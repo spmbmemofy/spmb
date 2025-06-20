@@ -10,7 +10,9 @@ import { Label } from '@/components/ui/label';
 import { FileText, Save } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { initialSchoolData } from "@/app/registration/dashboard/page"; 
+import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
 
+const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const pathwayOptions = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
 
 export default function DocumentsPage() {
@@ -19,6 +21,24 @@ export default function DocumentsPage() {
   const [selectedSchoolId, setSelectedSchoolId] = React.useState<string>("");
   const [selectedPathway, setSelectedPathway] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  React.useEffect(() => {
+    const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+    if (savedProgress) {
+      if (savedProgress.schoolId) setSelectedSchoolId(savedProgress.schoolId);
+      if (savedProgress.pathway) setSelectedPathway(savedProgress.pathway);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
+    saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
+      ...currentProgress,
+      schoolId: selectedSchoolId || undefined, // Ensure undefined if empty
+      pathway: selectedPathway || undefined, // Ensure undefined if empty
+    });
+  }, [selectedSchoolId, selectedPathway]);
+
 
   const handleSubmit = () => {
     setIsSubmitting(true);
@@ -34,6 +54,14 @@ export default function DocumentsPage() {
 
     const schoolName = initialSchoolData.find(s => s.id === selectedSchoolId)?.namaSekolah || "Tidak Diketahui";
 
+    // Save final choice to localStorage before navigating
+    const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
+    saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
+      ...currentProgress,
+      schoolId: selectedSchoolId,
+      pathway: selectedPathway,
+    });
+    
     setTimeout(() => {
       toast({
         title: "Pilihan Disimpan",

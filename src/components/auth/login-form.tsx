@@ -31,6 +31,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
+import { getFromLocalStorage, saveToLocalStorage, removeFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
+
+const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 
 const formSchema = z.object({
   role: z.enum(["applicant", "admin"], {
@@ -58,12 +61,35 @@ export function LoginForm() {
     },
   });
 
+  React.useEffect(() => {
+    const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
+    if (savedCredentials?.rememberMe && savedCredentials.nisn && savedCredentials.role) {
+      form.reset({
+        nisn: savedCredentials.nisn,
+        role: savedCredentials.role,
+        password: "", // Password is not saved for security
+        rememberMe: savedCredentials.rememberMe,
+      });
+    }
+  }, [form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     console.log("Form values:", values);
+
+    if (values.rememberMe) {
+      saveToLocalStorage<LoginCredentials>(LOCAL_STORAGE_LOGIN_KEY, {
+        nisn: values.nisn,
+        role: values.role,
+        rememberMe: values.rememberMe,
+      });
+    } else {
+      removeFromLocalStorage(LOCAL_STORAGE_LOGIN_KEY);
+    }
+    
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    const isSuccess = Math.random() > 0.3; // Simulasi keberhasilan/kegagalan acak
+    const isSuccess = Math.random() > 0.3; 
 
     if (isSuccess) {
         toast({
@@ -72,9 +98,8 @@ export function LoginForm() {
         });
 
         if (values.role === "applicant") {
-          router.push('/registration/dashboard'); // Diubah dari biodata ke dashboard
+          router.push('/registration/dashboard'); 
         } else if (values.role === "admin") {
-          // Admin specific redirect, for now, let's go to dashboard as an example
           router.push('/registration/dashboard');
           console.log("Admin logged in, redirecting to admin dashboard.");
         }
@@ -111,7 +136,7 @@ export function LoginForm() {
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value} // ensure value is controlled
                       className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4"
                     >
                       <FormItem className="flex items-center space-x-3 space-y-0">

@@ -9,6 +9,9 @@ import { Input } from '@/components/ui/input';
 import { UploadCloud, FileUp, Paperclip, CheckCircle2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
+
+const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 
 interface DocumentItem {
   id: string;
@@ -21,11 +24,16 @@ interface DocumentUploadItemProps {
   label: string;
   required?: boolean;
   file: File | null;
+  fileMetadata?: { name: string; size: number; type: string } | null;
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>, id: string) => void;
 }
 
-const DocumentUploadItem: React.FC<DocumentUploadItemProps> = ({ id, label, required = true, file, onFileChange }) => {
+const DocumentUploadItem: React.FC<DocumentUploadItemProps> = ({ id, label, required = true, file, fileMetadata, onFileChange }) => {
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const displayFileName = file?.name || fileMetadata?.name;
+  const displayFileSize = file?.size || fileMetadata?.size;
+  const displayFileType = file?.type || fileMetadata?.type;
+  const hasSelection = file || fileMetadata;
 
   return (
     <div className="space-y-2 border-b pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0">
@@ -33,7 +41,7 @@ const DocumentUploadItem: React.FC<DocumentUploadItemProps> = ({ id, label, requ
         <Label htmlFor={id} className="text-md">
           {label} {required && <span className="text-destructive">*</span>}
         </Label>
-        {file && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+        {hasSelection && <CheckCircle2 className="h-5 w-5 text-green-500" />}
       </div>
       <div className="flex items-center space-x-3">
         <Button
@@ -53,12 +61,13 @@ const DocumentUploadItem: React.FC<DocumentUploadItemProps> = ({ id, label, requ
           accept=".pdf,.jpg,.jpeg,.png"
         />
         <span className="text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-xs">
-          {file ? file.name : "Belum ada file dipilih"}
+          {displayFileName ? displayFileName : "Belum ada file dipilih"}
         </span>
       </div>
-       {file && (
+       {displayFileName && displayFileSize !== undefined && displayFileType && (
          <p className="text-xs text-muted-foreground">
-           Ukuran: {(file.size / 1024 / 1024).toFixed(2)} MB, Jenis: {file.type}
+           Ukuran: {(displayFileSize / 1024 / 1024).toFixed(2)} MB, Jenis: {displayFileType}
+           {file ? "" : " (Dari sesi sebelumnya)"}
          </p>
        )}
     </div>
@@ -96,17 +105,32 @@ export default function DocumentUploadPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   
   const [documentsToUpload, setDocumentsToUpload] = React.useState<DocumentItem[]>([]);
+  // uploadedFiles stores actual File objects for the current session
   const [uploadedFiles, setUploadedFiles] = React.useState<Record<string, File | null>>({});
+  // fileMetadataStore is for displaying info from localStorage
+  const [fileMetadataStore, setFileMetadataStore] = React.useState<RegistrationProgress['documentMetadata']>({});
 
   React.useEffect(() => {
     const currentPathwayDocs = pathwaySpecificDocumentsMap[selectedPathway] || [];
     const allDocs = [...generalDocuments, ...currentPathwayDocs];
     setDocumentsToUpload(allDocs);
+    
+    // Initialize uploadedFiles state for current session (all null initially)
     setUploadedFiles(allDocs.reduce((acc, doc) => ({ ...acc, [doc.id]: null }), {}));
+    
+    // Load persisted file metadata from localStorage
+    const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+    if (savedProgress?.documentMetadata) {
+      setFileMetadataStore(savedProgress.documentMetadata);
+    }
+
   }, [selectedPathway]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, documentId: string) => {
     const file = event.target.files?.[0];
+    const newUploadedFiles = { ...uploadedFiles };
+    const newFileMetadata = { ...fileMetadataStore };
+
     if (file) {
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
         toast({
@@ -115,15 +139,29 @@ export default function DocumentUploadPage() {
           description: `File ${file.name} melebihi batas maksimal 2MB.`,
         });
         event.target.value = ''; 
-        return;
+        newUploadedFiles[documentId] = null;
+        newFileMetadata[documentId] = null;
+      } else {
+        newUploadedFiles[documentId] = file;
+        newFileMetadata[documentId] = { name: file.name, size: file.size, type: file.type };
       }
-      setUploadedFiles(prev => ({ ...prev, [documentId]: file }));
     } else {
-      setUploadedFiles(prev => ({ ...prev, [documentId]: null }));
+      newUploadedFiles[documentId] = null;
+      newFileMetadata[documentId] = null;
     }
+    setUploadedFiles(newUploadedFiles);
+    setFileMetadataStore(newFileMetadata);
+
+    // Save metadata to localStorage
+    const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
+    saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
+      ...currentProgress,
+      documentMetadata: newFileMetadata,
+    });
   };
 
   const allRequiredFilesUploaded = () => {
+    // This check is for the current session's File objects
     if (documentsToUpload.length === 0 && generalDocuments.length > 0) return false; 
     return documentsToUpload
       .filter(doc => doc.required)
@@ -135,15 +173,16 @@ export default function DocumentUploadPage() {
       toast({
         variant: "destructive",
         title: "Berkas Belum Lengkap",
-        description: "Harap unggah semua berkas yang wajib diisi (ditandai dengan *).",
+        description: "Harap unggah semua berkas yang wajib diisi (ditandai dengan *) untuk sesi ini.",
       });
       return;
     }
 
     setIsSubmitting(true);
-    console.log("Mengunggah berkas:", uploadedFiles);
+    console.log("Mengunggah berkas (actual File objects):", uploadedFiles);
     
-    const uploadedDocIds = Object.entries(uploadedFiles)
+    // Get IDs of files that have actual File objects in the current session
+    const successfullyUploadedDocIds = Object.entries(uploadedFiles)
       .filter(([, file]) => file !== null)
       .map(([id]) => id);
 
@@ -154,21 +193,29 @@ export default function DocumentUploadPage() {
         description: "Semua berkas Anda telah berhasil diunggah. Melanjutkan ke halaman status pendaftaran.",
       });
       setIsSubmitting(false);
-      router.push(`/registration/selection?pathway=${selectedPathway}&schoolId=${selectedSchoolId}&docs=${uploadedDocIds.join(',')}`);
+      // Pass the IDs of files actually uploaded in this session
+      router.push(`/registration/selection?pathway=${selectedPathway}&schoolId=${selectedSchoolId}&docs=${successfullyUploadedDocIds.join(',')}`);
     }, 2000);
   };
   
   const currentPathwaySpecificDocs = pathwaySpecificDocumentsMap[selectedPathway] || [];
 
-  if (!selectedPathway) {
+  if (!selectedPathway && !selectedSchoolId) { // Check if schoolId is also missing for a more robust check
+     // Attempt to load from localStorage if query params are missing (e.g., direct navigation/refresh)
+     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+     if (savedProgress?.pathway && savedProgress?.schoolId) {
+         router.replace(`/registration/document-upload?pathway=${savedProgress.pathway}&schoolId=${savedProgress.schoolId}`);
+         return <p>Mengalihkan...</p>; // Or a loading indicator
+     }
      return (
         <div className="flex flex-1 flex-col items-center justify-center p-4 sm:p-6 md:p-8">
             <Card className="w-full max-w-md text-center">
                 <CardHeader>
-                    <CardTitle>Jalur Pendaftaran Tidak Valid</CardTitle>
+                    <CardTitle>Informasi Tidak Lengkap</CardTitle>
+                    <CardDescription>Jalur pendaftaran atau sekolah belum dipilih.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <p>Harap pilih jalur pendaftaran terlebih dahulu.</p>
+                    <p>Harap pilih sekolah tujuan dan jalur pendaftaran terlebih dahulu.</p>
                     <Button onClick={() => router.push('/registration/documents')} className="mt-4">
                         Kembali ke Pemilihan Jalur
                     </Button>
@@ -189,6 +236,7 @@ export default function DocumentUploadPage() {
           <CardTitle className="text-2xl sm:text-3xl font-headline">Unggah Berkas Pendaftaran</CardTitle>
           <CardDescription className="text-md">
             Harap unggah dokumen yang diperlukan. Format file yang diterima: PDF, JPG, JPEG, PNG. Ukuran maks: 2MB per file.
+            Berkas yang sudah dipilih di sesi sebelumnya akan ditandai, namun perlu dipilih ulang untuk diunggah.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
@@ -201,6 +249,7 @@ export default function DocumentUploadPage() {
                 label={doc.label}
                 required={doc.required}
                 file={uploadedFiles[doc.id] || null}
+                fileMetadata={fileMetadataStore?.[doc.id]}
                 onFileChange={handleFileChange}
               />
             ))}
@@ -216,6 +265,7 @@ export default function DocumentUploadPage() {
                   label={doc.label}
                   required={doc.required}
                   file={uploadedFiles[doc.id] || null}
+                  fileMetadata={fileMetadataStore?.[doc.id]}
                   onFileChange={handleFileChange}
                 />
               ))}

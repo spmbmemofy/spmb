@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { User, FileText, Settings, LogOut, Menu as MenuIcon, Home, ClipboardCheck } from 'lucide-react';
 import {
   SidebarProvider,
@@ -19,6 +19,11 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import { getFromLocalStorage, removeFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
+
+const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
+const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
+
 
 interface RegistrationLayoutProps {
   children: ReactNode;
@@ -26,6 +31,7 @@ interface RegistrationLayoutProps {
 
 export default function RegistrationLayout({ children }: RegistrationLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const menuItems = [
     {
@@ -48,11 +54,23 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     },
     {
       href: '/registration/selection',
-      label: 'STATUS PENDAFTARAN', // Changed from SELEKSI
+      label: 'STATUS PENDAFTARAN',
       icon: ClipboardCheck,
       activePaths: ['/registration/selection'],
     },
   ];
+
+  const handleLogout = () => {
+    // Clear registration progress
+    removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);
+
+    // Check if login credentials should be cleared
+    const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
+    if (!savedCredentials || !savedCredentials.rememberMe) {
+      removeFromLocalStorage(LOCAL_STORAGE_LOGIN_KEY);
+    }
+    router.push('/');
+  };
 
   return (
     <SidebarProvider>
@@ -94,11 +112,9 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
           <SidebarFooter>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: 'Keluar', side: 'right' }}>
-                  <Link href="/">
+                <SidebarMenuButton onClick={handleLogout} tooltip={{ children: 'Keluar', side: 'right' }}>
                     <LogOut />
                     <span className="group-data-[state=collapsed]:hidden">Keluar</span>
-                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
