@@ -19,8 +19,8 @@ const allSchoolsData: School[] = [
     id: "sman1tanjungredeb", 
     namaSekolah: "SMA Negeri 1 Tanjung Redeb", 
     akreditasi: "A", 
-    kuota: 280, 
-    jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112, umum: 14 },
+    kuota: 266, // 280 - 14 (umum)
+    jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112 },
     jumlahPendaftar: 210, 
     statusPendaftaran: "Buka", 
     alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
@@ -30,8 +30,8 @@ const allSchoolsData: School[] = [
     id: "smkn1berau", 
     namaSekolah: "SMK Negeri 1 Berau", 
     akreditasi: "A", 
-    kuota: 320, 
-    jalurKuota: { afirmasi: 64, mutasi: 16, prestasi: 96, domisili: 128, umum: 16 },
+    kuota: 304, // 320 - 16 (umum)
+    jalurKuota: { afirmasi: 64, mutasi: 16, prestasi: 96, domisili: 128 },
     jumlahPendaftar: 295, 
     statusPendaftaran: "Segera Penuh", 
     alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
@@ -41,8 +41,8 @@ const allSchoolsData: School[] = [
     id: "sman2berau", 
     namaSekolah: "SMA Negeri 2 Berau", 
     akreditasi: "B", 
-    kuota: 240, 
-    jalurKuota: { afirmasi: 48, mutasi: 12, prestasi: 72, domisili: 96, umum: 12 },
+    kuota: 228, // 240 - 12 (umum)
+    jalurKuota: { afirmasi: 48, mutasi: 12, prestasi: 72, domisili: 96 },
     jumlahPendaftar: 180, 
     statusPendaftaran: "Buka", 
     alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
@@ -52,8 +52,8 @@ const allSchoolsData: School[] = [
     id: "smamuhammadiyahberau", 
     namaSekolah: "SMA Muhammadiyah Tanjung Redeb", 
     akreditasi: "B", 
-    kuota: 150, 
-    jalurKuota: { afirmasi: 30, mutasi: 7, prestasi: 45, domisili: 60, umum: 8 },
+    kuota: 142, // 150 - 8 (umum)
+    jalurKuota: { afirmasi: 30, mutasi: 7, prestasi: 45, domisili: 60 },
     jumlahPendaftar: 150, 
     statusPendaftaran: "Tutup", 
     alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
@@ -63,8 +63,8 @@ const allSchoolsData: School[] = [
     id: "smkyphbberau", 
     namaSekolah: "SMK YPSHB Berau", 
     akreditasi: "B", 
-    kuota: 200, 
-    jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 80, umum: 10 },
+    kuota: 190, // 200 - 10 (umum)
+    jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 80 },
     jumlahPendaftar: 125, 
     statusPendaftaran: "Buka", 
     alamat: "Jl. Pangeran Antasari, Teluk Bayur, Kab. Berau, Kalimantan Timur", 
@@ -78,7 +78,7 @@ interface Applicant {
   no: number;
   fullName: string;
   nisn: string;
-  jalur: "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili" | "Umum";
+  jalur: "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili"; // Removed "Umum"
   asalSekolah: string;
   status: ApplicantStatus;
   peringkat: number;
@@ -95,10 +95,10 @@ const schoolApplicantsData: Record<string, Applicant[]> = {
   "smkn1berau": [
     { id: 'app2-1', no: 1, fullName: 'Putri Amelia Sari', nisn: '0064455667', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Sambaliung', status: 'Berkas tidak sesuai', peringkat: 1 },
     { id: 'app2-2', no: 2, fullName: 'Fajar Maulana Ishaq', nisn: '0065566778', jalur: 'Domisili', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Menunggu Verifikasi', peringkat: 2 },
-    { id: 'app2-3', no: 3, fullName: 'Nur Azizah Fitriani', nisn: '0066677889', jalur: 'Umum', asalSekolah: 'SMP IT Ash-Shohwah Berau', status: 'Terverifikasi', peringkat: 3 },
+    { id: 'app2-3', no: 3, fullName: 'Nur Azizah Fitriani', nisn: '0066677889', jalur: 'Prestasi', asalSekolah: 'SMP IT Ash-Shohwah Berau', status: 'Terverifikasi', peringkat: 3 }, // Changed from Umum to Prestasi
   ],
   "sman2berau": [
-    { id: 'app3-1', no: 1, fullName: 'Bayu Saputra Dinata', nisn: '0077788990', jalur: 'Umum', asalSekolah: 'SMP Negeri 3 Gunung Tabur', status: 'Terverifikasi', peringkat: 1 },
+    { id: 'app3-1', no: 1, fullName: 'Bayu Saputra Dinata', nisn: '0077788990', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 3 Gunung Tabur', status: 'Terverifikasi', peringkat: 1 }, // Changed from Umum to Prestasi
     { id: 'app3-2', no: 2, fullName: 'Linda Wati', nisn: '0078899001', jalur: 'Domisili', asalSekolah: 'SMP Negeri 5 Segah', status: 'Menunggu Verifikasi', peringkat: 241 },
   ],
    "smamuhammadiyahberau": [
@@ -106,11 +106,11 @@ const schoolApplicantsData: Record<string, Applicant[]> = {
    ],
    "smkyphbberau": [
     { id: 'app5-1', no: 1, fullName: 'Indah Permatasari Dewi', nisn: '0088899001', jalur: 'Prestasi', asalSekolah: 'SMP Kristen Berau', status: 'Menunggu Verifikasi', peringkat: 1 },
-    { id: 'app5-2', no: 2, fullName: 'Agus Setiawan', nisn: '0089900112', jalur: 'Umum', asalSekolah: 'SMP PGRI Tanjung Redeb', status: 'Terverifikasi', peringkat: 2},
+    { id: 'app5-2', no: 2, fullName: 'Agus Setiawan', nisn: '0089900112', jalur: 'Prestasi', asalSekolah: 'SMP PGRI Tanjung Redeb', status: 'Terverifikasi', peringkat: 2}, // Changed from Umum to Prestasi
    ],
 };
 
-const jalurOptions = ["Semua", "Afirmasi", "Mutasi", "Prestasi", "Domisili", "Umum"];
+const jalurOptions = ["Semua", "Afirmasi", "Mutasi", "Prestasi", "Domisili"]; // Removed "Umum"
 const asalSekolahOptions = ["Semua", "SMP Negeri 1 Tanjung Redeb", "SMP Negeri 2 Teluk Bayur", "MTs Al-Kautsar Berau", "SMP Negeri 1 Sambaliung", "SMP IT Ash-Shohwah Berau", "SMP Negeri 3 Gunung Tabur", "SMP Kristen Berau", "SMP PGRI Tanjung Redeb", "SMP Negeri 5 Segah", "MTs Muhammadiyah Berau"];
 
 const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
@@ -208,7 +208,6 @@ export default function SchoolDetailPage() {
                     <li>Mutasi: {school.jalurKuota.mutasi}</li>
                     <li>Prestasi: {school.jalurKuota.prestasi}</li>
                     <li>Domisili: {school.jalurKuota.domisili}</li>
-                    <li>Umum: {school.jalurKuota.umum}</li>
                   </ul>
                 </div>
               )}
