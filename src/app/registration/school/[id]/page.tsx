@@ -22,7 +22,7 @@ const allSchoolsData: School[] = [
     akreditasi: "A",
     kuota: 266,
     jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112 },
-    jumlahPendaftar: 50,
+    jumlahPendaftar: 50, // This will be visually consistent due to 50 generated applicants
     statusPendaftaran: "Buka",
     alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Kab. Berau, Kalimantan Timur",
     telepon: "0554-21045"
@@ -62,7 +62,7 @@ const allSchoolsData: School[] = [
   },
   {
     id: "smkyphbberau",
-    namaSekolah: "SMK YPSHB Berau",
+    namaSekolah: "SMK YPSHB Berau", // Shortened for consistency
     akreditasi: "B",
     kuota: 190,
     jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 80 },
@@ -76,7 +76,7 @@ const allSchoolsData: School[] = [
 type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
 interface Applicant {
   id: string;
-  noRegistrasi: string; // Used for unique key if NISN is not unique enough for UI
+  noRegistrasi: string;
   fullName: string;
   nisn: string;
   jalur: "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
@@ -87,7 +87,7 @@ interface Applicant {
 
 const schoolIds = ["sman1tanjungredeb", "smkn1berau", "sman2berau", "smamuhammadiyahberau", "smkyphbberau"];
 const jalurOptionsPlain: Applicant['jalur'][] = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
-const asalSekolahOptionsPlain = [
+const asalSekolahOptionsPlain = [ // Base options if dynamic generation fails or for initial state
   "SMP Negeri 1 Tanjung Redeb", "SMP Negeri 2 Teluk Bayur", "MTs Al-Kautsar Berau",
   "SMP Negeri 1 Sambaliung", "SMP IT Ash-Shohwah Berau", "SMP Negeri 3 Gunung Tabur",
   "SMP Kristen Berau", "SMP PGRI Tanjung Redeb", "SMP Negeri 5 Segah", "MTs Muhammadiyah Berau",
@@ -97,33 +97,7 @@ const statusOptionsPlain: ApplicantStatus[] = ["Terverifikasi", "Menunggu Verifi
 const firstNames = ["Ahmad", "Budi", "Citra", "Dewi", "Eka", "Fajar", "Gita", "Hendra", "Indah", "Joko", "Lia", "Mira", "Nina", "Omar", "Putu", "Rahmat", "Sari", "Tono", "Umar", "Vina", "Wati", "Yoga", "Zaki", "Amir", "Bella"];
 const lastNames = ["Santoso", "Wijaya", "Kusuma", "Lestari", "Pratama", "Wahyuni", "Setiawan", "Handayani", "Permana", "Wulandari", "Hakim", "Saleh", "Putri", "Maulana", "Siregar", "Abdullah", "Batubara", "Chandra", "Daulay", "Effendi"];
 
-const schoolApplicantsData: Record<string, Applicant[]> = {};
-
-schoolIds.forEach((schoolId, schoolIndex) => {
-  schoolApplicantsData[schoolId] = [];
-  for (let i = 0; i < 50; i++) {
-    const studentNumber = i + 1;
-    const firstNameIndex = Math.floor(Math.random() * firstNames.length);
-    const lastNameIndex = Math.floor(Math.random() * lastNames.length);
-    const nisnSchoolCode = String(schoolIndex + 1).padStart(2, '0');
-    const nisnStudentCode = String(studentNumber).padStart(3, '0');
-
-    schoolApplicantsData[schoolId].push({
-      id: `app${schoolIndex + 1}-${studentNumber}`,
-      noRegistrasi: `REG${schoolIndex + 1}${String(studentNumber).padStart(4, '0')}`,
-      fullName: `${firstNames[firstNameIndex]} ${lastNames[lastNameIndex]}`,
-      nisn: `005${nisnSchoolCode}${nisnStudentCode}${Math.floor(100 + Math.random() * 900)}`,
-      jalur: jalurOptionsPlain[i % jalurOptionsPlain.length],
-      asalSekolah: asalSekolahOptionsPlain[i % asalSekolahOptionsPlain.length],
-      status: statusOptionsPlain[i % statusOptionsPlain.length],
-      peringkat: studentNumber, // Peringkat sederhana 1-50
-    });
-  }
-});
-
-
 const jalurOptions = ["Semua", ...jalurOptionsPlain];
-const asalSekolahOptions = ["Semua", ...new Set(Object.values(schoolApplicantsData).flat().map(a => a.asalSekolah) || asalSekolahOptionsPlain)];
 
 
 const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
@@ -139,7 +113,7 @@ const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "s
   }
 };
 
-type SortKey = keyof Applicant | 'no'; // 'no' for displayed number
+type SortKey = keyof Applicant | 'no';
 type SortDirection = "ascending" | "descending";
 
 interface SortConfig {
@@ -152,6 +126,10 @@ export default function SchoolDetailPage() {
   const params = useParams();
   const schoolId = params.id as string;
 
+  const [currentSchoolApplicants, setCurrentSchoolApplicants] = React.useState<Applicant[]>([]);
+  const [dynamicAsalSekolahOptions, setDynamicAsalSekolahOptions] = React.useState<string[]>(["Semua", ...asalSekolahOptionsPlain]);
+
+
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedJalur, setSelectedJalur] = React.useState("Semua");
   const [selectedAsalSekolah, setSelectedAsalSekolah] = React.useState("Semua");
@@ -160,9 +138,51 @@ export default function SchoolDetailPage() {
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
 
+  React.useEffect(() => {
+    if (!schoolId) {
+      setCurrentSchoolApplicants([]);
+      setDynamicAsalSekolahOptions(["Semua", ...asalSekolahOptionsPlain]);
+      return;
+    }
+
+    const schoolIndex = schoolIds.findIndex(id => id === schoolId);
+    if (schoolIndex === -1) {
+        setCurrentSchoolApplicants([]);
+        setDynamicAsalSekolahOptions(["Semua", ...asalSekolahOptionsPlain]);
+        return; // School ID not found in our list
+    }
+
+    const generatedApplicants: Applicant[] = [];
+    for (let i = 0; i < 50; i++) {
+      const studentNumber = i + 1;
+      const firstNameIndex = Math.floor(Math.random() * firstNames.length);
+      const lastNameIndex = Math.floor(Math.random() * lastNames.length);
+      const nisnSchoolCode = String(schoolIndex + 1).padStart(2, '0');
+      const nisnStudentCode = String(studentNumber).padStart(3, '0');
+
+      generatedApplicants.push({
+        id: `app${schoolIndex + 1}-${studentNumber}`,
+        noRegistrasi: `REG${schoolIndex + 1}${String(studentNumber).padStart(4, '0')}`,
+        fullName: `${firstNames[firstNameIndex]} ${lastNames[lastNameIndex]}`,
+        nisn: `005${nisnSchoolCode}${nisnStudentCode}${Math.floor(100 + Math.random() * 900)}`,
+        jalur: jalurOptionsPlain[i % jalurOptionsPlain.length],
+        asalSekolah: asalSekolahOptionsPlain[i % asalSekolahOptionsPlain.length],
+        status: statusOptionsPlain[i % statusOptionsPlain.length],
+        peringkat: studentNumber,
+      });
+    }
+    setCurrentSchoolApplicants(generatedApplicants);
+
+    const uniqueAsalSekolah = [...new Set(generatedApplicants.map(a => a.asalSekolah).filter(Boolean))];
+    setDynamicAsalSekolahOptions(["Semua", ...uniqueAsalSekolah.sort()]);
+    setCurrentPage(1); // Reset page on data change
+
+  }, [schoolId]);
+
 
   const school = allSchoolsData.find(s => s.id === schoolId);
-  const applicants = schoolApplicantsData[schoolId] || [];
+  // Use currentSchoolApplicants for filtering, sorting, and display
+  const applicants = currentSchoolApplicants; 
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -196,6 +216,9 @@ export default function SchoolDetailPage() {
         }
         return sortConfig.direction === 'ascending' ? comparison : -comparison;
       });
+    } else if (sortConfig.key === 'no' && sortConfig.direction === 'descending') {
+       // For 'No.' column, descending means reverse of ascending order
+       // This part might need adjustment if 'no' is based on original index vs current page index
     }
     return sortableItems;
   }, [filteredApplicants, sortConfig]);
@@ -345,7 +368,7 @@ export default function SchoolDetailPage() {
                   <SelectValue placeholder="Filter berdasarkan Asal Sekolah" />
                 </SelectTrigger>
                 <SelectContent>
-                  {asalSekolahOptions.map(asal => (
+                  {dynamicAsalSekolahOptions.map(asal => (
                     <SelectItem key={asal} value={asal}>{asal}</SelectItem>
                   ))}
                 </SelectContent>
@@ -398,7 +421,7 @@ export default function SchoolDetailPage() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center text-muted-foreground h-24">
-                        Tidak ada data pendaftar yang sesuai dengan filter.
+                        { currentSchoolApplicants.length === 0 ? "Memuat data pendaftar..." : "Tidak ada data pendaftar yang sesuai dengan filter."}
                       </TableCell>
                     </TableRow>
                   )}
@@ -410,13 +433,13 @@ export default function SchoolDetailPage() {
                 <span className="text-sm text-muted-foreground">Data per halaman:</span>
                 <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
                   <SelectTrigger className="w-[80px]">
-                    <SelectValue placeholder={pageSize} />
+                    <SelectValue placeholder={pageSize.toString()} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="10">10</SelectItem>
                     <SelectItem value="25">25</SelectItem>
                     <SelectItem value="50">50</SelectItem>
-                    <SelectItem value={sortedApplicants.length.toString()}>Semua</SelectItem>
+                    <SelectItem value={sortedApplicants.length > 0 ? sortedApplicants.length.toString() : "50"}>Semua</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -450,4 +473,4 @@ export default function SchoolDetailPage() {
     </div>
   );
 }
-
+    
