@@ -67,7 +67,6 @@ export const initialSchoolData = [
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Berau",
     telepon: "0554-21045",
-    tahapPendaftaran: 1 as const,
   },
   {
     id: "smkn1berau",
@@ -79,7 +78,6 @@ export const initialSchoolData = [
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Berau",
     telepon: "0554-22112",
-    tahapPendaftaran: 2 as const,
   },
   {
     id: "sman2berau",
@@ -91,7 +89,6 @@ export const initialSchoolData = [
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Berau",
     telepon: "0554-23451",
-    tahapPendaftaran: 1 as const,
   },
   {
     id: "smamuhammadiyahberau",
@@ -103,7 +100,6 @@ export const initialSchoolData = [
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Berau",
     telepon: "0554-21987",
-    tahapPendaftaran: 2 as const,
   },
   {
     id: "smkyphbberau",
@@ -115,11 +111,10 @@ export const initialSchoolData = [
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. Pangeran Antasari, Teluk Bayur, Berau",
     telepon: "0554-24001",
-    tahapPendaftaran: 1 as const,
   },
 ];
 
-const initialOriginSchoolData = [
+export const initialOriginSchoolData = [
   {
     id: "smpn1tanjungredeb",
     namaSekolah: "SMP Negeri 1 Tanjung Redeb",
@@ -161,7 +156,7 @@ export type SchoolStatus = "Buka" | "Segera Penuh" | "Tutup";
 export type School = typeof initialSchoolData[0];
 export type OriginSchool = typeof initialOriginSchoolData[0];
 
-type SchoolSortKey = keyof Omit<School, 'tahapPendaftaran' | 'jalurKuota' | 'alamat' | 'telepon' | 'id'>;
+type SchoolSortKey = keyof Omit<School, 'jalurKuota' | 'alamat' | 'telepon' | 'id'>;
 type SortDirection = "ascending" | "descending";
 
 interface SchoolSortConfig {
@@ -481,7 +476,11 @@ export default function DashboardPage() {
                   {paginatedOriginSchoolData.length > 0 ? (
                     paginatedOriginSchoolData.map((school) => (
                       <TableRow key={school.id}>
-                        <TableCell className="font-medium">{school.namaSekolah}</TableCell>
+                        <TableCell className="font-medium">
+                           <Link href={`/registration/origin-school/${school.id}`} className="hover:underline text-primary">
+                            {school.namaSekolah}
+                          </Link>
+                        </TableCell>
                         <TableCell className="text-center">{school.status}</TableCell>
                         <TableCell className="text-center">{school.akreditasi}</TableCell>
                         <TableCell className="text-center">{school.jumlahPendaftar}</TableCell>
@@ -536,7 +535,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              Data sekolah asal pendaftar yang terdaftar di sistem.
+              Data sekolah asal pendaftar yang terdaftar di sistem. Klik nama sekolah untuk detail.
             </p>
           </section>
         </CardContent>
@@ -544,5 +543,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
 
     
