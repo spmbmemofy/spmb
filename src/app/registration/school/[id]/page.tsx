@@ -11,15 +11,65 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { School, SchoolStatus } from "@/app/registration/dashboard/page"; // Import types
+import type { School } from "@/app/registration/dashboard/page"; // Import types
 
 // Mock data for schools - in a real app, this would come from an API
 const allSchoolsData: School[] = [
-  { id: "sman1tanjungredeb", namaSekolah: "SMA Negeri 1 Tanjung Redeb", akreditasi: "A", kuota: 2, jumlahPendaftar: 210, statusPendaftaran: "Buka", alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-21045" },
-  { id: "smkn1berau", namaSekolah: "SMK Negeri 1 Berau", akreditasi: "A", kuota: 2, jumlahPendaftar: 295, statusPendaftaran: "Segera Penuh", alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-22112" },
-  { id: "sman2berau", namaSekolah: "SMA Negeri 2 Berau", akreditasi: "B", kuota: 1, jumlahPendaftar: 180, statusPendaftaran: "Buka", alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-23451" },
-  { id: "smamuhammadiyahberau", namaSekolah: "SMA Muhammadiyah Tanjung Redeb", akreditasi: "B", kuota: 1, jumlahPendaftar: 150, statusPendaftaran: "Tutup", alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-21987" },
-  { id: "smkyphbberau", namaSekolah: "SMK YPSHB Berau", akreditasi: "B", kuota: 1, jumlahPendaftar: 125, statusPendaftaran: "Buka", alamat: "Jl. Pangeran Antasari, Teluk Bayur, Kab. Berau, Kalimantan Timur", telepon: "0554-24001" },
+  { 
+    id: "sman1tanjungredeb", 
+    namaSekolah: "SMA Negeri 1 Tanjung Redeb", 
+    akreditasi: "A", 
+    kuota: 280, 
+    jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112, umum: 14 },
+    jumlahPendaftar: 210, 
+    statusPendaftaran: "Buka", 
+    alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
+    telepon: "0554-21045" 
+  },
+  { 
+    id: "smkn1berau", 
+    namaSekolah: "SMK Negeri 1 Berau", 
+    akreditasi: "A", 
+    kuota: 320, 
+    jalurKuota: { afirmasi: 64, mutasi: 16, prestasi: 96, domisili: 128, umum: 16 },
+    jumlahPendaftar: 295, 
+    statusPendaftaran: "Segera Penuh", 
+    alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
+    telepon: "0554-22112" 
+  },
+  { 
+    id: "sman2berau", 
+    namaSekolah: "SMA Negeri 2 Berau", 
+    akreditasi: "B", 
+    kuota: 240, 
+    jalurKuota: { afirmasi: 48, mutasi: 12, prestasi: 72, domisili: 96, umum: 12 },
+    jumlahPendaftar: 180, 
+    statusPendaftaran: "Buka", 
+    alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
+    telepon: "0554-23451" 
+  },
+  { 
+    id: "smamuhammadiyahberau", 
+    namaSekolah: "SMA Muhammadiyah Tanjung Redeb", 
+    akreditasi: "B", 
+    kuota: 150, 
+    jalurKuota: { afirmasi: 30, mutasi: 7, prestasi: 45, domisili: 60, umum: 8 },
+    jumlahPendaftar: 150, 
+    statusPendaftaran: "Tutup", 
+    alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
+    telepon: "0554-21987" 
+  },
+  { 
+    id: "smkyphbberau", 
+    namaSekolah: "SMK YPSHB Berau", 
+    akreditasi: "B", 
+    kuota: 200, 
+    jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 80, umum: 10 },
+    jumlahPendaftar: 125, 
+    statusPendaftaran: "Buka", 
+    alamat: "Jl. Pangeran Antasari, Teluk Bayur, Kab. Berau, Kalimantan Timur", 
+    telepon: "0554-24001" 
+  },
 ];
 
 type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
@@ -40,7 +90,7 @@ const schoolApplicantsData: Record<string, Applicant[]> = {
     { id: 'app1-1', no: 1, fullName: 'Aulia Rahman Hakim', nisn: '0051122334', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Terverifikasi', peringkat: 1 },
     { id: 'app1-2', no: 2, fullName: 'Dewi Anggraini Putri', nisn: '0052233445', jalur: 'Domisili', asalSekolah: 'SMP Negeri 2 Teluk Bayur', status: 'Menunggu Verifikasi', peringkat: 2 },
     { id: 'app1-3', no: 3, fullName: 'Rahmat Hidayatullah', nisn: '0053344556', jalur: 'Afirmasi', asalSekolah: 'MTs Al-Kautsar Berau', status: 'Terverifikasi', peringkat: 3 },
-    { id: 'app1-4', no: 4, fullName: 'Siti Aminah', nisn: '0054455667', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Menunggu Verifikasi', peringkat: 4 },
+    { id: 'app1-4', no: 4, fullName: 'Siti Aminah', nisn: '0054455667', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Menunggu Verifikasi', peringkat: 281 },
   ],
   "smkn1berau": [
     { id: 'app2-1', no: 1, fullName: 'Putri Amelia Sari', nisn: '0064455667', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Sambaliung', status: 'Berkas tidak sesuai', peringkat: 1 },
@@ -49,7 +99,7 @@ const schoolApplicantsData: Record<string, Applicant[]> = {
   ],
   "sman2berau": [
     { id: 'app3-1', no: 1, fullName: 'Bayu Saputra Dinata', nisn: '0077788990', jalur: 'Umum', asalSekolah: 'SMP Negeri 3 Gunung Tabur', status: 'Terverifikasi', peringkat: 1 },
-    { id: 'app3-2', no: 2, fullName: 'Linda Wati', nisn: '0078899001', jalur: 'Domisili', asalSekolah: 'SMP Negeri 5 Segah', status: 'Menunggu Verifikasi', peringkat: 2 },
+    { id: 'app3-2', no: 2, fullName: 'Linda Wati', nisn: '0078899001', jalur: 'Domisili', asalSekolah: 'SMP Negeri 5 Segah', status: 'Menunggu Verifikasi', peringkat: 241 },
   ],
    "smamuhammadiyahberau": [
     { id: 'app4-1', no: 1, fullName: 'Muhammad Iqbal', nisn: '0091234567', jalur: 'Prestasi', asalSekolah: 'MTs Muhammadiyah Berau', status: 'Terverifikasi', peringkat: 1},
@@ -145,11 +195,23 @@ export default function SchoolDetailPage() {
             <h3 className="text-lg font-semibold mb-3 text-primary">Informasi Sekolah</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
               <div><span className="font-medium text-muted-foreground">Akreditasi:</span> {school.akreditasi}</div>
-              <div><span className="font-medium text-muted-foreground">Kuota Total:</span> {school.kuota}</div>
+              <div><span className="font-medium text-muted-foreground">Total Kuota:</span> {school.kuota}</div>
               <div><span className="font-medium text-muted-foreground">Jumlah Pendaftar:</span> {school.jumlahPendaftar}</div>
               <div><span className="font-medium text-muted-foreground">Status Pendaftaran:</span> <Badge variant={school.statusPendaftaran === "Buka" ? "default" : school.statusPendaftaran === "Segera Penuh" ? "secondary" : "destructive"}>{school.statusPendaftaran}</Badge></div>
               <div className="md:col-span-2"><span className="font-medium text-muted-foreground">Alamat:</span> {school.alamat}</div>
               <div className="md:col-span-2"><span className="font-medium text-muted-foreground">Telepon:</span> {school.telepon}</div>
+              {school.jalurKuota && (
+                <div className="md:col-span-2 mt-3">
+                  <h4 className="font-medium text-muted-foreground mb-1">Kuota per Jalur:</h4>
+                  <ul className="list-disc list-inside text-sm space-y-0.5 pl-4">
+                    <li>Afirmasi: {school.jalurKuota.afirmasi}</li>
+                    <li>Mutasi: {school.jalurKuota.mutasi}</li>
+                    <li>Prestasi: {school.jalurKuota.prestasi}</li>
+                    <li>Domisili: {school.jalurKuota.domisili}</li>
+                    <li>Umum: {school.jalurKuota.umum}</li>
+                  </ul>
+                </div>
+              )}
             </div>
           </section>
 

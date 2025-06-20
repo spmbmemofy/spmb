@@ -59,6 +59,7 @@ const schoolData = [
     namaSekolah: "SMA Negeri 1 Tanjung Redeb",
     akreditasi: "A",
     kuota: 280,
+    jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112, umum: 14 },
     jumlahPendaftar: 210,
     statusPendaftaran: "Buka",
     alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Berau",
@@ -69,6 +70,7 @@ const schoolData = [
     namaSekolah: "SMK Negeri 1 Berau",
     akreditasi: "A",
     kuota: 320,
+    jalurKuota: { afirmasi: 64, mutasi: 16, prestasi: 96, domisili: 128, umum: 16 },
     jumlahPendaftar: 295,
     statusPendaftaran: "Segera Penuh",
     alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Berau",
@@ -79,6 +81,7 @@ const schoolData = [
     namaSekolah: "SMA Negeri 2 Berau",
     akreditasi: "B",
     kuota: 240,
+    jalurKuota: { afirmasi: 48, mutasi: 12, prestasi: 72, domisili: 96, umum: 12 },
     jumlahPendaftar: 180,
     statusPendaftaran: "Buka",
     alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Berau",
@@ -89,6 +92,7 @@ const schoolData = [
     namaSekolah: "SMA Muhammadiyah Tanjung Redeb",
     akreditasi: "B",
     kuota: 150,
+    jalurKuota: { afirmasi: 30, mutasi: 7, prestasi: 45, domisili: 60, umum: 8 },
     jumlahPendaftar: 150,
     statusPendaftaran: "Tutup",
     alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Berau",
@@ -99,6 +103,7 @@ const schoolData = [
     namaSekolah: "SMK YPSHB (Yayasan Pendidikan Sinar Harapan Bangsa) Berau",
     akreditasi: "B",
     kuota: 200,
+    jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 80, umum: 10 },
     jumlahPendaftar: 125,
     statusPendaftaran: "Buka",
     alamat: "Jl. Pangeran Antasari, Teluk Bayur, Berau",
@@ -142,7 +147,7 @@ export default function DashboardPage() {
             <div className="aspect-[16/9] w-full">
               <ChartContainer config={chartConfig} className="min-h-[300px] sm:min-h-[350px] md:min-h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
+                  <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
                     <CartesianGrid vertical={false} />
                     <XAxis
                       dataKey="track"
@@ -175,7 +180,7 @@ export default function DashboardPage() {
                   <TableRow>
                     <TableHead className="font-semibold">Nama Sekolah</TableHead>
                     <TableHead className="text-center font-semibold">Akreditasi</TableHead>
-                    <TableHead className="text-center font-semibold">Kuota</TableHead>
+                    <TableHead className="text-center font-semibold">Total Kuota</TableHead>
                     <TableHead className="text-center font-semibold">Pendaftar</TableHead>
                     <TableHead className="text-center font-semibold">Status</TableHead>
                   </TableRow>
