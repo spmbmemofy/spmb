@@ -107,7 +107,8 @@ const statusOptionsPlain: ApplicantStatus[] = ["Terverifikasi", "Menunggu Verifi
 const firstNames = ["Ahmad", "Budi", "Citra", "Dewi", "Eka", "Fajar", "Gita", "Hendra", "Indah", "Joko", "Lia", "Mira", "Nina", "Omar", "Putu", "Rahmat", "Sari", "Tono", "Umar", "Vina", "Wati", "Yoga", "Zaki", "Amir", "Bella"];
 const lastNames = ["Santoso", "Wijaya", "Kusuma", "Lestari", "Pratama", "Wahyuni", "Setiawan", "Handayani", "Permana", "Wulandari", "Hakim", "Saleh", "Putri", "Maulana", "Siregar", "Abdullah", "Batubara", "Chandra", "Daulay", "Effendi"];
 
-const jalurOptions = ["Semua", ...jalurOptionsPlain];
+const jalurOptions = ["Semua Jalur", ...jalurOptionsPlain];
+const statusOptions = ["Semua Status", ...statusOptionsPlain];
 
 
 const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
@@ -138,12 +139,13 @@ export default function SchoolDetailPage() {
   const school = allSchoolsData.find(s => s.id === schoolId);
 
   const [currentSchoolApplicants, setCurrentSchoolApplicants] = React.useState<Applicant[]>([]);
-  const [dynamicAsalSekolahOptions, setDynamicAsalSekolahOptions] = React.useState<string[]>(["Semua", ...asalSekolahOptionsPlain]);
+  const [dynamicAsalSekolahOptions, setDynamicAsalSekolahOptions] = React.useState<string[]>(["Semua Asal Sekolah", ...asalSekolahOptionsPlain]);
 
 
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [selectedJalur, setSelectedJalur] = React.useState("Semua");
-  const [selectedAsalSekolah, setSelectedAsalSekolah] = React.useState("Semua");
+  const [selectedJalur, setSelectedJalur] = React.useState("Semua Jalur");
+  const [selectedAsalSekolah, setSelectedAsalSekolah] = React.useState("Semua Asal Sekolah");
+  const [selectedStatus, setSelectedStatus] = React.useState<string>("Semua Status");
   const [sortConfig, setSortConfig] = React.useState<SortConfig>({ key: 'peringkat', direction: 'ascending' });
   
   const [pageSize, setPageSize] = React.useState(10);
@@ -152,14 +154,14 @@ export default function SchoolDetailPage() {
   React.useEffect(() => {
     if (!schoolId || !school) {
       setCurrentSchoolApplicants([]);
-      setDynamicAsalSekolahOptions(["Semua", ...asalSekolahOptionsPlain]);
+      setDynamicAsalSekolahOptions(["Semua Asal Sekolah", ...asalSekolahOptionsPlain]);
       return;
     }
 
     const schoolIndex = schoolIds.findIndex(id => id === schoolId);
     if (schoolIndex === -1) {
         setCurrentSchoolApplicants([]);
-        setDynamicAsalSekolahOptions(["Semua", ...asalSekolahOptionsPlain]);
+        setDynamicAsalSekolahOptions(["Semua Asal Sekolah", ...asalSekolahOptionsPlain]);
         return; 
     }
 
@@ -204,7 +206,7 @@ export default function SchoolDetailPage() {
     setCurrentSchoolApplicants(rankedApplicants);
 
     const uniqueAsalSekolah = [...new Set(rankedApplicants.map(a => a.asalSekolah).filter(Boolean))];
-    setDynamicAsalSekolahOptions(["Semua", ...uniqueAsalSekolah.sort()]);
+    setDynamicAsalSekolahOptions(["Semua Asal Sekolah", ...uniqueAsalSekolah.sort()]);
     setCurrentPage(1); 
 
   }, [schoolId, school]);
@@ -212,18 +214,19 @@ export default function SchoolDetailPage() {
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedJalur, selectedAsalSekolah, pageSize]);
+  }, [searchTerm, selectedJalur, selectedAsalSekolah, selectedStatus, pageSize]);
 
   const filteredApplicants = React.useMemo(() => {
     return currentSchoolApplicants.filter(applicant => {
       const searchTermMatch =
         applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         applicant.nisn.includes(searchTerm);
-      const jalurMatch = selectedJalur === "Semua" || applicant.jalur === selectedJalur;
-      const asalSekolahMatch = selectedAsalSekolah === "Semua" || applicant.asalSekolah === selectedAsalSekolah;
-      return searchTermMatch && jalurMatch && asalSekolahMatch;
+      const jalurMatch = selectedJalur === "Semua Jalur" || applicant.jalur === selectedJalur;
+      const asalSekolahMatch = selectedAsalSekolah === "Semua Asal Sekolah" || applicant.asalSekolah === selectedAsalSekolah;
+      const statusMatch = selectedStatus === "Semua Status" || applicant.status === selectedStatus;
+      return searchTermMatch && jalurMatch && asalSekolahMatch && statusMatch;
     });
-  }, [currentSchoolApplicants, searchTerm, selectedJalur, selectedAsalSekolah]);
+  }, [currentSchoolApplicants, searchTerm, selectedJalur, selectedAsalSekolah, selectedStatus]);
 
   const sortedApplicants = React.useMemo(() => {
     let sortableItems = [...filteredApplicants];
@@ -431,8 +434,8 @@ export default function SchoolDetailPage() {
               <FilterIcon className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold text-primary">Filter Daftar Pendaftar</h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="relative">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="relative sm:col-span-2 lg:col-span-1">
                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Cari Nama/NISN..."
@@ -458,6 +461,16 @@ export default function SchoolDetailPage() {
                 <SelectContent>
                   {dynamicAsalSekolahOptions.map(asal => (
                     <SelectItem key={asal} value={asal}>{asal}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter berdasarkan Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map(status => (
+                    <SelectItem key={status} value={status}>{status}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -574,3 +587,4 @@ export default function SchoolDetailPage() {
     
 
     
+
