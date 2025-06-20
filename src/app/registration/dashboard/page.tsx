@@ -62,7 +62,7 @@ export default function DashboardPage() {
             <div className="aspect-[16/9] w-full">
               <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
+                  <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
                     <CartesianGrid vertical={false} />
                     <XAxis
                       dataKey="track"
@@ -77,12 +77,10 @@ export default function DashboardPage() {
                       content={<ChartTooltipContent indicator="dashed" />}
                     />
                     <Bar dataKey="applicants" radius={8} />
+                    <ChartLegend content={<ChartLegendContent />} />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
-            </div>
-            <div className="mt-4 flex justify-center">
-                 <ChartLegend content={<ChartLegendContent />} />
             </div>
           </section>
         </CardContent>
