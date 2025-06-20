@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, CheckSquare, XSquare } from 'lucide-react';
 import { initialSchoolData, type School } from "@/app/registration/dashboard/page"; 
 
-// Mock data biodata (sama seperti di biodata/page.tsx)
 const biodataDetailsMock = {
   fullName: "Muhammad Rizky Pratama",
   nisn: "0056789123",
@@ -19,10 +18,21 @@ const biodataDetailsMock = {
   dateOfBirth: "2008-07-15",
   gender: "Laki-laki",
   religion: "Islam",
-  address: "Jl. Durian III No. 25, RT 10 RW 03, Kel. Tanjung Redeb, Kec. Tanjung Redeb, Kabupaten Berau, Kalimantan Timur 77311",
+  streetName: "Jl. Durian III No. 25",
+  rtRw: "RT 10 RW 03",
+  village: "Kel. Tanjung Redeb",
+  subdistrict: "Kec. Tanjung Redeb",
+  district: "Kabupaten Berau",
+  province: "Kalimantan Timur 77311",
   previousSchool: "SMP Negeri 1 Tanjung Redeb",
   fatherName: "Abdullah Siregar",
+  fatherDateOfBirth: "1975-03-20",
+  fatherOccupation: "Wiraswasta",
+  fatherIncome: "Rp 7.500.000 - Rp 15.000.000",
   motherName: "Siti Fatimah",
+  motherDateOfBirth: "1980-08-10",
+  motherOccupation: "Ibu Rumah Tangga",
+  motherIncome: "-",
   guardianName: "-",
   contactNumber: "081254321098",
 };
@@ -58,7 +68,7 @@ const pathwaySpecificDocumentsMapConst: Record<string, DocumentItem[]> = {
     { id: "kip_kks_pkh", label: "Scan Kartu Indonesia Pintar (KIP) / Kartu Keluarga Sejahtera (KKS) / Program Keluarga Harapan (PKH)", required: true },
   ],
   Prestasi: [
-    { id: "sertifikat_prestasi", label: "Scan Sertifikat Prestasi", required: false }, // Opsional
+    { id: "sertifikat_prestasi", label: "Scan Sertifikat Prestasi", required: false }, 
     { id: "sk_prestasi", label: "Scan Surat Keterangan Prestasi dari Sekolah Asal", required: true },
   ],
   Mutasi: [
@@ -90,7 +100,6 @@ export default function SelectionPage() {
       const pathwayDocs = pathwaySpecificDocumentsMapConst[selectedPathway] || [];
       docsForPathway = [...generalDocumentsConst, ...pathwayDocs];
     } else {
-      // Jika tidak ada pathway, tampilkan hanya berkas umum (seharusnya tidak terjadi jika alur benar)
       docsForPathway = [...generalDocumentsConst];
     }
     setDocumentsToShow(docsForPathway);
@@ -128,7 +137,7 @@ export default function SelectionPage() {
     );
   }
 
-  const mockVerificationStatus = "Menunggu Verifikasi oleh Panitia"; // Example status
+  const mockVerificationStatus = "Menunggu Verifikasi oleh Panitia"; 
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
@@ -155,10 +164,21 @@ export default function SelectionPage() {
               <BiodataDisplayItem label="Tempat, Tanggal Lahir" value={`${biodataDetailsMock.placeOfBirth}, ${biodataDetailsMock.dateOfBirth}`} />
               <BiodataDisplayItem label="Jenis Kelamin" value={biodataDetailsMock.gender} />
               <BiodataDisplayItem label="Agama" value={biodataDetailsMock.religion} />
-              <BiodataDisplayItem label="Alamat Lengkap" value={biodataDetailsMock.address} />
+              <BiodataDisplayItem label="Nama Jalan" value={biodataDetailsMock.streetName} />
+              <BiodataDisplayItem label="RT/RW" value={biodataDetailsMock.rtRw} />
+              <BiodataDisplayItem label="Kelurahan/Desa" value={biodataDetailsMock.village} />
+              <BiodataDisplayItem label="Kecamatan" value={biodataDetailsMock.subdistrict} />
+              <BiodataDisplayItem label="Kabupaten/Kota" value={biodataDetailsMock.district} />
+              <BiodataDisplayItem label="Provinsi & Kode Pos" value={biodataDetailsMock.province} />
               <BiodataDisplayItem label="Sekolah Asal" value={biodataDetailsMock.previousSchool} />
               <BiodataDisplayItem label="Nama Ayah" value={biodataDetailsMock.fatherName} />
+              <BiodataDisplayItem label="Tanggal Lahir Ayah" value={biodataDetailsMock.fatherDateOfBirth} />
+              <BiodataDisplayItem label="Pekerjaan Ayah" value={biodataDetailsMock.fatherOccupation} />
+              <BiodataDisplayItem label="Penghasilan Ayah" value={biodataDetailsMock.fatherIncome} />
               <BiodataDisplayItem label="Nama Ibu" value={biodataDetailsMock.motherName} />
+              <BiodataDisplayItem label="Tanggal Lahir Ibu" value={biodataDetailsMock.motherDateOfBirth} />
+              <BiodataDisplayItem label="Pekerjaan Ibu" value={biodataDetailsMock.motherOccupation} />
+              <BiodataDisplayItem label="Penghasilan Ibu" value={biodataDetailsMock.motherIncome} />
               <BiodataDisplayItem label="Nama Wali" value={biodataDetailsMock.guardianName} />
               <BiodataDisplayItem label="Nomor Kontak" value={biodataDetailsMock.contactNumber} />
             </div>
@@ -184,7 +204,6 @@ export default function SelectionPage() {
               {documentsToShow.length > 0 ? (
                 documentsToShow.map(doc => {
                   const isUploaded = uploadedDocIds.includes(doc.id);
-                  const isRequiredAndMissing = doc.required && !isUploaded;
                   
                   let icon;
                   let badgeVariant: "default" | "destructive" | "secondary" = "secondary";
@@ -257,4 +276,3 @@ export default function SelectionPage() {
     </div>
   );
 }
-

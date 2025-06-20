@@ -24,7 +24,12 @@ const initialBiodataDetails = {
   dateOfBirth: "2008-07-15",
   gender: "Laki-laki",
   religion: "Islam",
-  address: "Jl. Durian III No. 25, RT 10 RW 03, Kel. Tanjung Redeb, Kec. Tanjung Redeb, Kabupaten Berau, Kalimantan Timur 77311",
+  streetName: "Jl. Durian III No. 25",
+  rtRw: "RT 10 RW 03",
+  village: "Kel. Tanjung Redeb",
+  subdistrict: "Kec. Tanjung Redeb",
+  district: "Kabupaten Berau",
+  province: "Kalimantan Timur 77311",
   previousSchool: "SMP Negeri 1 Tanjung Redeb",
   fatherName: "Abdullah Siregar",
   fatherDateOfBirth: "1975-03-20",
@@ -215,8 +220,7 @@ export default function BiodataPage() {
           title: "Ukuran File Terlalu Besar",
           description: `File ${file.name} melebihi batas maksimal 2MB.`,
         });
-        // Do not change hasProfilePhoto if current one is valid and new one is too large
-        event.target.value = ''; // Clear the input
+        event.target.value = ''; 
         return;
       }
       if (!file.type.startsWith('image/')) {
@@ -225,8 +229,7 @@ export default function BiodataPage() {
           title: "Jenis File Tidak Sesuai",
           description: "Harap pilih file gambar (PNG, JPG, JPEG).",
         });
-        // Do not change hasProfilePhoto if current one is valid and new one is wrong type
-        event.target.value = ''; // Clear the input
+        event.target.value = ''; 
         return;
       }
 
@@ -244,15 +247,12 @@ export default function BiodataPage() {
         description: `${file.name} siap ditampilkan.`,
       });
     } else {
-      // No file selected or selection was cleared
-      // Only set hasProfilePhoto to false if there wasn't one already from localStorage
-      // or if we want to allow explicit clearing. For now, let's assume clearing means no photo.
       setProfilePhoto(null);
       saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
         ...currentProgress,
         hasProfilePhoto: false,
       });
-       if (currentProgress?.hasProfilePhoto) { // Only toast if there was a photo before
+       if (currentProgress?.hasProfilePhoto) { 
         toast({
           title: "Pilihan Foto Dihapus",
           description: "Foto profil telah dihapus.",
@@ -269,7 +269,7 @@ export default function BiodataPage() {
           <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
             <UserCircle size={40} />
           </div>
-          <CardTitle className="text-2xl sm:text-3xl font-headline">Biodata & Nilai Rapor Pendaftar</CardTitle>
+          <CardTitle className="text-2xl sm:text-3xl font-headline">Data Pendaftar</CardTitle>
           <CardDescription className="text-md">
             Harap tinjau biodata dan nilai rapor Anda di bawah ini. Informasi pribadi dan nilai telah diisi oleh administrasi sekolah. Anda dapat mengubah informasi orang tua/wali dan mengunggah foto profil.
           </CardDescription>
@@ -315,7 +315,12 @@ export default function BiodataPage() {
               <BiodataItem label="Tanggal Lahir" value={biodata.dateOfBirth} />
               <BiodataItem label="Jenis Kelamin" value={biodata.gender} />
               <BiodataItem label="Agama" value={biodata.religion} />
-              <BiodataItem label="Alamat Lengkap" value={biodata.address} />
+              <BiodataItem label="Nama Jalan" value={biodata.streetName} />
+              <BiodataItem label="RT/RW" value={biodata.rtRw} />
+              <BiodataItem label="Kelurahan/Desa" value={biodata.village} />
+              <BiodataItem label="Kecamatan" value={biodata.subdistrict} />
+              <BiodataItem label="Kabupaten/Kota" value={biodata.district} />
+              <BiodataItem label="Provinsi & Kode Pos" value={biodata.province} />
               <BiodataItem label="Sekolah Asal" value={biodata.previousSchool} />
               <BiodataItem label="Nomor Kontak (Siswa/Orang Tua)" value={biodata.contactNumber} />
             </div>
@@ -396,8 +401,8 @@ export default function BiodataPage() {
                 </TableBody>
                 <ShadcnTableFooter>
                   <TableRow>
-                    <TableCell className="font-semibold text-right">Jumlah Keseluruhan Nilai Rapor (dari Rata-rata Semester)</TableCell>
-                    <TableCell className="text-right font-bold text-lg">{overallTableValue}</TableCell>
+                    <TableCell className="font-semibold text-right bg-muted">Jumlah Keseluruhan Nilai Rapor (dari Rata-rata Semester)</TableCell>
+                    <TableCell className="text-right font-bold text-lg bg-muted">{overallTableValue}</TableCell>
                   </TableRow>
                 </ShadcnTableFooter>
               </Table>
@@ -433,3 +438,4 @@ export default function BiodataPage() {
     
 
     
+
