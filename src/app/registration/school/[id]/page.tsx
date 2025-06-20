@@ -4,7 +4,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, School as SchoolIcon, Users, Filter as FilterIcon, Search as SearchIcon } from "lucide-react";
+import { ArrowLeft, School as SchoolIcon, Users, Filter as FilterIcon, Search as SearchIcon, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,7 @@ const allSchoolsData: School[] = [
     akreditasi: "A", 
     kuota: 266,
     jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112 },
-    jumlahPendaftar: 50, // Updated
+    jumlahPendaftar: 50,
     statusPendaftaran: "Buka", 
     alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
     telepon: "0554-21045" 
@@ -32,7 +32,7 @@ const allSchoolsData: School[] = [
     akreditasi: "A", 
     kuota: 304,
     jalurKuota: { afirmasi: 64, mutasi: 16, prestasi: 96, domisili: 128 },
-    jumlahPendaftar: 50, // Updated
+    jumlahPendaftar: 50,
     statusPendaftaran: "Buka", 
     alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
     telepon: "0554-22112" 
@@ -43,7 +43,7 @@ const allSchoolsData: School[] = [
     akreditasi: "B", 
     kuota: 228,
     jalurKuota: { afirmasi: 48, mutasi: 12, prestasi: 72, domisili: 96 },
-    jumlahPendaftar: 50, // Updated
+    jumlahPendaftar: 50,
     statusPendaftaran: "Buka", 
     alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
     telepon: "0554-23451" 
@@ -54,7 +54,7 @@ const allSchoolsData: School[] = [
     akreditasi: "B", 
     kuota: 142,
     jalurKuota: { afirmasi: 30, mutasi: 7, prestasi: 45, domisili: 60 },
-    jumlahPendaftar: 50, // Updated
+    jumlahPendaftar: 50,
     statusPendaftaran: "Buka", 
     alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
     telepon: "0554-21987" 
@@ -65,7 +65,7 @@ const allSchoolsData: School[] = [
     akreditasi: "B", 
     kuota: 190,
     jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 80 },
-    jumlahPendaftar: 50, // Updated
+    jumlahPendaftar: 50,
     statusPendaftaran: "Buka", 
     alamat: "Jl. Pangeran Antasari, Teluk Bayur, Kab. Berau, Kalimantan Timur", 
     telepon: "0554-24001" 
@@ -90,11 +90,11 @@ const asalSekolahOptionsPlain = [
   "SMP Negeri 1 Tanjung Redeb", "SMP Negeri 2 Teluk Bayur", "MTs Al-Kautsar Berau",
   "SMP Negeri 1 Sambaliung", "SMP IT Ash-Shohwah Berau", "SMP Negeri 3 Gunung Tabur",
   "SMP Kristen Berau", "SMP PGRI Tanjung Redeb", "SMP Negeri 5 Segah", "MTs Muhammadiyah Berau",
-  "SMP YPPSB Sangatta", "SMP Vidatra Bontang", "SMP Islam Bunga Bangsa Samarinda" // Added more diverse schools
+  "SMP YPPSB Sangatta", "SMP Vidatra Bontang", "SMP Islam Bunga Bangsa Samarinda"
 ];
 const statusOptionsPlain: ApplicantStatus[] = ["Terverifikasi", "Menunggu Verifikasi", "Berkas tidak sesuai"];
-const firstNames = ["Ahmad", "Budi", "Citra", "Dewi", "Eka", "Fajar", "Gita", "Hendra", "Indah", "Joko", "Lia", "Mira", "Nina", "Omar", "Putu"];
-const lastNames = ["Santoso", "Wijaya", "Kusuma", "Lestari", "Pratama", "Wahyuni", "Setiawan", "Handayani", "Permana", "Wulandari", "Hakim", "Saleh", "Putri", "Maulana", "Siregar"];
+const firstNames = ["Ahmad", "Budi", "Citra", "Dewi", "Eka", "Fajar", "Gita", "Hendra", "Indah", "Joko", "Lia", "Mira", "Nina", "Omar", "Putu", "Rahmat", "Sari", "Tono", "Umar", "Vina", "Wati", "Yoga", "Zaki", "Amir", "Bella"];
+const lastNames = ["Santoso", "Wijaya", "Kusuma", "Lestari", "Pratama", "Wahyuni", "Setiawan", "Handayani", "Permana", "Wulandari", "Hakim", "Saleh", "Putri", "Maulana", "Siregar", "Abdullah", "Batubara", "Chandra", "Daulay", "Effendi"];
 
 const schoolApplicantsData: Record<string, Applicant[]> = {};
 
@@ -110,7 +110,7 @@ schoolIds.forEach((schoolId, schoolIndex) => {
     schoolApplicantsData[schoolId].push({
       id: `app${schoolIndex + 1}-${studentNumber}`,
       no: studentNumber,
-      fullName: `${firstNames[firstNameIndex]} ${lastNames[lastNameIndex]} (${studentNumber})`,
+      fullName: `${firstNames[firstNameIndex]} ${lastNames[lastNameIndex]}`, // Removed number from name
       nisn: `005${nisnSchoolCode}${nisnStudentCode}${Math.floor(100 + Math.random() * 900)}`,
       jalur: jalurOptionsPlain[i % jalurOptionsPlain.length],
       asalSekolah: asalSekolahOptionsPlain[i % asalSekolahOptionsPlain.length],
@@ -122,7 +122,7 @@ schoolIds.forEach((schoolId, schoolIndex) => {
 
 
 const jalurOptions = ["Semua", ...jalurOptionsPlain];
-const asalSekolahOptions = ["Semua", ...new Set(schoolApplicantsData[schoolIds[0]]?.map(a => a.asalSekolah) || asalSekolahOptionsPlain)];
+const asalSekolahOptions = ["Semua", ...new Set(Object.values(schoolApplicantsData).flat().map(a => a.asalSekolah) || asalSekolahOptionsPlain)];
 
 
 const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
@@ -138,6 +138,14 @@ const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "s
   }
 };
 
+type SortKey = keyof Applicant;
+type SortDirection = "ascending" | "descending";
+
+interface SortConfig {
+  key: SortKey | null;
+  direction: SortDirection;
+}
+
 
 export default function SchoolDetailPage() {
   const params = useParams();
@@ -146,6 +154,7 @@ export default function SchoolDetailPage() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedJalur, setSelectedJalur] = React.useState("Semua");
   const [selectedAsalSekolah, setSelectedAsalSekolah] = React.useState("Semua");
+  const [sortConfig, setSortConfig] = React.useState<SortConfig>({ key: 'peringkat', direction: 'ascending' });
 
   const school = allSchoolsData.find(s => s.id === schoolId);
   const applicants = schoolApplicantsData[schoolId] || [];
@@ -160,6 +169,48 @@ export default function SchoolDetailPage() {
       return searchTermMatch && jalurMatch && asalSekolahMatch;
     });
   }, [applicants, searchTerm, selectedJalur, selectedAsalSekolah]);
+
+  const sortedApplicants = React.useMemo(() => {
+    let sortableItems = [...filteredApplicants];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        const valA = a[sortConfig.key!];
+        const valB = b[sortConfig.key!];
+
+        let comparison = 0;
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          comparison = valA - valB;
+        } else if (typeof valA === 'string' && typeof valB === 'string') {
+          comparison = valA.localeCompare(valB);
+        } else {
+          // Fallback for mixed types or other types - treat as strings
+          comparison = String(valA).localeCompare(String(valB));
+        }
+        
+        return sortConfig.direction === 'ascending' ? comparison : -comparison;
+      });
+    }
+    return sortableItems;
+  }, [filteredApplicants, sortConfig]);
+
+  const requestSort = (key: SortKey) => {
+    let direction: SortDirection = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: SortKey) => {
+    if (sortConfig.key !== key) {
+      return null;
+    }
+    if (sortConfig.direction === 'ascending') {
+      return <ArrowUp className="ml-1 h-3 w-3" />;
+    }
+    return <ArrowDown className="ml-1 h-3 w-3" />;
+  };
+
 
   if (!school) {
     return (
@@ -183,6 +234,16 @@ export default function SchoolDetailPage() {
       </div>
     );
   }
+
+  const renderSortableHeader = (key: SortKey, label: string, className: string = "") => (
+    <TableHead className={cn("cursor-pointer hover:bg-muted/50", className)} onClick={() => requestSort(key)}>
+      <div className="flex items-center">
+        {label}
+        {getSortIcon(key)}
+      </div>
+    </TableHead>
+  );
+
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8 space-y-6">
@@ -243,7 +304,7 @@ export default function SchoolDetailPage() {
               </div>
               <Select value={selectedJalur} onValueChange={setSelectedJalur}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih Jalur" />
+                  <SelectValue placeholder="Filter berdasarkan Jalur" />
                 </SelectTrigger>
                 <SelectContent>
                   {jalurOptions.map(jalur => (
@@ -253,7 +314,7 @@ export default function SchoolDetailPage() {
               </Select>
               <Select value={selectedAsalSekolah} onValueChange={setSelectedAsalSekolah}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih Asal Sekolah" />
+                  <SelectValue placeholder="Filter berdasarkan Asal Sekolah" />
                 </SelectTrigger>
                 <SelectContent>
                   {asalSekolahOptions.map(asal => (
@@ -267,26 +328,26 @@ export default function SchoolDetailPage() {
           <section>
              <div className="flex items-center space-x-2 mb-4">
                 <Users className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold text-primary">Daftar Pendaftar ({filteredApplicants.length})</h3>
+                <h3 className="text-lg font-semibold text-primary">Daftar Pendaftar ({sortedApplicants.length})</h3>
             </div>
             <div className="overflow-x-auto rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[50px] text-center">No.</TableHead>
-                    <TableHead>Nama Lengkap</TableHead>
-                    <TableHead>NISN</TableHead>
-                    <TableHead>Asal Sekolah</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                    <TableHead>Jalur</TableHead>
-                    <TableHead className="text-right">Peringkat</TableHead>
+                    {renderSortableHeader('no' as SortKey, "No.", "w-[50px] text-center")}
+                    {renderSortableHeader('fullName' as SortKey, "Nama Lengkap")}
+                    {renderSortableHeader('nisn' as SortKey, "NISN")}
+                    {renderSortableHeader('asalSekolah' as SortKey, "Asal Sekolah")}
+                    {renderSortableHeader('status' as SortKey, "Status", "text-center")}
+                    {renderSortableHeader('jalur' as SortKey, "Jalur")}
+                    {renderSortableHeader('peringkat' as SortKey, "Peringkat", "text-right")}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredApplicants.length > 0 ? (
-                    filteredApplicants.map((applicant, index) => (
+                  {sortedApplicants.length > 0 ? (
+                    sortedApplicants.map((applicant) => (
                       <TableRow key={applicant.id}>
-                        <TableCell className="text-center">{index + 1}</TableCell>
+                        <TableCell className="text-center">{applicant.no}</TableCell>
                         <TableCell className="font-medium">{applicant.fullName}</TableCell>
                         <TableCell>{applicant.nisn}</TableCell>
                         <TableCell>{applicant.asalSekolah}</TableCell>
@@ -321,4 +382,3 @@ export default function SchoolDetailPage() {
     </div>
   );
 }
-

@@ -22,9 +22,9 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { LayoutDashboard, Building } from "lucide-react";
+import { LayoutDashboard, Building, ArrowUp, ArrowDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-// Updated chartData for 5 schools x 50 applicants = 250 total, distributed among 4 tracks
 const chartData = [
   { track: "Afirmasi", applicants: 62, fill: "var(--color-afirmasi)" },
   { track: "Mutasi", applicants: 62, fill: "var(--color-mutasi)" },
@@ -54,15 +54,15 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const schoolData = [
+const initialSchoolData = [
   {
     id: "sman1tanjungredeb",
     namaSekolah: "SMA Negeri 1 Tanjung Redeb",
     akreditasi: "A",
     kuota: 266, 
     jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112 },
-    jumlahPendaftar: 50, // Updated
-    statusPendaftaran: "Buka",
+    jumlahPendaftar: 50,
+    statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Berau",
     telepon: "0554-21045"
   },
@@ -72,8 +72,8 @@ const schoolData = [
     akreditasi: "A",
     kuota: 304, 
     jalurKuota: { afirmasi: 64, mutasi: 16, prestasi: 96, domisili: 128 },
-    jumlahPendaftar: 50, // Updated
-    statusPendaftaran: "Buka", // Changed from "Segera Penuh" due to lower pendaftar
+    jumlahPendaftar: 50,
+    statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Berau",
     telepon: "0554-22112"
   },
@@ -83,8 +83,8 @@ const schoolData = [
     akreditasi: "B",
     kuota: 228, 
     jalurKuota: { afirmasi: 48, mutasi: 12, prestasi: 72, domisili: 96 },
-    jumlahPendaftar: 50, // Updated
-    statusPendaftaran: "Buka",
+    jumlahPendaftar: 50,
+    statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Berau",
     telepon: "0554-23451"
   },
@@ -94,8 +94,8 @@ const schoolData = [
     akreditasi: "B",
     kuota: 142, 
     jalurKuota: { afirmasi: 30, mutasi: 7, prestasi: 45, domisili: 60 },
-    jumlahPendaftar: 50, // Updated
-    statusPendaftaran: "Buka", // Changed from "Tutup"
+    jumlahPendaftar: 50,
+    statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Berau",
     telepon: "0554-21987"
   },
@@ -105,15 +105,23 @@ const schoolData = [
     akreditasi: "B",
     kuota: 190, 
     jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 80 },
-    jumlahPendaftar: 50, // Updated
-    statusPendaftaran: "Buka",
+    jumlahPendaftar: 50,
+    statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. Pangeran Antasari, Teluk Bayur, Berau",
     telepon: "0554-24001"
   },
 ];
 
 export type SchoolStatus = "Buka" | "Segera Penuh" | "Tutup";
-export type School = typeof schoolData[0];
+export type School = typeof initialSchoolData[0];
+
+type SchoolSortKey = keyof School;
+type SortDirection = "ascending" | "descending";
+
+interface SchoolSortConfig {
+  key: SchoolSortKey | null;
+  direction: SortDirection;
+}
 
 const getStatusBadgeVariant = (status: SchoolStatus): "default" | "secondary" | "destructive" => {
   switch (status) {
@@ -130,6 +138,61 @@ const getStatusBadgeVariant = (status: SchoolStatus): "default" | "secondary" | 
 
 
 export default function DashboardPage() {
+  const [schoolData, setSchoolData] = React.useState<School[]>(initialSchoolData);
+  const [sortConfig, setSortConfig] = React.useState<SchoolSortConfig>({ key: 'namaSekolah', direction: 'ascending' });
+
+  const sortedSchoolData = React.useMemo(() => {
+    let sortableItems = [...schoolData];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        const valA = a[sortConfig.key!];
+        const valB = b[sortConfig.key!];
+
+        let comparison = 0;
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          comparison = valA - valB;
+        } else if (typeof valA === 'string' && typeof valB === 'string') {
+          comparison = valA.localeCompare(valB);
+        } else {
+          comparison = String(valA).localeCompare(String(valB));
+        }
+        
+        return sortConfig.direction === 'ascending' ? comparison : -comparison;
+      });
+    }
+    return sortableItems;
+  }, [schoolData, sortConfig]);
+
+  const requestSort = (key: SchoolSortKey) => {
+    let direction: SortDirection = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: SchoolSortKey) => {
+    if (sortConfig.key !== key) {
+      return null;
+    }
+    if (sortConfig.direction === 'ascending') {
+      return <ArrowUp className="ml-1 h-3 w-3" />;
+    }
+    return <ArrowDown className="ml-1 h-3 w-3" />;
+  };
+
+  const renderSortableHeader = (key: SchoolSortKey, label: string, className: string = "") => (
+    <TableHead 
+      className={cn("font-semibold cursor-pointer hover:bg-muted/50", className)}
+      onClick={() => requestSort(key)}
+    >
+      <div className="flex items-center">
+        {label}
+        {getSortIcon(key)}
+      </div>
+    </TableHead>
+  );
+
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
       <Card className="w-full max-w-4xl shadow-2xl">
@@ -179,15 +242,15 @@ export default function DashboardPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="font-semibold">Nama Sekolah</TableHead>
-                    <TableHead className="text-center font-semibold">Akreditasi</TableHead>
-                    <TableHead className="text-center font-semibold">Total Kuota</TableHead>
-                    <TableHead className="text-center font-semibold">Pendaftar</TableHead>
-                    <TableHead className="text-center font-semibold">Status</TableHead>
+                    {renderSortableHeader('namaSekolah' as SchoolSortKey, "Nama Sekolah")}
+                    {renderSortableHeader('akreditasi' as SchoolSortKey, "Akreditasi", "text-center")}
+                    {renderSortableHeader('kuota' as SchoolSortKey, "Total Kuota", "text-center")}
+                    {renderSortableHeader('jumlahPendaftar' as SchoolSortKey, "Pendaftar", "text-center")}
+                    {renderSortableHeader('statusPendaftaran' as SchoolSortKey, "Status", "text-center")}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {schoolData.map((school) => (
+                  {sortedSchoolData.map((school) => (
                     <TableRow key={school.id}>
                       <TableCell className="font-medium">
                         <Link href={`/registration/school/${school.id}`} className="hover:underline text-primary">
@@ -216,3 +279,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
