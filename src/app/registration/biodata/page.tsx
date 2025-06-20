@@ -10,6 +10,10 @@ import { Label } from '@/components/ui/label';
 import { UserCircle, CheckCircle2, Edit3, Save, XCircle, Upload } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadcnTableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
+
+const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
+
 
 // Initial mock data dengan konteks Berau
 const initialBiodataDetails = {
@@ -147,6 +151,15 @@ export default function BiodataPage() {
       });
       return;
     }
+    const progress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
+    if (!progress?.hasProfilePhoto) {
+         toast({
+            variant: "destructive",
+            title: "Foto Profil Diperlukan",
+            description: "Harap unggah foto profil Anda sebelum mengkonfirmasi biodata.",
+        });
+        return;
+    }
     setIsConfirmed(true);
     toast({
       title: "Biodata Terkonfirmasi",
@@ -193,6 +206,8 @@ export default function BiodataPage() {
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
+
     if (file) {
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
         toast({
@@ -200,6 +215,8 @@ export default function BiodataPage() {
           title: "Ukuran File Terlalu Besar",
           description: `File ${file.name} melebihi batas maksimal 2MB.`,
         });
+        // Do not change hasProfilePhoto if current one is valid and new one is too large
+        event.target.value = ''; // Clear the input
         return;
       }
       if (!file.type.startsWith('image/')) {
@@ -208,18 +225,39 @@ export default function BiodataPage() {
           title: "Jenis File Tidak Sesuai",
           description: "Harap pilih file gambar (PNG, JPG, JPEG).",
         });
+        // Do not change hasProfilePhoto if current one is valid and new one is wrong type
+        event.target.value = ''; // Clear the input
         return;
       }
 
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfilePhoto(reader.result as string);
+        saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
+          ...currentProgress,
+          hasProfilePhoto: true,
+        });
       };
       reader.readAsDataURL(file);
       toast({
         title: "Foto Terpilih",
         description: `${file.name} siap ditampilkan.`,
       });
+    } else {
+      // No file selected or selection was cleared
+      // Only set hasProfilePhoto to false if there wasn't one already from localStorage
+      // or if we want to allow explicit clearing. For now, let's assume clearing means no photo.
+      setProfilePhoto(null);
+      saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
+        ...currentProgress,
+        hasProfilePhoto: false,
+      });
+       if (currentProgress?.hasProfilePhoto) { // Only toast if there was a photo before
+        toast({
+          title: "Pilihan Foto Dihapus",
+          description: "Foto profil telah dihapus.",
+        });
+      }
     }
   };
 

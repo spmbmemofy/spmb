@@ -19,7 +19,8 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { getFromLocalStorage, removeFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
+import { getFromLocalStorage, removeFromLocalStorage, type LoginCredentials, type RegistrationProgress } from "@/lib/localStorage";
+import { useToast } from "@/hooks/use-toast";
 
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
@@ -32,6 +33,7 @@ interface RegistrationLayoutProps {
 export default function RegistrationLayout({ children }: RegistrationLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { toast } = useToast();
 
   const menuItems = [
     {
@@ -51,6 +53,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       label: 'PILIH SEKOLAH', 
       icon: FileText,
       activePaths: ['/registration/documents', '/registration/document-upload'], 
+      isPilihSekolah: true, // Custom flag
     },
     {
       href: '/registration/selection',
@@ -61,16 +64,32 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   ];
 
   const handleLogout = () => {
-    // Clear registration progress
     removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);
-
-    // Check if login credentials should be cleared
     const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
     if (!savedCredentials || !savedCredentials.rememberMe) {
       removeFromLocalStorage(LOCAL_STORAGE_LOGIN_KEY);
     }
     router.push('/');
   };
+
+  const handleMenuItemClick = (itemHref: string, isPilihSekolah?: boolean, event?: React.MouseEvent<HTMLAnchorElement>) => {
+    if (isPilihSekolah) {
+      const progress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+      if (!progress?.hasProfilePhoto) {
+        if (event) event.preventDefault();
+        toast({
+          variant: "destructive",
+          title: "Foto Profil Diperlukan",
+          description: "Harap unggah foto profil Anda di halaman Data Pendaftar sebelum melanjutkan ke pemilihan sekolah.",
+        });
+        return;
+      }
+    }
+    // If not 'Pilih Sekolah' or if photo check passes, Link's default behavior will navigate
+    // For direct router.push if not using Link's href:
+    // router.push(itemHref); 
+  };
+
 
   return (
     <SidebarProvider>
@@ -100,7 +119,10 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
                     isActive={item.activePaths.some(path => pathname.startsWith(path))}
                     tooltip={{ children: item.label, side: 'right' }}
                   >
-                    <Link href={item.href}>
+                    <Link 
+                      href={item.href} 
+                      onClick={(e) => handleMenuItemClick(item.href, item.isPilihSekolah, e)}
+                    >
                       <item.icon />
                       <span className="group-data-[state=collapsed]:hidden">{item.label}</span>
                     </Link>

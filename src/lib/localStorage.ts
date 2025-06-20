@@ -10,8 +10,8 @@ export interface LoginCredentials {
 export interface RegistrationProgress {
   schoolId?: string;
   pathway?: string;
-  // Store metadata for "remembered" files, not the File objects themselves
   documentMetadata?: { [docId: string]: { name: string; size: number; type: string } | null };
+  hasProfilePhoto?: boolean;
 }
 
 export function getFromLocalStorage<T>(key: string, defaultValue: T): T {
