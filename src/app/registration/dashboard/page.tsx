@@ -24,7 +24,7 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { LayoutDashboard, Building, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { LayoutDashboard, Building, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Filter, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const chartData = [
@@ -119,8 +119,47 @@ export const initialSchoolData = [
   },
 ];
 
+const initialOriginSchoolData = [
+  {
+    id: "smpn1tanjungredeb",
+    namaSekolah: "SMP Negeri 1 Tanjung Redeb",
+    status: "Negeri" as const,
+    akreditasi: "A" as const,
+    jumlahPendaftar: 25,
+  },
+  {
+    id: "smpn2telukbayur",
+    namaSekolah: "SMP Negeri 2 Teluk Bayur",
+    status: "Negeri" as const,
+    akreditasi: "A" as const,
+    jumlahPendaftar: 18,
+  },
+  {
+    id: "smpn3sambaliung",
+    namaSekolah: "SMP Negeri 3 Sambaliung",
+    status: "Negeri" as const,
+    akreditasi: "B" as const,
+    jumlahPendaftar: 15,
+  },
+  {
+    id: "mtsalkholil",
+    namaSekolah: "MTs Al-Kholil",
+    status: "Swasta" as const,
+    akreditasi: "B" as const,
+    jumlahPendaftar: 22,
+  },
+  {
+    id: "smpitashshohwah",
+    namaSekolah: "SMP IT Ash-Shohwah Berau",
+    status: "Swasta" as const,
+    akreditasi: "A" as const,
+    jumlahPendaftar: 12,
+  },
+];
+
 export type SchoolStatus = "Buka" | "Segera Penuh" | "Tutup";
 export type School = typeof initialSchoolData[0];
+export type OriginSchool = typeof initialOriginSchoolData[0];
 
 type SchoolSortKey = keyof School | 'tahapPendaftaran';
 type SortDirection = "ascending" | "descending";
@@ -146,6 +185,7 @@ const getStatusBadgeVariant = (status: SchoolStatus): "default" | "secondary" | 
 
 export default function DashboardPage() {
   const [schoolData, setSchoolData] = React.useState<School[]>(initialSchoolData);
+  const [originSchoolData, setOriginSchoolData] = React.useState<OriginSchool[]>(initialOriginSchoolData);
   const [sortConfig, setSortConfig] = React.useState<SchoolSortConfig>({ key: 'namaSekolah', direction: 'ascending' });
   const [selectedStage, setSelectedStage] = React.useState<string>("Semua Tahap"); // "Semua Tahap", "1", "2"
 
@@ -383,8 +423,49 @@ export default function DashboardPage() {
               Data sekolah dan pendaftar diperbarui secara berkala. Klik nama sekolah untuk detail.
             </p>
           </section>
+
+          <section>
+            <div className="flex items-center space-x-2 mb-6">
+                <BookOpen className="h-6 w-6 text-primary" />
+                <h2 className="text-xl font-semibold text-primary">Informasi Sekolah Asal Pendaftar</h2>
+            </div>
+            <div className="overflow-x-auto rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-semibold">Nama Sekolah Asal</TableHead>
+                    <TableHead className="text-center font-semibold">Status</TableHead>
+                    <TableHead className="text-center font-semibold">Akreditasi</TableHead>
+                    <TableHead className="text-center font-semibold">Jumlah Pendaftar</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {originSchoolData.length > 0 ? (
+                    originSchoolData.map((school) => (
+                      <TableRow key={school.id}>
+                        <TableCell className="font-medium">{school.namaSekolah}</TableCell>
+                        <TableCell className="text-center">{school.status}</TableCell>
+                        <TableCell className="text-center">{school.akreditasi}</TableCell>
+                        <TableCell className="text-center">{school.jumlahPendaftar}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                     <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
+                        Tidak ada data sekolah asal yang tersedia.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              Data sekolah asal pendaftar yang terdaftar di sistem.
+            </p>
+          </section>
         </CardContent>
       </Card>
     </div>
   );
 }
+
