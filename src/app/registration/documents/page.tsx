@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { FileText, Save } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { initialSchoolData } from "@/app/registration/dashboard/page"; // Import school data
+import { initialSchoolData } from "@/app/registration/dashboard/page"; 
 
 const pathwayOptions = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
 
@@ -40,7 +40,7 @@ export default function DocumentsPage() {
       });
       console.log("Pilihan Sekolah:", selectedSchoolId, "Jalur:", selectedPathway);
       setIsSubmitting(false);
-      // Here you might want to enable the document upload section or navigate
+      // Here you might want to navigate to the next step, e.g., actual document upload page
     }, 1000);
   };
 
@@ -53,7 +53,7 @@ export default function DocumentsPage() {
           </div>
           <CardTitle className="text-2xl sm:text-3xl font-headline">Pilih Sekolah & Jalur Pendaftaran</CardTitle>
           <CardDescription className="text-md">
-            Silakan pilih sekolah tujuan dan jalur pendaftaran Anda sebelum melanjutkan ke tahap unggah dokumen.
+            Silakan pilih sekolah tujuan dan jalur pendaftaran Anda.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -88,24 +88,6 @@ export default function DocumentsPage() {
               </SelectContent>
             </Select>
           </div>
-          
-          <div className="text-center pt-6">
-            <h3 className="text-lg font-semibold mb-2 text-primary">Tahap Berikutnya: Unggah Dokumen</h3>
-            <p className="text-muted-foreground text-sm">
-              Setelah menyimpan pilihan sekolah dan jalur, fitur untuk mengunggah dokumen yang diperlukan akan tersedia di bagian bawah halaman ini atau pada langkah berikutnya.
-            </p>
-            {/* Placeholder for document upload form or components can be expanded here */}
-            {selectedSchoolId && selectedPathway && (
-                 <div className="mt-6 p-4 border-dashed border-2 border-border rounded-md min-h-[150px] flex flex-col items-center justify-center">
-                    <p className="text-muted-foreground font-medium">Area Unggah Dokumen</p>
-                    <p className="text-xs text-muted-foreground mt-1">Komponen unggah dokumen akan muncul di sini.</p>
-                    <Button variant="outline" className="mt-4" disabled>
-                        Pilih Dokumen (Nonaktif)
-                    </Button>
-                 </div>
-            )}
-          </div>
-
         </CardContent>
         <CardFooter className="flex justify-end pt-6">
           <Button onClick={handleSubmit} disabled={isSubmitting || !selectedSchoolId || !selectedPathway}>
