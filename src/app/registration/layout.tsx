@@ -42,7 +42,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     },
     {
       href: '/registration/biodata',
-      label: 'PROFIL',
+      label: 'DATA PENDAFTAR',
       icon: User,
       activePaths: ['/registration/biodata'],
     },
