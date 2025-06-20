@@ -110,11 +110,18 @@ export default function BiodataPage() {
   });
 
   const [profilePhoto, setProfilePhoto] = React.useState<string | null>(null);
+  const [persistedPhotoUploaded, setPersistedPhotoUploaded] = React.useState<boolean>(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const semesterLabels = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5"];
   const semesterKeys: (keyof Pick<typeof reportCardGradesData[0], 'semester1' | 'semester2' | 'semester3' | 'semester4' | 'semester5'>)[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
 
+  React.useEffect(() => {
+    const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
+    if (savedProgress?.hasProfilePhoto) {
+      setPersistedPhotoUploaded(true);
+    }
+  }, []);
 
   const calculateSemesterAverage = (semesterKey: typeof semesterKeys[0]): string => {
     let sum = 0;
@@ -240,6 +247,7 @@ export default function BiodataPage() {
           ...currentProgress,
           hasProfilePhoto: true,
         });
+        setPersistedPhotoUploaded(true); 
       };
       reader.readAsDataURL(file);
       toast({
@@ -247,17 +255,19 @@ export default function BiodataPage() {
         description: `${file.name} siap ditampilkan.`,
       });
     } else {
-      setProfilePhoto(null);
-      saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
-        ...currentProgress,
-        hasProfilePhoto: false,
-      });
-       if (currentProgress?.hasProfilePhoto) { 
-        toast({
-          title: "Pilihan Foto Dihapus",
-          description: "Foto profil telah dihapus.",
-        });
+      // If user cancels file selection after having a photo selected in the current session
+      // or if they had a photo from a previous session and now "clear" it by cancelling.
+      // We only clear the live preview `profilePhoto` if they actually *had* a file selected in this interaction.
+      // The `persistedPhotoUploaded` state and `localStorage` should only be set to false if they
+      // explicitly remove the photo, which is not a feature here.
+      // For now, cancelling a file dialog won't change localStorage.hasProfilePhoto
+      // It will just clear the current preview if one was just set.
+      if (profilePhoto) { // Only if there was a photo in current state
+          // setProfilePhoto(null); // Optionally clear preview, or keep old one
       }
+      // Do NOT set hasProfilePhoto to false here, as cancelling a dialog
+      // shouldn't remove a previously saved photo status.
+      // Explicit deletion feature would be needed for that.
     }
   };
 
@@ -300,7 +310,7 @@ export default function BiodataPage() {
               aria-label="Unggah atau ganti foto profil"
             >
               <Upload className="mr-2 h-4 w-4" />
-              {profilePhoto ? "Ganti Foto" : "Unggah Foto Profil"}
+              {profilePhoto || persistedPhotoUploaded ? "Ganti Foto" : "Unggah Foto Profil"}
             </Button>
             <p className="text-xs text-muted-foreground mt-2">Maks. 2MB (PNG, JPG, JPEG)</p>
           </div>
@@ -439,3 +449,6 @@ export default function BiodataPage() {
 
     
 
+
+
+    
