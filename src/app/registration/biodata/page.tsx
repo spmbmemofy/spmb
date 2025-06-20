@@ -5,7 +5,7 @@ import * as React from "react";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { UserCircle, CheckCircle2 } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadcnTableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 
 // Mock data dengan konteks Berau
@@ -41,6 +41,22 @@ const calculateAverage = (grades: typeof reportCardGradesData[0]) => {
   return (validGrades.reduce((sum, grade) => sum + grade, 0) / validGrades.length).toFixed(2);
 };
 
+const calculateOverallAverage = () => {
+  let totalSum = 0;
+  let totalCount = 0;
+  reportCardGradesData.forEach(subject => {
+    const grades = [subject.semester1, subject.semester2, subject.semester3, subject.semester4, subject.semester5];
+    grades.forEach(grade => {
+      if (typeof grade === 'number') {
+        totalSum += grade;
+        totalCount++;
+      }
+    });
+  });
+  if (totalCount === 0) return "N/A";
+  return (totalSum / totalCount).toFixed(2);
+};
+
 interface BiodataItemProps {
   label: string;
   value: string | number | undefined;
@@ -56,6 +72,7 @@ const BiodataItem: React.FC<BiodataItemProps> = ({ label, value }) => (
 export default function BiodataPage() {
   const { toast } = useToast();
   const [isConfirmed, setIsConfirmed] = React.useState(false);
+  const overallAverage = React.useMemo(() => calculateOverallAverage(), []);
 
   const handleConfirm = () => {
     setIsConfirmed(true);
@@ -134,6 +151,12 @@ export default function BiodataPage() {
                     </TableRow>
                   ))}
                 </TableBody>
+                <ShadcnTableFooter>
+                  <TableRow>
+                    <TableCell colSpan={6} className="font-semibold text-right">Rata-rata Keseluruhan Nilai Rapor</TableCell>
+                    <TableCell className="text-right font-bold text-lg">{overallAverage}</TableCell>
+                  </TableRow>
+                </ShadcnTableFooter>
               </Table>
             </div>
             <p className="text-xs text-muted-foreground mt-2">Nilai dalam skala 0-100.</p>
