@@ -121,15 +121,15 @@ export default function BiodataPage() {
       semester: label,
       average: calculateSemesterAverage(semesterKeys[index])
     }));
-  }, []); // Dependencies: reportCardGradesData, semesterKeys, semesterLabels are stable
+  }, []); 
 
-  const overallTableAverage = React.useMemo(() => {
+  const overallTableValue = React.useMemo(() => {
     const averages = displayedSemesterAverages
       .map(s => parseFloat(s.average))
       .filter(avg => !isNaN(avg));
     
     if (averages.length === 0) return "N/A";
-    return (averages.reduce((sum, avg) => sum + avg, 0) / averages.length).toFixed(2);
+    return averages.reduce((sum, avg) => sum + avg, 0).toFixed(2);
   }, [displayedSemesterAverages]);
 
 
@@ -291,8 +291,8 @@ export default function BiodataPage() {
                 </TableBody>
                 <ShadcnTableFooter>
                   <TableRow>
-                    <TableCell className="font-semibold text-right">Rata-rata Keseluruhan Nilai Rapor</TableCell>
-                    <TableCell className="text-right font-bold text-lg">{overallTableAverage}</TableCell>
+                    <TableCell className="font-semibold text-right">Jumlah Keseluruhan Nilai Rapor (dari Rata-rata Semester)</TableCell>
+                    <TableCell className="text-right font-bold text-lg">{overallTableValue}</TableCell>
                   </TableRow>
                 </ShadcnTableFooter>
               </Table>
@@ -315,6 +315,8 @@ export default function BiodataPage() {
     </div>
   );
 }
+    
+
     
 
     
