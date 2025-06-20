@@ -46,6 +46,12 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       icon: FileText,
       activePaths: ['/registration/documents'], 
     },
+    {
+      href: '/registration/selection',
+      label: 'SELEKSI',
+      icon: ClipboardCheck,
+      activePaths: ['/registration/selection'],
+    },
   ];
 
   return (
@@ -87,14 +93,6 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
           </SidebarContent>
           <SidebarFooter>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: 'Seleksi', side: 'right' }}>
-                  <Link href="/registration/selection">
-                    <ClipboardCheck />
-                    <span>Seleksi</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: 'Keluar', side: 'right' }}>
                   <Link href="/">
