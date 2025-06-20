@@ -24,7 +24,7 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { LayoutDashboard, Building, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Filter, BookOpen } from "lucide-react";
+import { LayoutDashboard, Building, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const chartData = [
@@ -161,7 +161,7 @@ export type SchoolStatus = "Buka" | "Segera Penuh" | "Tutup";
 export type School = typeof initialSchoolData[0];
 export type OriginSchool = typeof initialOriginSchoolData[0];
 
-type SchoolSortKey = keyof School | 'tahapPendaftaran';
+type SchoolSortKey = keyof Omit<School, 'tahapPendaftaran' | 'jalurKuota' | 'alamat' | 'telepon' | 'id'>;
 type SortDirection = "ascending" | "descending";
 
 interface SchoolSortConfig {
@@ -196,7 +196,6 @@ export default function DashboardPage() {
   
   // State for destination school table
   const [schoolSortConfig, setSchoolSortConfig] = React.useState<SchoolSortConfig>({ key: 'namaSekolah', direction: 'ascending' });
-  const [selectedStage, setSelectedStage] = React.useState<string>("Semua Tahap");
   const [schoolPageSize, setSchoolPageSize] = React.useState(5);
   const [schoolCurrentPage, setSchoolCurrentPage] = React.useState(1);
 
@@ -208,23 +207,15 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     setSchoolCurrentPage(1);
-  }, [schoolPageSize, selectedStage]);
+  }, [schoolPageSize]);
 
   React.useEffect(() => {
     setOriginSchoolCurrentPage(1);
   }, [originSchoolPageSize]);
 
   // Logic for destination school table
-  const filteredByStageSchoolData = React.useMemo(() => {
-    if (selectedStage === "Semua Tahap") {
-      return schoolData;
-    }
-    const stage = parseInt(selectedStage, 10);
-    return schoolData.filter(school => school.tahapPendaftaran === stage);
-  }, [schoolData, selectedStage]);
-
   const sortedSchoolData = React.useMemo(() => {
-    let sortableItems = [...filteredByStageSchoolData];
+    let sortableItems = [...schoolData];
     if (schoolSortConfig.key !== null) {
       sortableItems.sort((a, b) => {
         const valA = a[schoolSortConfig.key!];
@@ -241,7 +232,7 @@ export default function DashboardPage() {
       });
     }
     return sortableItems;
-  }, [filteredByStageSchoolData, schoolSortConfig]);
+  }, [schoolData, schoolSortConfig]);
 
   const paginatedSchoolData = React.useMemo(() => {
     const startIndex = (schoolCurrentPage - 1) * schoolPageSize;
@@ -387,19 +378,6 @@ export default function DashboardPage() {
                     <Building className="h-6 w-6 text-primary" />
                     <h2 className="text-xl font-semibold text-primary">Informasi Sekolah Tujuan (Kab. Berau)</h2>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-muted-foreground"/>
-                    <Select value={selectedStage} onValueChange={setSelectedStage}>
-                        <SelectTrigger className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Filter Tahap" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        <SelectItem value="Semua Tahap">Semua Tahap</SelectItem>
-                        <SelectItem value="1">Tahap 1</SelectItem>
-                        <SelectItem value="2">Tahap 2</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
             </div>
             <div className="overflow-x-auto rounded-md border">
               <Table>
@@ -407,7 +385,6 @@ export default function DashboardPage() {
                   <TableRow>
                     {renderSchoolSortableHeader('namaSekolah', "Nama Sekolah")}
                     {renderSchoolSortableHeader('akreditasi', "Akreditasi", "text-center")}
-                    {renderSchoolSortableHeader('tahapPendaftaran', "Tahap", "text-center")}
                     {renderSchoolSortableHeader('kuota', "Total Kuota", "text-center")}
                     {renderSchoolSortableHeader('jumlahPendaftar', "Pendaftar", "text-center")}
                     {renderSchoolSortableHeader('statusPendaftaran', "Status", "text-center")}
@@ -423,7 +400,6 @@ export default function DashboardPage() {
                           </Link>
                         </TableCell>
                         <TableCell className="text-center">{school.akreditasi}</TableCell>
-                        <TableCell className="text-center">{school.tahapPendaftaran}</TableCell>
                         <TableCell className="text-center">{school.kuota}</TableCell>
                         <TableCell className="text-center">{school.jumlahPendaftar}</TableCell>
                         <TableCell className="text-center">
@@ -435,8 +411,8 @@ export default function DashboardPage() {
                     ))
                   ) : (
                      <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
-                        Tidak ada data sekolah yang sesuai dengan filter.
+                      <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
+                        Tidak ada data sekolah yang tersedia.
                       </TableCell>
                     </TableRow>
                   )}
@@ -568,3 +544,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
