@@ -50,7 +50,7 @@ interface BiodataItemProps {
 
 const BiodataItem: React.FC<BiodataItemProps> = ({ label, value }) => (
   <div>
-    <p className="text-sm font-medium text-muted-foreground">{label}</p>
+    <p className="text-sm font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md inline-block mb-1">{label}</p>
     <p className="text-md sm:text-lg">{value || "-"}</p>
   </div>
 );
@@ -382,6 +382,8 @@ export default function BiodataPage() {
     </div>
   );
 }
+    
+
     
 
     
