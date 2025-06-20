@@ -179,11 +179,9 @@ export default function OriginSchoolDetailPage() {
             <p>Maaf, data untuk sekolah asal ini tidak dapat ditemukan.</p>
           </CardContent>
           <CardFooter>
-            <Button asChild className="mx-auto" onClick={() => router.push('/registration/dashboard')}>
-              <>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Kembali ke Beranda
-              </>
+            <Button className="mx-auto" onClick={() => router.push('/registration/dashboard')}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Kembali ke Beranda
             </Button>
           </CardFooter>
         </Card>
@@ -226,7 +224,7 @@ export default function OriginSchoolDetailPage() {
           <section className="border rounded-lg p-4 space-y-4">
             <div className="flex items-center space-x-2">
               <FilterIcon className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-semibold text-primary">Filter Daftar Siswa Pendaftar</h3>
+              <h3 className="text-lg font-semibold text-primary">Filter Daftar Siswa</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="relative sm:col-span-2 lg:col-span-1">
