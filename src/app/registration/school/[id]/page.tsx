@@ -31,31 +31,37 @@ interface Applicant {
   jalur: "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili" | "Umum";
   asalSekolah: string;
   status: ApplicantStatus;
+  peringkat: number;
 }
 
 // Mock applicants for each school in Berau
 const schoolApplicantsData: Record<string, Applicant[]> = {
   "sman1tanjungredeb": [
-    { id: 'app1-1', no: 1, fullName: 'Aulia Rahman', nisn: '0051122334', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Lolos Seleksi' },
-    { id: 'app1-2', no: 2, fullName: 'Dewi Anggraini', nisn: '0052233445', jalur: 'Domisili', asalSekolah: 'SMP Negeri 2 Teluk Bayur', status: 'Menunggu Verifikasi' },
-    { id: 'app1-3', no: 3, fullName: 'Rahmat Hidayat', nisn: '0053344556', jalur: 'Afirmasi', asalSekolah: 'MTs Al-Kautsar Berau', status: 'Lolos Seleksi' },
+    { id: 'app1-1', no: 1, fullName: 'Aulia Rahman Hakim', nisn: '0051122334', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Lolos Seleksi', peringkat: 1 },
+    { id: 'app1-2', no: 2, fullName: 'Dewi Anggraini Putri', nisn: '0052233445', jalur: 'Domisili', asalSekolah: 'SMP Negeri 2 Teluk Bayur', status: 'Menunggu Verifikasi', peringkat: 2 },
+    { id: 'app1-3', no: 3, fullName: 'Rahmat Hidayatullah', nisn: '0053344556', jalur: 'Afirmasi', asalSekolah: 'MTs Al-Kautsar Berau', status: 'Lolos Seleksi', peringkat: 3 },
+    { id: 'app1-4', no: 4, fullName: 'Siti Aminah', nisn: '0054455667', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Cadangan', peringkat: 4 },
   ],
   "smkn1berau": [
-    { id: 'app2-1', no: 1, fullName: 'Putri Amelia', nisn: '0064455667', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Sambaliung', status: 'Tidak Lolos' },
-    { id: 'app2-2', no: 2, fullName: 'Fajar Maulana', nisn: '0065566778', jalur: 'Domisili', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Cadangan' },
-    { id: 'app2-3', no: 3, fullName: 'Nur Azizah', nisn: '0066677889', jalur: 'Umum', asalSekolah: 'SMP IT Ash-Shohwah Berau', status: 'Lolos Seleksi' },
+    { id: 'app2-1', no: 1, fullName: 'Putri Amelia Sari', nisn: '0064455667', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Sambaliung', status: 'Tidak Lolos', peringkat: 1 },
+    { id: 'app2-2', no: 2, fullName: 'Fajar Maulana Ishaq', nisn: '0065566778', jalur: 'Domisili', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Cadangan', peringkat: 2 },
+    { id: 'app2-3', no: 3, fullName: 'Nur Azizah Fitriani', nisn: '0066677889', jalur: 'Umum', asalSekolah: 'SMP IT Ash-Shohwah Berau', status: 'Lolos Seleksi', peringkat: 3 },
   ],
   "sman2berau": [
-    { id: 'app3-1', no: 1, fullName: 'Bayu Saputra', nisn: '0077788990', jalur: 'Umum', asalSekolah: 'SMP Negeri 3 Gunung Tabur', status: 'Lolos Seleksi' },
+    { id: 'app3-1', no: 1, fullName: 'Bayu Saputra Dinata', nisn: '0077788990', jalur: 'Umum', asalSekolah: 'SMP Negeri 3 Gunung Tabur', status: 'Lolos Seleksi', peringkat: 1 },
+    { id: 'app3-2', no: 2, fullName: 'Linda Wati', nisn: '0078899001', jalur: 'Domisili', asalSekolah: 'SMP Negeri 5 Segah', status: 'Menunggu Verifikasi', peringkat: 2 },
   ],
-   "smamuhammadiyahberau": [], 
+   "smamuhammadiyahberau": [
+    { id: 'app4-1', no: 1, fullName: 'Muhammad Iqbal', nisn: '0091234567', jalur: 'Prestasi', asalSekolah: 'MTs Muhammadiyah Berau', status: 'Lolos Seleksi', peringkat: 1},
+   ],
    "smkyphbberau": [
-    { id: 'app5-1', no: 1, fullName: 'Indah Permatasari', nisn: '0088899001', jalur: 'Prestasi', asalSekolah: 'SMP Kristen Berau', status: 'Menunggu Verifikasi' },
+    { id: 'app5-1', no: 1, fullName: 'Indah Permatasari Dewi', nisn: '0088899001', jalur: 'Prestasi', asalSekolah: 'SMP Kristen Berau', status: 'Menunggu Verifikasi', peringkat: 1 },
+    { id: 'app5-2', no: 2, fullName: 'Agus Setiawan', nisn: '0089900112', jalur: 'Umum', asalSekolah: 'SMP PGRI Tanjung Redeb', status: 'Lolos Seleksi', peringkat: 2},
    ],
 };
 
 const jalurOptions = ["Semua", "Afirmasi", "Mutasi", "Prestasi", "Domisili", "Umum"];
-const asalSekolahOptions = ["Semua", "SMP Negeri 1 Tanjung Redeb", "SMP Negeri 2 Teluk Bayur", "MTs Al-Kautsar Berau", "SMP Negeri 1 Sambaliung", "SMP IT Ash-Shohwah Berau", "SMP Negeri 3 Gunung Tabur", "SMP Kristen Berau", "SMP PGRI Tanjung Redeb"];
+const asalSekolahOptions = ["Semua", "SMP Negeri 1 Tanjung Redeb", "SMP Negeri 2 Teluk Bayur", "MTs Al-Kautsar Berau", "SMP Negeri 1 Sambaliung", "SMP IT Ash-Shohwah Berau", "SMP Negeri 3 Gunung Tabur", "SMP Kristen Berau", "SMP PGRI Tanjung Redeb", "SMP Negeri 5 Segah", "MTs Muhammadiyah Berau"];
 
 const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" | "outline" => {
   switch (status) {
@@ -199,9 +205,10 @@ export default function SchoolDetailPage() {
                     <TableHead className="w-[50px] text-center">No.</TableHead>
                     <TableHead>Nama Lengkap</TableHead>
                     <TableHead>NISN</TableHead>
-                    <TableHead>Jalur</TableHead>
                     <TableHead>Asal Sekolah</TableHead>
                     <TableHead className="text-center">Status</TableHead>
+                    <TableHead>Jalur</TableHead>
+                    <TableHead className="text-right">Peringkat</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -211,18 +218,19 @@ export default function SchoolDetailPage() {
                         <TableCell className="text-center">{index + 1}</TableCell>
                         <TableCell className="font-medium">{applicant.fullName}</TableCell>
                         <TableCell>{applicant.nisn}</TableCell>
-                        <TableCell>{applicant.jalur}</TableCell>
                         <TableCell>{applicant.asalSekolah}</TableCell>
                         <TableCell className="text-center">
                           <Badge variant={getApplicantStatusBadgeVariant(applicant.status)}>
                             {applicant.status}
                           </Badge>
                         </TableCell>
+                        <TableCell>{applicant.jalur}</TableCell>
+                        <TableCell className="text-right">{applicant.peringkat}</TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground h-24">
                         Tidak ada data pendaftar yang sesuai dengan filter.
                       </TableCell>
                     </TableRow>
@@ -236,3 +244,4 @@ export default function SchoolDetailPage() {
     </div>
   );
 }
+
