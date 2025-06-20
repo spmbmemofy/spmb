@@ -277,8 +277,8 @@ export default function BiodataPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="font-semibold">Semester</TableHead>
-                    <TableHead className="text-right font-semibold">Rata-rata Nilai</TableHead>
+                    <TableHead className="font-semibold bg-muted">Semester</TableHead>
+                    <TableHead className="text-right font-semibold bg-muted">Rata-rata Nilai</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -315,6 +315,8 @@ export default function BiodataPage() {
     </div>
   );
 }
+    
+
     
 
     
