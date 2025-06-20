@@ -274,7 +274,7 @@ export default function OriginSchoolDetailPage() {
           <section>
              <div className="flex items-center space-x-2 mb-4">
                 <Users className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold text-primary">Daftar Siswa Pendaftar ({sortedApplicants.length})</h3>
+                <h3 className="text-lg font-semibold text-primary">Daftar Siswa ({sortedApplicants.length})</h3>
             </div>
             <div className="overflow-x-auto rounded-md border">
               <Table>
@@ -363,6 +363,6 @@ export default function OriginSchoolDetailPage() {
     </div>
   );
 }
-
+    
 
     
