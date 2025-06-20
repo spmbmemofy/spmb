@@ -103,28 +103,68 @@ export default function DocumentUploadPage() {
   const selectedSchoolId = searchParams.get("schoolId") || "";
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
   
   const [documentsToUpload, setDocumentsToUpload] = React.useState<DocumentItem[]>([]);
-  // uploadedFiles stores actual File objects for the current session
   const [uploadedFiles, setUploadedFiles] = React.useState<Record<string, File | null>>({});
-  // fileMetadataStore is for displaying info from localStorage
   const [fileMetadataStore, setFileMetadataStore] = React.useState<RegistrationProgress['documentMetadata']>({});
 
   React.useEffect(() => {
-    const currentPathwayDocs = pathwaySpecificDocumentsMap[selectedPathway] || [];
+    const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+    if (!savedProgress?.hasProfilePhoto) {
+      toast({
+        variant: "destructive",
+        title: "Akses Ditolak",
+        description: "Harap unggah foto profil Anda di halaman Data Pendaftar sebelum melanjutkan.",
+      });
+      router.replace('/registration/biodata');
+      return; 
+    }
+    
+    // Attempt to load pathway and schoolId from query params first
+    let currentSelectedPathway = searchParams.get("pathway") || "";
+    let currentSelectedSchoolId = searchParams.get("schoolId") || "";
+
+    // If not in query params, try from localStorage (e.g., refresh)
+    if (!currentSelectedPathway && savedProgress?.pathway) {
+        currentSelectedPathway = savedProgress.pathway;
+    }
+    if (!currentSelectedSchoolId && savedProgress?.schoolId) {
+        currentSelectedSchoolId = savedProgress.schoolId;
+    }
+    
+    // If still missing after checking localStorage, redirect to documents page
+    if (!currentSelectedPathway || !currentSelectedSchoolId) {
+        toast({
+            variant: "destructive",
+            title: "Informasi Tidak Lengkap",
+            description: "Jalur pendaftaran atau sekolah belum dipilih. Mengalihkan...",
+        });
+        router.replace('/registration/documents');
+        return;
+    }
+    
+    // If params were missing and found in localStorage, update URL
+    if (searchParams.get("pathway") !== currentSelectedPathway || searchParams.get("schoolId") !== currentSelectedSchoolId) {
+        router.replace(`/registration/document-upload?pathway=${currentSelectedPathway}&schoolId=${currentSelectedSchoolId}`);
+        // The component will re-render with updated searchParams, so useEffect will run again.
+        // We can return here to avoid setting state with potentially outdated params.
+        return;
+    }
+
+
+    const currentPathwayDocs = pathwaySpecificDocumentsMap[currentSelectedPathway] || [];
     const allDocs = [...generalDocuments, ...currentPathwayDocs];
     setDocumentsToUpload(allDocs);
     
-    // Initialize uploadedFiles state for current session (all null initially)
     setUploadedFiles(allDocs.reduce((acc, doc) => ({ ...acc, [doc.id]: null }), {}));
     
-    // Load persisted file metadata from localStorage
-    const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
     if (savedProgress?.documentMetadata) {
       setFileMetadataStore(savedProgress.documentMetadata);
     }
+    setIsLoading(false);
 
-  }, [selectedPathway]);
+  }, [router, toast, searchParams]); // Removed selectedPathway, selectedSchoolId as direct deps
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, documentId: string) => {
     const file = event.target.files?.[0];
@@ -152,7 +192,6 @@ export default function DocumentUploadPage() {
     setUploadedFiles(newUploadedFiles);
     setFileMetadataStore(newFileMetadata);
 
-    // Save metadata to localStorage
     const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
     saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
       ...currentProgress,
@@ -161,7 +200,6 @@ export default function DocumentUploadPage() {
   };
 
   const allRequiredFilesUploaded = () => {
-    // This check is for the current session's File objects
     if (documentsToUpload.length === 0 && generalDocuments.length > 0) return false; 
     return documentsToUpload
       .filter(doc => doc.required)
@@ -181,50 +219,29 @@ export default function DocumentUploadPage() {
     setIsSubmitting(true);
     console.log("Mengunggah berkas (actual File objects):", uploadedFiles);
     
-    // Get IDs of files that have actual File objects in the current session
     const successfullyUploadedDocIds = Object.entries(uploadedFiles)
       .filter(([, file]) => file !== null)
       .map(([id]) => id);
 
-    // Simulate API call
     setTimeout(() => {
       toast({
         title: "Berkas Berhasil Diunggah",
         description: "Semua berkas Anda telah berhasil diunggah. Melanjutkan ke halaman status pendaftaran.",
       });
       setIsSubmitting(false);
-      // Pass the IDs of files actually uploaded in this session
       router.push(`/registration/selection?pathway=${selectedPathway}&schoolId=${selectedSchoolId}&docs=${successfullyUploadedDocIds.join(',')}`);
     }, 2000);
   };
   
-  const currentPathwaySpecificDocs = pathwaySpecificDocumentsMap[selectedPathway] || [];
-
-  if (!selectedPathway && !selectedSchoolId) { // Check if schoolId is also missing for a more robust check
-     // Attempt to load from localStorage if query params are missing (e.g., direct navigation/refresh)
-     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
-     if (savedProgress?.pathway && savedProgress?.schoolId) {
-         router.replace(`/registration/document-upload?pathway=${savedProgress.pathway}&schoolId=${savedProgress.schoolId}`);
-         return <p>Mengalihkan...</p>; // Or a loading indicator
-     }
-     return (
-        <div className="flex flex-1 flex-col items-center justify-center p-4 sm:p-6 md:p-8">
-            <Card className="w-full max-w-md text-center">
-                <CardHeader>
-                    <CardTitle>Informasi Tidak Lengkap</CardTitle>
-                    <CardDescription>Jalur pendaftaran atau sekolah belum dipilih.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p>Harap pilih sekolah tujuan dan jalur pendaftaran terlebih dahulu.</p>
-                    <Button onClick={() => router.push('/registration/documents')} className="mt-4">
-                        Kembali ke Pemilihan Jalur
-                    </Button>
-                </CardContent>
-            </Card>
-        </div>
-     );
+  if (isLoading) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center p-4">
+        <p>Memeriksa sesi Anda...</p>
+      </div>
+    );
   }
-
+  
+  const currentPathwaySpecificDocs = pathwaySpecificDocumentsMap[selectedPathway] || [];
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">

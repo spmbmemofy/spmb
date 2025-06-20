@@ -21,23 +21,36 @@ export default function DocumentsPage() {
   const [selectedSchoolId, setSelectedSchoolId] = React.useState<string>("");
   const [selectedPathway, setSelectedPathway] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+    if (!savedProgress?.hasProfilePhoto) {
+      toast({
+        variant: "destructive",
+        title: "Akses Ditolak",
+        description: "Harap unggah foto profil Anda di halaman Data Pendaftar sebelum melanjutkan.",
+      });
+      router.replace('/registration/biodata');
+      return; 
+    }
+
     if (savedProgress) {
       if (savedProgress.schoolId) setSelectedSchoolId(savedProgress.schoolId);
       if (savedProgress.pathway) setSelectedPathway(savedProgress.pathway);
     }
-  }, []);
+    setIsLoading(false);
+  }, [router, toast]);
 
   React.useEffect(() => {
+    if (isLoading) return; // Don't save to localStorage while initial loading/checking
     const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
     saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
       ...currentProgress,
-      schoolId: selectedSchoolId || undefined, // Ensure undefined if empty
-      pathway: selectedPathway || undefined, // Ensure undefined if empty
+      schoolId: selectedSchoolId || undefined, 
+      pathway: selectedPathway || undefined, 
     });
-  }, [selectedSchoolId, selectedPathway]);
+  }, [selectedSchoolId, selectedPathway, isLoading]);
 
 
   const handleSubmit = () => {
@@ -54,7 +67,6 @@ export default function DocumentsPage() {
 
     const schoolName = initialSchoolData.find(s => s.id === selectedSchoolId)?.namaSekolah || "Tidak Diketahui";
 
-    // Save final choice to localStorage before navigating
     const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
     saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
       ...currentProgress,
@@ -72,6 +84,14 @@ export default function DocumentsPage() {
       router.push(`/registration/document-upload?pathway=${selectedPathway}&schoolId=${selectedSchoolId}`);
     }, 1000);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center p-4">
+        <p>Memeriksa sesi Anda...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
