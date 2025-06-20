@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserCircle, CheckCircle2, Edit3, Save, XCircle, Upload, Check } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadcnTableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
@@ -14,7 +15,45 @@ import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress } fr
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 
-// Initial mock data dengan konteks Berau
+const genderOptions = [
+  { value: "Laki-laki", label: "Laki-laki" },
+  { value: "Perempuan", label: "Perempuan" },
+];
+
+const religionOptions = [
+  { value: "Islam", label: "Islam" },
+  { value: "Kristen Protestan", label: "Kristen Protestan" },
+  { value: "Katolik", label: "Katolik" },
+  { value: "Hindu", label: "Hindu" },
+  { value: "Buddha", label: "Buddha" },
+  { value: "Konghucu", label: "Konghucu" },
+  { value: "Lainnya", label: "Lainnya" },
+];
+
+const occupationOptions = [
+    { value: "Tidak Bekerja", label: "Tidak Bekerja" },
+    { value: "Ibu Rumah Tangga", label: "Ibu Rumah Tangga" },
+    { value: "PNS/TNI/Polri", label: "PNS/TNI/Polri" },
+    { value: "Pegawai Swasta", label: "Pegawai Swasta" },
+    { value: "Wiraswasta", label: "Wiraswasta (Perdagangan, Jasa, dll)" },
+    { value: "Petani/Nelayan/Peternak", label: "Petani/Nelayan/Peternak" },
+    { value: "Buruh (Harian Lepas, Pabrik, Bangunan)", label: "Buruh (Harian Lepas, Pabrik, Bangunan)" },
+    { value: "Profesional (Dokter, Guru, Pengacara)", label: "Profesional (Dokter, Guru, Pengacara)" },
+    { value: "Pensiunan", label: "Pensiunan" },
+    { value: "Lainnya", label: "Lainnya" },
+];
+
+const incomeOptions = [
+    { value: "-", label: "-" },
+    { value: "< Rp 1.000.000", label: "< Rp 1.000.000" },
+    { value: "Rp 1.000.000 - Rp 2.500.000", label: "Rp 1.000.000 - Rp 2.500.000" },
+    { value: "Rp 2.500.001 - Rp 5.000.000", label: "Rp 2.500.001 - Rp 5.000.000" },
+    { value: "Rp 5.000.001 - Rp 7.500.000", label: "Rp 5.000.001 - Rp 7.500.000" },
+    { value: "Rp 7.500.001 - Rp 15.000.000", label: "Rp 7.500.001 - Rp 15.000.000" },
+    { value: "> Rp 15.000.000", label: "> Rp 15.000.000" },
+];
+
+
 const initialBiodataDetails = {
   fullName: "Muhammad Rizky Pratama",
   nisn: "0056789123",
@@ -43,6 +82,7 @@ const initialBiodataDetails = {
 };
 
 type BiodataKeys = keyof typeof initialBiodataDetails;
+type SelectOption = { value: string; label: string };
 
 const reportCardGradesData = [
   { subject: "Matematika", semester1: 86, semester2: 89, semester3: 91, semester4: 88, semester5: 93 },
@@ -65,6 +105,7 @@ interface BiodataItemProps {
   onInputChange?: (newValue: string) => void;
   disableEditButton?: boolean;
   inputType?: string;
+  selectOptions?: SelectOption[];
 }
 
 const BiodataItem: React.FC<BiodataItemProps> = ({
@@ -79,19 +120,36 @@ const BiodataItem: React.FC<BiodataItemProps> = ({
   onInputChange,
   disableEditButton,
   inputType = "text",
+  selectOptions,
 }) => {
   if (isEditing && fieldKey && onSaveClick && onCancelClick && onInputChange) {
     return (
       <div className="space-y-1 py-2 border-b last:border-b-0">
         <Label htmlFor={fieldKey} className="text-sm font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md inline-block mb-1">{label}</Label>
         <div className="flex items-center space-x-2">
-          <Input
-            id={fieldKey}
-            type={inputType}
-            value={currentInputValue}
-            onChange={(e) => onInputChange(e.target.value)}
-            className="text-sm flex-grow"
-          />
+          {selectOptions && selectOptions.length > 0 ? (
+            <Select
+              value={currentInputValue}
+              onValueChange={onInputChange}
+            >
+              <SelectTrigger id={fieldKey} className="text-sm flex-grow">
+                <SelectValue placeholder={`Pilih ${label.toLowerCase()}`} />
+              </SelectTrigger>
+              <SelectContent>
+                {selectOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              id={fieldKey}
+              type={inputType}
+              value={currentInputValue}
+              onChange={(e) => onInputChange(e.target.value)}
+              className="text-sm flex-grow"
+            />
+          )}
           <Button onClick={() => onSaveClick(fieldKey)} size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" aria-label={`Simpan ${label}`}>
             <Check className="h-4 w-4 text-green-600" />
           </Button>
@@ -128,38 +186,62 @@ const BiodataItem: React.FC<BiodataItemProps> = ({
 
 interface EditableBiodataFieldProps {
   label: string;
-  name: string;
+  name: ParentInfoKeys;
   value: string | number | undefined;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (name: ParentInfoKeys, value: string) => void;
   type?: string;
   placeholder?: string;
+  selectOptions?: SelectOption[];
 }
 
-const EditableBiodataField: React.FC<EditableBiodataFieldProps> = ({ label, name, value, onChange, type = "text", placeholder }) => (
-  <div className="space-y-1">
-    <Label htmlFor={name} className="text-sm font-medium">{label}</Label>
-    <Input
-      id={name}
-      name={name}
-      type={type}
-      value={value || ""}
-      onChange={onChange}
-      placeholder={placeholder || `Masukkan ${label.toLowerCase()}`}
-      className="text-sm"
-    />
-  </div>
-);
+const EditableBiodataField: React.FC<EditableBiodataFieldProps> = ({ label, name, value, onChange, type = "text", placeholder, selectOptions }) => {
+  if (selectOptions && selectOptions.length > 0) {
+    return (
+      <div className="space-y-1">
+        <Label htmlFor={name} className="text-sm font-medium">{label}</Label>
+        <Select
+          value={String(value || "")}
+          onValueChange={(newValue) => onChange(name, newValue)}
+        >
+          <SelectTrigger id={name} className="text-sm">
+            <SelectValue placeholder={`Pilih ${label.toLowerCase()}`} />
+          </SelectTrigger>
+          <SelectContent>
+            {selectOptions.map(option => (
+              <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="space-y-1">
+      <Label htmlFor={name} className="text-sm font-medium">{label}</Label>
+      <Input
+        id={name}
+        name={name}
+        type={type}
+        value={value || ""}
+        onChange={(e) => onChange(name, e.target.value)}
+        placeholder={placeholder || `Masukkan ${label.toLowerCase()}`}
+        className="text-sm"
+      />
+    </div>
+  );
+};
 
 type ParentInfoKeys = 'fatherName' | 'fatherDateOfBirth' | 'fatherOccupation' | 'fatherIncome' |
                       'motherName' | 'motherDateOfBirth' | 'motherOccupation' | 'motherIncome' |
                       'guardianName';
 
-const personalInfoEditableFields: Array<{ key: BiodataKeys; label: string; type?: string }> = [
+const personalInfoEditableFields: Array<{ key: BiodataKeys; label: string; type?: string; selectOptions?: SelectOption[] }> = [
     { key: "fullName", label: "Nama Lengkap" },
     { key: "placeOfBirth", label: "Tempat Lahir" },
     { key: "dateOfBirth", label: "Tanggal Lahir", type: "date" },
-    { key: "gender", label: "Jenis Kelamin" },
-    { key: "religion", label: "Agama" },
+    { key: "gender", label: "Jenis Kelamin", selectOptions: genderOptions },
+    { key: "religion", label: "Agama", selectOptions: religionOptions },
     { key: "streetName", label: "Nama Jalan" },
     { key: "rtRw", label: "RT/RW" },
     { key: "village", label: "Kelurahan/Desa" },
@@ -307,8 +389,7 @@ export default function BiodataPage() {
     setIsEditingParentInfo(true);
   };
 
-  const handleParentInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const handleParentInputChange = (name: ParentInfoKeys, value: string) => {
     setEditableParentInfo(prev => ({ ...prev, [name]: value }));
   };
 
@@ -416,12 +497,10 @@ export default function BiodataPage() {
 
           <section>
             <h2 className="text-xl font-semibold mb-4 text-primary">Informasi Pribadi</h2>
-            <div className="space-y-0"> {/* Adjusted from grid to manage border-b correctly in BiodataItem */}
-              {/* Non-editable fields first */}
+            <div className="space-y-0"> 
               <BiodataItem label="NISN (Nomor Induk Siswa Nasional)" value={biodata.nisn} />
               <BiodataItem label="NIK (Nomor Induk Kependudukan)" value={biodata.nik} />
 
-              {/* Editable personal fields */}
               {personalInfoEditableFields.map((field) => (
                 <BiodataItem
                   key={field.key}
@@ -429,13 +508,14 @@ export default function BiodataPage() {
                   value={biodata[field.key as keyof typeof biodata]}
                   fieldKey={field.key as BiodataKeys}
                   isEditing={editingPersonalField === field.key}
-                  currentInputValue={editingPersonalField === field.key ? currentPersonalFieldValue : ""}
+                  currentInputValue={editingPersonalField === field.key ? currentPersonalFieldValue : String(biodata[field.key as keyof typeof biodata] || "")}
                   onEditClick={handleStartEditPersonalField}
                   onSaveClick={handleSavePersonalField}
                   onCancelClick={handleCancelEditPersonalField}
                   onInputChange={setCurrentPersonalFieldValue}
                   disableEditButton={(editingPersonalField !== null && editingPersonalField !== field.key) || isEditingParentInfo}
                   inputType={field.type}
+                  selectOptions={field.selectOptions}
                 />
               ))}
             </div>
@@ -461,15 +541,15 @@ export default function BiodataPage() {
                   <h3 className="md:col-span-2 text-lg font-medium text-muted-foreground">Data Ayah</h3>
                   <EditableBiodataField label="Nama Ayah" name="fatherName" value={editableParentInfo.fatherName} onChange={handleParentInputChange} />
                   <EditableBiodataField label="Tanggal Lahir Ayah" name="fatherDateOfBirth" type="date" value={editableParentInfo.fatherDateOfBirth} onChange={handleParentInputChange} />
-                  <EditableBiodataField label="Pekerjaan Ayah" name="fatherOccupation" value={editableParentInfo.fatherOccupation} onChange={handleParentInputChange} />
-                  <EditableBiodataField label="Penghasilan Ayah per Bulan" name="fatherIncome" value={editableParentInfo.fatherIncome} onChange={handleParentInputChange} />
+                  <EditableBiodataField label="Pekerjaan Ayah" name="fatherOccupation" value={editableParentInfo.fatherOccupation} onChange={handleParentInputChange} selectOptions={occupationOptions} />
+                  <EditableBiodataField label="Penghasilan Ayah per Bulan" name="fatherIncome" value={editableParentInfo.fatherIncome} onChange={handleParentInputChange} selectOptions={incomeOptions}/>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-left border p-4 rounded-md">
                   <h3 className="md:col-span-2 text-lg font-medium text-muted-foreground">Data Ibu</h3>
                   <EditableBiodataField label="Nama Ibu" name="motherName" value={editableParentInfo.motherName} onChange={handleParentInputChange} />
                   <EditableBiodataField label="Tanggal Lahir Ibu" name="motherDateOfBirth" type="date" value={editableParentInfo.motherDateOfBirth} onChange={handleParentInputChange} />
-                  <EditableBiodataField label="Pekerjaan Ibu" name="motherOccupation" value={editableParentInfo.motherOccupation} onChange={handleParentInputChange} />
-                  <EditableBiodataField label="Penghasilan Ibu per Bulan" name="motherIncome" value={editableParentInfo.motherIncome} onChange={handleParentInputChange} />
+                  <EditableBiodataField label="Pekerjaan Ibu" name="motherOccupation" value={editableParentInfo.motherOccupation} onChange={handleParentInputChange} selectOptions={occupationOptions} />
+                  <EditableBiodataField label="Penghasilan Ibu per Bulan" name="motherIncome" value={editableParentInfo.motherIncome} onChange={handleParentInputChange} selectOptions={incomeOptions} />
                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-left border p-4 rounded-md">
                     <h3 className="md:col-span-2 text-lg font-medium text-muted-foreground">Data Wali (jika ada)</h3>
@@ -486,7 +566,6 @@ export default function BiodataPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-left">
-                {/* Display Parent Info using non-editable BiodataItem */}
                 <BiodataItem label="Nama Ayah" value={biodata.fatherName} />
                 <BiodataItem label="Tanggal Lahir Ayah" value={biodata.fatherDateOfBirth} />
                 <BiodataItem label="Pekerjaan Ayah" value={biodata.fatherOccupation} />
@@ -563,3 +642,4 @@ export default function BiodataPage() {
 
 
     
+
