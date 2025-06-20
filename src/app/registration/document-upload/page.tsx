@@ -63,11 +63,7 @@ const documentsToUpload = [
   { id: "kk", label: "Scan Kartu Keluarga (KK)", required: true },
   { id: "akta", label: "Scan Akta Kelahiran", required: true },
   { id: "skl", label: "Scan Surat Keterangan Lulus (SKL)", required: true },
-  { id: "raport1", label: "Scan Rapor Semester 1", required: true },
-  { id: "raport2", label: "Scan Rapor Semester 2", required: true },
-  { id: "raport3", label: "Scan Rapor Semester 3", required: true },
-  { id: "raport4", label: "Scan Rapor Semester 4", required: true },
-  { id: "raport5", label: "Scan Rapor Semester 5", required: true },
+  { id: "rapor_gabungan", label: "Scan Rapor (Semester 1-5, Gabungan PDF/Gambar)", required: true },
 ];
 
 export default function DocumentUploadPage() {
@@ -81,14 +77,13 @@ export default function DocumentUploadPage() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, documentId: string) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Basic validation (example: max size 2MB)
       if (file.size > 2 * 1024 * 1024) {
         toast({
           variant: "destructive",
           title: "Ukuran File Terlalu Besar",
           description: `File ${file.name} melebihi batas maksimal 2MB.`,
         });
-        event.target.value = ''; // Reset input
+        event.target.value = ''; 
         return;
       }
       setUploadedFiles(prev => ({ ...prev, [documentId]: file }));
@@ -114,7 +109,6 @@ export default function DocumentUploadPage() {
     }
 
     setIsSubmitting(true);
-    // Simulate API call for document upload
     console.log("Mengunggah berkas:", uploadedFiles);
     setTimeout(() => {
       toast({
@@ -122,7 +116,6 @@ export default function DocumentUploadPage() {
         description: "Semua berkas Anda telah berhasil diunggah. Melanjutkan ke tahap seleksi.",
       });
       setIsSubmitting(false);
-      // Navigate to the next step, e.g., selection status page
       router.push('/registration/selection');
     }, 2000);
   };
