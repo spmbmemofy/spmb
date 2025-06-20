@@ -20,7 +20,13 @@ const biodataDetails = {
   address: "Jl. Durian III No. 25, RT 10 RW 03, Kel. Tanjung Redeb, Kec. Tanjung Redeb, Kabupaten Berau, Kalimantan Timur 77311",
   previousSchool: "SMP Negeri 1 Tanjung Redeb",
   fatherName: "Abdullah Siregar",
+  fatherDateOfBirth: "1975-03-20",
+  fatherOccupation: "Wiraswasta (Perdagangan Hasil Bumi)",
+  fatherIncome: "Rp 7.500.000 - Rp 15.000.000",
   motherName: "Siti Fatimah",
+  motherDateOfBirth: "1980-08-10",
+  motherOccupation: "Ibu Rumah Tangga",
+  motherIncome: "-",
   guardianName: "-",
   contactNumber: "081254321098",
 };
@@ -118,7 +124,15 @@ export default function BiodataPage() {
             <h2 className="text-xl font-semibold mb-4 text-primary">Informasi Orang Tua/Wali</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-left">
               <BiodataItem label="Nama Ayah" value={biodataDetails.fatherName} />
+              <BiodataItem label="Tanggal Lahir Ayah" value={biodataDetails.fatherDateOfBirth} />
+              <BiodataItem label="Pekerjaan Ayah" value={biodataDetails.fatherOccupation} />
+              <BiodataItem label="Penghasilan Ayah per Bulan" value={biodataDetails.fatherIncome} />
+              
               <BiodataItem label="Nama Ibu" value={biodataDetails.motherName} />
+              <BiodataItem label="Tanggal Lahir Ibu" value={biodataDetails.motherDateOfBirth} />
+              <BiodataItem label="Pekerjaan Ibu" value={biodataDetails.motherOccupation} />
+              <BiodataItem label="Penghasilan Ibu per Bulan" value={biodataDetails.motherIncome} />
+
               <BiodataItem label="Nama Wali (jika ada)" value={biodataDetails.guardianName} />
             </div>
           </section>
