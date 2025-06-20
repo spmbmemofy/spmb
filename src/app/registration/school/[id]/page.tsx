@@ -80,7 +80,6 @@ interface Applicant {
   fullName: string;
   nisn: string;
   jalur: "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
-  asalSekolah: string;
   status: ApplicantStatus;
   peringkat?: number | null; 
 }
@@ -97,12 +96,7 @@ interface PathwayStats {
 
 const schoolIds = ["sman1tanjungredeb", "smkn1berau", "sman2berau", "smamuhammadiyahberau", "smkyphbberau"];
 const jalurOptionsPlain: Applicant['jalur'][] = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
-const asalSekolahOptionsPlain = [ 
-  "SMP Negeri 1 Tanjung Redeb", "SMP Negeri 2 Teluk Bayur", "MTs Al-Kautsar Berau",
-  "SMP Negeri 1 Sambaliung", "SMP IT Ash-Shohwah Berau", "SMP Negeri 3 Gunung Tabur",
-  "SMP Kristen Berau", "SMP PGRI Tanjung Redeb", "SMP Negeri 5 Segah", "MTs Muhammadiyah Berau",
-  "SMP YPPSB Sangatta", "SMP Vidatra Bontang", "SMP Islam Bunga Bangsa Samarinda"
-];
+
 const statusOptionsPlain: ApplicantStatus[] = ["Terverifikasi", "Menunggu Verifikasi", "Berkas tidak sesuai"];
 const firstNames = ["Ahmad", "Budi", "Citra", "Dewi", "Eka", "Fajar", "Gita", "Hendra", "Indah", "Joko", "Lia", "Mira", "Nina", "Omar", "Putu", "Rahmat", "Sari", "Tono", "Umar", "Vina", "Wati", "Yoga", "Zaki", "Amir", "Bella"];
 const lastNames = ["Santoso", "Wijaya", "Kusuma", "Lestari", "Pratama", "Wahyuni", "Setiawan", "Handayani", "Permana", "Wulandari", "Hakim", "Saleh", "Putri", "Maulana", "Siregar", "Abdullah", "Batubara", "Chandra", "Daulay", "Effendi"];
@@ -124,7 +118,7 @@ const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "s
   }
 };
 
-type SortKey = keyof Omit<Applicant, 'asalSekolah'> | 'no';
+type SortKey = keyof Omit<Applicant, 'peringkat'> | 'no' | 'peringkat';
 type SortDirection = "ascending" | "descending";
 
 interface SortConfig {
@@ -159,8 +153,14 @@ export default function SchoolDetailPage() {
         setCurrentSchoolApplicants([]);
         return; 
     }
-
+    
     const generatedApplicantsBase: Omit<Applicant, 'peringkat'>[] = [];
+    const mutasiQuota = school.jalurKuota.mutasi || 0;
+    // Target at least 3 more verified applicants in Mutasi than the quota
+    const targetVerifiedMutasiInMutasiPathway = mutasiQuota + 3; 
+    let actualMutasiApplicantsAssigned = 0;
+    let actualVerifiedMutasiApplicantsAssigned = 0;
+
     for (let i = 0; i < 50; i++) {
       const studentNumber = i + 1;
       const firstNameIndex = Math.floor(Math.random() * firstNames.length);
@@ -168,25 +168,54 @@ export default function SchoolDetailPage() {
       const nisnSchoolCode = String(schoolIndex + 1).padStart(2, '0');
       const nisnStudentCode = String(studentNumber).padStart(3, '0');
 
+      let jalurPilihan: Applicant['jalur'];
+      let statusPilihan: ApplicantStatus;
+
+      // Prioritize creating verified applicants for Mutasi pathway up to targetVerifiedMutasiInMutasiPathway
+      if (actualMutasiApplicantsAssigned < targetVerifiedMutasiInMutasiPathway) {
+          jalurPilihan = "Mutasi";
+          actualMutasiApplicantsAssigned++;
+          // For these prioritized Mutasi applicants, also force their status to Terverifikasi
+          statusPilihan = "Terverifikasi";
+          actualVerifiedMutasiApplicantsAssigned++;
+      } else {
+          // For the rest of the 50 applicants, distribute them among other pathways,
+          // or allow a few more into Mutasi but with varied statuses.
+          const otherJalurOptions = jalurOptionsPlain.filter(j => j !== "Mutasi");
+          // Add a few more to Mutasi beyond the 'targetVerifiedMutasiInMutasiPathway' for variety, but don't force their status
+          if (i % 7 === 0 && actualMutasiApplicantsAssigned < (mutasiQuota + 5) && jalurOptionsPlain.includes("Mutasi")) { 
+            jalurPilihan = "Mutasi";
+            actualMutasiApplicantsAssigned++;
+            statusPilihan = statusOptionsPlain[i % statusOptionsPlain.length]; // Random status
+          } else if (otherJalurOptions.length > 0) {
+            // Distribute among other pathways
+            jalurPilihan = otherJalurOptions[i % otherJalurOptions.length];
+            statusPilihan = statusOptionsPlain[i % statusOptionsPlain.length];
+          } else { 
+            // Fallback if only Mutasi exists or otherJalurOptions is empty (should not happen with current setup)
+            jalurPilihan = jalurOptionsPlain[i % jalurOptionsPlain.length]; // Fallback to general distribution
+            statusPilihan = statusOptionsPlain[i % statusOptionsPlain.length];
+          }
+      }
+      
       generatedApplicantsBase.push({
         id: `app${schoolIndex + 1}-${studentNumber}`,
         noRegistrasi: `REG${schoolIndex + 1}${String(studentNumber).padStart(4, '0')}`,
         fullName: `${firstNames[firstNameIndex]} ${lastNames[lastNameIndex]}`,
         nisn: `005${nisnSchoolCode}${nisnStudentCode}${Math.floor(100 + Math.random() * 900)}`,
-        jalur: jalurOptionsPlain[i % jalurOptionsPlain.length],
-        asalSekolah: asalSekolahOptionsPlain[i % asalSekolahOptionsPlain.length], // This will be removed from display
-        status: statusOptionsPlain[i % statusOptionsPlain.length],
+        jalur: jalurPilihan,
+        status: statusPilihan,
       });
     }
-    
+        
     const rankedApplicants: Applicant[] = generatedApplicantsBase.map(app => ({ ...app, peringkat: null as number | null }));
 
     jalurOptionsPlain.forEach(jalurName => {
       const verifiedApplicantsInJalur = rankedApplicants
         .filter(app => app.jalur === jalurName && app.status === "Terverifikasi")
         .sort((a, b) => { 
-          const idANum = parseInt(a.id.split('-')[1]);
-          const idBNum = parseInt(b.id.split('-')[1]);
+          const idANum = parseInt(a.noRegistrasi.replace(`REG${schoolIndex + 1}`, ''));
+          const idBNum = parseInt(b.noRegistrasi.replace(`REG${schoolIndex + 1}`, ''));
           return idANum - idBNum;
         });
 
@@ -232,8 +261,8 @@ export default function SchoolDetailPage() {
           else if (pB === null) comparison = -1; 
           else comparison = pA - pB;
         } else {
-            const valA = a[sortConfig.key as keyof Omit<Applicant, 'peringkat' | 'asalSekolah'>];
-            const valB = b[sortConfig.key as keyof Omit<Applicant, 'peringkat' | 'asalSekolah'>];
+            const valA = a[sortConfig.key as keyof Omit<Applicant, 'peringkat'>];
+            const valB = b[sortConfig.key as keyof Omit<Applicant, 'peringkat'>];
             if (typeof valA === 'number' && typeof valB === 'number') {
             comparison = valA - valB;
             } else if (typeof valA === 'string' && typeof valB === 'string') {
@@ -566,5 +595,6 @@ export default function SchoolDetailPage() {
     
 
     
+
 
 
