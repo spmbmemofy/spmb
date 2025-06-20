@@ -42,13 +42,13 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     },
     {
       href: '/registration/documents',
-      label: 'PILIH SEKOLAH', // This will lead to document upload as well
+      label: 'PILIH SEKOLAH', 
       icon: FileText,
       activePaths: ['/registration/documents', '/registration/document-upload'], 
     },
     {
       href: '/registration/selection',
-      label: 'SELEKSI',
+      label: 'STATUS PENDAFTARAN', // Changed from SELEKSI
       icon: ClipboardCheck,
       activePaths: ['/registration/selection'],
     },
