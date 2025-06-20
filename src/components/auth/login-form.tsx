@@ -1,7 +1,9 @@
+
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // Added for redirection
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -45,6 +47,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const { toast } = useToast();
+  const router = useRouter(); // Initialize router
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,7 +72,15 @@ export function LoginForm() {
             title: "Login Successful",
             description: `Welcome, ${values.role}! (NISN: ${values.nisn})`,
         });
-        // Here you would typically redirect the user or update auth state
+        
+        // Redirect if applicant
+        if (values.role === "applicant") {
+          router.push('/registration/biodata');
+        } else if (values.role === "admin") {
+          // Placeholder for admin redirect if needed in the future
+          // router.push('/admin/dashboard'); 
+          console.log("Admin logged in, no specific redirect configured yet.");
+        }
         // form.reset(); // Optionally reset form on success
     } else {
         toast({
