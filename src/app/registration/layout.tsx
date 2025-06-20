@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { User, FileText, Settings, LogOut, Menu as MenuIcon } from 'lucide-react';
+import { User, FileText, Settings, LogOut, Menu as MenuIcon, Home, ClipboardCheck } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -29,6 +29,12 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
 
   const menuItems = [
     {
+      href: '/registration/dashboard',
+      label: 'BERANDA',
+      icon: Home,
+      activePaths: ['/registration/dashboard'],
+    },
+    {
       href: '/registration/biodata',
       label: 'PROFIL',
       icon: User,
@@ -48,7 +54,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
         <Sidebar collapsible="icon" className="border-r">
           <SidebarHeader>
             <div className="flex h-14 items-center justify-center p-2 group-data-[state=expanded]:border-b">
-               <Link href="/registration/biodata" className="flex items-center gap-2">
+               <Link href="/registration/dashboard" className="flex items-center gap-2">
                  <Image 
                     src="https://placehold.co/40x40.png"
                     alt="Ikon Aplikasi" 
@@ -81,16 +87,14 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
           </SidebarContent>
           <SidebarFooter>
             <SidebarMenu>
-              {/* Placeholder for a settings link if needed in future
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: 'Pengaturan', side: 'right' }}>
-                  <Link href="/settings"> 
-                    <Settings />
-                    <span>Pengaturan</span>
+                <SidebarMenuButton asChild tooltip={{ children: 'Seleksi', side: 'right' }}>
+                  <Link href="/registration/selection">
+                    <ClipboardCheck />
+                    <span>Seleksi</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: 'Keluar', side: 'right' }}>
                   <Link href="/">
