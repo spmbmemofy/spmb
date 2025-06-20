@@ -51,7 +51,7 @@ interface BiodataItemProps {
 const BiodataItem: React.FC<BiodataItemProps> = ({ label, value }) => (
   <div>
     <p className="text-sm font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md inline-block mb-1">{label}</p>
-    <p className="text-md sm:text-lg">{value || "-"}</p>
+    <p className="text-sm">{value || "-"}</p>
   </div>
 );
 
@@ -74,7 +74,7 @@ const EditableBiodataField: React.FC<EditableBiodataFieldProps> = ({ label, name
       value={value || ""}
       onChange={onChange}
       placeholder={placeholder || `Masukkan ${label.toLowerCase()}`}
-      className="text-md sm:text-lg"
+      className="text-sm"
     />
   </div>
 );
@@ -382,6 +382,8 @@ export default function BiodataPage() {
     </div>
   );
 }
+    
+
     
 
     
