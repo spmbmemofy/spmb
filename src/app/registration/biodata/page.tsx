@@ -7,13 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UserCircle, CheckCircle2, Edit3, Save, XCircle, Upload } from 'lucide-react';
+import { UserCircle, CheckCircle2, Edit3, Save, XCircle, Upload, Check } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadcnTableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
-
 
 // Initial mock data dengan konteks Berau
 const initialBiodataDetails = {
@@ -43,6 +42,8 @@ const initialBiodataDetails = {
   contactNumber: "081254321098",
 };
 
+type BiodataKeys = keyof typeof initialBiodataDetails;
+
 const reportCardGradesData = [
   { subject: "Matematika", semester1: 86, semester2: 89, semester3: 91, semester4: 88, semester5: 93 },
   { subject: "Ilmu Pengetahuan Alam (IPA)", semester1: 89, semester2: 91, semester3: 87, semester4: 90, semester5: 92 },
@@ -55,14 +56,75 @@ const reportCardGradesData = [
 interface BiodataItemProps {
   label: string;
   value: string | number | undefined;
+  fieldKey?: BiodataKeys;
+  isEditing?: boolean;
+  currentInputValue?: string;
+  onEditClick?: (fieldKey: BiodataKeys, currentValue: string) => void;
+  onSaveClick?: (fieldKey: BiodataKeys) => void;
+  onCancelClick?: () => void;
+  onInputChange?: (newValue: string) => void;
+  disableEditButton?: boolean;
+  inputType?: string;
 }
 
-const BiodataItem: React.FC<BiodataItemProps> = ({ label, value }) => (
-  <div>
-    <p className="text-sm font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md inline-block mb-1">{label}</p>
-    <p className="text-sm">{value || "-"}</p>
-  </div>
-);
+const BiodataItem: React.FC<BiodataItemProps> = ({
+  label,
+  value,
+  fieldKey,
+  isEditing,
+  currentInputValue,
+  onEditClick,
+  onSaveClick,
+  onCancelClick,
+  onInputChange,
+  disableEditButton,
+  inputType = "text",
+}) => {
+  if (isEditing && fieldKey && onSaveClick && onCancelClick && onInputChange) {
+    return (
+      <div className="space-y-1 py-2 border-b last:border-b-0">
+        <Label htmlFor={fieldKey} className="text-sm font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md inline-block mb-1">{label}</Label>
+        <div className="flex items-center space-x-2">
+          <Input
+            id={fieldKey}
+            type={inputType}
+            value={currentInputValue}
+            onChange={(e) => onInputChange(e.target.value)}
+            className="text-sm flex-grow"
+          />
+          <Button onClick={() => onSaveClick(fieldKey)} size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" aria-label={`Simpan ${label}`}>
+            <Check className="h-4 w-4 text-green-600" />
+          </Button>
+          <Button onClick={onCancelClick} size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" aria-label={`Batal edit ${label}`}>
+            <XCircle className="h-4 w-4 text-red-600" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-between py-2 border-b last:border-b-0">
+      <div>
+        <p className="text-sm font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md inline-block mb-1">{label}</p>
+        <p className="text-sm">{value || "-"}</p>
+      </div>
+      {onEditClick && fieldKey && (
+        <Button
+          onClick={() => onEditClick(fieldKey, String(value || ""))}
+          size="icon"
+          variant="ghost"
+          className="h-7 w-7"
+          disabled={disableEditButton}
+          aria-label={`Edit ${label}`}
+        >
+          <Edit3 className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
+};
+
 
 interface EditableBiodataFieldProps {
   label: string;
@@ -92,10 +154,30 @@ type ParentInfoKeys = 'fatherName' | 'fatherDateOfBirth' | 'fatherOccupation' | 
                       'motherName' | 'motherDateOfBirth' | 'motherOccupation' | 'motherIncome' |
                       'guardianName';
 
+const personalInfoEditableFields: Array<{ key: BiodataKeys; label: string; type?: string }> = [
+    { key: "fullName", label: "Nama Lengkap" },
+    { key: "placeOfBirth", label: "Tempat Lahir" },
+    { key: "dateOfBirth", label: "Tanggal Lahir", type: "date" },
+    { key: "gender", label: "Jenis Kelamin" },
+    { key: "religion", label: "Agama" },
+    { key: "streetName", label: "Nama Jalan" },
+    { key: "rtRw", label: "RT/RW" },
+    { key: "village", label: "Kelurahan/Desa" },
+    { key: "subdistrict", label: "Kecamatan" },
+    { key: "district", label: "Kabupaten/Kota" },
+    { key: "province", label: "Provinsi & Kode Pos" },
+    { key: "previousSchool", label: "Sekolah Asal" },
+    { key: "contactNumber", label: "Nomor Kontak (Siswa/Orang Tua)", type: "tel" },
+];
+
 export default function BiodataPage() {
   const { toast } = useToast();
   const [isConfirmed, setIsConfirmed] = React.useState(false);
   const [biodata, setBiodata] = React.useState(initialBiodataDetails);
+  
+  const [editingPersonalField, setEditingPersonalField] = React.useState<BiodataKeys | null>(null);
+  const [currentPersonalFieldValue, setCurrentPersonalFieldValue] = React.useState<string>("");
+
   const [isEditingParentInfo, setIsEditingParentInfo] = React.useState(false);
   const [editableParentInfo, setEditableParentInfo] = React.useState({
     fatherName: initialBiodataDetails.fatherName,
@@ -153,13 +235,39 @@ export default function BiodataPage() {
     return averages.reduce((sum, avg) => sum + avg, 0).toFixed(2);
   }, [displayedSemesterAverages]);
 
+  const handleStartEditPersonalField = (fieldKey: BiodataKeys, currentValue: string) => {
+    if (isEditingParentInfo) {
+      toast({ variant: "destructive", title: "Selesaikan Edit Dahulu", description: "Harap simpan atau batalkan perubahan pada informasi orang tua sebelum menyunting field lain." });
+      return;
+    }
+    if (editingPersonalField && editingPersonalField !== fieldKey) {
+       toast({ variant: "destructive", title: "Selesaikan Edit Saat Ini", description: `Harap simpan atau batalkan perubahan pada field yang sedang disunting.` });
+       return;
+    }
+    setEditingPersonalField(fieldKey);
+    setCurrentPersonalFieldValue(currentValue);
+  };
+
+  const handleSavePersonalField = (fieldKey: BiodataKeys) => {
+    setBiodata(prev => ({ ...prev, [fieldKey]: currentPersonalFieldValue }));
+    setEditingPersonalField(null);
+    setCurrentPersonalFieldValue("");
+    const fieldLabel = personalInfoEditableFields.find(f => f.key === fieldKey)?.label || fieldKey;
+    toast({ title: "Data Disimpan", description: `${fieldLabel} telah berhasil diperbarui.` });
+  };
+
+  const handleCancelEditPersonalField = () => {
+    setEditingPersonalField(null);
+    setCurrentPersonalFieldValue("");
+  };
+
 
   const handleConfirm = () => {
-    if (isEditingParentInfo) {
+    if (isEditingParentInfo || editingPersonalField) {
       toast({
         variant: "destructive",
         title: "Simpan Perubahan Dahulu",
-        description: "Harap simpan atau batalkan perubahan pada informasi orang tua sebelum melanjutkan.",
+        description: "Harap simpan atau batalkan semua perubahan yang sedang aktif sebelum melanjutkan.",
       });
       return;
     }
@@ -181,6 +289,10 @@ export default function BiodataPage() {
   };
 
   const handleEditParentInfo = () => {
+    if (editingPersonalField) {
+      toast({ variant: "destructive", title: "Selesaikan Edit Dahulu", description: "Harap simpan atau batalkan perubahan pada informasi pribadi sebelum menyunting info orang tua." });
+      return;
+    }
     setEditableParentInfo({
       fatherName: biodata.fatherName,
       fatherDateOfBirth: biodata.fatherDateOfBirth,
@@ -254,23 +366,10 @@ export default function BiodataPage() {
         title: "Foto Terpilih",
         description: `${file.name} siap ditampilkan.`,
       });
-    } else {
-      // If user cancels file selection after having a photo selected in the current session
-      // or if they had a photo from a previous session and now "clear" it by cancelling.
-      // We only clear the live preview `profilePhoto` if they actually *had* a file selected in this interaction.
-      // The `persistedPhotoUploaded` state and `localStorage` should only be set to false if they
-      // explicitly remove the photo, which is not a feature here.
-      // For now, cancelling a file dialog won't change localStorage.hasProfilePhoto
-      // It will just clear the current preview if one was just set.
-      if (profilePhoto) { // Only if there was a photo in current state
-          // setProfilePhoto(null); // Optionally clear preview, or keep old one
-      }
-      // Do NOT set hasProfilePhoto to false here, as cancelling a dialog
-      // shouldn't remove a previously saved photo status.
-      // Explicit deletion feature would be needed for that.
     }
   };
 
+  const isAnyFieldBeingEdited = isEditingParentInfo || editingPersonalField !== null;
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
@@ -281,7 +380,7 @@ export default function BiodataPage() {
           </div>
           <CardTitle className="text-2xl sm:text-3xl font-headline">Data Pendaftar</CardTitle>
           <CardDescription className="text-md">
-            Harap tinjau biodata dan nilai rapor Anda di bawah ini. Informasi pribadi dan nilai telah diisi oleh administrasi sekolah. Anda dapat mengubah informasi orang tua/wali dan mengunggah foto profil.
+            Harap tinjau biodata dan nilai rapor Anda. Anda dapat menyunting informasi pribadi dan orang tua/wali, serta mengunggah foto profil.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
@@ -317,22 +416,28 @@ export default function BiodataPage() {
 
           <section>
             <h2 className="text-xl font-semibold mb-4 text-primary">Informasi Pribadi</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-left">
-              <BiodataItem label="Nama Lengkap" value={biodata.fullName} />
+            <div className="space-y-0"> {/* Adjusted from grid to manage border-b correctly in BiodataItem */}
+              {/* Non-editable fields first */}
               <BiodataItem label="NISN (Nomor Induk Siswa Nasional)" value={biodata.nisn} />
               <BiodataItem label="NIK (Nomor Induk Kependudukan)" value={biodata.nik} />
-              <BiodataItem label="Tempat Lahir" value={biodata.placeOfBirth} />
-              <BiodataItem label="Tanggal Lahir" value={biodata.dateOfBirth} />
-              <BiodataItem label="Jenis Kelamin" value={biodata.gender} />
-              <BiodataItem label="Agama" value={biodata.religion} />
-              <BiodataItem label="Nama Jalan" value={biodata.streetName} />
-              <BiodataItem label="RT/RW" value={biodata.rtRw} />
-              <BiodataItem label="Kelurahan/Desa" value={biodata.village} />
-              <BiodataItem label="Kecamatan" value={biodata.subdistrict} />
-              <BiodataItem label="Kabupaten/Kota" value={biodata.district} />
-              <BiodataItem label="Provinsi & Kode Pos" value={biodata.province} />
-              <BiodataItem label="Sekolah Asal" value={biodata.previousSchool} />
-              <BiodataItem label="Nomor Kontak (Siswa/Orang Tua)" value={biodata.contactNumber} />
+
+              {/* Editable personal fields */}
+              {personalInfoEditableFields.map((field) => (
+                <BiodataItem
+                  key={field.key}
+                  label={field.label}
+                  value={biodata[field.key as keyof typeof biodata]}
+                  fieldKey={field.key as BiodataKeys}
+                  isEditing={editingPersonalField === field.key}
+                  currentInputValue={editingPersonalField === field.key ? currentPersonalFieldValue : ""}
+                  onEditClick={handleStartEditPersonalField}
+                  onSaveClick={handleSavePersonalField}
+                  onCancelClick={handleCancelEditPersonalField}
+                  onInputChange={setCurrentPersonalFieldValue}
+                  disableEditButton={(editingPersonalField !== null && editingPersonalField !== field.key) || isEditingParentInfo}
+                  inputType={field.type}
+                />
+              ))}
             </div>
           </section>
 
@@ -340,8 +445,13 @@ export default function BiodataPage() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-primary">Informasi Orang Tua/Wali</h2>
               {!isEditingParentInfo && (
-                <Button onClick={handleEditParentInfo} variant="outline" size="sm">
-                  <Edit3 className="mr-2 h-4 w-4" /> Edit
+                <Button 
+                  onClick={handleEditParentInfo} 
+                  variant="outline" 
+                  size="sm"
+                  disabled={editingPersonalField !== null}
+                >
+                  <Edit3 className="mr-2 h-4 w-4" /> Edit Info Orang Tua
                 </Button>
               )}
             </div>
@@ -370,12 +480,13 @@ export default function BiodataPage() {
                     <XCircle className="mr-2 h-4 w-4" /> Batal
                   </Button>
                   <Button onClick={handleSaveParentInfo}>
-                    <Save className="mr-2 h-4 w-4" /> Simpan Perubahan
+                    <Save className="mr-2 h-4 w-4" /> Simpan Perubahan Ortu
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-left">
+                {/* Display Parent Info using non-editable BiodataItem */}
                 <BiodataItem label="Nama Ayah" value={biodata.fatherName} />
                 <BiodataItem label="Tanggal Lahir Ayah" value={biodata.fatherDateOfBirth} />
                 <BiodataItem label="Pekerjaan Ayah" value={biodata.fatherOccupation} />
@@ -424,7 +535,7 @@ export default function BiodataPage() {
             <Button
               size="lg"
               onClick={handleConfirm}
-              disabled={isConfirmed || isEditingParentInfo}
+              disabled={isConfirmed || isAnyFieldBeingEdited}
               className="w-full sm:w-auto"
             >
               <CheckCircle2 className="mr-2 h-5 w-5" />
