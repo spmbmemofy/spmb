@@ -7,8 +7,38 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, CheckSquare, XSquare } from 'lucide-react';
+import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, CheckSquare, XSquare } from 'lucide-react';
 import { initialSchoolData, type School } from "@/app/registration/dashboard/page"; 
+
+// Mock data biodata (sama seperti di biodata/page.tsx)
+const biodataDetailsMock = {
+  fullName: "Muhammad Rizky Pratama",
+  nisn: "0056789123",
+  nik: "6403011507050002",
+  placeOfBirth: "Tanjung Redeb",
+  dateOfBirth: "2008-07-15",
+  gender: "Laki-laki",
+  religion: "Islam",
+  address: "Jl. Durian III No. 25, RT 10 RW 03, Kel. Tanjung Redeb, Kec. Tanjung Redeb, Kabupaten Berau, Kalimantan Timur 77311",
+  previousSchool: "SMP Negeri 1 Tanjung Redeb",
+  fatherName: "Abdullah Siregar",
+  motherName: "Siti Fatimah",
+  guardianName: "-",
+  contactNumber: "081254321098",
+};
+
+interface BiodataDisplayItemProps {
+  label: string;
+  value: string | number | undefined;
+}
+
+const BiodataDisplayItem: React.FC<BiodataDisplayItemProps> = ({ label, value }) => (
+  <div className="flex flex-col sm:flex-row sm:justify-between py-2 border-b last:border-b-0">
+    <p className="text-sm font-medium text-muted-foreground">{label}</p>
+    <p className="text-sm sm:text-right">{value || "-"}</p>
+  </div>
+);
+
 
 interface DocumentItem {
   id: string;
@@ -28,7 +58,7 @@ const pathwaySpecificDocumentsMapConst: Record<string, DocumentItem[]> = {
     { id: "kip_kks_pkh", label: "Scan Kartu Indonesia Pintar (KIP) / Kartu Keluarga Sejahtera (KKS) / Program Keluarga Harapan (PKH)", required: true },
   ],
   Prestasi: [
-    { id: "sertifikat_prestasi", label: "Scan Sertifikat Prestasi (jika ada)", required: false },
+    { id: "sertifikat_prestasi", label: "Scan Sertifikat Prestasi", required: false }, // Opsional
     { id: "sk_prestasi", label: "Scan Surat Keterangan Prestasi dari Sekolah Asal", required: true },
   ],
   Mutasi: [
@@ -55,12 +85,15 @@ export default function SelectionPage() {
       setSchool(foundSchool);
     }
 
+    let docsForPathway: DocumentItem[] = [];
     if (selectedPathway) {
       const pathwayDocs = pathwaySpecificDocumentsMapConst[selectedPathway] || [];
-      setDocumentsToShow([...generalDocumentsConst, ...pathwayDocs]);
+      docsForPathway = [...generalDocumentsConst, ...pathwayDocs];
     } else {
-      setDocumentsToShow([...generalDocumentsConst]);
+      // Jika tidak ada pathway, tampilkan hanya berkas umum (seharusnya tidak terjadi jika alur benar)
+      docsForPathway = [...generalDocumentsConst];
     }
+    setDocumentsToShow(docsForPathway);
     
     if (uploadedDocsString) {
       setUploadedDocIds(uploadedDocsString.split(','));
@@ -111,6 +144,27 @@ export default function SelectionPage() {
         </CardHeader>
         <CardContent className="space-y-8">
           <section>
+            <h3 className="text-xl font-semibold mb-4 text-primary flex items-center">
+              <UserCircle className="mr-2 h-6 w-6" />
+              Detail Biodata Pendaftar
+            </h3>
+            <div className="space-y-1 rounded-md border p-4">
+              <BiodataDisplayItem label="Nama Lengkap" value={biodataDetailsMock.fullName} />
+              <BiodataDisplayItem label="NISN" value={biodataDetailsMock.nisn} />
+              <BiodataDisplayItem label="NIK" value={biodataDetailsMock.nik} />
+              <BiodataDisplayItem label="Tempat, Tanggal Lahir" value={`${biodataDetailsMock.placeOfBirth}, ${biodataDetailsMock.dateOfBirth}`} />
+              <BiodataDisplayItem label="Jenis Kelamin" value={biodataDetailsMock.gender} />
+              <BiodataDisplayItem label="Agama" value={biodataDetailsMock.religion} />
+              <BiodataDisplayItem label="Alamat Lengkap" value={biodataDetailsMock.address} />
+              <BiodataDisplayItem label="Sekolah Asal" value={biodataDetailsMock.previousSchool} />
+              <BiodataDisplayItem label="Nama Ayah" value={biodataDetailsMock.fatherName} />
+              <BiodataDisplayItem label="Nama Ibu" value={biodataDetailsMock.motherName} />
+              <BiodataDisplayItem label="Nama Wali" value={biodataDetailsMock.guardianName} />
+              <BiodataDisplayItem label="Nomor Kontak" value={biodataDetailsMock.contactNumber} />
+            </div>
+          </section>
+
+          <section>
             <h3 className="text-xl font-semibold mb-4 text-primary">Detail Pilihan Pendaftaran</h3>
             <div className="space-y-3 rounded-md border p-4">
               <div className="flex justify-between">
@@ -126,51 +180,81 @@ export default function SelectionPage() {
 
           <section>
             <h3 className="text-xl font-semibold mb-4 text-primary">Kelengkapan Berkas</h3>
-            <div className="space-y-3 rounded-md border p-4">
+            <div className="space-y-2 rounded-md border p-4">
               {documentsToShow.length > 0 ? (
                 documentsToShow.map(doc => {
                   const isUploaded = uploadedDocIds.includes(doc.id);
                   const isRequiredAndMissing = doc.required && !isUploaded;
+                  
+                  let icon;
+                  let badgeVariant: "default" | "destructive" | "secondary" = "secondary";
+                  let statusText = "";
+
+                  if (isUploaded) {
+                    icon = <FileCheck2 className="h-5 w-5 mr-2 text-green-600" />;
+                    badgeVariant = "default";
+                    statusText = "Terunggah";
+                  } else if (doc.required) {
+                    icon = <XSquare className="h-5 w-5 mr-2 text-destructive" />;
+                    badgeVariant = "destructive";
+                    statusText = "Belum Diunggah";
+                  } else {
+                    icon = <FileQuestion className="h-5 w-5 mr-2 text-muted-foreground" />;
+                    badgeVariant = "secondary";
+                    statusText = "Tidak Diunggah";
+                  }
+
                   return (
-                    <div key={doc.id} className="flex justify-between items-center py-2 border-b last:border-b-0">
-                      <span className="flex items-center">
-                        {isUploaded ? <FileCheck2 className="h-5 w-5 mr-2 text-green-600" /> : 
-                         (doc.required ? <FileQuestion className="h-5 w-5 mr-2 text-destructive" /> : <FileQuestion className="h-5 w-5 mr-2 text-muted-foreground" />)
-                        }
+                    <div key={doc.id} className="flex justify-between items-center py-2.5 border-b last:border-b-0">
+                      <span className="flex items-center text-sm">
+                        {icon}
                         {doc.label} {!doc.required && <span className="text-xs text-muted-foreground ml-1">(Opsional)</span>}
                       </span>
-                      <Badge variant={isUploaded ? "default" : (isRequiredAndMissing ? "destructive" : "secondary")}>
-                        {isUploaded ? "Terunggah" : (doc.required ? "Belum Diunggah" : "Tidak Diunggah")}
+                      <Badge variant={badgeVariant} className="text-xs">
+                        {statusText}
                       </Badge>
                     </div>
                   );
                 })
               ) : (
-                <p className="text-muted-foreground text-center">Tidak ada informasi berkas untuk ditampilkan.</p>
+                <p className="text-muted-foreground text-center py-4">Tidak ada informasi berkas untuk jalur ini.</p>
               )}
             </div>
+             <p className="text-xs text-muted-foreground mt-2">
+                Status "Terunggah" menunjukkan berkas telah dipilih pada sesi unggah terakhir. Verifikasi akhir dilakukan oleh panitia.
+            </p>
           </section>
           
           <section>
-            <h3 className="text-xl font-semibold mb-4 text-primary">Status Verifikasi</h3>
+            <h3 className="text-xl font-semibold mb-4 text-primary">Status Verifikasi Pendaftaran</h3>
             <div className="rounded-md border p-6 text-center bg-secondary/30">
-              <p className="text-lg font-medium text-foreground">{mockVerificationStatus}</p>
+                <div className="flex items-center justify-center mb-2">
+                    {mockVerificationStatus === "Menunggu Verifikasi oleh Panitia" && <Info className="h-6 w-6 mr-2 text-yellow-600" />}
+                    {mockVerificationStatus.toLowerCase().includes("diterima") && <CheckSquare className="h-6 w-6 mr-2 text-green-600" />}
+                    {mockVerificationStatus.toLowerCase().includes("ditolak") && <XSquare className="h-6 w-6 mr-2 text-destructive" />}
+                    <p className="text-lg font-medium text-foreground">{mockVerificationStatus}</p>
+                </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Harap periksa halaman ini secara berkala untuk pembaruan status.
+                Harap periksa halaman ini secara berkala untuk pembaruan status dari panitia. Anda akan dihubungi jika ada informasi lebih lanjut.
               </p>
             </div>
           </section>
 
         </CardContent>
-        <CardFooter className="flex justify-center pt-6">
+        <CardFooter className="flex flex-col sm:flex-row justify-center pt-6 gap-4">
             <Button asChild variant="outline">
                 <Link href="/registration/dashboard">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Kembali ke Beranda
                 </Link>
             </Button>
+             <Button onClick={() => router.push('/registration/document-upload?pathway=' + selectedPathway + '&schoolId=' + selectedSchoolId)}>
+                <FileCheck2 className="mr-2 h-4 w-4" />
+                Ubah/Unggah Ulang Berkas
+            </Button>
         </CardFooter>
       </Card>
     </div>
   );
 }
+
