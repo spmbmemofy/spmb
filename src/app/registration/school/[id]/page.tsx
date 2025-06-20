@@ -124,7 +124,7 @@ const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "s
   }
 };
 
-type SortKey = keyof Applicant | 'no';
+type SortKey = keyof Omit<Applicant, 'asalSekolah'> | 'no';
 type SortDirection = "ascending" | "descending";
 
 interface SortConfig {
@@ -139,12 +139,9 @@ export default function SchoolDetailPage() {
   const school = allSchoolsData.find(s => s.id === schoolId);
 
   const [currentSchoolApplicants, setCurrentSchoolApplicants] = React.useState<Applicant[]>([]);
-  const [dynamicAsalSekolahOptions, setDynamicAsalSekolahOptions] = React.useState<string[]>(["Semua Asal Sekolah", ...asalSekolahOptionsPlain]);
-
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedJalur, setSelectedJalur] = React.useState("Semua Jalur");
-  const [selectedAsalSekolah, setSelectedAsalSekolah] = React.useState("Semua Asal Sekolah");
   const [selectedStatus, setSelectedStatus] = React.useState<string>("Semua Status");
   const [sortConfig, setSortConfig] = React.useState<SortConfig>({ key: 'peringkat', direction: 'ascending' });
   
@@ -154,14 +151,12 @@ export default function SchoolDetailPage() {
   React.useEffect(() => {
     if (!schoolId || !school) {
       setCurrentSchoolApplicants([]);
-      setDynamicAsalSekolahOptions(["Semua Asal Sekolah", ...asalSekolahOptionsPlain]);
       return;
     }
 
     const schoolIndex = schoolIds.findIndex(id => id === schoolId);
     if (schoolIndex === -1) {
         setCurrentSchoolApplicants([]);
-        setDynamicAsalSekolahOptions(["Semua Asal Sekolah", ...asalSekolahOptionsPlain]);
         return; 
     }
 
@@ -179,7 +174,7 @@ export default function SchoolDetailPage() {
         fullName: `${firstNames[firstNameIndex]} ${lastNames[lastNameIndex]}`,
         nisn: `005${nisnSchoolCode}${nisnStudentCode}${Math.floor(100 + Math.random() * 900)}`,
         jalur: jalurOptionsPlain[i % jalurOptionsPlain.length],
-        asalSekolah: asalSekolahOptionsPlain[i % asalSekolahOptionsPlain.length],
+        asalSekolah: asalSekolahOptionsPlain[i % asalSekolahOptionsPlain.length], // This will be removed from display
         status: statusOptionsPlain[i % statusOptionsPlain.length],
       });
     }
@@ -204,9 +199,6 @@ export default function SchoolDetailPage() {
     });
     
     setCurrentSchoolApplicants(rankedApplicants);
-
-    const uniqueAsalSekolah = [...new Set(rankedApplicants.map(a => a.asalSekolah).filter(Boolean))];
-    setDynamicAsalSekolahOptions(["Semua Asal Sekolah", ...uniqueAsalSekolah.sort()]);
     setCurrentPage(1); 
 
   }, [schoolId, school]);
@@ -214,7 +206,7 @@ export default function SchoolDetailPage() {
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedJalur, selectedAsalSekolah, selectedStatus, pageSize]);
+  }, [searchTerm, selectedJalur, selectedStatus, pageSize]);
 
   const filteredApplicants = React.useMemo(() => {
     return currentSchoolApplicants.filter(applicant => {
@@ -222,11 +214,10 @@ export default function SchoolDetailPage() {
         applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         applicant.nisn.includes(searchTerm);
       const jalurMatch = selectedJalur === "Semua Jalur" || applicant.jalur === selectedJalur;
-      const asalSekolahMatch = selectedAsalSekolah === "Semua Asal Sekolah" || applicant.asalSekolah === selectedAsalSekolah;
       const statusMatch = selectedStatus === "Semua Status" || applicant.status === selectedStatus;
-      return searchTermMatch && jalurMatch && asalSekolahMatch && statusMatch;
+      return searchTermMatch && jalurMatch && statusMatch;
     });
-  }, [currentSchoolApplicants, searchTerm, selectedJalur, selectedAsalSekolah, selectedStatus]);
+  }, [currentSchoolApplicants, searchTerm, selectedJalur, selectedStatus]);
 
   const sortedApplicants = React.useMemo(() => {
     let sortableItems = [...filteredApplicants];
@@ -241,8 +232,8 @@ export default function SchoolDetailPage() {
           else if (pB === null) comparison = -1; 
           else comparison = pA - pB;
         } else {
-            const valA = a[sortConfig.key as keyof Omit<Applicant, 'peringkat'>];
-            const valB = b[sortConfig.key as keyof Omit<Applicant, 'peringkat'>];
+            const valA = a[sortConfig.key as keyof Omit<Applicant, 'peringkat' | 'asalSekolah'>];
+            const valB = b[sortConfig.key as keyof Omit<Applicant, 'peringkat' | 'asalSekolah'>];
             if (typeof valA === 'number' && typeof valB === 'number') {
             comparison = valA - valB;
             } else if (typeof valA === 'string' && typeof valB === 'string') {
@@ -434,8 +425,8 @@ export default function SchoolDetailPage() {
               <FilterIcon className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold text-primary">Filter Daftar Pendaftar</h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="relative sm:col-span-2 lg:col-span-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="relative lg:col-span-1">
                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Cari Nama/NISN..."
@@ -451,16 +442,6 @@ export default function SchoolDetailPage() {
                 <SelectContent>
                   {jalurOptions.map(jalur => (
                     <SelectItem key={jalur} value={jalur}>{jalur}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={selectedAsalSekolah} onValueChange={setSelectedAsalSekolah}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter berdasarkan Asal Sekolah" />
-                </SelectTrigger>
-                <SelectContent>
-                  {dynamicAsalSekolahOptions.map(asal => (
-                    <SelectItem key={asal} value={asal}>{asal}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -489,7 +470,6 @@ export default function SchoolDetailPage() {
                     {renderSortableHeader('no' as SortKey, "No.", "w-[60px] text-center")}
                     {renderSortableHeader('fullName' as SortKey, "Nama Lengkap")}
                     {renderSortableHeader('nisn' as SortKey, "NISN")}
-                    {renderSortableHeader('asalSekolah' as SortKey, "Asal Sekolah")}
                     {renderSortableHeader('status' as SortKey, "Status", "text-center")}
                     {renderSortableHeader('jalur' as SortKey, "Jalur")}
                     {renderSortableHeader('peringkat' as SortKey, "Peringkat", "text-right")}
@@ -502,7 +482,6 @@ export default function SchoolDetailPage() {
                         <TableCell className="text-center">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                         <TableCell className="font-medium">{applicant.fullName}</TableCell>
                         <TableCell>{applicant.nisn}</TableCell>
-                        <TableCell>{applicant.asalSekolah}</TableCell>
                         <TableCell className="text-center">
                           <Badge variant={getApplicantStatusBadgeVariant(applicant.status)}>
                             {applicant.status}
@@ -531,7 +510,7 @@ export default function SchoolDetailPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground h-24">
+                      <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
                         { currentSchoolApplicants.length === 0 ? "Memuat data pendaftar..." : "Tidak ada data pendaftar yang sesuai dengan filter."}
                       </TableCell>
                     </TableRow>
@@ -587,4 +566,5 @@ export default function SchoolDetailPage() {
     
 
     
+
 
