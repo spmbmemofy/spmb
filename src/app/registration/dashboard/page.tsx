@@ -131,7 +131,7 @@ export default function DashboardPage() {
           <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
             <LayoutDashboard size={40} />
           </div>
-          <CardTitle className="text-3xl font-headline">Beranda Pendaftaran</CardTitle>
+          <CardTitle className="text-2xl sm:text-3xl font-headline">Beranda Pendaftaran</CardTitle>
           <CardDescription className="text-md">
             Ringkasan data pendaftar berdasarkan jalur penerimaan dan informasi sekolah di Kabupaten Berau.
           </CardDescription>
@@ -140,7 +140,7 @@ export default function DashboardPage() {
           <section>
             <h2 className="text-xl font-semibold mb-4 text-primary text-center">Distribusi Pendaftar per Jalur</h2>
             <div className="aspect-[16/9] w-full">
-              <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+              <ChartContainer config={chartConfig} className="min-h-[300px] sm:min-h-[350px] md:min-h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
                     <CartesianGrid vertical={false} />

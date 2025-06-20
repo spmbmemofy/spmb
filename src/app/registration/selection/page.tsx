@@ -12,7 +12,7 @@ export default function SelectionPage() {
           <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
             <ClipboardCheck size={40} />
           </div>
-          <CardTitle className="text-3xl font-headline">Proses Seleksi</CardTitle>
+          <CardTitle className="text-2xl sm:text-3xl font-headline">Proses Seleksi</CardTitle>
           <CardDescription className="text-md">
             Informasi dan status mengenai proses seleksi pendaftaran.
           </CardDescription>

@@ -9,7 +9,7 @@ export default function ForgotPasswordPage() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-headline">Pemulihan Kata Sandi</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl font-headline">Pemulihan Kata Sandi</CardTitle>
           <CardDescription>
             Instruksi untuk pemulihan kata sandi akan muncul di sini.
           </CardDescription>

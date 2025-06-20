@@ -66,13 +66,13 @@ const asalSekolahOptions = ["Semua", "SMP Negeri 1 Tanjung Redeb", "SMP Negeri 2
 const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
   switch (status) {
     case "Terverifikasi":
-      return "default"; 
+      return "default";
     case "Menunggu Verifikasi":
-      return "secondary"; 
+      return "secondary";
     case "Berkas tidak sesuai":
-      return "destructive"; 
+      return "destructive";
     default:
-      return "default"; // Fallback, though ideally unreachable with strict typing
+      return "default";
   }
 };
 
@@ -90,7 +90,7 @@ export default function SchoolDetailPage() {
 
   const filteredApplicants = React.useMemo(() => {
     return applicants.filter(applicant => {
-      const searchTermMatch = 
+      const searchTermMatch =
         applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         applicant.nisn.includes(searchTerm);
       const jalurMatch = selectedJalur === "Semua" || applicant.jalur === selectedJalur;
@@ -104,7 +104,7 @@ export default function SchoolDetailPage() {
       <div className="flex flex-1 flex-col items-center justify-center p-4">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
-            <CardTitle>Sekolah Tidak Ditemukan</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">Sekolah Tidak Ditemukan</CardTitle>
           </CardHeader>
           <CardContent>
             <p>Maaf, data untuk sekolah ini tidak dapat ditemukan.</p>
@@ -126,12 +126,12 @@ export default function SchoolDetailPage() {
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8 space-y-6">
       <Card className="w-full max-w-4xl shadow-2xl">
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div className="flex items-center space-x-3">
               <SchoolIcon className="h-8 w-8 text-primary" />
-              <CardTitle className="text-2xl sm:text-3xl font-headline">{school.namaSekolah}</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl md:text-3xl font-headline">{school.namaSekolah}</CardTitle>
             </div>
-            <Button variant="outline" asChild size="sm">
+            <Button variant="outline" asChild size="sm" className="w-full sm:w-auto">
               <Link href="/registration/dashboard">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Kembali
@@ -223,7 +223,7 @@ export default function SchoolDetailPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>{applicant.jalur}</TableCell>
-                        <TableCell 
+                        <TableCell
                           className={`text-right font-medium ${
                             applicant.peringkat <= school.kuota ? 'text-green-600' : 'text-red-600'
                           }`}
@@ -248,4 +248,3 @@ export default function SchoolDetailPage() {
     </div>
   );
 }
-

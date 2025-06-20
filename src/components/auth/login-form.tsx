@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -47,7 +47,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const { toast } = useToast();
-  const router = useRouter(); 
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,19 +62,21 @@ export function LoginForm() {
     setIsSubmitting(true);
     console.log("Form values:", values);
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    const isSuccess = Math.random() > 0.3; 
+
+    const isSuccess = Math.random() > 0.3;
 
     if (isSuccess) {
         toast({
             title: "Login Berhasil",
             description: `Selamat datang, ${values.role === 'applicant' ? 'Pendaftar' : 'Admin'}! (NISN: ${values.nisn})`,
         });
-        
+
         if (values.role === "applicant") {
           router.push('/registration/biodata');
         } else if (values.role === "admin") {
-          console.log("Admin logged in, no specific redirect configured yet.");
+          // Admin specific redirect, for now, let's go to dashboard as an example
+          router.push('/registration/dashboard');
+          console.log("Admin logged in, redirecting to admin dashboard.");
         }
     } else {
         toast({
@@ -92,7 +94,7 @@ export function LoginForm() {
         <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
           <Lock size={32} />
         </div>
-        <CardTitle className="text-2xl font-headline">Akses Portal Pendaftaran</CardTitle>
+        <CardTitle className="text-xl sm:text-2xl font-headline">Akses Portal Pendaftaran</CardTitle>
         <CardDescription>
           Silakan pilih peran Anda dan masukkan kredensial untuk melanjutkan.
         </CardDescription>

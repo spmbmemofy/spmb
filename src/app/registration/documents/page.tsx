@@ -12,7 +12,7 @@ export default function DocumentsPage() {
           <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
             <FileText size={40} />
           </div>
-          <CardTitle className="text-3xl font-headline">Unggah Dokumen Pendaftaran</CardTitle>
+          <CardTitle className="text-2xl sm:text-3xl font-headline">Unggah Dokumen Pendaftaran</CardTitle>
           <CardDescription className="text-md">
             Silakan unggah dokumen yang diperlukan untuk melanjutkan proses pendaftaran.
           </CardDescription>

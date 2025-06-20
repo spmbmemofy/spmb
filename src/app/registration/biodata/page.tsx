@@ -75,7 +75,7 @@ export default function BiodataPage() {
           <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
             <UserCircle size={40} />
           </div>
-          <CardTitle className="text-3xl font-headline">Biodata & Nilai Rapor Pendaftar</CardTitle>
+          <CardTitle className="text-2xl sm:text-3xl font-headline">Biodata & Nilai Rapor Pendaftar</CardTitle>
           <CardDescription className="text-md">
             Harap tinjau biodata dan nilai rapor Anda di bawah ini. Informasi ini telah diisi sebelumnya oleh administrasi sekolah asal Anda.
           </CardDescription>
@@ -134,9 +134,9 @@ export default function BiodataPage() {
           </section>
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row justify-end items-center pt-6 gap-4">
-            <Button 
-              size="lg" 
-              onClick={handleConfirm} 
+            <Button
+              size="lg"
+              onClick={handleConfirm}
               disabled={isConfirmed}
               className="w-full sm:w-auto"
             >
