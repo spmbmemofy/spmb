@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 const biodataDetails = {
   fullName: "Ahmad Budi Santoso",
   nisn: "1234567890",
+  nik: "3171234505080001", // Added NIK
   placeOfBirth: "Jakarta",
   dateOfBirth: "2008-05-15",
   gender: "Male",
@@ -85,7 +86,8 @@ export default function BiodataPage() {
             <h2 className="text-xl font-semibold mb-4 text-primary">Personal Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-left">
               <BiodataItem label="Full Name" value={biodataDetails.fullName} />
-              <BiodataItem label="NISN" value={biodataDetails.nisn} />
+              <BiodataItem label="NISN (Nomor Induk Siswa Nasional)" value={biodataDetails.nisn} />
+              <BiodataItem label="NIK (Nomor Induk Kependudukan)" value={biodataDetails.nik} />
               <BiodataItem label="Place of Birth" value={biodataDetails.placeOfBirth} />
               <BiodataItem label="Date of Birth" value={biodataDetails.dateOfBirth} />
               <BiodataItem label="Gender" value={biodataDetails.gender} />
