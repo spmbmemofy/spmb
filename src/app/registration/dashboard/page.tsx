@@ -14,6 +14,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ChartContainer,
   ChartTooltip,
@@ -22,7 +24,7 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { LayoutDashboard, Building, ArrowUp, ArrowDown } from "lucide-react";
+import { LayoutDashboard, Building, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const chartData = [
@@ -141,6 +143,13 @@ export default function DashboardPage() {
   const [schoolData, setSchoolData] = React.useState<School[]>(initialSchoolData);
   const [sortConfig, setSortConfig] = React.useState<SchoolSortConfig>({ key: 'namaSekolah', direction: 'ascending' });
 
+  const [pageSize, setPageSize] = React.useState(5); // Default page size for schools
+  const [currentPage, setCurrentPage] = React.useState(1);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [pageSize]); // Reset to page 1 if page size changes
+
   const sortedSchoolData = React.useMemo(() => {
     let sortableItems = [...schoolData];
     if (sortConfig.key !== null) {
@@ -162,6 +171,16 @@ export default function DashboardPage() {
     }
     return sortableItems;
   }, [schoolData, sortConfig]);
+
+  const paginatedSchoolData = React.useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return sortedSchoolData.slice(startIndex, startIndex + pageSize);
+  }, [sortedSchoolData, currentPage, pageSize]);
+
+  const totalPages = React.useMemo(() => {
+    return Math.ceil(sortedSchoolData.length / pageSize);
+  }, [sortedSchoolData.length, pageSize]);
+
 
   const requestSort = (key: SchoolSortKey) => {
     let direction: SortDirection = 'ascending';
@@ -192,6 +211,18 @@ export default function DashboardPage() {
       </div>
     </TableHead>
   );
+
+  const handlePageSizeChange = (value: string) => {
+    setPageSize(parseInt(value, 10));
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
@@ -250,25 +281,71 @@ export default function DashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedSchoolData.map((school) => (
-                    <TableRow key={school.id}>
-                      <TableCell className="font-medium">
-                        <Link href={`/registration/school/${school.id}`} className="hover:underline text-primary">
-                          {school.namaSekolah}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-center">{school.akreditasi}</TableCell>
-                      <TableCell className="text-center">{school.kuota}</TableCell>
-                      <TableCell className="text-center">{school.jumlahPendaftar}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant={getStatusBadgeVariant(school.statusPendaftaran as SchoolStatus)}>
-                          {school.statusPendaftaran}
-                        </Badge>
+                  {paginatedSchoolData.length > 0 ? (
+                    paginatedSchoolData.map((school) => (
+                      <TableRow key={school.id}>
+                        <TableCell className="font-medium">
+                          <Link href={`/registration/school/${school.id}`} className="hover:underline text-primary">
+                            {school.namaSekolah}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-center">{school.akreditasi}</TableCell>
+                        <TableCell className="text-center">{school.kuota}</TableCell>
+                        <TableCell className="text-center">{school.jumlahPendaftar}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={getStatusBadgeVariant(school.statusPendaftaran as SchoolStatus)}>
+                            {school.statusPendaftaran}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                     <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
+                        Tidak ada data sekolah.
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
+            </div>
+             <div className="flex items-center justify-between mt-4 flex-wrap gap-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Data per halaman:</span>
+                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                  <SelectTrigger className="w-[80px]">
+                    <SelectValue placeholder={pageSize.toString()} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value={(sortedSchoolData.length).toString()}>Semua</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Sebelumnya
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Halaman {currentPage} dari {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                >
+                  Berikutnya
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
               Data sekolah dan pendaftar diperbarui secara berkala. Klik nama sekolah untuk detail.

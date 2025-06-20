@@ -4,7 +4,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, School as SchoolIcon, Users, Filter as FilterIcon, Search as SearchIcon, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowLeft, School as SchoolIcon, Users, Filter as FilterIcon, Search as SearchIcon, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -76,7 +76,7 @@ const allSchoolsData: School[] = [
 type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
 interface Applicant {
   id: string;
-  no: number;
+  noRegistrasi: string; // Used for unique key if NISN is not unique enough for UI
   fullName: string;
   nisn: string;
   jalur: "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
@@ -110,13 +110,13 @@ schoolIds.forEach((schoolId, schoolIndex) => {
 
     schoolApplicantsData[schoolId].push({
       id: `app${schoolIndex + 1}-${studentNumber}`,
-      no: studentNumber,
-      fullName: `${firstNames[firstNameIndex]} ${lastNames[lastNameIndex]}`, // Removed number from name
+      noRegistrasi: `REG${schoolIndex + 1}${String(studentNumber).padStart(4, '0')}`,
+      fullName: `${firstNames[firstNameIndex]} ${lastNames[lastNameIndex]}`,
       nisn: `005${nisnSchoolCode}${nisnStudentCode}${Math.floor(100 + Math.random() * 900)}`,
       jalur: jalurOptionsPlain[i % jalurOptionsPlain.length],
       asalSekolah: asalSekolahOptionsPlain[i % asalSekolahOptionsPlain.length],
       status: statusOptionsPlain[i % statusOptionsPlain.length],
-      peringkat: studentNumber,
+      peringkat: studentNumber, // Peringkat sederhana 1-50
     });
   }
 });
@@ -139,7 +139,7 @@ const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "s
   }
 };
 
-type SortKey = keyof Applicant;
+type SortKey = keyof Applicant | 'no'; // 'no' for displayed number
 type SortDirection = "ascending" | "descending";
 
 interface SortConfig {
@@ -156,9 +156,17 @@ export default function SchoolDetailPage() {
   const [selectedJalur, setSelectedJalur] = React.useState("Semua");
   const [selectedAsalSekolah, setSelectedAsalSekolah] = React.useState("Semua");
   const [sortConfig, setSortConfig] = React.useState<SortConfig>({ key: 'peringkat', direction: 'ascending' });
+  
+  const [pageSize, setPageSize] = React.useState(10);
+  const [currentPage, setCurrentPage] = React.useState(1);
+
 
   const school = allSchoolsData.find(s => s.id === schoolId);
   const applicants = schoolApplicantsData[schoolId] || [];
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedJalur, selectedAsalSekolah, pageSize]);
 
   const filteredApplicants = React.useMemo(() => {
     return applicants.filter(applicant => {
@@ -173,10 +181,10 @@ export default function SchoolDetailPage() {
 
   const sortedApplicants = React.useMemo(() => {
     let sortableItems = [...filteredApplicants];
-    if (sortConfig.key !== null) {
+    if (sortConfig.key !== null && sortConfig.key !== 'no') {
       sortableItems.sort((a, b) => {
-        const valA = a[sortConfig.key!];
-        const valB = b[sortConfig.key!];
+        const valA = a[sortConfig.key as keyof Applicant];
+        const valB = b[sortConfig.key as keyof Applicant];
 
         let comparison = 0;
         if (typeof valA === 'number' && typeof valB === 'number') {
@@ -184,15 +192,23 @@ export default function SchoolDetailPage() {
         } else if (typeof valA === 'string' && typeof valB === 'string') {
           comparison = valA.localeCompare(valB);
         } else {
-          // Fallback for mixed types or other types - treat as strings
           comparison = String(valA).localeCompare(String(valB));
         }
-
         return sortConfig.direction === 'ascending' ? comparison : -comparison;
       });
     }
     return sortableItems;
   }, [filteredApplicants, sortConfig]);
+
+  const paginatedApplicants = React.useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return sortedApplicants.slice(startIndex, startIndex + pageSize);
+  }, [sortedApplicants, currentPage, pageSize]);
+
+  const totalPages = React.useMemo(() => {
+    return Math.ceil(sortedApplicants.length / pageSize);
+  }, [sortedApplicants.length, pageSize]);
+
 
   const requestSort = (key: SortKey) => {
     let direction: SortDirection = 'ascending';
@@ -211,7 +227,6 @@ export default function SchoolDetailPage() {
     }
     return <ArrowDown className="ml-1 h-3 w-3" />;
   };
-
 
   if (!school) {
     return (
@@ -245,6 +260,18 @@ export default function SchoolDetailPage() {
     </TableHead>
   );
 
+  const handlePageSizeChange = (value: string) => {
+    setPageSize(parseInt(value, 10));
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8 space-y-6">
@@ -270,7 +297,7 @@ export default function SchoolDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
               <div><span className="font-medium text-muted-foreground">Akreditasi:</span> {school.akreditasi}</div>
               <div><span className="font-medium text-muted-foreground">Total Kuota:</span> {school.kuota}</div>
-              <div><span className="font-medium text-muted-foreground">Jumlah Pendaftar:</span> {school.jumlahPendaftar}</div>
+              <div><span className="font-medium text-muted-foreground">Jumlah Pendaftar:</span> {applicants.length}</div>
               <div><span className="font-medium text-muted-foreground">Status Pendaftaran:</span> <Badge variant={school.statusPendaftaran === "Buka" ? "default" : school.statusPendaftaran === "Segera Penuh" ? "secondary" : "destructive"}>{school.statusPendaftaran}</Badge></div>
               <div className="md:col-span-2"><span className="font-medium text-muted-foreground">Alamat:</span> {school.alamat}</div>
               <div className="md:col-span-2"><span className="font-medium text-muted-foreground">Telepon:</span> {school.telepon}</div>
@@ -335,7 +362,7 @@ export default function SchoolDetailPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {renderSortableHeader('no' as SortKey, "No.", "w-[50px] text-center")}
+                    {renderSortableHeader('no' as SortKey, "No.", "w-[60px] text-center")}
                     {renderSortableHeader('fullName' as SortKey, "Nama Lengkap")}
                     {renderSortableHeader('nisn' as SortKey, "NISN")}
                     {renderSortableHeader('asalSekolah' as SortKey, "Asal Sekolah")}
@@ -345,10 +372,10 @@ export default function SchoolDetailPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedApplicants.length > 0 ? (
-                    sortedApplicants.map((applicant) => (
+                  {paginatedApplicants.length > 0 ? (
+                    paginatedApplicants.map((applicant, index) => (
                       <TableRow key={applicant.id}>
-                        <TableCell className="text-center">{applicant.no}</TableCell>
+                        <TableCell className="text-center">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                         <TableCell className="font-medium">{applicant.fullName}</TableCell>
                         <TableCell>{applicant.nisn}</TableCell>
                         <TableCell>{applicant.asalSekolah}</TableCell>
@@ -378,9 +405,49 @@ export default function SchoolDetailPage() {
                 </TableBody>
               </Table>
             </div>
+            <div className="flex items-center justify-between mt-4 flex-wrap gap-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Data per halaman:</span>
+                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                  <SelectTrigger className="w-[80px]">
+                    <SelectValue placeholder={pageSize} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value={sortedApplicants.length.toString()}>Semua</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Sebelumnya
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Halaman {currentPage} dari {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                >
+                  Berikutnya
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
           </section>
         </CardContent>
       </Card>
     </div>
   );
 }
+
