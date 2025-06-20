@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { User, FileText, Settings, LogOut, Menu as MenuIcon, Home, ClipboardCheck } from 'lucide-react';
+import { User, FileText, Settings, LogOut, Menu as MenuIcon, Home, ClipboardCheck, UploadCloud } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -32,7 +32,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       href: '/registration/dashboard',
       label: 'BERANDA',
       icon: Home,
-      activePaths: ['/registration/dashboard', '/registration/school'], // Include school detail page
+      activePaths: ['/registration/dashboard', '/registration/school'], 
     },
     {
       href: '/registration/biodata',
@@ -42,9 +42,15 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     },
     {
       href: '/registration/documents',
-      label: 'PENDAFTARAN',
+      label: 'PILIH SEKOLAH',
       icon: FileText,
       activePaths: ['/registration/documents'], 
+    },
+    {
+      href: '/registration/document-upload',
+      label: 'UNGGAH BERKAS',
+      icon: UploadCloud,
+      activePaths: ['/registration/document-upload'],
     },
     {
       href: '/registration/selection',

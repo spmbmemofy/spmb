@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation"; // Import useRouter
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,6 +15,7 @@ const pathwayOptions = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
 
 export default function DocumentsPage() {
   const { toast } = useToast();
+  const router = useRouter(); // Initialize useRouter
   const [selectedSchoolId, setSelectedSchoolId] = React.useState<string>("");
   const [selectedPathway, setSelectedPathway] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -36,11 +38,11 @@ export default function DocumentsPage() {
     setTimeout(() => {
       toast({
         title: "Pilihan Disimpan",
-        description: `Anda memilih ${schoolName} melalui jalur ${selectedPathway}.`,
+        description: `Anda memilih ${schoolName} melalui jalur ${selectedPathway}. Melanjutkan ke halaman unggah berkas.`,
       });
       console.log("Pilihan Sekolah:", selectedSchoolId, "Jalur:", selectedPathway);
       setIsSubmitting(false);
-      // Here you might want to navigate to the next step, e.g., actual document upload page
+      router.push('/registration/document-upload'); // Navigate to document upload page
     }, 1000);
   };
 
