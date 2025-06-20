@@ -2,10 +2,9 @@
 "use client";
 
 import * as React from "react";
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { UserCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { UserCircle, CheckCircle2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 
@@ -70,7 +69,7 @@ export default function BiodataPage() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 sm:p-6 md:p-8">
+    <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
       <Card className="w-full max-w-3xl shadow-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
@@ -134,13 +133,7 @@ export default function BiodataPage() {
             <p className="text-xs text-muted-foreground mt-2">Nilai dalam skala 0-100.</p>
           </section>
         </CardContent>
-        <CardFooter className="flex flex-col sm:flex-row justify-between items-center pt-6 gap-4">
-            <Button variant="outline" asChild>
-                <Link href="/">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Kembali ke Login / Keluar
-                </Link>
-            </Button>
+        <CardFooter className="flex flex-col sm:flex-row justify-end items-center pt-6 gap-4">
             <Button 
               size="lg" 
               onClick={handleConfirm} 
@@ -152,6 +145,6 @@ export default function BiodataPage() {
             </Button>
         </CardFooter>
       </Card>
-    </main>
+    </div>
   );
 }
