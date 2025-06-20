@@ -63,7 +63,7 @@ export function LoginForm() {
     console.log("Form values:", values);
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    const isSuccess = Math.random() > 0.3;
+    const isSuccess = Math.random() > 0.3; // Simulasi keberhasilan/kegagalan acak
 
     if (isSuccess) {
         toast({
@@ -72,7 +72,7 @@ export function LoginForm() {
         });
 
         if (values.role === "applicant") {
-          router.push('/registration/biodata');
+          router.push('/registration/dashboard'); // Diubah dari biodata ke dashboard
         } else if (values.role === "admin") {
           // Admin specific redirect, for now, let's go to dashboard as an example
           router.push('/registration/dashboard');
