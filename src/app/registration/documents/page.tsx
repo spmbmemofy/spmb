@@ -66,7 +66,7 @@ export default function DocumentsPage() {
               <SelectContent>
                 {initialSchoolData.map((school) => (
                   <SelectItem key={school.id} value={school.id}>
-                    {school.namaSekolah} (Tahap {school.tahapPendaftaran})
+                    {school.namaSekolah}
                   </SelectItem>
                 ))}
               </SelectContent>
