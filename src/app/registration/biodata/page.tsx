@@ -2,11 +2,12 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UserCircle, CheckCircle2, Edit3, Save, XCircle } from 'lucide-react';
+import { UserCircle, CheckCircle2, Edit3, Save, XCircle, Upload } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadcnTableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 
@@ -99,8 +100,12 @@ export default function BiodataPage() {
     guardianName: initialBiodataDetails.guardianName,
   });
 
+  const [profilePhoto, setProfilePhoto] = React.useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   const semesterLabels = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5"];
-  const semesterKeys: (keyof typeof reportCardGradesData[0])[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
+  const semesterKeys: (keyof Pick<typeof reportCardGradesData[0], 'semester1' | 'semester2' | 'semester3' | 'semester4' | 'semester5'>)[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
+
 
   const calculateSemesterAverage = (semesterKey: typeof semesterKeys[0]): string => {
     let sum = 0;
@@ -186,6 +191,38 @@ export default function BiodataPage() {
     setIsEditingParentInfo(false);
   };
 
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast({
+          variant: "destructive",
+          title: "Ukuran File Terlalu Besar",
+          description: `File ${file.name} melebihi batas maksimal 2MB.`,
+        });
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        toast({
+          variant: "destructive",
+          title: "Jenis File Tidak Sesuai",
+          description: "Harap pilih file gambar (PNG, JPG, JPEG).",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePhoto(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      toast({
+        title: "Foto Terpilih",
+        description: `${file.name} siap ditampilkan.`,
+      });
+    }
+  };
+
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
@@ -196,10 +233,40 @@ export default function BiodataPage() {
           </div>
           <CardTitle className="text-2xl sm:text-3xl font-headline">Biodata & Nilai Rapor Pendaftar</CardTitle>
           <CardDescription className="text-md">
-            Harap tinjau biodata dan nilai rapor Anda di bawah ini. Informasi pribadi dan nilai telah diisi oleh administrasi sekolah. Anda dapat mengubah informasi orang tua/wali.
+            Harap tinjau biodata dan nilai rapor Anda di bawah ini. Informasi pribadi dan nilai telah diisi oleh administrasi sekolah. Anda dapat mengubah informasi orang tua/wali dan mengunggah foto profil.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
+          <div className="flex flex-col items-center mb-8 pt-4 border-t">
+            <div className="relative w-32 h-32 sm:w-36 sm:h-36 mb-4">
+              <Image
+                src={profilePhoto || "https://placehold.co/150x150.png"}
+                alt="Foto Profil"
+                layout="fill"
+                className="rounded-full object-cover border-2 border-primary shadow-md"
+                data-ai-hint="profile picture user"
+              />
+            </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handlePhotoChange}
+              accept="image/png, image/jpeg, image/jpg"
+              className="hidden"
+              id="photo-upload"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Unggah atau ganti foto profil"
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              {profilePhoto ? "Ganti Foto" : "Unggah Foto Profil"}
+            </Button>
+            <p className="text-xs text-muted-foreground mt-2">Maks. 2MB (PNG, JPG, JPEG)</p>
+          </div>
+
           <section>
             <h2 className="text-xl font-semibold mb-4 text-primary">Informasi Pribadi</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-left">
@@ -315,6 +382,8 @@ export default function BiodataPage() {
     </div>
   );
 }
+    
+
     
 
     
