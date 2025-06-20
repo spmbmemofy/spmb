@@ -53,6 +53,40 @@ const incomeOptions = [
     { value: "> Rp 15.000.000", label: "> Rp 15.000.000" },
 ];
 
+const villageOptions = [
+  { value: "Kel. Tanjung Redeb", label: "Kel. Tanjung Redeb" },
+  { value: "Kel. Gayam", label: "Kel. Gayam" },
+  { value: "Kel. Karang Ambun", label: "Kel. Karang Ambun" },
+  { value: "Kel. Bugis", label: "Kel. Bugis" },
+  { value: "Kel. Sungai Bedungun", label: "Kel. Sungai Bedungun" },
+  { value: "Desa Labanan Makmur", label: "Desa Labanan Makmur" },
+  { value: "Desa Sukan Tengah", label: "Desa Sukan Tengah" },
+];
+
+const subdistrictOptions = [
+  { value: "Kec. Tanjung Redeb", label: "Kec. Tanjung Redeb" },
+  { value: "Kec. Teluk Bayur", label: "Kec. Teluk Bayur" },
+  { value: "Kec. Sambaliung", label: "Kec. Sambaliung" },
+  { value: "Kec. Gunung Tabur", label: "Kec. Gunung Tabur" },
+  { value: "Kec. Segah", label: "Kec. Segah" },
+  { value: "Kec. Pulau Derawan", label: "Kec. Pulau Derawan" },
+];
+
+const districtOptions = [
+  { value: "Kabupaten Berau", label: "Kabupaten Berau" },
+  { value: "Kota Samarinda", label: "Kota Samarinda" },
+  { value: "Kota Balikpapan", label: "Kota Balikpapan" },
+  { value: "Kabupaten Kutai Kartanegara", label: "Kabupaten Kutai Kartanegara" },
+];
+
+const provinceOptions = [
+  { value: "Kalimantan Timur 77311", label: "Kalimantan Timur 77311" },
+  { value: "Kalimantan Timur 75111", label: "Kalimantan Timur 75111 (Samarinda)" },
+  { value: "Kalimantan Utara 77111", label: "Kalimantan Utara 77111" },
+  { value: "Jawa Timur 60234", label: "Jawa Timur 60234" },
+  { value: "DKI Jakarta 10110", label: "DKI Jakarta 10110" },
+];
+
 
 const initialBiodataDetails = {
   fullName: "Muhammad Rizky Pratama",
@@ -244,10 +278,10 @@ const personalInfoEditableFields: Array<{ key: BiodataKeys; label: string; type?
     { key: "religion", label: "Agama", selectOptions: religionOptions },
     { key: "streetName", label: "Nama Jalan" },
     { key: "rtRw", label: "RT/RW" },
-    { key: "village", label: "Kelurahan/Desa" },
-    { key: "subdistrict", label: "Kecamatan" },
-    { key: "district", label: "Kabupaten/Kota" },
-    { key: "province", label: "Provinsi & Kode Pos" },
+    { key: "village", label: "Kelurahan/Desa", selectOptions: villageOptions },
+    { key: "subdistrict", label: "Kecamatan", selectOptions: subdistrictOptions },
+    { key: "district", label: "Kabupaten/Kota", selectOptions: districtOptions },
+    { key: "province", label: "Provinsi & Kode Pos", selectOptions: provinceOptions },
     { key: "previousSchool", label: "Sekolah Asal" },
     { key: "contactNumber", label: "Nomor Kontak (Siswa/Orang Tua)", type: "tel" },
 ];
@@ -643,3 +677,6 @@ export default function BiodataPage() {
 
     
 
+
+
+    
