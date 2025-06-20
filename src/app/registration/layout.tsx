@@ -32,7 +32,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       href: '/registration/dashboard',
       label: 'BERANDA',
       icon: Home,
-      activePaths: ['/registration/dashboard'],
+      activePaths: ['/registration/dashboard', '/registration/school'], // Include school detail page
     },
     {
       href: '/registration/biodata',
@@ -84,7 +84,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
                   >
                     <Link href={item.href}>
                       <item.icon />
-                      <span>{item.label}</span>
+                      <span className="group-data-[state=collapsed]:hidden">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -97,7 +97,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
                 <SidebarMenuButton asChild tooltip={{ children: 'Keluar', side: 'right' }}>
                   <Link href="/">
                     <LogOut />
-                    <span>Keluar</span>
+                    <span className="group-data-[state=collapsed]:hidden">Keluar</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
