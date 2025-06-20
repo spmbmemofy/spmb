@@ -94,10 +94,11 @@ export default function DocumentsPage() {
         <CardFooter className="flex justify-end pt-6">
           <Button onClick={handleSubmit} disabled={isSubmitting || !selectedSchoolId || !selectedPathway}>
             <Save className="mr-2 h-4 w-4" />
-            {isSubmitting ? "Menyimpan..." : "Simpan Pilihan & Lanjutkan"}
+            {isSubmitting ? "Menyimpan..." : "Simpan dan Lanjutkan"}
           </Button>
         </CardFooter>
       </Card>
     </div>
   );
 }
+
