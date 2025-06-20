@@ -169,6 +169,13 @@ interface SchoolSortConfig {
   direction: SortDirection;
 }
 
+type OriginSchoolSortKey = keyof OriginSchool;
+interface OriginSchoolSortConfig {
+  key: OriginSchoolSortKey | null;
+  direction: SortDirection;
+}
+
+
 const getStatusBadgeVariant = (status: SchoolStatus): "default" | "secondary" | "destructive" => {
   switch (status) {
     case "Buka":
@@ -186,16 +193,28 @@ const getStatusBadgeVariant = (status: SchoolStatus): "default" | "secondary" | 
 export default function DashboardPage() {
   const [schoolData, setSchoolData] = React.useState<School[]>(initialSchoolData);
   const [originSchoolData, setOriginSchoolData] = React.useState<OriginSchool[]>(initialOriginSchoolData);
-  const [sortConfig, setSortConfig] = React.useState<SchoolSortConfig>({ key: 'namaSekolah', direction: 'ascending' });
-  const [selectedStage, setSelectedStage] = React.useState<string>("Semua Tahap"); // "Semua Tahap", "1", "2"
+  
+  // State for destination school table
+  const [schoolSortConfig, setSchoolSortConfig] = React.useState<SchoolSortConfig>({ key: 'namaSekolah', direction: 'ascending' });
+  const [selectedStage, setSelectedStage] = React.useState<string>("Semua Tahap");
+  const [schoolPageSize, setSchoolPageSize] = React.useState(5);
+  const [schoolCurrentPage, setSchoolCurrentPage] = React.useState(1);
 
-  const [pageSize, setPageSize] = React.useState(5);
-  const [currentPage, setCurrentPage] = React.useState(1);
+  // State for origin school table
+  const [originSchoolSortConfig, setOriginSchoolSortConfig] = React.useState<OriginSchoolSortConfig>({ key: 'namaSekolah', direction: 'ascending' });
+  const [originSchoolPageSize, setOriginSchoolPageSize] = React.useState(5);
+  const [originSchoolCurrentPage, setOriginSchoolCurrentPage] = React.useState(1);
+
 
   React.useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, selectedStage]);
+    setSchoolCurrentPage(1);
+  }, [schoolPageSize, selectedStage]);
 
+  React.useEffect(() => {
+    setOriginSchoolCurrentPage(1);
+  }, [originSchoolPageSize]);
+
+  // Logic for destination school table
   const filteredByStageSchoolData = React.useMemo(() => {
     if (selectedStage === "Semua Tahap") {
       return schoolData;
@@ -204,14 +223,12 @@ export default function DashboardPage() {
     return schoolData.filter(school => school.tahapPendaftaran === stage);
   }, [schoolData, selectedStage]);
 
-
   const sortedSchoolData = React.useMemo(() => {
     let sortableItems = [...filteredByStageSchoolData];
-    if (sortConfig.key !== null) {
+    if (schoolSortConfig.key !== null) {
       sortableItems.sort((a, b) => {
-        const valA = a[sortConfig.key!];
-        const valB = b[sortConfig.key!];
-
+        const valA = a[schoolSortConfig.key!];
+        const valB = b[schoolSortConfig.key!];
         let comparison = 0;
         if (typeof valA === 'number' && typeof valB === 'number') {
           comparison = valA - valB;
@@ -220,64 +237,109 @@ export default function DashboardPage() {
         } else {
           comparison = String(valA).localeCompare(String(valB));
         }
-        
-        return sortConfig.direction === 'ascending' ? comparison : -comparison;
+        return schoolSortConfig.direction === 'ascending' ? comparison : -comparison;
       });
     }
     return sortableItems;
-  }, [filteredByStageSchoolData, sortConfig]);
+  }, [filteredByStageSchoolData, schoolSortConfig]);
 
   const paginatedSchoolData = React.useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return sortedSchoolData.slice(startIndex, startIndex + pageSize);
-  }, [sortedSchoolData, currentPage, pageSize]);
+    const startIndex = (schoolCurrentPage - 1) * schoolPageSize;
+    return sortedSchoolData.slice(startIndex, startIndex + schoolPageSize);
+  }, [sortedSchoolData, schoolCurrentPage, schoolPageSize]);
 
-  const totalPages = React.useMemo(() => {
-    return Math.ceil(sortedSchoolData.length / pageSize);
-  }, [sortedSchoolData.length, pageSize]);
+  const totalSchoolPages = React.useMemo(() => {
+    return Math.ceil(sortedSchoolData.length / schoolPageSize);
+  }, [sortedSchoolData.length, schoolPageSize]);
 
-
-  const requestSort = (key: SchoolSortKey) => {
+  const requestSchoolSort = (key: SchoolSortKey) => {
     let direction: SortDirection = 'ascending';
-    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+    if (schoolSortConfig.key === key && schoolSortConfig.direction === 'ascending') {
       direction = 'descending';
     }
-    setSortConfig({ key, direction });
+    setSchoolSortConfig({ key, direction });
   };
 
-  const getSortIcon = (key: SchoolSortKey) => {
-    if (sortConfig.key !== key) {
-      return null;
-    }
-    if (sortConfig.direction === 'ascending') {
-      return <ArrowUp className="ml-1 h-3 w-3" />;
-    }
-    return <ArrowDown className="ml-1 h-3 w-3" />;
+  const getSchoolSortIcon = (key: SchoolSortKey) => {
+    if (schoolSortConfig.key !== key) return null;
+    return schoolSortConfig.direction === 'ascending' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />;
   };
 
-  const renderSortableHeader = (key: SchoolSortKey, label: string, className: string = "") => (
+  const renderSchoolSortableHeader = (key: SchoolSortKey, label: string, className: string = "") => (
     <TableHead
       className={cn("font-semibold cursor-pointer hover:bg-muted/50", className)}
-      onClick={() => requestSort(key)}
+      onClick={() => requestSchoolSort(key)}
     >
       <div className="flex items-center">
         {label}
-        {getSortIcon(key)}
+        {getSchoolSortIcon(key)}
       </div>
     </TableHead>
   );
 
-  const handlePageSizeChange = (value: string) => {
-    setPageSize(parseInt(value, 10));
+  const handleSchoolPageSizeChange = (value: string) => setSchoolPageSize(parseInt(value, 10));
+  const handlePreviousSchoolPage = () => setSchoolCurrentPage((prev) => Math.max(prev - 1, 1));
+  const handleNextSchoolPage = () => setSchoolCurrentPage((prev) => Math.min(prev + 1, totalSchoolPages));
+
+  // Logic for origin school table
+  const sortedOriginSchoolData = React.useMemo(() => {
+    let sortableItems = [...originSchoolData];
+    if (originSchoolSortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        const valA = a[originSchoolSortConfig.key!];
+        const valB = b[originSchoolSortConfig.key!];
+        let comparison = 0;
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          comparison = valA - valB;
+        } else if (typeof valA === 'string' && typeof valB === 'string') {
+          comparison = valA.localeCompare(valB);
+        } else {
+          comparison = String(valA).localeCompare(String(valB));
+        }
+        return originSchoolSortConfig.direction === 'ascending' ? comparison : -comparison;
+      });
+    }
+    return sortableItems;
+  }, [originSchoolData, originSchoolSortConfig]);
+
+  const paginatedOriginSchoolData = React.useMemo(() => {
+    const startIndex = (originSchoolCurrentPage - 1) * originSchoolPageSize;
+    return sortedOriginSchoolData.slice(startIndex, startIndex + originSchoolPageSize);
+  }, [sortedOriginSchoolData, originSchoolCurrentPage, originSchoolPageSize]);
+
+  const totalOriginSchoolPages = React.useMemo(() => {
+    return Math.ceil(sortedOriginSchoolData.length / originSchoolPageSize);
+  }, [sortedOriginSchoolData.length, originSchoolPageSize]);
+
+  const requestOriginSchoolSort = (key: OriginSchoolSortKey) => {
+    let direction: SortDirection = 'ascending';
+    if (originSchoolSortConfig.key === key && originSchoolSortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setOriginSchoolSortConfig({ key, direction });
   };
 
-  const handlePreviousPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  const getOriginSchoolSortIcon = (key: OriginSchoolSortKey) => {
+    if (originSchoolSortConfig.key !== key) return null;
+    return originSchoolSortConfig.direction === 'ascending' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />;
   };
 
-  const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  };
+  const renderOriginSchoolSortableHeader = (key: OriginSchoolSortKey, label: string, className: string = "") => (
+    <TableHead
+      className={cn("font-semibold cursor-pointer hover:bg-muted/50", className)}
+      onClick={() => requestOriginSchoolSort(key)}
+    >
+      <div className="flex items-center">
+        {label}
+        {getOriginSchoolSortIcon(key)}
+      </div>
+    </TableHead>
+  );
+
+  const handleOriginSchoolPageSizeChange = (value: string) => setOriginSchoolPageSize(parseInt(value, 10));
+  const handlePreviousOriginSchoolPage = () => setOriginSchoolCurrentPage((prev) => Math.max(prev - 1, 1));
+  const handleNextOriginSchoolPage = () => setOriginSchoolCurrentPage((prev) => Math.min(prev + 1, totalOriginSchoolPages));
+
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
@@ -343,12 +405,12 @@ export default function DashboardPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {renderSortableHeader('namaSekolah' as SchoolSortKey, "Nama Sekolah")}
-                    {renderSortableHeader('akreditasi' as SchoolSortKey, "Akreditasi", "text-center")}
-                    {renderSortableHeader('tahapPendaftaran' as SchoolSortKey, "Tahap", "text-center")}
-                    {renderSortableHeader('kuota' as SchoolSortKey, "Total Kuota", "text-center")}
-                    {renderSortableHeader('jumlahPendaftar' as SchoolSortKey, "Pendaftar", "text-center")}
-                    {renderSortableHeader('statusPendaftaran' as SchoolSortKey, "Status", "text-center")}
+                    {renderSchoolSortableHeader('namaSekolah', "Nama Sekolah")}
+                    {renderSchoolSortableHeader('akreditasi', "Akreditasi", "text-center")}
+                    {renderSchoolSortableHeader('tahapPendaftaran', "Tahap", "text-center")}
+                    {renderSchoolSortableHeader('kuota', "Total Kuota", "text-center")}
+                    {renderSchoolSortableHeader('jumlahPendaftar', "Pendaftar", "text-center")}
+                    {renderSchoolSortableHeader('statusPendaftaran', "Status", "text-center")}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -384,9 +446,9 @@ export default function DashboardPage() {
              <div className="flex items-center justify-between mt-4 flex-wrap gap-4">
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-muted-foreground">Data per halaman:</span>
-                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                <Select value={schoolPageSize.toString()} onValueChange={handleSchoolPageSizeChange}>
                   <SelectTrigger className="w-[80px]">
-                    <SelectValue placeholder={pageSize.toString()} />
+                    <SelectValue placeholder={schoolPageSize.toString()} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="5">5</SelectItem>
@@ -399,20 +461,20 @@ export default function DashboardPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handlePreviousPage}
-                  disabled={currentPage === 1}
+                  onClick={handlePreviousSchoolPage}
+                  disabled={schoolCurrentPage === 1}
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Sebelumnya
                 </Button>
                 <span className="text-sm text-muted-foreground">
-                  Halaman {currentPage} dari {totalPages}
+                  Halaman {schoolCurrentPage} dari {totalSchoolPages}
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages || totalPages === 0}
+                  onClick={handleNextSchoolPage}
+                  disabled={schoolCurrentPage === totalSchoolPages || totalSchoolPages === 0}
                 >
                   Berikutnya
                   <ChevronRight className="h-4 w-4 ml-1" />
@@ -433,15 +495,15 @@ export default function DashboardPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="font-semibold">Nama Sekolah Asal</TableHead>
-                    <TableHead className="text-center font-semibold">Status</TableHead>
-                    <TableHead className="text-center font-semibold">Akreditasi</TableHead>
-                    <TableHead className="text-center font-semibold">Jumlah Pendaftar</TableHead>
+                    {renderOriginSchoolSortableHeader('namaSekolah', "Nama Sekolah Asal")}
+                    {renderOriginSchoolSortableHeader('status', "Status", "text-center")}
+                    {renderOriginSchoolSortableHeader('akreditasi', "Akreditasi", "text-center")}
+                    {renderOriginSchoolSortableHeader('jumlahPendaftar', "Jumlah Pendaftar", "text-center")}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {originSchoolData.length > 0 ? (
-                    originSchoolData.map((school) => (
+                  {paginatedOriginSchoolData.length > 0 ? (
+                    paginatedOriginSchoolData.map((school) => (
                       <TableRow key={school.id}>
                         <TableCell className="font-medium">{school.namaSekolah}</TableCell>
                         <TableCell className="text-center">{school.status}</TableCell>
@@ -459,6 +521,44 @@ export default function DashboardPage() {
                 </TableBody>
               </Table>
             </div>
+            <div className="flex items-center justify-between mt-4 flex-wrap gap-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Data per halaman:</span>
+                <Select value={originSchoolPageSize.toString()} onValueChange={handleOriginSchoolPageSizeChange}>
+                  <SelectTrigger className="w-[80px]">
+                    <SelectValue placeholder={originSchoolPageSize.toString()} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value={(sortedOriginSchoolData.length > 0 ? sortedOriginSchoolData.length.toString() : "5")}>Semua</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePreviousOriginSchoolPage}
+                  disabled={originSchoolCurrentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Sebelumnya
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Halaman {originSchoolCurrentPage} dari {totalOriginSchoolPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextOriginSchoolPage}
+                  disabled={originSchoolCurrentPage === totalOriginSchoolPages || totalOriginSchoolPages === 0}
+                >
+                  Berikutnya
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
               Data sekolah asal pendaftar yang terdaftar di sistem.
             </p>
@@ -468,4 +568,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
