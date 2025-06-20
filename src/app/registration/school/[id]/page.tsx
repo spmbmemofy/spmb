@@ -25,7 +25,8 @@ const allSchoolsData: School[] = [
     jumlahPendaftar: 50, 
     statusPendaftaran: "Buka",
     alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Kab. Berau, Kalimantan Timur",
-    telepon: "0554-21045"
+    telepon: "0554-21045",
+    tahapPendaftaran: 1,
   },
   {
     id: "smkn1berau",
@@ -36,7 +37,8 @@ const allSchoolsData: School[] = [
     jumlahPendaftar: 50,
     statusPendaftaran: "Buka",
     alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Kab. Berau, Kalimantan Timur",
-    telepon: "0554-22112"
+    telepon: "0554-22112",
+    tahapPendaftaran: 2,
   },
   {
     id: "sman2berau",
@@ -47,7 +49,8 @@ const allSchoolsData: School[] = [
     jumlahPendaftar: 50,
     statusPendaftaran: "Buka",
     alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Kab. Berau, Kalimantan Timur",
-    telepon: "0554-23451"
+    telepon: "0554-23451",
+    tahapPendaftaran: 1,
   },
   {
     id: "smamuhammadiyahberau",
@@ -58,7 +61,8 @@ const allSchoolsData: School[] = [
     jumlahPendaftar: 50,
     statusPendaftaran: "Buka",
     alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Kab. Berau, Kalimantan Timur",
-    telepon: "0554-21987"
+    telepon: "0554-21987",
+    tahapPendaftaran: 2,
   },
   {
     id: "smkyphbberau",
@@ -69,7 +73,8 @@ const allSchoolsData: School[] = [
     jumlahPendaftar: 50,
     statusPendaftaran: "Buka",
     alamat: "Jl. Pangeran Antasari, Teluk Bayur, Kab. Berau, Kalimantan Timur",
-    telepon: "0554-24001"
+    telepon: "0554-24001",
+    tahapPendaftaran: 1,
   },
 ];
 
@@ -166,7 +171,6 @@ export default function SchoolDetailPage() {
     const mutasiQuota = school.jalurKuota.mutasi || 0;
     const targetVerifiedMutasiInMutasiPathway = mutasiQuota + 3; 
     let actualMutasiApplicantsAssigned = 0;
-    // let actualVerifiedMutasiApplicantsAssigned = 0; // Not strictly needed for logic as targetVerifiedMutasiInMutasiPathway handles it
 
     for (let i = 0; i < 50; i++) {
       const studentNumber = i + 1;
@@ -183,7 +187,6 @@ export default function SchoolDetailPage() {
           jalurPilihan = "Mutasi";
           actualMutasiApplicantsAssigned++;
           statusPilihan = "Terverifikasi";
-          // actualVerifiedMutasiApplicantsAssigned++;
       } else {
           const otherJalurOptions = jalurOptionsPlain.filter(j => j !== "Mutasi");
           if (i % 7 === 0 && actualMutasiApplicantsAssigned < (mutasiQuota + 5) && jalurOptionsPlain.includes("Mutasi")) { 
@@ -263,14 +266,18 @@ export default function SchoolDetailPage() {
           else if (pB === null) comparison = -1; 
           else comparison = pA - pB;
         } else {
-            const valA = a[sortConfig.key as keyof Omit<Applicant, 'peringkat'>];
-            const valB = b[sortConfig.key as keyof Omit<Applicant, 'peringkat'>];
-            if (typeof valA === 'number' && typeof valB === 'number') {
-            comparison = valA - valB;
+            const valA = a[sortConfig.key as keyof Omit<Applicant, 'peringkat'| 'asalSekolah'>]; // asalSekolah might not exist if removed
+            const valB = b[sortConfig.key as keyof Omit<Applicant, 'peringkat'| 'asalSekolah'>];
+            
+            // Handle asalSekolah explicitly if it's the sort key
+            if (sortConfig.key === 'asalSekolah') {
+                 comparison = (a.asalSekolah || "").localeCompare(b.asalSekolah || "");
+            } else if (typeof valA === 'number' && typeof valB === 'number') {
+                comparison = valA - valB;
             } else if (typeof valA === 'string' && typeof valB === 'string') {
-            comparison = valA.localeCompare(valB);
+                comparison = valA.localeCompare(valB);
             } else {
-            comparison = String(valA).localeCompare(String(valB));
+                comparison = String(valA).localeCompare(String(valB));
             }
         }
         return sortConfig.direction === 'ascending' ? comparison : -comparison;
@@ -402,6 +409,7 @@ export default function SchoolDetailPage() {
             <h3 className="text-lg font-semibold mb-3 text-primary">Informasi Umum Sekolah</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
               <div><span className="font-medium text-muted-foreground">Akreditasi:</span> {school.akreditasi}</div>
+              <div><span className="font-medium text-muted-foreground">Tahap Pendaftaran:</span> {school.tahapPendaftaran}</div>
               <div><span className="font-medium text-muted-foreground">Total Kuota Keseluruhan:</span> {school.kuota}</div>
               <div><span className="font-medium text-muted-foreground">Total Pendaftar:</span> {currentSchoolApplicants.length}</div>
               <div><span className="font-medium text-muted-foreground">Status Pendaftaran Umum:</span> <Badge variant={school.statusPendaftaran === "Buka" ? "default" : school.statusPendaftaran === "Segera Penuh" ? "secondary" : "destructive"}>{school.statusPendaftaran}</Badge></div>
@@ -456,8 +464,8 @@ export default function SchoolDetailPage() {
               <FilterIcon className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold text-primary">Filter Daftar Pendaftar</h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="relative lg:col-span-1">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="relative sm:col-span-1">
                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Cari Nama/NISN..."
@@ -596,13 +604,3 @@ export default function SchoolDetailPage() {
     </div>
   );
 }
-    
-
-    
-
-
-
-
-
-
-    

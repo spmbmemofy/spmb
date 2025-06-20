@@ -24,7 +24,7 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { LayoutDashboard, Building, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { LayoutDashboard, Building, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const chartData = [
@@ -66,7 +66,8 @@ const initialSchoolData = [
     jumlahPendaftar: 50,
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Berau",
-    telepon: "0554-21045"
+    telepon: "0554-21045",
+    tahapPendaftaran: 1 as const,
   },
   {
     id: "smkn1berau",
@@ -77,7 +78,8 @@ const initialSchoolData = [
     jumlahPendaftar: 50,
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Berau",
-    telepon: "0554-22112"
+    telepon: "0554-22112",
+    tahapPendaftaran: 2 as const,
   },
   {
     id: "sman2berau",
@@ -88,7 +90,8 @@ const initialSchoolData = [
     jumlahPendaftar: 50,
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Berau",
-    telepon: "0554-23451"
+    telepon: "0554-23451",
+    tahapPendaftaran: 1 as const,
   },
   {
     id: "smamuhammadiyahberau",
@@ -99,7 +102,8 @@ const initialSchoolData = [
     jumlahPendaftar: 50,
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Berau",
-    telepon: "0554-21987"
+    telepon: "0554-21987",
+    tahapPendaftaran: 2 as const,
   },
   {
     id: "smkyphbberau",
@@ -110,14 +114,15 @@ const initialSchoolData = [
     jumlahPendaftar: 50,
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. Pangeran Antasari, Teluk Bayur, Berau",
-    telepon: "0554-24001"
+    telepon: "0554-24001",
+    tahapPendaftaran: 1 as const,
   },
 ];
 
 export type SchoolStatus = "Buka" | "Segera Penuh" | "Tutup";
 export type School = typeof initialSchoolData[0];
 
-type SchoolSortKey = keyof School;
+type SchoolSortKey = keyof School | 'tahapPendaftaran';
 type SortDirection = "ascending" | "descending";
 
 interface SchoolSortConfig {
@@ -142,16 +147,26 @@ const getStatusBadgeVariant = (status: SchoolStatus): "default" | "secondary" | 
 export default function DashboardPage() {
   const [schoolData, setSchoolData] = React.useState<School[]>(initialSchoolData);
   const [sortConfig, setSortConfig] = React.useState<SchoolSortConfig>({ key: 'namaSekolah', direction: 'ascending' });
+  const [selectedStage, setSelectedStage] = React.useState<string>("Semua Tahap"); // "Semua Tahap", "1", "2"
 
-  const [pageSize, setPageSize] = React.useState(5); // Default page size for schools
+  const [pageSize, setPageSize] = React.useState(5);
   const [currentPage, setCurrentPage] = React.useState(1);
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [pageSize]); // Reset to page 1 if page size changes
+  }, [pageSize, selectedStage]); 
+
+  const filteredByStageSchoolData = React.useMemo(() => {
+    if (selectedStage === "Semua Tahap") {
+      return schoolData;
+    }
+    const stage = parseInt(selectedStage, 10);
+    return schoolData.filter(school => school.tahapPendaftaran === stage);
+  }, [schoolData, selectedStage]);
+
 
   const sortedSchoolData = React.useMemo(() => {
-    let sortableItems = [...schoolData];
+    let sortableItems = [...filteredByStageSchoolData];
     if (sortConfig.key !== null) {
       sortableItems.sort((a, b) => {
         const valA = a[sortConfig.key!];
@@ -170,7 +185,7 @@ export default function DashboardPage() {
       });
     }
     return sortableItems;
-  }, [schoolData, sortConfig]);
+  }, [filteredByStageSchoolData, sortConfig]);
 
   const paginatedSchoolData = React.useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -265,9 +280,24 @@ export default function DashboardPage() {
           </section>
 
           <section>
-            <div className="flex items-center justify-center mb-6">
-              <Building className="h-6 w-6 mr-2 text-primary" />
-              <h2 className="text-xl font-semibold text-primary text-center">Informasi Sekolah Tujuan (Kab. Berau)</h2>
+            <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
+                <div className="flex items-center space-x-2">
+                    <Building className="h-6 w-6 text-primary" />
+                    <h2 className="text-xl font-semibold text-primary">Informasi Sekolah Tujuan (Kab. Berau)</h2>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-muted-foreground"/>
+                    <Select value={selectedStage} onValueChange={setSelectedStage}>
+                        <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectValue placeholder="Filter Tahap" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="Semua Tahap">Semua Tahap</SelectItem>
+                        <SelectItem value="1">Tahap 1</SelectItem>
+                        <SelectItem value="2">Tahap 2</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
             <div className="overflow-x-auto rounded-md border">
               <Table>
@@ -275,6 +305,7 @@ export default function DashboardPage() {
                   <TableRow>
                     {renderSortableHeader('namaSekolah' as SchoolSortKey, "Nama Sekolah")}
                     {renderSortableHeader('akreditasi' as SchoolSortKey, "Akreditasi", "text-center")}
+                    {renderSortableHeader('tahapPendaftaran' as SchoolSortKey, "Tahap", "text-center")}
                     {renderSortableHeader('kuota' as SchoolSortKey, "Total Kuota", "text-center")}
                     {renderSortableHeader('jumlahPendaftar' as SchoolSortKey, "Pendaftar", "text-center")}
                     {renderSortableHeader('statusPendaftaran' as SchoolSortKey, "Status", "text-center")}
@@ -290,6 +321,7 @@ export default function DashboardPage() {
                           </Link>
                         </TableCell>
                         <TableCell className="text-center">{school.akreditasi}</TableCell>
+                        <TableCell className="text-center">{school.tahapPendaftaran}</TableCell>
                         <TableCell className="text-center">{school.kuota}</TableCell>
                         <TableCell className="text-center">{school.jumlahPendaftar}</TableCell>
                         <TableCell className="text-center">
@@ -301,8 +333,8 @@ export default function DashboardPage() {
                     ))
                   ) : (
                      <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
-                        Tidak ada data sekolah.
+                      <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
+                        Tidak ada data sekolah yang sesuai dengan filter.
                       </TableCell>
                     </TableRow>
                   )}
@@ -319,7 +351,7 @@ export default function DashboardPage() {
                   <SelectContent>
                     <SelectItem value="5">5</SelectItem>
                     <SelectItem value="10">10</SelectItem>
-                    <SelectItem value={(sortedSchoolData.length).toString()}>Semua</SelectItem>
+                    <SelectItem value={(sortedSchoolData.length > 0 ? sortedSchoolData.length.toString() : "5")}>Semua</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -356,4 +388,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
