@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { User, FileText, Settings, LogOut, Menu as MenuIcon, Home, ClipboardCheck, UploadCloud } from 'lucide-react';
+import { User, FileText, Settings, LogOut, Menu as MenuIcon, Home, ClipboardCheck } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -42,15 +42,9 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     },
     {
       href: '/registration/documents',
-      label: 'PILIH SEKOLAH',
+      label: 'PILIH SEKOLAH', // This will lead to document upload as well
       icon: FileText,
-      activePaths: ['/registration/documents'], 
-    },
-    {
-      href: '/registration/document-upload',
-      label: 'UNGGAH BERKAS',
-      icon: UploadCloud,
-      activePaths: ['/registration/document-upload'],
+      activePaths: ['/registration/documents', '/registration/document-upload'], 
     },
     {
       href: '/registration/selection',
