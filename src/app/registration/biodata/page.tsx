@@ -93,10 +93,16 @@ export default function BiodataPage() {
               <BiodataItem label="Agama" value={biodataDetails.religion} />
               <BiodataItem label="Alamat Lengkap" value={biodataDetails.address} />
               <BiodataItem label="Sekolah Asal" value={biodataDetails.previousSchool} />
+              <BiodataItem label="Nomor Kontak (Siswa/Orang Tua)" value={biodataDetails.contactNumber} />
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold mb-4 text-primary">Informasi Orang Tua/Wali</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-left">
               <BiodataItem label="Nama Ayah" value={biodataDetails.fatherName} />
               <BiodataItem label="Nama Ibu" value={biodataDetails.motherName} />
               <BiodataItem label="Nama Wali (jika ada)" value={biodataDetails.guardianName} />
-              <BiodataItem label="Nomor Kontak (Siswa/Orang Tua)" value={biodataDetails.contactNumber} />
             </div>
           </section>
 
