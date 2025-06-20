@@ -56,12 +56,12 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const initialSchoolData = [
+export const initialSchoolData = [
   {
     id: "sman1tanjungredeb",
     namaSekolah: "SMA Negeri 1 Tanjung Redeb",
     akreditasi: "A",
-    kuota: 266, 
+    kuota: 266,
     jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112 },
     jumlahPendaftar: 50,
     statusPendaftaran: "Buka" as SchoolStatus,
@@ -73,7 +73,7 @@ const initialSchoolData = [
     id: "smkn1berau",
     namaSekolah: "SMK Negeri 1 Berau",
     akreditasi: "A",
-    kuota: 304, 
+    kuota: 304,
     jalurKuota: { afirmasi: 64, mutasi: 16, prestasi: 96, domisili: 128 },
     jumlahPendaftar: 50,
     statusPendaftaran: "Buka" as SchoolStatus,
@@ -85,7 +85,7 @@ const initialSchoolData = [
     id: "sman2berau",
     namaSekolah: "SMA Negeri 2 Berau",
     akreditasi: "B",
-    kuota: 228, 
+    kuota: 228,
     jalurKuota: { afirmasi: 48, mutasi: 12, prestasi: 72, domisili: 96 },
     jumlahPendaftar: 50,
     statusPendaftaran: "Buka" as SchoolStatus,
@@ -97,7 +97,7 @@ const initialSchoolData = [
     id: "smamuhammadiyahberau",
     namaSekolah: "SMA Muhammadiyah Tanjung Redeb",
     akreditasi: "B",
-    kuota: 142, 
+    kuota: 142,
     jalurKuota: { afirmasi: 30, mutasi: 7, prestasi: 45, domisili: 60 },
     jumlahPendaftar: 50,
     statusPendaftaran: "Buka" as SchoolStatus,
@@ -109,7 +109,7 @@ const initialSchoolData = [
     id: "smkyphbberau",
     namaSekolah: "SMK YPSHB (Yayasan Pendidikan Sinar Harapan Bangsa) Berau",
     akreditasi: "B",
-    kuota: 190, 
+    kuota: 190,
     jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 80 },
     jumlahPendaftar: 50,
     statusPendaftaran: "Buka" as SchoolStatus,
@@ -154,7 +154,7 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [pageSize, selectedStage]); 
+  }, [pageSize, selectedStage]);
 
   const filteredByStageSchoolData = React.useMemo(() => {
     if (selectedStage === "Semua Tahap") {
@@ -216,7 +216,7 @@ export default function DashboardPage() {
   };
 
   const renderSortableHeader = (key: SchoolSortKey, label: string, className: string = "") => (
-    <TableHead 
+    <TableHead
       className={cn("font-semibold cursor-pointer hover:bg-muted/50", className)}
       onClick={() => requestSort(key)}
     >
