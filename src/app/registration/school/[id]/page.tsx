@@ -22,7 +22,7 @@ const allSchoolsData: School[] = [
   { id: "smkyphbberau", namaSekolah: "SMK YPSHB Berau", akreditasi: "B", kuota: 200, jumlahPendaftar: 125, statusPendaftaran: "Buka", alamat: "Jl. Pangeran Antasari, Teluk Bayur, Kab. Berau, Kalimantan Timur", telepon: "0554-24001" },
 ];
 
-type ApplicantStatus = "Lolos Seleksi" | "Menunggu Verifikasi" | "Tidak Lolos" | "Cadangan";
+type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
 interface Applicant {
   id: string;
   no: number;
@@ -37,44 +37,42 @@ interface Applicant {
 // Mock applicants for each school in Berau
 const schoolApplicantsData: Record<string, Applicant[]> = {
   "sman1tanjungredeb": [
-    { id: 'app1-1', no: 1, fullName: 'Aulia Rahman Hakim', nisn: '0051122334', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Lolos Seleksi', peringkat: 1 },
+    { id: 'app1-1', no: 1, fullName: 'Aulia Rahman Hakim', nisn: '0051122334', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Terverifikasi', peringkat: 1 },
     { id: 'app1-2', no: 2, fullName: 'Dewi Anggraini Putri', nisn: '0052233445', jalur: 'Domisili', asalSekolah: 'SMP Negeri 2 Teluk Bayur', status: 'Menunggu Verifikasi', peringkat: 2 },
-    { id: 'app1-3', no: 3, fullName: 'Rahmat Hidayatullah', nisn: '0053344556', jalur: 'Afirmasi', asalSekolah: 'MTs Al-Kautsar Berau', status: 'Lolos Seleksi', peringkat: 3 },
-    { id: 'app1-4', no: 4, fullName: 'Siti Aminah', nisn: '0054455667', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Cadangan', peringkat: 4 },
+    { id: 'app1-3', no: 3, fullName: 'Rahmat Hidayatullah', nisn: '0053344556', jalur: 'Afirmasi', asalSekolah: 'MTs Al-Kautsar Berau', status: 'Terverifikasi', peringkat: 3 },
+    { id: 'app1-4', no: 4, fullName: 'Siti Aminah', nisn: '0054455667', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Menunggu Verifikasi', peringkat: 4 },
   ],
   "smkn1berau": [
-    { id: 'app2-1', no: 1, fullName: 'Putri Amelia Sari', nisn: '0064455667', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Sambaliung', status: 'Tidak Lolos', peringkat: 1 },
-    { id: 'app2-2', no: 2, fullName: 'Fajar Maulana Ishaq', nisn: '0065566778', jalur: 'Domisili', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Cadangan', peringkat: 2 },
-    { id: 'app2-3', no: 3, fullName: 'Nur Azizah Fitriani', nisn: '0066677889', jalur: 'Umum', asalSekolah: 'SMP IT Ash-Shohwah Berau', status: 'Lolos Seleksi', peringkat: 3 },
+    { id: 'app2-1', no: 1, fullName: 'Putri Amelia Sari', nisn: '0064455667', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Sambaliung', status: 'Berkas tidak sesuai', peringkat: 1 },
+    { id: 'app2-2', no: 2, fullName: 'Fajar Maulana Ishaq', nisn: '0065566778', jalur: 'Domisili', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Menunggu Verifikasi', peringkat: 2 },
+    { id: 'app2-3', no: 3, fullName: 'Nur Azizah Fitriani', nisn: '0066677889', jalur: 'Umum', asalSekolah: 'SMP IT Ash-Shohwah Berau', status: 'Terverifikasi', peringkat: 3 },
   ],
   "sman2berau": [
-    { id: 'app3-1', no: 1, fullName: 'Bayu Saputra Dinata', nisn: '0077788990', jalur: 'Umum', asalSekolah: 'SMP Negeri 3 Gunung Tabur', status: 'Lolos Seleksi', peringkat: 1 },
+    { id: 'app3-1', no: 1, fullName: 'Bayu Saputra Dinata', nisn: '0077788990', jalur: 'Umum', asalSekolah: 'SMP Negeri 3 Gunung Tabur', status: 'Terverifikasi', peringkat: 1 },
     { id: 'app3-2', no: 2, fullName: 'Linda Wati', nisn: '0078899001', jalur: 'Domisili', asalSekolah: 'SMP Negeri 5 Segah', status: 'Menunggu Verifikasi', peringkat: 2 },
   ],
    "smamuhammadiyahberau": [
-    { id: 'app4-1', no: 1, fullName: 'Muhammad Iqbal', nisn: '0091234567', jalur: 'Prestasi', asalSekolah: 'MTs Muhammadiyah Berau', status: 'Lolos Seleksi', peringkat: 1},
+    { id: 'app4-1', no: 1, fullName: 'Muhammad Iqbal', nisn: '0091234567', jalur: 'Prestasi', asalSekolah: 'MTs Muhammadiyah Berau', status: 'Terverifikasi', peringkat: 1},
    ],
    "smkyphbberau": [
     { id: 'app5-1', no: 1, fullName: 'Indah Permatasari Dewi', nisn: '0088899001', jalur: 'Prestasi', asalSekolah: 'SMP Kristen Berau', status: 'Menunggu Verifikasi', peringkat: 1 },
-    { id: 'app5-2', no: 2, fullName: 'Agus Setiawan', nisn: '0089900112', jalur: 'Umum', asalSekolah: 'SMP PGRI Tanjung Redeb', status: 'Lolos Seleksi', peringkat: 2},
+    { id: 'app5-2', no: 2, fullName: 'Agus Setiawan', nisn: '0089900112', jalur: 'Umum', asalSekolah: 'SMP PGRI Tanjung Redeb', status: 'Terverifikasi', peringkat: 2},
    ],
 };
 
 const jalurOptions = ["Semua", "Afirmasi", "Mutasi", "Prestasi", "Domisili", "Umum"];
 const asalSekolahOptions = ["Semua", "SMP Negeri 1 Tanjung Redeb", "SMP Negeri 2 Teluk Bayur", "MTs Al-Kautsar Berau", "SMP Negeri 1 Sambaliung", "SMP IT Ash-Shohwah Berau", "SMP Negeri 3 Gunung Tabur", "SMP Kristen Berau", "SMP PGRI Tanjung Redeb", "SMP Negeri 5 Segah", "MTs Muhammadiyah Berau"];
 
-const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" | "outline" => {
+const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
   switch (status) {
-    case "Lolos Seleksi":
+    case "Terverifikasi":
       return "default"; 
     case "Menunggu Verifikasi":
       return "secondary"; 
-    case "Tidak Lolos":
+    case "Berkas tidak sesuai":
       return "destructive"; 
-    case "Cadangan":
-      return "outline"; 
     default:
-      return "default";
+      return "default"; // Fallback, though ideally unreachable with strict typing
   }
 };
 
@@ -244,4 +242,3 @@ export default function SchoolDetailPage() {
     </div>
   );
 }
-
