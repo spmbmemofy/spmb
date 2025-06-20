@@ -24,11 +24,12 @@ import {
 } from "@/components/ui/chart";
 import { LayoutDashboard, Building } from "lucide-react";
 
+// Updated chartData for 5 schools x 50 applicants = 250 total, distributed among 4 tracks
 const chartData = [
-  { track: "Afirmasi", applicants: 120, fill: "var(--color-afirmasi)" },
-  { track: "Mutasi", applicants: 75, fill: "var(--color-mutasi)" },
-  { track: "Prestasi", applicants: 200, fill: "var(--color-prestasi)" },
-  { track: "Domisili", applicants: 150, fill: "var(--color-domisili)" },
+  { track: "Afirmasi", applicants: 62, fill: "var(--color-afirmasi)" },
+  { track: "Mutasi", applicants: 62, fill: "var(--color-mutasi)" },
+  { track: "Prestasi", applicants: 63, fill: "var(--color-prestasi)" },
+  { track: "Domisili", applicants: 63, fill: "var(--color-domisili)" },
 ];
 
 const chartConfig = {
@@ -58,9 +59,9 @@ const schoolData = [
     id: "sman1tanjungredeb",
     namaSekolah: "SMA Negeri 1 Tanjung Redeb",
     akreditasi: "A",
-    kuota: 266, // 280 - 14 (umum)
+    kuota: 266, 
     jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112 },
-    jumlahPendaftar: 210,
+    jumlahPendaftar: 50, // Updated
     statusPendaftaran: "Buka",
     alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Berau",
     telepon: "0554-21045"
@@ -69,10 +70,10 @@ const schoolData = [
     id: "smkn1berau",
     namaSekolah: "SMK Negeri 1 Berau",
     akreditasi: "A",
-    kuota: 304, // 320 - 16 (umum)
+    kuota: 304, 
     jalurKuota: { afirmasi: 64, mutasi: 16, prestasi: 96, domisili: 128 },
-    jumlahPendaftar: 295,
-    statusPendaftaran: "Segera Penuh",
+    jumlahPendaftar: 50, // Updated
+    statusPendaftaran: "Buka", // Changed from "Segera Penuh" due to lower pendaftar
     alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Berau",
     telepon: "0554-22112"
   },
@@ -80,9 +81,9 @@ const schoolData = [
     id: "sman2berau",
     namaSekolah: "SMA Negeri 2 Berau",
     akreditasi: "B",
-    kuota: 228, // 240 - 12 (umum)
+    kuota: 228, 
     jalurKuota: { afirmasi: 48, mutasi: 12, prestasi: 72, domisili: 96 },
-    jumlahPendaftar: 180,
+    jumlahPendaftar: 50, // Updated
     statusPendaftaran: "Buka",
     alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Berau",
     telepon: "0554-23451"
@@ -91,10 +92,10 @@ const schoolData = [
     id: "smamuhammadiyahberau",
     namaSekolah: "SMA Muhammadiyah Tanjung Redeb",
     akreditasi: "B",
-    kuota: 142, // 150 - 8 (umum)
+    kuota: 142, 
     jalurKuota: { afirmasi: 30, mutasi: 7, prestasi: 45, domisili: 60 },
-    jumlahPendaftar: 150,
-    statusPendaftaran: "Tutup",
+    jumlahPendaftar: 50, // Updated
+    statusPendaftaran: "Buka", // Changed from "Tutup"
     alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Berau",
     telepon: "0554-21987"
   },
@@ -102,9 +103,9 @@ const schoolData = [
     id: "smkyphbberau",
     namaSekolah: "SMK YPSHB (Yayasan Pendidikan Sinar Harapan Bangsa) Berau",
     akreditasi: "B",
-    kuota: 190, // 200 - 10 (umum)
+    kuota: 190, 
     jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 80 },
-    jumlahPendaftar: 125,
+    jumlahPendaftar: 50, // Updated
     statusPendaftaran: "Buka",
     alamat: "Jl. Pangeran Antasari, Teluk Bayur, Berau",
     telepon: "0554-24001"
