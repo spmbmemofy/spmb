@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // Added for redirection
+import { useRouter } from "next/navigation"; 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -34,12 +34,12 @@ import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   role: z.enum(["applicant", "admin"], {
-    required_error: "You need to select a role.",
+    required_error: "Anda harus memilih peran.",
   }),
-  nisn: z.string().min(1, { message: "NISN is required." }),
+  nisn: z.string().min(1, { message: "NISN wajib diisi." }),
   password: z
     .string()
-    .min(6, { message: "Password must be at least 6 characters." }),
+    .min(6, { message: "Kata sandi minimal 6 karakter." }),
   rememberMe: z.boolean().default(false).optional(),
 });
 
@@ -47,7 +47,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const { toast } = useToast();
-  const router = useRouter(); // Initialize router
+  const router = useRouter(); 
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -60,33 +60,27 @@ export function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    // Simulate API call
     console.log("Form values:", values);
     await new Promise((resolve) => setTimeout(resolve, 1500));
     
-    // Mock success/error
-    const isSuccess = Math.random() > 0.3; // Simulate success/failure
+    const isSuccess = Math.random() > 0.3; 
 
     if (isSuccess) {
         toast({
-            title: "Login Successful",
-            description: `Welcome, ${values.role}! (NISN: ${values.nisn})`,
+            title: "Login Berhasil",
+            description: `Selamat datang, ${values.role === 'applicant' ? 'Pendaftar' : 'Admin'}! (NISN: ${values.nisn})`,
         });
         
-        // Redirect if applicant
         if (values.role === "applicant") {
           router.push('/registration/biodata');
         } else if (values.role === "admin") {
-          // Placeholder for admin redirect if needed in the future
-          // router.push('/admin/dashboard'); 
           console.log("Admin logged in, no specific redirect configured yet.");
         }
-        // form.reset(); // Optionally reset form on success
     } else {
         toast({
             variant: "destructive",
-            title: "Login Failed",
-            description: "Invalid NISN or password. Please try again.",
+            title: "Login Gagal",
+            description: "NISN atau kata sandi tidak valid. Silakan coba lagi.",
         });
     }
     setIsSubmitting(false);
@@ -98,9 +92,9 @@ export function LoginForm() {
         <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
           <Lock size={32} />
         </div>
-        <CardTitle className="text-2xl font-headline">Admission Portal Access</CardTitle>
+        <CardTitle className="text-2xl font-headline">Akses Portal Pendaftaran</CardTitle>
         <CardDescription>
-          Please select your role and enter your credentials to continue.
+          Silakan pilih peran Anda dan masukkan kredensial untuk melanjutkan.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -111,7 +105,7 @@ export function LoginForm() {
               name="role"
               render={({ field }) => (
                 <FormItem className="space-y-3">
-                  <FormLabel>Select Your Role</FormLabel>
+                  <FormLabel>Pilih Peran Anda</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
@@ -124,7 +118,7 @@ export function LoginForm() {
                         </FormControl>
                         <FormLabel htmlFor="applicant" className="font-normal flex items-center">
                           <User className="mr-2 h-5 w-5 text-accent" />
-                          Applicant
+                          Pendaftar
                         </FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-3 space-y-0">
@@ -152,7 +146,7 @@ export function LoginForm() {
                   <div className="relative">
                     <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <FormControl>
-                      <Input id="nisn" placeholder="Enter your NISN" {...field} className="pl-10" />
+                      <Input id="nisn" placeholder="Masukkan NISN Anda" {...field} className="pl-10" />
                     </FormControl>
                   </div>
                   <FormMessage />
@@ -164,14 +158,14 @@ export function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="password">Password</FormLabel>
+                  <FormLabel htmlFor="password">Kata Sandi</FormLabel>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <FormControl>
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
-                        placeholder="Enter your password"
+                        placeholder="Masukkan kata sandi Anda"
                         {...field}
                         className="pl-10 pr-10"
                       />
@@ -182,7 +176,7 @@ export function LoginForm() {
                       size="icon"
                       className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground"
                       onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </Button>
@@ -205,9 +199,9 @@ export function LoginForm() {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel htmlFor="rememberMe" className="font-normal">Remember me</FormLabel>
+                      <FormLabel htmlFor="rememberMe" className="font-normal">Ingat saya</FormLabel>
                       <FormDescription>
-                        Keep me logged in for 2 weeks.
+                        Biarkan saya tetap masuk selama 2 minggu.
                       </FormDescription>
                     </div>
                   </FormItem>
@@ -215,14 +209,14 @@ export function LoginForm() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Signing In..." : "Sign In"}
+              {isSubmitting ? "Sedang Masuk..." : "Masuk"}
             </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter className="flex justify-center">
         <Button variant="link" asChild className="text-sm">
-          <Link href="/forgot-password">Forgot Password?</Link>
+          <Link href="/forgot-password">Lupa Kata Sandi?</Link>
         </Button>
       </CardFooter>
     </Card>

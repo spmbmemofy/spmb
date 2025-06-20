@@ -13,10 +13,10 @@ import { useToast } from "@/hooks/use-toast";
 const biodataDetails = {
   fullName: "Ahmad Budi Santoso",
   nisn: "1234567890",
-  nik: "3171234505080001", // Added NIK
+  nik: "3171234505080001",
   placeOfBirth: "Jakarta",
   dateOfBirth: "2008-05-15",
-  gender: "Male",
+  gender: "Laki-laki",
   religion: "Islam",
   address: "Jl. Merdeka No. 10, RT 05 RW 02, Kel. Cempaka Putih, Kec. Menteng, Jakarta Pusat, DKI Jakarta 10310",
   previousSchool: "SMP Negeri 1 Jakarta Pusat",
@@ -27,12 +27,12 @@ const biodataDetails = {
 };
 
 const reportCardGradesData = [
-  { subject: "Mathematics", semester1: 85, semester2: 88, semester3: 90, semester4: 87, semester5: 92 },
-  { subject: "Natural Sciences (IPA)", semester1: 88, semester2: 90, semester3: 85, semester4: 89, semester5: 91 },
-  { subject: "Social Sciences (IPS)", semester1: 86, semester2: 84, semester3: 89, semester4: 85, semester5: 88 },
-  { subject: "Indonesian Language", semester1: 90, semester2: 87, semester3: 88, semester4: 92, semester5: 89 },
-  { subject: "English Language", semester1: 82, semester2: 85, semester3: 87, semester4: 88, semester5: 90 },
-  { subject: "Civics (PKN)", semester1: 87, semester2: 88, semester3: 86, semester4: 90, semester5: 89 },
+  { subject: "Matematika", semester1: 85, semester2: 88, semester3: 90, semester4: 87, semester5: 92 },
+  { subject: "Ilmu Pengetahuan Alam (IPA)", semester1: 88, semester2: 90, semester3: 85, semester4: 89, semester5: 91 },
+  { subject: "Ilmu Pengetahuan Sosial (IPS)", semester1: 86, semester2: 84, semester3: 89, semester4: 85, semester5: 88 },
+  { subject: "Bahasa Indonesia", semester1: 90, semester2: 87, semester3: 88, semester4: 92, semester5: 89 },
+  { subject: "Bahasa Inggris", semester1: 82, semester2: 85, semester3: 87, semester4: 88, semester5: 90 },
+  { subject: "Pendidikan Kewarganegaraan (PKN)", semester1: 87, semester2: 88, semester3: 86, semester4: 90, semester5: 89 },
 ];
 
 const calculateAverage = (grades: typeof reportCardGradesData[0]) => {
@@ -61,12 +61,12 @@ export default function BiodataPage() {
   const handleConfirm = () => {
     setIsConfirmed(true);
     toast({
-      title: "Biodata Confirmed",
-      description: "Your biodata and report card grades have been confirmed. Proceeding to the next step.",
+      title: "Biodata Terkonfirmasi",
+      description: "Biodata dan nilai rapor Anda telah dikonfirmasi. Melanjutkan ke tahap berikutnya.",
     });
     // Here you would typically navigate to the next step, e.g.:
     // router.push('/registration/next-step');
-    console.log("Biodata confirmed, ready for next step.");
+    console.log("Biodata dikonfirmasi, siap untuk tahap berikutnya.");
   };
 
   return (
@@ -76,44 +76,44 @@ export default function BiodataPage() {
           <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
             <UserCircle size={40} />
           </div>
-          <CardTitle className="text-3xl font-headline">Applicant Biodata & Grades</CardTitle>
+          <CardTitle className="text-3xl font-headline">Biodata & Nilai Rapor Pendaftar</CardTitle>
           <CardDescription className="text-md">
-            Please review your biodata and report card grades below. This information has been pre-filled by your previous school's administration.
+            Harap tinjau biodata dan nilai rapor Anda di bawah ini. Informasi ini telah diisi sebelumnya oleh administrasi sekolah asal Anda.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
           <section>
-            <h2 className="text-xl font-semibold mb-4 text-primary">Personal Information</h2>
+            <h2 className="text-xl font-semibold mb-4 text-primary">Informasi Pribadi</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-left">
-              <BiodataItem label="Full Name" value={biodataDetails.fullName} />
+              <BiodataItem label="Nama Lengkap" value={biodataDetails.fullName} />
               <BiodataItem label="NISN (Nomor Induk Siswa Nasional)" value={biodataDetails.nisn} />
               <BiodataItem label="NIK (Nomor Induk Kependudukan)" value={biodataDetails.nik} />
-              <BiodataItem label="Place of Birth" value={biodataDetails.placeOfBirth} />
-              <BiodataItem label="Date of Birth" value={biodataDetails.dateOfBirth} />
-              <BiodataItem label="Gender" value={biodataDetails.gender} />
-              <BiodataItem label="Religion" value={biodataDetails.religion} />
-              <BiodataItem label="Full Address" value={biodataDetails.address} />
-              <BiodataItem label="Previous School" value={biodataDetails.previousSchool} />
-              <BiodataItem label="Father's Name" value={biodataDetails.fatherName} />
-              <BiodataItem label="Mother's Name" value={biodataDetails.motherName} />
-              <BiodataItem label="Guardian's Name (if any)" value={biodataDetails.guardianName} />
-              <BiodataItem label="Contact Number (Student/Parent)" value={biodataDetails.contactNumber} />
+              <BiodataItem label="Tempat Lahir" value={biodataDetails.placeOfBirth} />
+              <BiodataItem label="Tanggal Lahir" value={biodataDetails.dateOfBirth} />
+              <BiodataItem label="Jenis Kelamin" value={biodataDetails.gender} />
+              <BiodataItem label="Agama" value={biodataDetails.religion} />
+              <BiodataItem label="Alamat Lengkap" value={biodataDetails.address} />
+              <BiodataItem label="Sekolah Asal" value={biodataDetails.previousSchool} />
+              <BiodataItem label="Nama Ayah" value={biodataDetails.fatherName} />
+              <BiodataItem label="Nama Ibu" value={biodataDetails.motherName} />
+              <BiodataItem label="Nama Wali (jika ada)" value={biodataDetails.guardianName} />
+              <BiodataItem label="Nomor Kontak (Siswa/Orang Tua)" value={biodataDetails.contactNumber} />
             </div>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-4 text-primary">Report Card Grades (SMP/MTs)</h2>
+            <h2 className="text-xl font-semibold mb-4 text-primary">Nilai Rapor (SMP/MTs)</h2>
             <div className="overflow-x-auto rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="font-semibold">Subject</TableHead>
+                    <TableHead className="font-semibold">Mata Pelajaran</TableHead>
                     <TableHead className="text-center font-semibold">Sem 1</TableHead>
                     <TableHead className="text-center font-semibold">Sem 2</TableHead>
                     <TableHead className="text-center font-semibold">Sem 3</TableHead>
                     <TableHead className="text-center font-semibold">Sem 4</TableHead>
                     <TableHead className="text-center font-semibold">Sem 5</TableHead>
-                    <TableHead className="text-right font-semibold">Average</TableHead>
+                    <TableHead className="text-right font-semibold">Rata-rata</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -131,14 +131,14 @@ export default function BiodataPage() {
                 </TableBody>
               </Table>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Grades are on a scale of 0-100.</p>
+            <p className="text-xs text-muted-foreground mt-2">Nilai dalam skala 0-100.</p>
           </section>
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row justify-between items-center pt-6 gap-4">
             <Button variant="outline" asChild>
                 <Link href="/">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Login / Logout
+                    Kembali ke Login / Keluar
                 </Link>
             </Button>
             <Button 
@@ -148,7 +148,7 @@ export default function BiodataPage() {
               className="w-full sm:w-auto"
             >
               <CheckCircle2 className="mr-2 h-5 w-5" />
-              {isConfirmed ? "Confirmed" : "Confirm and Continue"}
+              {isConfirmed ? "Terkonfirmasi" : "Konfirmasi dan Lanjutkan"}
             </Button>
         </CardFooter>
       </Card>
