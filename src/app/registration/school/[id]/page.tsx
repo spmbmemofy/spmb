@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { School } from "@/app/registration/dashboard/page";
+import type { School } from "@/app/registration/dashboard/page"; // Assuming JalurKuota is part of School type
 import { cn } from "@/lib/utils";
 
 // Mock data for schools - in a real app, this would come from an API
@@ -22,7 +22,7 @@ const allSchoolsData: School[] = [
     akreditasi: "A",
     kuota: 266,
     jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112 },
-    jumlahPendaftar: 50, // This will be visually consistent due to 50 generated applicants
+    jumlahPendaftar: 50, 
     statusPendaftaran: "Buka",
     alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Kab. Berau, Kalimantan Timur",
     telepon: "0554-21045"
@@ -62,7 +62,7 @@ const allSchoolsData: School[] = [
   },
   {
     id: "smkyphbberau",
-    namaSekolah: "SMK YPSHB Berau", // Shortened for consistency
+    namaSekolah: "SMK YPSHB Berau",
     akreditasi: "B",
     kuota: 190,
     jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 80 },
@@ -82,12 +82,12 @@ interface Applicant {
   jalur: "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
   asalSekolah: string;
   status: ApplicantStatus;
-  peringkat: number;
+  peringkat?: number | null; // Peringkat is now optional and can be null
 }
 
 const schoolIds = ["sman1tanjungredeb", "smkn1berau", "sman2berau", "smamuhammadiyahberau", "smkyphbberau"];
 const jalurOptionsPlain: Applicant['jalur'][] = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
-const asalSekolahOptionsPlain = [ // Base options if dynamic generation fails or for initial state
+const asalSekolahOptionsPlain = [ 
   "SMP Negeri 1 Tanjung Redeb", "SMP Negeri 2 Teluk Bayur", "MTs Al-Kautsar Berau",
   "SMP Negeri 1 Sambaliung", "SMP IT Ash-Shohwah Berau", "SMP Negeri 3 Gunung Tabur",
   "SMP Kristen Berau", "SMP PGRI Tanjung Redeb", "SMP Negeri 5 Segah", "MTs Muhammadiyah Berau",
@@ -125,6 +125,7 @@ interface SortConfig {
 export default function SchoolDetailPage() {
   const params = useParams();
   const schoolId = params.id as string;
+  const school = allSchoolsData.find(s => s.id === schoolId);
 
   const [currentSchoolApplicants, setCurrentSchoolApplicants] = React.useState<Applicant[]>([]);
   const [dynamicAsalSekolahOptions, setDynamicAsalSekolahOptions] = React.useState<string[]>(["Semua", ...asalSekolahOptionsPlain]);
@@ -139,7 +140,7 @@ export default function SchoolDetailPage() {
   const [currentPage, setCurrentPage] = React.useState(1);
 
   React.useEffect(() => {
-    if (!schoolId) {
+    if (!schoolId || !school) {
       setCurrentSchoolApplicants([]);
       setDynamicAsalSekolahOptions(["Semua", ...asalSekolahOptionsPlain]);
       return;
@@ -149,10 +150,10 @@ export default function SchoolDetailPage() {
     if (schoolIndex === -1) {
         setCurrentSchoolApplicants([]);
         setDynamicAsalSekolahOptions(["Semua", ...asalSekolahOptionsPlain]);
-        return; // School ID not found in our list
+        return; 
     }
 
-    const generatedApplicants: Applicant[] = [];
+    const generatedApplicantsBase: Omit<Applicant, 'peringkat'>[] = [];
     for (let i = 0; i < 50; i++) {
       const studentNumber = i + 1;
       const firstNameIndex = Math.floor(Math.random() * firstNames.length);
@@ -160,7 +161,7 @@ export default function SchoolDetailPage() {
       const nisnSchoolCode = String(schoolIndex + 1).padStart(2, '0');
       const nisnStudentCode = String(studentNumber).padStart(3, '0');
 
-      generatedApplicants.push({
+      generatedApplicantsBase.push({
         id: `app${schoolIndex + 1}-${studentNumber}`,
         noRegistrasi: `REG${schoolIndex + 1}${String(studentNumber).padStart(4, '0')}`,
         fullName: `${firstNames[firstNameIndex]} ${lastNames[lastNameIndex]}`,
@@ -168,28 +169,44 @@ export default function SchoolDetailPage() {
         jalur: jalurOptionsPlain[i % jalurOptionsPlain.length],
         asalSekolah: asalSekolahOptionsPlain[i % asalSekolahOptionsPlain.length],
         status: statusOptionsPlain[i % statusOptionsPlain.length],
-        peringkat: studentNumber,
       });
     }
-    setCurrentSchoolApplicants(generatedApplicants);
+    
+    // Assign ranks
+    const rankedApplicants: Applicant[] = generatedApplicantsBase.map(app => ({ ...app, peringkat: null as number | null }));
 
-    const uniqueAsalSekolah = [...new Set(generatedApplicants.map(a => a.asalSekolah).filter(Boolean))];
+    jalurOptionsPlain.forEach(jalurName => {
+      const verifiedApplicantsInJalur = rankedApplicants
+        .filter(app => app.jalur === jalurName && app.status === "Terverifikasi")
+        .sort((a, b) => { // Sort by ID for stable ranking
+          const idANum = parseInt(a.id.split('-')[1]);
+          const idBNum = parseInt(b.id.split('-')[1]);
+          return idANum - idBNum;
+        });
+
+      verifiedApplicantsInJalur.forEach((app, index) => {
+        const originalApplicantIndex = rankedApplicants.findIndex(origApp => origApp.id === app.id);
+        if (originalApplicantIndex !== -1) {
+          rankedApplicants[originalApplicantIndex].peringkat = index + 1;
+        }
+      });
+    });
+    
+    setCurrentSchoolApplicants(rankedApplicants);
+
+    const uniqueAsalSekolah = [...new Set(rankedApplicants.map(a => a.asalSekolah).filter(Boolean))];
     setDynamicAsalSekolahOptions(["Semua", ...uniqueAsalSekolah.sort()]);
-    setCurrentPage(1); // Reset page on data change
+    setCurrentPage(1); 
 
-  }, [schoolId]);
+  }, [schoolId, school]);
 
-
-  const school = allSchoolsData.find(s => s.id === schoolId);
-  // Use currentSchoolApplicants for filtering, sorting, and display
-  const applicants = currentSchoolApplicants; 
 
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedJalur, selectedAsalSekolah, pageSize]);
 
   const filteredApplicants = React.useMemo(() => {
-    return applicants.filter(applicant => {
+    return currentSchoolApplicants.filter(applicant => {
       const searchTermMatch =
         applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         applicant.nisn.includes(searchTerm);
@@ -197,28 +214,33 @@ export default function SchoolDetailPage() {
       const asalSekolahMatch = selectedAsalSekolah === "Semua" || applicant.asalSekolah === selectedAsalSekolah;
       return searchTermMatch && jalurMatch && asalSekolahMatch;
     });
-  }, [applicants, searchTerm, selectedJalur, selectedAsalSekolah]);
+  }, [currentSchoolApplicants, searchTerm, selectedJalur, selectedAsalSekolah]);
 
   const sortedApplicants = React.useMemo(() => {
     let sortableItems = [...filteredApplicants];
     if (sortConfig.key !== null && sortConfig.key !== 'no') {
       sortableItems.sort((a, b) => {
-        const valA = a[sortConfig.key as keyof Applicant];
-        const valB = b[sortConfig.key as keyof Applicant];
-
         let comparison = 0;
-        if (typeof valA === 'number' && typeof valB === 'number') {
-          comparison = valA - valB;
-        } else if (typeof valA === 'string' && typeof valB === 'string') {
-          comparison = valA.localeCompare(valB);
+        if (sortConfig.key === 'peringkat') {
+          const pA = a.peringkat;
+          const pB = b.peringkat;
+          if (pA === null && pB === null) comparison = 0;
+          else if (pA === null) comparison = 1; // nulls (unranked) go last
+          else if (pB === null) comparison = -1; // nulls (unranked) go last
+          else comparison = pA - pB;
         } else {
-          comparison = String(valA).localeCompare(String(valB));
+            const valA = a[sortConfig.key as keyof Omit<Applicant, 'peringkat'>];
+            const valB = b[sortConfig.key as keyof Omit<Applicant, 'peringkat'>];
+            if (typeof valA === 'number' && typeof valB === 'number') {
+            comparison = valA - valB;
+            } else if (typeof valA === 'string' && typeof valB === 'string') {
+            comparison = valA.localeCompare(valB);
+            } else {
+            comparison = String(valA).localeCompare(String(valB));
+            }
         }
         return sortConfig.direction === 'ascending' ? comparison : -comparison;
       });
-    } else if (sortConfig.key === 'no' && sortConfig.direction === 'descending') {
-       // For 'No.' column, descending means reverse of ascending order
-       // This part might need adjustment if 'no' is based on original index vs current page index
     }
     return sortableItems;
   }, [filteredApplicants, sortConfig]);
@@ -320,7 +342,7 @@ export default function SchoolDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
               <div><span className="font-medium text-muted-foreground">Akreditasi:</span> {school.akreditasi}</div>
               <div><span className="font-medium text-muted-foreground">Total Kuota:</span> {school.kuota}</div>
-              <div><span className="font-medium text-muted-foreground">Jumlah Pendaftar:</span> {applicants.length}</div>
+              <div><span className="font-medium text-muted-foreground">Jumlah Pendaftar:</span> {currentSchoolApplicants.length}</div>
               <div><span className="font-medium text-muted-foreground">Status Pendaftaran:</span> <Badge variant={school.statusPendaftaran === "Buka" ? "default" : school.statusPendaftaran === "Segera Penuh" ? "secondary" : "destructive"}>{school.statusPendaftaran}</Badge></div>
               <div className="md:col-span-2"><span className="font-medium text-muted-foreground">Alamat:</span> {school.alamat}</div>
               <div className="md:col-span-2"><span className="font-medium text-muted-foreground">Telepon:</span> {school.telepon}</div>
@@ -409,12 +431,22 @@ export default function SchoolDetailPage() {
                         </TableCell>
                         <TableCell>{applicant.jalur}</TableCell>
                         <TableCell
-                          className={cn(
-                            "text-right font-medium",
-                            applicant.peringkat <= school.kuota ? 'text-green-600' : 'text-red-600'
-                          )}
-                        >
-                          {applicant.peringkat}
+                            className={cn(
+                                "text-right font-medium",
+                                (() => {
+                                if (applicant.peringkat && school.jalurKuota) {
+                                    const pathwayKey = applicant.jalur.toLowerCase() as keyof typeof school.jalurKuota;
+                                    const pathwayQuota = school.jalurKuota[pathwayKey];
+                                    if (pathwayQuota !== undefined && applicant.peringkat <= pathwayQuota) {
+                                    return 'text-green-600';
+                                    }
+                                    return 'text-red-600'; 
+                                }
+                                return ''; 
+                                })()
+                            )}
+                            >
+                            {applicant.peringkat ?? '-'}
                         </TableCell>
                       </TableRow>
                     ))
@@ -473,4 +505,6 @@ export default function SchoolDetailPage() {
     </div>
   );
 }
+    
+
     
