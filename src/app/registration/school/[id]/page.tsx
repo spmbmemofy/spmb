@@ -11,64 +11,65 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { School } from "@/app/registration/dashboard/page"; 
+import type { School } from "@/app/registration/dashboard/page";
+import { cn } from "@/lib/utils";
 
 // Mock data for schools - in a real app, this would come from an API
 const allSchoolsData: School[] = [
-  { 
-    id: "sman1tanjungredeb", 
-    namaSekolah: "SMA Negeri 1 Tanjung Redeb", 
-    akreditasi: "A", 
+  {
+    id: "sman1tanjungredeb",
+    namaSekolah: "SMA Negeri 1 Tanjung Redeb",
+    akreditasi: "A",
     kuota: 266,
     jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112 },
     jumlahPendaftar: 50,
-    statusPendaftaran: "Buka", 
-    alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
-    telepon: "0554-21045" 
+    statusPendaftaran: "Buka",
+    alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Kab. Berau, Kalimantan Timur",
+    telepon: "0554-21045"
   },
-  { 
-    id: "smkn1berau", 
-    namaSekolah: "SMK Negeri 1 Berau", 
-    akreditasi: "A", 
+  {
+    id: "smkn1berau",
+    namaSekolah: "SMK Negeri 1 Berau",
+    akreditasi: "A",
     kuota: 304,
     jalurKuota: { afirmasi: 64, mutasi: 16, prestasi: 96, domisili: 128 },
     jumlahPendaftar: 50,
-    statusPendaftaran: "Buka", 
-    alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
-    telepon: "0554-22112" 
+    statusPendaftaran: "Buka",
+    alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Kab. Berau, Kalimantan Timur",
+    telepon: "0554-22112"
   },
-  { 
-    id: "sman2berau", 
-    namaSekolah: "SMA Negeri 2 Berau", 
-    akreditasi: "B", 
+  {
+    id: "sman2berau",
+    namaSekolah: "SMA Negeri 2 Berau",
+    akreditasi: "B",
     kuota: 228,
     jalurKuota: { afirmasi: 48, mutasi: 12, prestasi: 72, domisili: 96 },
     jumlahPendaftar: 50,
-    statusPendaftaran: "Buka", 
-    alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
-    telepon: "0554-23451" 
+    statusPendaftaran: "Buka",
+    alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Kab. Berau, Kalimantan Timur",
+    telepon: "0554-23451"
   },
-  { 
-    id: "smamuhammadiyahberau", 
-    namaSekolah: "SMA Muhammadiyah Tanjung Redeb", 
-    akreditasi: "B", 
+  {
+    id: "smamuhammadiyahberau",
+    namaSekolah: "SMA Muhammadiyah Tanjung Redeb",
+    akreditasi: "B",
     kuota: 142,
     jalurKuota: { afirmasi: 30, mutasi: 7, prestasi: 45, domisili: 60 },
     jumlahPendaftar: 50,
-    statusPendaftaran: "Buka", 
-    alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Kab. Berau, Kalimantan Timur", 
-    telepon: "0554-21987" 
+    statusPendaftaran: "Buka",
+    alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Kab. Berau, Kalimantan Timur",
+    telepon: "0554-21987"
   },
-  { 
-    id: "smkyphbberau", 
-    namaSekolah: "SMK YPSHB Berau", 
-    akreditasi: "B", 
+  {
+    id: "smkyphbberau",
+    namaSekolah: "SMK YPSHB Berau",
+    akreditasi: "B",
     kuota: 190,
     jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 80 },
     jumlahPendaftar: 50,
-    statusPendaftaran: "Buka", 
-    alamat: "Jl. Pangeran Antasari, Teluk Bayur, Kab. Berau, Kalimantan Timur", 
-    telepon: "0554-24001" 
+    statusPendaftaran: "Buka",
+    alamat: "Jl. Pangeran Antasari, Teluk Bayur, Kab. Berau, Kalimantan Timur",
+    telepon: "0554-24001"
   },
 ];
 
@@ -106,7 +107,7 @@ schoolIds.forEach((schoolId, schoolIndex) => {
     const lastNameIndex = Math.floor(Math.random() * lastNames.length);
     const nisnSchoolCode = String(schoolIndex + 1).padStart(2, '0');
     const nisnStudentCode = String(studentNumber).padStart(3, '0');
-    
+
     schoolApplicantsData[schoolId].push({
       id: `app${schoolIndex + 1}-${studentNumber}`,
       no: studentNumber,
@@ -115,7 +116,7 @@ schoolIds.forEach((schoolId, schoolIndex) => {
       jalur: jalurOptionsPlain[i % jalurOptionsPlain.length],
       asalSekolah: asalSekolahOptionsPlain[i % asalSekolahOptionsPlain.length],
       status: statusOptionsPlain[i % statusOptionsPlain.length],
-      peringkat: studentNumber, 
+      peringkat: studentNumber,
     });
   }
 });
@@ -186,7 +187,7 @@ export default function SchoolDetailPage() {
           // Fallback for mixed types or other types - treat as strings
           comparison = String(valA).localeCompare(String(valB));
         }
-        
+
         return sortConfig.direction === 'ascending' ? comparison : -comparison;
       });
     }
@@ -358,9 +359,10 @@ export default function SchoolDetailPage() {
                         </TableCell>
                         <TableCell>{applicant.jalur}</TableCell>
                         <TableCell
-                          className={`text-right font-medium ${
+                          className={cn(
+                            "text-right font-medium",
                             applicant.peringkat <= school.kuota ? 'text-green-600' : 'text-red-600'
-                          }`}
+                          )}
                         >
                           {applicant.peringkat}
                         </TableCell>
