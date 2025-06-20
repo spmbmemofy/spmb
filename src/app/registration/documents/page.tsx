@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation"; // Import useRouter
+import { useRouter } from "next/navigation";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,7 +15,7 @@ const pathwayOptions = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
 
 export default function DocumentsPage() {
   const { toast } = useToast();
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
   const [selectedSchoolId, setSelectedSchoolId] = React.useState<string>("");
   const [selectedPathway, setSelectedPathway] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -34,7 +34,6 @@ export default function DocumentsPage() {
 
     const schoolName = initialSchoolData.find(s => s.id === selectedSchoolId)?.namaSekolah || "Tidak Diketahui";
 
-    // Simulate API call
     setTimeout(() => {
       toast({
         title: "Pilihan Disimpan",
@@ -42,7 +41,7 @@ export default function DocumentsPage() {
       });
       console.log("Pilihan Sekolah:", selectedSchoolId, "Jalur:", selectedPathway);
       setIsSubmitting(false);
-      router.push('/registration/document-upload'); // Navigate to document upload page
+      router.push(`/registration/document-upload?pathway=${selectedPathway}`);
     }, 1000);
   };
 
@@ -68,7 +67,7 @@ export default function DocumentsPage() {
               <SelectContent>
                 {initialSchoolData.map((school) => (
                   <SelectItem key={school.id} value={school.id}>
-                    {school.namaSekolah}
+                    {school.namaSekolah} 
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -101,4 +100,3 @@ export default function DocumentsPage() {
     </div>
   );
 }
-
