@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -60,6 +61,8 @@ const schoolData = [
     kuota: 250,
     jumlahPendaftar: 180,
     statusPendaftaran: "Buka",
+    alamat: "Jl. Pendidikan No. 1, Kota Impian",
+    telepon: "021-1234567"
   },
   {
     id: "sma2",
@@ -68,6 +71,8 @@ const schoolData = [
     kuota: 150,
     jumlahPendaftar: 145,
     statusPendaftaran: "Segera Penuh",
+    alamat: "Jl. Harapan No. 2, Kota Impian",
+    telepon: "021-2345678"
   },
   {
     id: "smk1",
@@ -76,6 +81,8 @@ const schoolData = [
     kuota: 300,
     jumlahPendaftar: 220,
     statusPendaftaran: "Buka",
+    alamat: "Jl. Teknologi No. 3, Kota Impian",
+    telepon: "021-3456789"
   },
   {
     id: "sma3",
@@ -84,6 +91,8 @@ const schoolData = [
     kuota: 200,
     jumlahPendaftar: 200,
     statusPendaftaran: "Tutup",
+    alamat: "Jl. Cendekia No. 4, Kota Impian",
+    telepon: "021-4567890"
   },
   {
     id: "smk2",
@@ -92,19 +101,22 @@ const schoolData = [
     kuota: 180,
     jumlahPendaftar: 105,
     statusPendaftaran: "Buka",
+    alamat: "Jl. Karya No. 5, Kota Impian",
+    telepon: "021-5678901"
   },
 ];
 
-type SchoolStatus = "Buka" | "Segera Penuh" | "Tutup";
+export type SchoolStatus = "Buka" | "Segera Penuh" | "Tutup";
+export type School = typeof schoolData[0];
 
 const getStatusBadgeVariant = (status: SchoolStatus): "default" | "secondary" | "destructive" => {
   switch (status) {
     case "Buka":
-      return "default"; // Greenish or bluish - primary is sky blue
+      return "default";
     case "Segera Penuh":
-      return "secondary"; // Orangish - secondary is light primary, let's use default for now
+      return "secondary";
     case "Tutup":
-      return "destructive"; // Reddish
+      return "destructive";
     default:
       return "default";
   }
@@ -130,7 +142,7 @@ export default function DashboardPage() {
             <div className="aspect-[16/9] w-full">
               <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
+                  <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 50 }}>
                     <CartesianGrid vertical={false} />
                     <XAxis
                       dataKey="track"
@@ -171,7 +183,11 @@ export default function DashboardPage() {
                 <TableBody>
                   {schoolData.map((school) => (
                     <TableRow key={school.id}>
-                      <TableCell className="font-medium">{school.namaSekolah}</TableCell>
+                      <TableCell className="font-medium">
+                        <Link href={`/registration/school/${school.id}`} className="hover:underline text-primary">
+                          {school.namaSekolah}
+                        </Link>
+                      </TableCell>
                       <TableCell className="text-center">{school.akreditasi}</TableCell>
                       <TableCell className="text-center">{school.kuota}</TableCell>
                       <TableCell className="text-center">{school.jumlahPendaftar}</TableCell>
@@ -186,7 +202,7 @@ export default function DashboardPage() {
               </Table>
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              Data sekolah dan pendaftar diperbarui secara berkala.
+              Data sekolah dan pendaftar diperbarui secara berkala. Klik nama sekolah untuk detail.
             </p>
           </section>
         </CardContent>
@@ -194,3 +210,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
