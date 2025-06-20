@@ -4,14 +4,14 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, School as SchoolIcon, Users, Filter as FilterIcon, Search as SearchIcon, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, School as SchoolIcon, Users, Filter as FilterIcon, Search as SearchIcon, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, PieChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { School } from "@/app/registration/dashboard/page"; // Assuming JalurKuota is part of School type
+import type { School } from "@/app/registration/dashboard/page"; 
 import { cn } from "@/lib/utils";
 
 // Mock data for schools - in a real app, this would come from an API
@@ -82,8 +82,18 @@ interface Applicant {
   jalur: "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
   asalSekolah: string;
   status: ApplicantStatus;
-  peringkat?: number | null; // Peringkat is now optional and can be null
+  peringkat?: number | null; 
 }
+
+interface PathwayStats {
+  nama: string;
+  kuota: number;
+  terverifikasi: number;
+  menungguVerifikasi: number;
+  berkasTidakSesuai: number;
+  totalPendaftar: number;
+}
+
 
 const schoolIds = ["sman1tanjungredeb", "smkn1berau", "sman2berau", "smamuhammadiyahberau", "smkyphbberau"];
 const jalurOptionsPlain: Applicant['jalur'][] = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
@@ -172,13 +182,12 @@ export default function SchoolDetailPage() {
       });
     }
     
-    // Assign ranks
     const rankedApplicants: Applicant[] = generatedApplicantsBase.map(app => ({ ...app, peringkat: null as number | null }));
 
     jalurOptionsPlain.forEach(jalurName => {
       const verifiedApplicantsInJalur = rankedApplicants
         .filter(app => app.jalur === jalurName && app.status === "Terverifikasi")
-        .sort((a, b) => { // Sort by ID for stable ranking
+        .sort((a, b) => { 
           const idANum = parseInt(a.id.split('-')[1]);
           const idBNum = parseInt(b.id.split('-')[1]);
           return idANum - idBNum;
@@ -225,8 +234,8 @@ export default function SchoolDetailPage() {
           const pA = a.peringkat;
           const pB = b.peringkat;
           if (pA === null && pB === null) comparison = 0;
-          else if (pA === null) comparison = 1; // nulls (unranked) go last
-          else if (pB === null) comparison = -1; // nulls (unranked) go last
+          else if (pA === null) comparison = 1; 
+          else if (pB === null) comparison = -1; 
           else comparison = pA - pB;
         } else {
             const valA = a[sortConfig.key as keyof Omit<Applicant, 'peringkat'>];
@@ -253,6 +262,33 @@ export default function SchoolDetailPage() {
   const totalPages = React.useMemo(() => {
     return Math.ceil(sortedApplicants.length / pageSize);
   }, [sortedApplicants.length, pageSize]);
+
+  const pathwayStats: PathwayStats[] = React.useMemo(() => {
+    if (!school || !school.jalurKuota || !currentSchoolApplicants.length) {
+      return [];
+    }
+
+    return jalurOptionsPlain.map(jalurName => {
+      const pathwayKey = jalurName.toLowerCase() as keyof typeof school.jalurKuota;
+      const kuota = school.jalurKuota[pathwayKey] ?? 0;
+
+      const applicantsInPathway = currentSchoolApplicants.filter(app => app.jalur === jalurName);
+
+      const terverifikasi = applicantsInPathway.filter(app => app.status === "Terverifikasi").length;
+      const menungguVerifikasi = applicantsInPathway.filter(app => app.status === "Menunggu Verifikasi").length;
+      const berkasTidakSesuai = applicantsInPathway.filter(app => app.status === "Berkas tidak sesuai").length;
+      const totalPendaftar = applicantsInPathway.length;
+
+      return {
+        nama: jalurName,
+        kuota,
+        terverifikasi,
+        menungguVerifikasi,
+        berkasTidakSesuai,
+        totalPendaftar,
+      };
+    });
+  }, [currentSchoolApplicants, school]);
 
 
   const requestSort = (key: SortKey) => {
@@ -336,34 +372,64 @@ export default function SchoolDetailPage() {
           </div>
           <CardDescription>Detail informasi sekolah dan daftar pendaftar di Kabupaten Berau.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <section className="border rounded-lg p-4">
-            <h3 className="text-lg font-semibold mb-3 text-primary">Informasi Sekolah</h3>
+        <CardContent className="space-y-8">
+          <section className="border rounded-lg p-4 space-y-4">
+            <h3 className="text-lg font-semibold mb-3 text-primary">Informasi Umum Sekolah</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
               <div><span className="font-medium text-muted-foreground">Akreditasi:</span> {school.akreditasi}</div>
-              <div><span className="font-medium text-muted-foreground">Total Kuota:</span> {school.kuota}</div>
-              <div><span className="font-medium text-muted-foreground">Jumlah Pendaftar:</span> {currentSchoolApplicants.length}</div>
-              <div><span className="font-medium text-muted-foreground">Status Pendaftaran:</span> <Badge variant={school.statusPendaftaran === "Buka" ? "default" : school.statusPendaftaran === "Segera Penuh" ? "secondary" : "destructive"}>{school.statusPendaftaran}</Badge></div>
+              <div><span className="font-medium text-muted-foreground">Total Kuota Keseluruhan:</span> {school.kuota}</div>
+              <div><span className="font-medium text-muted-foreground">Total Pendaftar:</span> {currentSchoolApplicants.length}</div>
+              <div><span className="font-medium text-muted-foreground">Status Pendaftaran Umum:</span> <Badge variant={school.statusPendaftaran === "Buka" ? "default" : school.statusPendaftaran === "Segera Penuh" ? "secondary" : "destructive"}>{school.statusPendaftaran}</Badge></div>
               <div className="md:col-span-2"><span className="font-medium text-muted-foreground">Alamat:</span> {school.alamat}</div>
               <div className="md:col-span-2"><span className="font-medium text-muted-foreground">Telepon:</span> {school.telepon}</div>
-              {school.jalurKuota && (
-                <div className="md:col-span-2 mt-3">
-                  <h4 className="font-medium text-muted-foreground mb-1">Kuota per Jalur:</h4>
-                  <ul className="list-disc list-inside text-sm space-y-0.5 pl-4">
-                    <li>Afirmasi: {school.jalurKuota.afirmasi}</li>
-                    <li>Mutasi: {school.jalurKuota.mutasi}</li>
-                    <li>Prestasi: {school.jalurKuota.prestasi}</li>
-                    <li>Domisili: {school.jalurKuota.domisili}</li>
-                  </ul>
-                </div>
-              )}
+            </div>
+          </section>
+
+          <section className="border rounded-lg p-4 space-y-4">
+             <div className="flex items-center space-x-2 mb-3">
+                <PieChart className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold text-primary">Ringkasan Kuota & Pendaftar per Jalur</h3>
+            </div>
+            <div className="overflow-x-auto rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-semibold">Jalur</TableHead>
+                    <TableHead className="text-center font-semibold">Kuota</TableHead>
+                    <TableHead className="text-center font-semibold">Terverifikasi</TableHead>
+                    <TableHead className="text-center font-semibold">Menunggu Verifikasi</TableHead>
+                    <TableHead className="text-center font-semibold whitespace-nowrap">Berkas Tdk. Sesuai</TableHead>
+                    <TableHead className="text-center font-semibold">Total Pendaftar</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pathwayStats.length > 0 ? (
+                    pathwayStats.map((stats) => (
+                      <TableRow key={stats.nama}>
+                        <TableCell className="font-medium">{stats.nama}</TableCell>
+                        <TableCell className="text-center">{stats.kuota}</TableCell>
+                        <TableCell className="text-center">{stats.terverifikasi}</TableCell>
+                        <TableCell className="text-center">{stats.menungguVerifikasi}</TableCell>
+                        <TableCell className="text-center">{stats.berkasTidakSesuai}</TableCell>
+                        <TableCell className="text-center font-medium">{stats.totalPendaftar}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
+                        Data ringkasan jalur belum tersedia.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
           </section>
 
           <section className="border rounded-lg p-4 space-y-4">
             <div className="flex items-center space-x-2">
               <FilterIcon className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-semibold text-primary">Filter Pendaftar</h3>
+              <h3 className="text-lg font-semibold text-primary">Filter Daftar Pendaftar</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="relative">
