@@ -79,6 +79,7 @@ interface Applicant {
   noRegistrasi: string;
   fullName: string;
   nisn: string;
+  asalSekolah: string; 
   jalur: "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
   status: ApplicantStatus;
   peringkat?: number | null; 
@@ -96,8 +97,15 @@ interface PathwayStats {
 
 const schoolIds = ["sman1tanjungredeb", "smkn1berau", "sman2berau", "smamuhammadiyahberau", "smkyphbberau"];
 const jalurOptionsPlain: Applicant['jalur'][] = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
-
+const asalSekolahOptionsPlain = [
+    "SMP Negeri 1 Tanjung Redeb", 
+    "SMP Negeri 2 Teluk Bayur", 
+    "SMP Negeri 3 Sambaliung", 
+    "MTs Al-Kholil", 
+    "SMP IT Ash-Shohwah Berau"
+];
 const statusOptionsPlain: ApplicantStatus[] = ["Terverifikasi", "Menunggu Verifikasi", "Berkas tidak sesuai"];
+
 const firstNames = ["Ahmad", "Budi", "Citra", "Dewi", "Eka", "Fajar", "Gita", "Hendra", "Indah", "Joko", "Lia", "Mira", "Nina", "Omar", "Putu", "Rahmat", "Sari", "Tono", "Umar", "Vina", "Wati", "Yoga", "Zaki", "Amir", "Bella"];
 const lastNames = ["Santoso", "Wijaya", "Kusuma", "Lestari", "Pratama", "Wahyuni", "Setiawan", "Handayani", "Permana", "Wulandari", "Hakim", "Saleh", "Putri", "Maulana", "Siregar", "Abdullah", "Batubara", "Chandra", "Daulay", "Effendi"];
 
@@ -133,9 +141,11 @@ export default function SchoolDetailPage() {
   const school = allSchoolsData.find(s => s.id === schoolId);
 
   const [currentSchoolApplicants, setCurrentSchoolApplicants] = React.useState<Applicant[]>([]);
+  const [dynamicAsalSekolahOptions, setDynamicAsalSekolahOptions] = React.useState<string[]>(["Semua Asal Sekolah"]);
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedJalur, setSelectedJalur] = React.useState("Semua Jalur");
+  const [selectedAsalSekolah, setSelectedAsalSekolah] = React.useState("Semua Asal Sekolah");
   const [selectedStatus, setSelectedStatus] = React.useState<string>("Semua Status");
   const [sortConfig, setSortConfig] = React.useState<SortConfig>({ key: 'peringkat', direction: 'ascending' });
   
@@ -145,18 +155,19 @@ export default function SchoolDetailPage() {
   React.useEffect(() => {
     if (!schoolId || !school) {
       setCurrentSchoolApplicants([]);
+      setDynamicAsalSekolahOptions(["Semua Asal Sekolah"]);
       return;
     }
 
     const schoolIndex = schoolIds.findIndex(id => id === schoolId);
     if (schoolIndex === -1) {
         setCurrentSchoolApplicants([]);
+        setDynamicAsalSekolahOptions(["Semua Asal Sekolah"]);
         return; 
     }
     
     const generatedApplicantsBase: Omit<Applicant, 'peringkat'>[] = [];
     const mutasiQuota = school.jalurKuota.mutasi || 0;
-    // Target at least 3 more verified applicants in Mutasi than the quota
     const targetVerifiedMutasiInMutasiPathway = mutasiQuota + 3; 
     let actualMutasiApplicantsAssigned = 0;
     let actualVerifiedMutasiApplicantsAssigned = 0;
@@ -167,33 +178,27 @@ export default function SchoolDetailPage() {
       const lastNameIndex = Math.floor(Math.random() * lastNames.length);
       const nisnSchoolCode = String(schoolIndex + 1).padStart(2, '0');
       const nisnStudentCode = String(studentNumber).padStart(3, '0');
+      const asalSekolahPilihan = asalSekolahOptionsPlain[i % asalSekolahOptionsPlain.length];
 
       let jalurPilihan: Applicant['jalur'];
       let statusPilihan: ApplicantStatus;
 
-      // Prioritize creating verified applicants for Mutasi pathway up to targetVerifiedMutasiInMutasiPathway
       if (actualMutasiApplicantsAssigned < targetVerifiedMutasiInMutasiPathway) {
           jalurPilihan = "Mutasi";
           actualMutasiApplicantsAssigned++;
-          // For these prioritized Mutasi applicants, also force their status to Terverifikasi
           statusPilihan = "Terverifikasi";
           actualVerifiedMutasiApplicantsAssigned++;
       } else {
-          // For the rest of the 50 applicants, distribute them among other pathways,
-          // or allow a few more into Mutasi but with varied statuses.
           const otherJalurOptions = jalurOptionsPlain.filter(j => j !== "Mutasi");
-          // Add a few more to Mutasi beyond the 'targetVerifiedMutasiInMutasiPathway' for variety, but don't force their status
           if (i % 7 === 0 && actualMutasiApplicantsAssigned < (mutasiQuota + 5) && jalurOptionsPlain.includes("Mutasi")) { 
             jalurPilihan = "Mutasi";
             actualMutasiApplicantsAssigned++;
-            statusPilihan = statusOptionsPlain[i % statusOptionsPlain.length]; // Random status
+            statusPilihan = statusOptionsPlain[i % statusOptionsPlain.length];
           } else if (otherJalurOptions.length > 0) {
-            // Distribute among other pathways
             jalurPilihan = otherJalurOptions[i % otherJalurOptions.length];
             statusPilihan = statusOptionsPlain[i % statusOptionsPlain.length];
           } else { 
-            // Fallback if only Mutasi exists or otherJalurOptions is empty (should not happen with current setup)
-            jalurPilihan = jalurOptionsPlain[i % jalurOptionsPlain.length]; // Fallback to general distribution
+            jalurPilihan = jalurOptionsPlain[i % jalurOptionsPlain.length];
             statusPilihan = statusOptionsPlain[i % statusOptionsPlain.length];
           }
       }
@@ -203,6 +208,7 @@ export default function SchoolDetailPage() {
         noRegistrasi: `REG${schoolIndex + 1}${String(studentNumber).padStart(4, '0')}`,
         fullName: `${firstNames[firstNameIndex]} ${lastNames[lastNameIndex]}`,
         nisn: `005${nisnSchoolCode}${nisnStudentCode}${Math.floor(100 + Math.random() * 900)}`,
+        asalSekolah: asalSekolahPilihan,
         jalur: jalurPilihan,
         status: statusPilihan,
       });
@@ -228,6 +234,10 @@ export default function SchoolDetailPage() {
     });
     
     setCurrentSchoolApplicants(rankedApplicants);
+    
+    const uniqueAsalSekolah = ["Semua Asal Sekolah", ...new Set(rankedApplicants.map(app => app.asalSekolah))];
+    setDynamicAsalSekolahOptions(uniqueAsalSekolah);
+
     setCurrentPage(1); 
 
   }, [schoolId, school]);
@@ -235,7 +245,7 @@ export default function SchoolDetailPage() {
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedJalur, selectedStatus, pageSize]);
+  }, [searchTerm, selectedJalur, selectedAsalSekolah, selectedStatus, pageSize]);
 
   const filteredApplicants = React.useMemo(() => {
     return currentSchoolApplicants.filter(applicant => {
@@ -243,10 +253,11 @@ export default function SchoolDetailPage() {
         applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         applicant.nisn.includes(searchTerm);
       const jalurMatch = selectedJalur === "Semua Jalur" || applicant.jalur === selectedJalur;
+      const asalSekolahMatch = selectedAsalSekolah === "Semua Asal Sekolah" || applicant.asalSekolah === selectedAsalSekolah;
       const statusMatch = selectedStatus === "Semua Status" || applicant.status === selectedStatus;
-      return searchTermMatch && jalurMatch && statusMatch;
+      return searchTermMatch && jalurMatch && asalSekolahMatch && statusMatch;
     });
-  }, [currentSchoolApplicants, searchTerm, selectedJalur, selectedStatus]);
+  }, [currentSchoolApplicants, searchTerm, selectedJalur, selectedAsalSekolah, selectedStatus]);
 
   const sortedApplicants = React.useMemo(() => {
     let sortableItems = [...filteredApplicants];
@@ -454,7 +465,7 @@ export default function SchoolDetailPage() {
               <FilterIcon className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold text-primary">Filter Daftar Pendaftar</h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="relative lg:col-span-1">
                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -471,6 +482,16 @@ export default function SchoolDetailPage() {
                 <SelectContent>
                   {jalurOptions.map(jalur => (
                     <SelectItem key={jalur} value={jalur}>{jalur}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedAsalSekolah} onValueChange={setSelectedAsalSekolah}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter berdasarkan Asal Sekolah" />
+                </SelectTrigger>
+                <SelectContent>
+                  {dynamicAsalSekolahOptions.map(asal => (
+                    <SelectItem key={asal} value={asal}>{asal}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -499,6 +520,7 @@ export default function SchoolDetailPage() {
                     {renderSortableHeader('no' as SortKey, "No.", "w-[60px] text-center")}
                     {renderSortableHeader('fullName' as SortKey, "Nama Lengkap")}
                     {renderSortableHeader('nisn' as SortKey, "NISN")}
+                    {renderSortableHeader('asalSekolah' as SortKey, "Asal Sekolah")}
                     {renderSortableHeader('status' as SortKey, "Status", "text-center")}
                     {renderSortableHeader('jalur' as SortKey, "Jalur")}
                     {renderSortableHeader('peringkat' as SortKey, "Peringkat", "text-right")}
@@ -511,6 +533,7 @@ export default function SchoolDetailPage() {
                         <TableCell className="text-center">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                         <TableCell className="font-medium">{applicant.fullName}</TableCell>
                         <TableCell>{applicant.nisn}</TableCell>
+                        <TableCell>{applicant.asalSekolah}</TableCell>
                         <TableCell className="text-center">
                           <Badge variant={getApplicantStatusBadgeVariant(applicant.status)}>
                             {applicant.status}
@@ -539,7 +562,7 @@ export default function SchoolDetailPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground h-24">
                         { currentSchoolApplicants.length === 0 ? "Memuat data pendaftar..." : "Tidak ada data pendaftar yang sesuai dengan filter."}
                       </TableCell>
                     </TableRow>
@@ -595,6 +618,7 @@ export default function SchoolDetailPage() {
     
 
     
+
 
 
 
