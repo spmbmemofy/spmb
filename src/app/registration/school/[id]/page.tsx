@@ -15,11 +15,11 @@ import type { School, SchoolStatus } from "@/app/registration/dashboard/page"; /
 
 // Mock data for schools - in a real app, this would come from an API
 const allSchoolsData: School[] = [
-  { id: "sman1tanjungredeb", namaSekolah: "SMA Negeri 1 Tanjung Redeb", akreditasi: "A", kuota: 280, jumlahPendaftar: 210, statusPendaftaran: "Buka", alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-21045" },
-  { id: "smkn1berau", namaSekolah: "SMK Negeri 1 Berau", akreditasi: "A", kuota: 320, jumlahPendaftar: 295, statusPendaftaran: "Segera Penuh", alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-22112" },
-  { id: "sman2berau", namaSekolah: "SMA Negeri 2 Berau", akreditasi: "B", kuota: 240, jumlahPendaftar: 180, statusPendaftaran: "Buka", alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-23451" },
-  { id: "smamuhammadiyahberau", namaSekolah: "SMA Muhammadiyah Tanjung Redeb", akreditasi: "B", kuota: 150, jumlahPendaftar: 150, statusPendaftaran: "Tutup", alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-21987" },
-  { id: "smkyphbberau", namaSekolah: "SMK YPSHB Berau", akreditasi: "B", kuota: 200, jumlahPendaftar: 125, statusPendaftaran: "Buka", alamat: "Jl. Pangeran Antasari, Teluk Bayur, Kab. Berau, Kalimantan Timur", telepon: "0554-24001" },
+  { id: "sman1tanjungredeb", namaSekolah: "SMA Negeri 1 Tanjung Redeb", akreditasi: "A", kuota: 2, jumlahPendaftar: 210, statusPendaftaran: "Buka", alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-21045" },
+  { id: "smkn1berau", namaSekolah: "SMK Negeri 1 Berau", akreditasi: "A", kuota: 2, jumlahPendaftar: 295, statusPendaftaran: "Segera Penuh", alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-22112" },
+  { id: "sman2berau", namaSekolah: "SMA Negeri 2 Berau", akreditasi: "B", kuota: 1, jumlahPendaftar: 180, statusPendaftaran: "Buka", alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-23451" },
+  { id: "smamuhammadiyahberau", namaSekolah: "SMA Muhammadiyah Tanjung Redeb", akreditasi: "B", kuota: 1, jumlahPendaftar: 150, statusPendaftaran: "Tutup", alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-21987" },
+  { id: "smkyphbberau", namaSekolah: "SMK YPSHB Berau", akreditasi: "B", kuota: 1, jumlahPendaftar: 125, statusPendaftaran: "Buka", alamat: "Jl. Pangeran Antasari, Teluk Bayur, Kab. Berau, Kalimantan Timur", telepon: "0554-24001" },
 ];
 
 type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
@@ -223,7 +223,13 @@ export default function SchoolDetailPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>{applicant.jalur}</TableCell>
-                        <TableCell className="text-right">{applicant.peringkat}</TableCell>
+                        <TableCell 
+                          className={`text-right font-medium ${
+                            applicant.peringkat <= school.kuota ? 'text-green-600' : 'text-red-600'
+                          }`}
+                        >
+                          {applicant.peringkat}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -242,3 +248,4 @@ export default function SchoolDetailPage() {
     </div>
   );
 }
+
