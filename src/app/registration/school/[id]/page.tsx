@@ -15,11 +15,11 @@ import type { School, SchoolStatus } from "@/app/registration/dashboard/page"; /
 
 // Mock data for schools - in a real app, this would come from an API
 const allSchoolsData: School[] = [
-  { id: "sma1", namaSekolah: "SMA Negeri 1 Kota Impian", akreditasi: "A", kuota: 250, jumlahPendaftar: 180, statusPendaftaran: "Buka", alamat: "Jl. Pendidikan No. 1, Kota Impian", telepon: "021-1234567" },
-  { id: "sma2", namaSekolah: "SMA Swasta Harapan Bangsa", akreditasi: "A", kuota: 150, jumlahPendaftar: 145, statusPendaftaran: "Segera Penuh", alamat: "Jl. Harapan No. 2, Kota Impian", telepon: "021-2345678" },
-  { id: "smk1", namaSekolah: "SMK Negeri 2 Teknologi Maju", akreditasi: "B", kuota: 300, jumlahPendaftar: 220, statusPendaftaran: "Buka", alamat: "Jl. Teknologi No. 3, Kota Impian", telepon: "021-3456789" },
-  { id: "sma3", namaSekolah: "SMA Negeri 3 Cendekia", akreditasi: "A", kuota: 200, jumlahPendaftar: 200, statusPendaftaran: "Tutup", alamat: "Jl. Cendekia No. 4, Kota Impian", telepon: "021-4567890" },
-  { id: "smk2", namaSekolah: "SMK Swasta Karya Guna", akreditasi: "B", kuota: 180, jumlahPendaftar: 105, statusPendaftaran: "Buka", alamat: "Jl. Karya No. 5, Kota Impian", telepon: "021-5678901" },
+  { id: "sman1tanjungredeb", namaSekolah: "SMA Negeri 1 Tanjung Redeb", akreditasi: "A", kuota: 280, jumlahPendaftar: 210, statusPendaftaran: "Buka", alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-21045" },
+  { id: "smkn1berau", namaSekolah: "SMK Negeri 1 Berau", akreditasi: "A", kuota: 320, jumlahPendaftar: 295, statusPendaftaran: "Segera Penuh", alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-22112" },
+  { id: "sman2berau", namaSekolah: "SMA Negeri 2 Berau", akreditasi: "B", kuota: 240, jumlahPendaftar: 180, statusPendaftaran: "Buka", alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-23451" },
+  { id: "smamuhammadiyahberau", namaSekolah: "SMA Muhammadiyah Tanjung Redeb", akreditasi: "B", kuota: 150, jumlahPendaftar: 150, statusPendaftaran: "Tutup", alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Kab. Berau, Kalimantan Timur", telepon: "0554-21987" },
+  { id: "smkyphbberau", namaSekolah: "SMK YPSHB Berau", akreditasi: "B", kuota: 200, jumlahPendaftar: 125, statusPendaftaran: "Buka", alamat: "Jl. Pangeran Antasari, Teluk Bayur, Kab. Berau, Kalimantan Timur", telepon: "0554-24001" },
 ];
 
 type ApplicantStatus = "Lolos Seleksi" | "Menunggu Verifikasi" | "Tidak Lolos" | "Cadangan";
@@ -33,39 +33,40 @@ interface Applicant {
   status: ApplicantStatus;
 }
 
-// Mock applicants for each school
+// Mock applicants for each school in Berau
 const schoolApplicantsData: Record<string, Applicant[]> = {
-  "sma1": [
-    { id: 'app1-1', no: 1, fullName: 'Citra Dewi Lestari', nisn: '0012345678', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Kota Impian', status: 'Lolos Seleksi' },
-    { id: 'app1-2', no: 2, fullName: 'Budi Hartono Wijaya', nisn: '0023456789', jalur: 'Domisili', asalSekolah: 'SMP Swasta Mutiara', status: 'Menunggu Verifikasi' },
-    { id: 'app1-3', no: 3, fullName: 'Ahmad Al Ghazali', nisn: '0034567890', jalur: 'Afirmasi', asalSekolah: 'SMP Negeri 2 Kota Impian', status: 'Lolos Seleksi' },
+  "sman1tanjungredeb": [
+    { id: 'app1-1', no: 1, fullName: 'Aulia Rahman', nisn: '0051122334', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Lolos Seleksi' },
+    { id: 'app1-2', no: 2, fullName: 'Dewi Anggraini', nisn: '0052233445', jalur: 'Domisili', asalSekolah: 'SMP Negeri 2 Teluk Bayur', status: 'Menunggu Verifikasi' },
+    { id: 'app1-3', no: 3, fullName: 'Rahmat Hidayat', nisn: '0053344556', jalur: 'Afirmasi', asalSekolah: 'MTs Al-Kautsar Berau', status: 'Lolos Seleksi' },
   ],
-  "sma2": [
-    { id: 'app2-1', no: 1, fullName: 'Siti Aminah Putri', nisn: '0045678901', jalur: 'Prestasi', asalSekolah: 'MTs Al-Ikhlas', status: 'Tidak Lolos' },
-    { id: 'app2-2', no: 2, fullName: 'Eko Prasetyo Nugroho', nisn: '0056789012', jalur: 'Domisili', asalSekolah: 'SMP Negeri 1 Kota Impian', status: 'Cadangan' },
+  "smkn1berau": [
+    { id: 'app2-1', no: 1, fullName: 'Putri Amelia', nisn: '0064455667', jalur: 'Prestasi', asalSekolah: 'SMP Negeri 1 Sambaliung', status: 'Tidak Lolos' },
+    { id: 'app2-2', no: 2, fullName: 'Fajar Maulana', nisn: '0065566778', jalur: 'Domisili', asalSekolah: 'SMP Negeri 1 Tanjung Redeb', status: 'Cadangan' },
+    { id: 'app2-3', no: 3, fullName: 'Nur Azizah', nisn: '0066677889', jalur: 'Umum', asalSekolah: 'SMP IT Ash-Shohwah Berau', status: 'Lolos Seleksi' },
   ],
-  "smk1": [
-    { id: 'app3-1', no: 1, fullName: 'Rizky Maulana Akbar', nisn: '0067890123', jalur: 'Umum', asalSekolah: 'SMP Harapan Kita', status: 'Lolos Seleksi' },
+  "sman2berau": [
+    { id: 'app3-1', no: 1, fullName: 'Bayu Saputra', nisn: '0077788990', jalur: 'Umum', asalSekolah: 'SMP Negeri 3 Gunung Tabur', status: 'Lolos Seleksi' },
   ],
-   "sma3": [], // No applicants for closed school
-   "smk2": [
-    { id: 'app5-1', no: 1, fullName: 'Putu Ayu Saraswati', nisn: '0078901234', jalur: 'Prestasi', asalSekolah: 'SMP Bintang Timur', status: 'Menunggu Verifikasi' },
+   "smamuhammadiyahberau": [], 
+   "smkyphbberau": [
+    { id: 'app5-1', no: 1, fullName: 'Indah Permatasari', nisn: '0088899001', jalur: 'Prestasi', asalSekolah: 'SMP Kristen Berau', status: 'Menunggu Verifikasi' },
    ],
 };
 
 const jalurOptions = ["Semua", "Afirmasi", "Mutasi", "Prestasi", "Domisili", "Umum"];
-const asalSekolahOptions = ["Semua", "SMP Negeri 1 Kota Impian", "SMP Swasta Mutiara", "SMP Negeri 2 Kota Impian", "MTs Al-Ikhlas", "SMP Harapan Kita", "SMP Bintang Timur"];
+const asalSekolahOptions = ["Semua", "SMP Negeri 1 Tanjung Redeb", "SMP Negeri 2 Teluk Bayur", "MTs Al-Kautsar Berau", "SMP Negeri 1 Sambaliung", "SMP IT Ash-Shohwah Berau", "SMP Negeri 3 Gunung Tabur", "SMP Kristen Berau", "SMP PGRI Tanjung Redeb"];
 
 const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" | "outline" => {
   switch (status) {
     case "Lolos Seleksi":
-      return "default"; // Greenish (primary)
+      return "default"; 
     case "Menunggu Verifikasi":
-      return "secondary"; // Bluish/Grayish
+      return "secondary"; 
     case "Tidak Lolos":
-      return "destructive"; // Reddish
+      return "destructive"; 
     case "Cadangan":
-      return "outline"; // Neutral
+      return "outline"; 
     default:
       return "default";
   }
@@ -133,7 +134,7 @@ export default function SchoolDetailPage() {
               </Link>
             </Button>
           </div>
-          <CardDescription>Detail informasi sekolah dan daftar pendaftar.</CardDescription>
+          <CardDescription>Detail informasi sekolah dan daftar pendaftar di Kabupaten Berau.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <section className="border rounded-lg p-4">
@@ -235,6 +236,3 @@ export default function SchoolDetailPage() {
     </div>
   );
 }
-
-
-    

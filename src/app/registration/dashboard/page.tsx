@@ -55,54 +55,54 @@ const chartConfig = {
 
 const schoolData = [
   {
-    id: "sma1",
-    namaSekolah: "SMA Negeri 1 Kota Impian",
+    id: "sman1tanjungredeb",
+    namaSekolah: "SMA Negeri 1 Tanjung Redeb",
     akreditasi: "A",
-    kuota: 250,
+    kuota: 280,
+    jumlahPendaftar: 210,
+    statusPendaftaran: "Buka",
+    alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Berau",
+    telepon: "0554-21045"
+  },
+  {
+    id: "smkn1berau",
+    namaSekolah: "SMK Negeri 1 Berau",
+    akreditasi: "A",
+    kuota: 320,
+    jumlahPendaftar: 295,
+    statusPendaftaran: "Segera Penuh",
+    alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Berau",
+    telepon: "0554-22112"
+  },
+  {
+    id: "sman2berau",
+    namaSekolah: "SMA Negeri 2 Berau",
+    akreditasi: "B",
+    kuota: 240,
     jumlahPendaftar: 180,
     statusPendaftaran: "Buka",
-    alamat: "Jl. Pendidikan No. 1, Kota Impian",
-    telepon: "021-1234567"
+    alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Berau",
+    telepon: "0554-23451"
   },
   {
-    id: "sma2",
-    namaSekolah: "SMA Swasta Harapan Bangsa",
-    akreditasi: "A",
+    id: "smamuhammadiyahberau",
+    namaSekolah: "SMA Muhammadiyah Tanjung Redeb",
+    akreditasi: "B",
     kuota: 150,
-    jumlahPendaftar: 145,
-    statusPendaftaran: "Segera Penuh",
-    alamat: "Jl. Harapan No. 2, Kota Impian",
-    telepon: "021-2345678"
-  },
-  {
-    id: "smk1",
-    namaSekolah: "SMK Negeri 2 Teknologi Maju",
-    akreditasi: "B",
-    kuota: 300,
-    jumlahPendaftar: 220,
-    statusPendaftaran: "Buka",
-    alamat: "Jl. Teknologi No. 3, Kota Impian",
-    telepon: "021-3456789"
-  },
-  {
-    id: "sma3",
-    namaSekolah: "SMA Negeri 3 Cendekia",
-    akreditasi: "A",
-    kuota: 200,
-    jumlahPendaftar: 200,
+    jumlahPendaftar: 150,
     statusPendaftaran: "Tutup",
-    alamat: "Jl. Cendekia No. 4, Kota Impian",
-    telepon: "021-4567890"
+    alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Berau",
+    telepon: "0554-21987"
   },
   {
-    id: "smk2",
-    namaSekolah: "SMK Swasta Karya Guna",
+    id: "smkyphbberau",
+    namaSekolah: "SMK YPSHB (Yayasan Pendidikan Sinar Harapan Bangsa) Berau",
     akreditasi: "B",
-    kuota: 180,
-    jumlahPendaftar: 105,
+    kuota: 200,
+    jumlahPendaftar: 125,
     statusPendaftaran: "Buka",
-    alamat: "Jl. Karya No. 5, Kota Impian",
-    telepon: "021-5678901"
+    alamat: "Jl. Pangeran Antasari, Teluk Bayur, Berau",
+    telepon: "0554-24001"
   },
 ];
 
@@ -133,7 +133,7 @@ export default function DashboardPage() {
           </div>
           <CardTitle className="text-3xl font-headline">Beranda Pendaftaran</CardTitle>
           <CardDescription className="text-md">
-            Ringkasan data pendaftar berdasarkan jalur penerimaan dan informasi sekolah.
+            Ringkasan data pendaftar berdasarkan jalur penerimaan dan informasi sekolah di Kabupaten Berau.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-12">
@@ -142,7 +142,7 @@ export default function DashboardPage() {
             <div className="aspect-[16/9] w-full">
               <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 50 }}>
+                  <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
                     <CartesianGrid vertical={false} />
                     <XAxis
                       dataKey="track"
@@ -156,8 +156,8 @@ export default function DashboardPage() {
                       cursor={false}
                       content={<ChartTooltipContent indicator="dashed" />}
                     />
+                     <ChartLegend content={<ChartLegendContent />} />
                     <Bar dataKey="applicants" radius={8} />
-                    <ChartLegend content={<ChartLegendContent />} />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -167,7 +167,7 @@ export default function DashboardPage() {
           <section>
             <div className="flex items-center justify-center mb-6">
               <Building className="h-6 w-6 mr-2 text-primary" />
-              <h2 className="text-xl font-semibold text-primary text-center">Informasi Sekolah Tujuan</h2>
+              <h2 className="text-xl font-semibold text-primary text-center">Informasi Sekolah Tujuan (Kab. Berau)</h2>
             </div>
             <div className="overflow-x-auto rounded-md border">
               <Table>
@@ -210,5 +210,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

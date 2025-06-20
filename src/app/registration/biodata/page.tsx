@@ -8,30 +8,30 @@ import { UserCircle, CheckCircle2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock data
+// Mock data dengan konteks Berau
 const biodataDetails = {
-  fullName: "Ahmad Budi Santoso",
-  nisn: "1234567890",
-  nik: "3171234505080001",
-  placeOfBirth: "Jakarta",
-  dateOfBirth: "2008-05-15",
+  fullName: "Muhammad Rizky Pratama",
+  nisn: "0056789123",
+  nik: "6403011507050002",
+  placeOfBirth: "Tanjung Redeb",
+  dateOfBirth: "2008-07-15",
   gender: "Laki-laki",
   religion: "Islam",
-  address: "Jl. Merdeka No. 10, RT 05 RW 02, Kel. Cempaka Putih, Kec. Menteng, Jakarta Pusat, DKI Jakarta 10310",
-  previousSchool: "SMP Negeri 1 Jakarta Pusat",
-  fatherName: "Bambang Santoso",
-  motherName: "Siti Aminah",
+  address: "Jl. Durian III No. 25, RT 10 RW 03, Kel. Tanjung Redeb, Kec. Tanjung Redeb, Kabupaten Berau, Kalimantan Timur 77311",
+  previousSchool: "SMP Negeri 1 Tanjung Redeb",
+  fatherName: "Abdullah Siregar",
+  motherName: "Siti Fatimah",
   guardianName: "-",
-  contactNumber: "081234567890",
+  contactNumber: "081254321098",
 };
 
 const reportCardGradesData = [
-  { subject: "Matematika", semester1: 85, semester2: 88, semester3: 90, semester4: 87, semester5: 92 },
-  { subject: "Ilmu Pengetahuan Alam (IPA)", semester1: 88, semester2: 90, semester3: 85, semester4: 89, semester5: 91 },
-  { subject: "Ilmu Pengetahuan Sosial (IPS)", semester1: 86, semester2: 84, semester3: 89, semester4: 85, semester5: 88 },
-  { subject: "Bahasa Indonesia", semester1: 90, semester2: 87, semester3: 88, semester4: 92, semester5: 89 },
-  { subject: "Bahasa Inggris", semester1: 82, semester2: 85, semester3: 87, semester4: 88, semester5: 90 },
-  { subject: "Pendidikan Kewarganegaraan (PKN)", semester1: 87, semester2: 88, semester3: 86, semester4: 90, semester5: 89 },
+  { subject: "Matematika", semester1: 86, semester2: 89, semester3: 91, semester4: 88, semester5: 93 },
+  { subject: "Ilmu Pengetahuan Alam (IPA)", semester1: 89, semester2: 91, semester3: 87, semester4: 90, semester5: 92 },
+  { subject: "Ilmu Pengetahuan Sosial (IPS)", semester1: 87, semester2: 85, semester3: 90, semester4: 86, semester5: 89 },
+  { subject: "Bahasa Indonesia", semester1: 91, semester2: 88, semester3: 89, semester4: 93, semester5: 90 },
+  { subject: "Bahasa Inggris", semester1: 83, semester2: 86, semester3: 88, semester4: 89, semester5: 91 },
+  { subject: "Pendidikan Kewarganegaraan (PKN)", semester1: 88, semester2: 89, semester3: 87, semester4: 91, semester5: 90 },
 ];
 
 const calculateAverage = (grades: typeof reportCardGradesData[0]) => {
