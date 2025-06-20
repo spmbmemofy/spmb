@@ -77,13 +77,13 @@ const pathwaySpecificDocumentsMap: Record<string, DocumentItem[]> = {
     { id: "kip_kks_pkh", label: "Scan Kartu Indonesia Pintar (KIP) / Kartu Keluarga Sejahtera (KKS) / Program Keluarga Harapan (PKH)", required: true },
   ],
   Prestasi: [
-    { id: "sertifikat_prestasi", label: "Scan Sertifikat Prestasi (jika ada)", required: false }, // Made optional as an example, adjust if needed
+    { id: "sertifikat_prestasi", label: "Scan Sertifikat Prestasi (jika ada)", required: false },
     { id: "sk_prestasi", label: "Scan Surat Keterangan Prestasi dari Sekolah Asal", required: true },
   ],
   Mutasi: [
     { id: "sk_penempatan", label: "Scan Surat Keputusan Penempatan/Mutasi Kerja Orang Tua/Wali", required: true },
   ],
-  Domisili: [], // No specific documents for Domisili
+  Domisili: [], 
 };
 
 export default function DocumentUploadPage() {
@@ -91,6 +91,7 @@ export default function DocumentUploadPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedPathway = searchParams.get("pathway") || "";
+  const selectedSchoolId = searchParams.get("schoolId") || "";
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   
@@ -123,7 +124,7 @@ export default function DocumentUploadPage() {
   };
 
   const allRequiredFilesUploaded = () => {
-    if (documentsToUpload.length === 0) return false; // Handle case where documents are not yet loaded
+    if (documentsToUpload.length === 0 && generalDocuments.length > 0) return false; 
     return documentsToUpload
       .filter(doc => doc.required)
       .every(doc => uploadedFiles[doc.id] !== null);
@@ -141,18 +142,42 @@ export default function DocumentUploadPage() {
 
     setIsSubmitting(true);
     console.log("Mengunggah berkas:", uploadedFiles);
+    
+    const uploadedDocIds = Object.entries(uploadedFiles)
+      .filter(([, file]) => file !== null)
+      .map(([id]) => id);
+
     // Simulate API call
     setTimeout(() => {
       toast({
         title: "Berkas Berhasil Diunggah",
-        description: "Semua berkas Anda telah berhasil diunggah. Melanjutkan ke tahap seleksi.",
+        description: "Semua berkas Anda telah berhasil diunggah. Melanjutkan ke halaman status pendaftaran.",
       });
       setIsSubmitting(false);
-      router.push('/registration/selection'); // Navigate to the next step, e.g., selection page
+      router.push(`/registration/selection?pathway=${selectedPathway}&schoolId=${selectedSchoolId}&docs=${uploadedDocIds.join(',')}`);
     }, 2000);
   };
   
   const currentPathwaySpecificDocs = pathwaySpecificDocumentsMap[selectedPathway] || [];
+
+  if (!selectedPathway) {
+     return (
+        <div className="flex flex-1 flex-col items-center justify-center p-4 sm:p-6 md:p-8">
+            <Card className="w-full max-w-md text-center">
+                <CardHeader>
+                    <CardTitle>Jalur Pendaftaran Tidak Valid</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p>Harap pilih jalur pendaftaran terlebih dahulu.</p>
+                    <Button onClick={() => router.push('/registration/documents')} className="mt-4">
+                        Kembali ke Pemilihan Jalur
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+     );
+  }
+
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">

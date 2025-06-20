@@ -41,7 +41,7 @@ export default function DocumentsPage() {
       });
       console.log("Pilihan Sekolah:", selectedSchoolId, "Jalur:", selectedPathway);
       setIsSubmitting(false);
-      router.push(`/registration/document-upload?pathway=${selectedPathway}`);
+      router.push(`/registration/document-upload?pathway=${selectedPathway}&schoolId=${selectedSchoolId}`);
     }, 1000);
   };
 
