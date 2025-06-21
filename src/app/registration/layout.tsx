@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { User, FileText, Settings, LogOut, Menu as MenuIcon, Home, ClipboardCheck } from 'lucide-react';
@@ -34,6 +34,22 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  useEffect(() => {
+    const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
+    
+    if (savedCredentials?.role === 'applicant') {
+      setIsAuthorized(true);
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Akses Ditolak",
+        description: "Halaman ini hanya untuk pendaftar. Silakan login sebagai pendaftar.",
+      });
+      router.replace('/');
+    }
+  }, [router, toast]);
 
   const menuItems = [
     {
@@ -90,6 +106,13 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     // router.push(itemHref); 
   };
 
+  if (!isAuthorized) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-background">
+        <p>Memverifikasi akses...</p>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
