@@ -22,7 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableRow, TableFooter as ShadcnTableFooter, TableHead, TableHeader } from "@/components/ui/table";
 
 import { useToast } from "@/hooks/use-toast";
-import { generateAllMockApplicants } from "@/lib/mockData";
+import { getApplicantById, updateApplicant } from "@/lib/applicantService";
 import type { Applicant, ApplicantStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -87,8 +87,7 @@ export default function VerifyApplicantPage() {
 
   React.useEffect(() => {
     if (applicantId) {
-      const allApplicants = generateAllMockApplicants();
-      const foundApplicant = allApplicants.find(app => app.id === applicantId);
+      const foundApplicant = getApplicantById(applicantId);
       setApplicant(foundApplicant || null);
 
       if (foundApplicant) {
@@ -119,10 +118,22 @@ export default function VerifyApplicantPage() {
 
   const handleConfirmAction = () => {
     if (!applicant || !selectedAction) return;
+
     if (selectedAction === 'reject' && !rejectionReason.trim()) {
       toast({ variant: "destructive", title: "Alasan Diperlukan", description: "Harap isi alasan penolakan sebelum melanjutkan." });
       return;
     }
+
+    const newStatus: ApplicantStatus = selectedAction === 'verify' ? "Terverifikasi" : "Berkas tidak sesuai";
+    
+    const updatedApplicant: Applicant = {
+        ...applicant,
+        statusVerifikasi: newStatus,
+        nilaiPrestasi: applicant.jalur === 'Prestasi' ? editableNilaiPrestasi : applicant.nilaiPrestasi,
+    };
+
+    updateApplicant(updatedApplicant);
+
     let toastMessage = selectedAction === 'verify'
       ? `Pendaftar "${applicant.fullName}" telah berhasil diverifikasi.`
       : `Pendaftaran "${applicant.fullName}" telah ditolak. Alasan: ${rejectionReason}`;

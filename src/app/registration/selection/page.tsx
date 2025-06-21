@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-import { generateAllMockApplicants, jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
+import { getApplicants } from "@/lib/applicantService";
+import { jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
 import { initialSchoolData } from "@/lib/schoolData";
 import type { Applicant, ApplicantStatus } from "@/lib/types";
 
@@ -38,7 +39,7 @@ export default function VerificationPage() {
   const [currentPage, setCurrentPage] = React.useState(1);
 
   React.useEffect(() => {
-    const applicantsData = generateAllMockApplicants();
+    const applicantsData = getApplicants();
     const verifierSchoolApplicants = applicantsData.filter(app => app.sekolahTujuanId === VERIFIER_SCHOOL_ID);
     setAllApplicants(verifierSchoolApplicants);
 
