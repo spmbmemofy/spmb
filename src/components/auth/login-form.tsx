@@ -115,9 +115,9 @@ export function LoginForm() {
         <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
           <Lock size={32} />
         </div>
-        <CardTitle className="text-xl sm:text-2xl font-headline">Akses Portal Pendaftaran</CardTitle>
+        <CardTitle className="text-xl sm:text-2xl font-headline">SPMB 2026</CardTitle>
         <CardDescription>
-          Silakan pilih peran Anda dan masukkan kredensial untuk melanjutkan.
+          Seleksi Penerimaan Mahasiswa Baru - Tahun 2026
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -4,8 +4,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'Akses Portal Pendaftaran',
-  description: 'Login aman untuk pengguna portal pendaftaran.',
+  title: 'SPMB 2026',
+  description: 'Portal SPMB 2026',
 };
 
 export default function RootLayout({

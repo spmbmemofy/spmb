@@ -149,8 +149,8 @@ export default function RegistrationProofPage() {
                 data-ai-hint="logo icon"
               />
             <div className="ml-4">
-              <h1 className="text-xl sm:text-2xl font-bold uppercase text-gray-800 dark:text-gray-100">Penerimaan Peserta Didik Baru</h1>
-              <p className="text-sm sm:text-md text-gray-600 dark:text-gray-300">Dinas Pendidikan dan Kebudayaan Kabupaten Berau - Tahun Ajaran 2024/2025</p>
+              <h1 className="text-xl sm:text-2xl font-bold uppercase text-gray-800 dark:text-gray-100">SPMB 2026</h1>
+              <p className="text-sm sm:text-md text-gray-600 dark:text-gray-300">Seleksi Penerimaan Mahasiswa Baru - Tahun 2026</p>
             </div>
           </div>
         </header>

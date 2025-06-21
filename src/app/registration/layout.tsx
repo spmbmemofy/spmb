@@ -135,7 +135,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
                     className="h-8 w-8"
                     data-ai-hint="logo icon"
                   />
-                  <span className="font-semibold group-data-[state=collapsed]:hidden">Portal</span>
+                  <span className="font-semibold group-data-[state=collapsed]:hidden">SPMB 2026</span>
                 </Link>
             </div>
           </SidebarHeader>
@@ -180,7 +180,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
                 <span className="sr-only">Toggle Menu</span>
               </Button>
             </SidebarTrigger>
-            <div className="font-semibold text-lg">Portal Pendaftaran</div>
+            <div className="font-semibold text-lg">SPMB 2026</div>
           </header>
           <div className="flex flex-1 flex-col">
             {children}
