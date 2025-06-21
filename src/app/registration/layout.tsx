@@ -60,14 +60,14 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     ];
 
     const verifierMenu = [
-      { href: '/registration/selection', label: 'Beranda', icon: Home, activePaths: ['/registration/selection', '/registration/verify'] },
+      { href: '/registration/selection', label: 'Data Pendaftar', icon: Home, activePaths: ['/registration/selection', '/registration/verify'] },
       { href: '/registration/all-data', label: 'Semua Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
       { href: '/registration/selection', label: 'Verifikasi', icon: UserCheck, activePaths: ['/registration/selection', '/registration/verify'] },
       { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
     ];
     
     const adminMenu = [
-      { href: '/registration/all-data', label: 'Beranda', icon: Home, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
+      { href: '/registration/all-data', label: 'Data Pendaftar', icon: Home, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
       { href: '/registration/selection', label: 'Verifikasi', icon: UserCheck, activePaths: ['/registration/selection', '/registration/verify'] },
       { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
     ];
