@@ -3,17 +3,19 @@
 
 import * as React from "react";
 import Image from "next/image";
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserCircle, CheckCircle2, Edit3, Save, XCircle, Upload, Check } from 'lucide-react';
+import { UserCircle, CheckCircle2, Edit3, Save, XCircle, Upload, Check, User } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadcnTableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type BiodataDetails } from "@/lib/localStorage";
+import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
+const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 
 
 const genderOptions = [
@@ -676,5 +678,33 @@ function ApplicantDashboard() {
 }
 
 export default function DashboardPage() {
+    const router = useRouter();
+    const [userRole, setUserRole] = React.useState<LoginCredentials['role'] | null>(null);
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
+        if (savedCredentials?.role) {
+            setUserRole(savedCredentials.role);
+        }
+        setIsLoading(false);
+    }, []);
+
+    React.useEffect(() => {
+        if (!isLoading && userRole) {
+            if (userRole === 'admin' || userRole === 'verifikator') {
+                router.replace('/registration/home');
+            }
+        }
+    }, [isLoading, userRole, router]);
+
+    if (isLoading || userRole !== 'applicant') {
+        return (
+            <div className="flex flex-1 items-center justify-center p-4">
+                <p>Mengarahkan...</p>
+            </div>
+        );
+    }
+    
     return <ApplicantDashboard />;
 }

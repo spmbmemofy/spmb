@@ -4,7 +4,7 @@
 import { ReactNode, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, School, FileText, UserCheck } from 'lucide-react';
+import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, School, FileText, UserCheck, User } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -52,7 +52,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
 
   const menuItems = useMemo(() => {
     const applicantMenu = [
-      { href: '/registration/dashboard', label: 'Data Pendaftar', icon: Home, activePaths: ['/registration/dashboard'] },
+      { href: '/registration/dashboard', label: 'Data Pendaftar', icon: User, activePaths: ['/registration/dashboard'] },
       { href: '/registration/documents', label: 'Pilihan Sekolah', icon: School, activePaths: ['/registration/documents'] },
       { href: '/registration/document-upload', label: 'Unggah Berkas', icon: FileText, activePaths: ['/registration/document-upload'] },
       { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'] },
@@ -60,14 +60,15 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     ];
 
     const verifierMenu = [
-      { href: '/registration/selection', label: 'Data Pendaftar', icon: Home, activePaths: ['/registration/selection', '/registration/verify'] },
-      { href: '/registration/all-data', label: 'Semua Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
+      { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
       { href: '/registration/selection', label: 'Verifikasi', icon: UserCheck, activePaths: ['/registration/selection', '/registration/verify'] },
+      { href: '/registration/all-data', label: 'Semua Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
       { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
     ];
     
     const adminMenu = [
-      { href: '/registration/all-data', label: 'Data Pendaftar', icon: Home, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
+      { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
+      { href: '/registration/all-data', label: 'Semua Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
       { href: '/registration/selection', label: 'Verifikasi', icon: UserCheck, activePaths: ['/registration/selection', '/registration/verify'] },
       { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
     ];
@@ -89,8 +90,8 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   };
 
   const homeLink = useMemo(() => {
-    if (userRole === 'admin') return '/registration/all-data';
-    if (userRole === 'verifikator') return '/registration/selection';
+    if (userRole === 'admin') return '/registration/home';
+    if (userRole === 'verifikator') return '/registration/home';
     return '/registration/dashboard';
   }, [userRole]);
 
