@@ -113,19 +113,17 @@ const initialBiodataDetails = {
   motherIncome: "-",
   guardianName: "-",
   contactNumber: "081254321098",
+  semesterGrades: {
+    semester1: 86.50,
+    semester2: 89.20,
+    semester3: 91.00,
+    semester4: 88.75,
+    semester5: 93.10
+  },
 };
 
 type BiodataKeys = keyof typeof initialBiodataDetails;
 type SelectOption = { value: string; label: string };
-
-const reportCardGradesData = [
-  { subject: "Matematika", semester1: 86, semester2: 89, semester3: 91, semester4: 88, semester5: 93 },
-  { subject: "Ilmu Pengetahuan Alam (IPA)", semester1: 89, semester2: 91, semester3: 87, semester4: 90, semester5: 92 },
-  { subject: "Ilmu Pengetahuan Sosial (IPS)", semester1: 87, semester2: 85, semester3: 90, semester4: 86, semester5: 89 },
-  { subject: "Bahasa Indonesia", semester1: 91, semester2: 88, semester3: 89, semester4: 93, semester5: 90 },
-  { subject: "Bahasa Inggris", semester1: 83, semester2: 86, semester3: 88, semester4: 89, semester5: 91 },
-  { subject: "Pendidikan Kewarganegaraan (PKN)", semester1: 88, semester2: 89, semester3: 87, semester4: 91, semester5: 90 },
-];
 
 interface BiodataItemProps {
   label: string;
@@ -311,8 +309,8 @@ export default function BiodataPage() {
   const [persistedPhotoUploaded, setPersistedPhotoUploaded] = React.useState<boolean>(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const semesterKeys: (keyof typeof initialBiodataDetails.semesterGrades)[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
   const semesterLabels = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5"];
-  const semesterKeys: (keyof Pick<typeof reportCardGradesData[0], 'semester1' | 'semester2' | 'semester3' | 'semester4' | 'semester5'>)[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
 
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
@@ -325,36 +323,12 @@ export default function BiodataPage() {
         }
     }
   }, []);
-
-  const calculateSemesterAverage = (semesterKey: typeof semesterKeys[0]): string => {
-    let sum = 0;
-    let count = 0;
-    reportCardGradesData.forEach(subject => {
-      const grade = subject[semesterKey];
-      if (typeof grade === 'number') {
-        sum += grade;
-        count++;
-      }
-    });
-    if (count === 0) return "N/A";
-    return (sum / count).toFixed(2);
-  };
-
-  const displayedSemesterAverages = React.useMemo(() => {
-    return semesterLabels.map((label, index) => ({
-      semester: label,
-      average: calculateSemesterAverage(semesterKeys[index])
-    }));
-  }, []); 
-
+  
   const overallTableValue = React.useMemo(() => {
-    const averages = displayedSemesterAverages
-      .map(s => parseFloat(s.average))
-      .filter(avg => !isNaN(avg));
-    
-    if (averages.length === 0) return "N/A";
-    return averages.reduce((sum, avg) => sum + avg, 0).toFixed(2);
-  }, [displayedSemesterAverages]);
+    if (!biodata.semesterGrades) return "0.00";
+    return Object.values(biodata.semesterGrades).reduce((sum, avg) => sum + avg, 0).toFixed(2);
+  }, [biodata.semesterGrades]);
+
 
   const handleStartEditPersonalField = (fieldKey: BiodataKeys, currentValue: string) => {
     if (isEditingParentInfo) {
@@ -633,16 +607,16 @@ export default function BiodataPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {displayedSemesterAverages.map((semesterData) => (
-                    <TableRow key={semesterData.semester}>
-                      <TableCell className="font-medium">{semesterData.semester}</TableCell>
-                      <TableCell className="text-right font-medium">{semesterData.average}</TableCell>
+                  {semesterKeys.map((key, index) => (
+                    <TableRow key={key}>
+                      <TableCell className="font-medium">{semesterLabels[index]}</TableCell>
+                      <TableCell className="text-right font-medium">{biodata.semesterGrades[key].toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
                 <ShadcnTableFooter>
                   <TableRow>
-                    <TableCell className="font-semibold text-right bg-muted">Jumlah Keseluruhan Nilai Rapor (dari Rata-rata Semester)</TableCell>
+                    <TableCell className="font-semibold text-right bg-muted">Jumlah Keseluruhan Nilai Rapor</TableCell>
                     <TableCell className="text-right font-bold text-lg bg-muted">{overallTableValue}</TableCell>
                   </TableRow>
                 </ShadcnTableFooter>

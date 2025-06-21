@@ -22,18 +22,17 @@ const biodataDetailsMock = {
   dateOfBirth: "2008-07-15",
   previousSchool: "SMP Negeri 1 Tanjung Redeb",
   contactNumber: "081254321098",
+  semesterGrades: {
+    semester1: 86.50,
+    semester2: 89.20,
+    semester3: 91.00,
+    semester4: 88.75,
+    semester5: 93.10,
+  }
 };
 
-const reportCardGradesData = [
-  { subject: "Matematika", semester1: 86, semester2: 89, semester3: 91, semester4: 88, semester5: 93 },
-  { subject: "Ilmu Pengetahuan Alam (IPA)", semester1: 89, semester2: 91, semester3: 87, semester4: 90, semester5: 92 },
-  { subject: "Ilmu Pengetahuan Sosial (IPS)", semester1: 87, semester2: 85, semester3: 90, semester4: 86, semester5: 89 },
-  { subject: "Bahasa Indonesia", semester1: 91, semester2: 88, semester3: 89, semester4: 93, semester5: 90 },
-  { subject: "Bahasa Inggris", semester1: 83, semester2: 86, semester3: 88, semester4: 89, semester5: 91 },
-  { subject: "Pendidikan Kewarganegaraan (PKN)", semester1: 88, semester2: 89, semester3: 87, semester4: 91, semester5: 90 },
-];
-const semesterKeys: (keyof typeof reportCardGradesData[0])[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
-
+const semesterKeys: (keyof typeof biodataDetailsMock.semesterGrades)[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
+const semesterLabels = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5"];
 
 export default function RegistrationProofPage() {
   const router = useRouter();
@@ -109,16 +108,8 @@ export default function RegistrationProofPage() {
       });
   };
 
-  const calculateAverage = (subject: typeof reportCardGradesData[0]): string => {
-    const grades = semesterKeys.map(key => subject[key] as number).filter(g => typeof g === 'number');
-    if (grades.length === 0) return "0.00";
-    return (grades.reduce((sum, g) => sum + g, 0) / grades.length).toFixed(2);
-  }
-
-  const overallAverage = React.useMemo(() => {
-    const allAverages = reportCardGradesData.map(subj => parseFloat(calculateAverage(subj)));
-    if (allAverages.length === 0) return "0.00";
-    return (allAverages.reduce((sum, avg) => sum + avg, 0) / allAverages.length).toFixed(2);
+  const totalNilai = React.useMemo(() => {
+    return Object.values(biodataDetailsMock.semesterGrades).reduce((acc, val) => acc + val, 0).toFixed(2);
   }, []);
 
   if (isLoading) {
@@ -190,24 +181,22 @@ export default function RegistrationProofPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="font-bold">Mata Pelajaran</TableHead>
-                    {semesterKeys.map((key, i) => <TableHead key={key} className="text-center font-bold">Sem. {i+1}</TableHead>)}
-                    <TableHead className="text-right font-bold">Rata-rata</TableHead>
+                    <TableHead className="font-bold">Semester</TableHead>
+                    <TableHead className="text-right font-bold">Rata-rata Nilai</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {reportCardGradesData.map(subject => (
-                    <TableRow key={subject.subject}>
-                      <TableCell className="font-medium">{subject.subject}</TableCell>
-                      {semesterKeys.map(key => <TableCell key={key} className="text-center">{subject[key]}</TableCell>)}
-                      <TableCell className="text-right font-medium">{calculateAverage(subject)}</TableCell>
+                  {semesterKeys.map((key, index) => (
+                    <TableRow key={key}>
+                      <TableCell className="font-medium">{semesterLabels[index]}</TableCell>
+                      <TableCell className="text-right">{biodataDetailsMock.semesterGrades[key].toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
                 <TableFooter>
                   <TableRow>
-                    <TableCell colSpan={6} className="text-right font-bold text-lg">NILAI RATA-RATA KESELURUHAN</TableCell>
-                    <TableCell className="text-right font-bold text-lg">{overallAverage}</TableCell>
+                    <TableCell className="text-right font-bold text-lg">JUMLAH KESELURUHAN NILAI</TableCell>
+                    <TableCell className="text-right font-bold text-lg">{totalNilai}</TableCell>
                   </TableRow>
                 </TableFooter>
               </Table>

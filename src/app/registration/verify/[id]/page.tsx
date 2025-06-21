@@ -54,17 +54,6 @@ const pathwaySpecificDocuments: Record<string, {id: string, label: string, url: 
   Domisili: [], 
 };
 
-const reportCardGradesData = [
-  { subject: "Matematika", semester1: 86, semester2: 89, semester3: 91, semester4: 88, semester5: 93 },
-  { subject: "Ilmu Pengetahuan Alam (IPA)", semester1: 89, semester2: 91, semester3: 87, semester4: 90, semester5: 92 },
-  { subject: "Ilmu Pengetahuan Sosial (IPS)", semester1: 87, semester2: 85, semester3: 90, semester4: 86, semester5: 89 },
-  { subject: "Bahasa Indonesia", semester1: 91, semester2: 88, semester3: 89, semester4: 93, semester5: 90 },
-  { subject: "Bahasa Inggris", semester1: 83, semester2: 86, semester3: 88, semester4: 89, semester5: 91 },
-  { subject: "Pendidikan Kewarganegaraan (PKN)", semester1: 88, semester2: 89, semester3: 87, semester4: 91, semester5: 90 },
-];
-const semesterKeys: (keyof Omit<typeof reportCardGradesData[0], 'subject'>)[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
-
-
 const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
   switch (status) {
     case "Terverifikasi": return "default";
@@ -141,21 +130,10 @@ export default function VerifyApplicantPage() {
     router.push('/registration/selection');
   };
   
-  const calculateAverage = (subject: typeof reportCardGradesData[0]): string => {
-    const grades = semesterKeys.map(key => subject[key]).filter(g => typeof g === 'number');
-    if (grades.length === 0) return "0.00";
-    return (grades.reduce((sum, g) => sum + g, 0) / grades.length).toFixed(2);
-  }
-
-  const nilaiRapor = React.useMemo(() => {
-    if (reportCardGradesData.length === 0) return 0;
-    const allAverages = reportCardGradesData.map(subj => parseFloat(calculateAverage(subj)));
-    return allAverages.reduce((sum, avg) => sum + avg, 0) / allAverages.length;
-  }, []);
-  
+  const totalNilaiRapor = applicant ? Object.values(applicant.semesterGrades).reduce((sum, grade) => sum + grade, 0) : 0;
   const nilaiPrestasi = applicant?.jalur === 'Prestasi' ? (applicant?.nilaiPrestasi || 0) : 0;
   const nilaiTambahan = isVerifierAuthorized ? 25 : 0;
-  const nilaiTotal = nilaiRapor + nilaiPrestasi + nilaiTambahan;
+  const nilaiTotal = totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
 
   const allDocumentsReviewed = documentsToVerify.length > 0 && documentsToVerify.every(doc => documentStatuses[doc.id] !== null);
 
@@ -233,24 +211,22 @@ export default function VerifyApplicantPage() {
              <Card>
                <CardHeader><CardTitle className="flex items-center text-lg"><BookOpen className="mr-2"/>Rincian Nilai Rapor</CardTitle></CardHeader>
                <CardContent>
-                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Mata Pelajaran</TableHead>
-                      {semesterKeys.map((key, i) => <TableHead key={key} className="text-center">S{i+1}</TableHead>)}
-                      <TableHead className="text-right">Rata-rata</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                  {reportCardGradesData.map(subject => (
-                    <TableRow key={subject.subject}>
-                      <TableCell className="font-medium text-xs py-2">{subject.subject}</TableCell>
-                      {semesterKeys.map(key => <TableCell key={key} className="text-center text-xs py-2">{subject[key]}</TableCell>)}
-                      <TableCell className="text-right font-medium text-xs py-2">{calculateAverage(subject)}</TableCell>
-                    </TableRow>
-                  ))}
-                  </TableBody>
-                 </Table>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Semester</TableHead>
+                            <TableHead className="text-right">Rata-rata Nilai</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {Object.entries(applicant.semesterGrades).map(([key, value], index) => (
+                            <TableRow key={key}>
+                                <TableCell className="font-medium">Semester {index + 1}</TableCell>
+                                <TableCell className="text-right">{value.toFixed(2)}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
                </CardContent>
             </Card>
             <Card>
@@ -259,8 +235,8 @@ export default function VerifyApplicantPage() {
                  <Table>
                     <TableBody>
                         <TableRow>
-                            <TableCell className="font-medium">Nilai Rata-rata Rapor</TableCell>
-                            <TableCell className="text-right">{nilaiRapor.toFixed(2)}</TableCell>
+                            <TableCell className="font-medium">Total Nilai Rapor (Jumlah Rata-rata Semester)</TableCell>
+                            <TableCell className="text-right">{totalNilaiRapor.toFixed(2)}</TableCell>
                         </TableRow>
                         {applicant.jalur === 'Prestasi' && (
                             <TableRow>
@@ -298,7 +274,7 @@ export default function VerifyApplicantPage() {
                             href={doc.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-0 h-auto justify-start text-left font-medium text-primary hover:underline"
+                            className="font-medium text-primary hover:underline flex-grow truncate"
                           >
                             {doc.label}
                           </a>

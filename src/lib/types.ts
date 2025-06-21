@@ -14,7 +14,13 @@ export interface Applicant {
   jalur: Jalur;
   statusVerifikasi: ApplicantStatus;
   peringkat?: number | null;
-  nilaiRataRataRapor?: number;
+  semesterGrades: {
+    semester1: number;
+    semester2: number;
+    semester3: number;
+    semester4: number;
+    semester5: number;
+  };
   nilaiPrestasi?: number;
   nilaiTambahanPilihan?: number;
 }
