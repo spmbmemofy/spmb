@@ -11,8 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { initialSchoolData } from "@/lib/schoolData";
-import { initialOriginSchoolData } from "@/app/registration/origin-school/[id]/page";
+import { initialSchoolData, initialOriginSchoolData } from "@/lib/schoolData";
 
 type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
 type Jalur = "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
@@ -285,7 +284,7 @@ export default function AllDataPage() {
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                 >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  <ChevronLeft className="mr-2 h-4 w-4" />
                   Sebelumnya
                 </Button>
                 <span className="text-sm text-muted-foreground">

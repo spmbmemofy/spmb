@@ -11,28 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { initialSchoolData } from "@/lib/schoolData";
+import { initialSchoolData, initialOriginSchoolData, type OriginSchool } from "@/lib/schoolData";
 import { cn } from "@/lib/utils";
-
-
-export interface OriginSchool {
-  id: string;
-  namaSekolah: string;
-  status: "Negeri" | "Swasta";
-  akreditasi: "A" | "B" | "C" | "Belum Terakreditasi";
-  jumlahPendaftar: number;
-}
-
-
-export const initialOriginSchoolData: OriginSchool[] = [
-    { id: "smpn1tanjungredeb", namaSekolah: "SMP Negeri 1 Tanjung Redeb", status: "Negeri", akreditasi: "A", jumlahPendaftar: 25 },
-    { id: "smpn2telukbayur", namaSekolah: "SMP Negeri 2 Teluk Bayur", status: "Negeri", akreditasi: "B", jumlahPendaftar: 18 },
-    { id: "smpn3sambaliung", namaSekolah: "SMP Negeri 3 Sambaliung", status: "Negeri", akreditasi: "B", jumlahPendaftar: 22 },
-    { id: "mtsalkholil", namaSekolah: "MTs Al-Kholil", status: "Swasta", akreditasi: "A", jumlahPendaftar: 15 },
-    { id: "smpitashshohwah", namaSekolah: "SMP IT Ash-Shohwah Berau", status: "Swasta", akreditasi: "A", jumlahPendaftar: 20 },
-    { id: "smpmuhammadiyah", namaSekolah: "SMP Muhammadiyah Tanjung Redeb", status: "Swasta", akreditasi: "B", jumlahPendaftar: 12 },
-];
-
 
 type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
 interface ApplicantFromOrigin {
