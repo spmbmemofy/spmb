@@ -87,15 +87,9 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
 
   const adminMenuItems = [
     {
-      href: '/registration/dashboard',
+      href: '/registration/all-data',
       label: 'Beranda',
       icon: Home,
-      activePaths: ['/registration/dashboard'], 
-    },
-    {
-      href: '/registration/all-data',
-      label: 'Semua Data',
-      icon: Database,
       activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'],
     },
     {
@@ -112,7 +106,29 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     },
   ];
   
-  const menuItems = userRole === 'applicant' ? applicantMenuItems : adminMenuItems;
+  const verifierMenuItems = [
+    {
+      href: '/registration/selection',
+      label: 'Beranda',
+      icon: Home,
+      activePaths: ['/registration/selection', '/registration/verify'],
+    },
+    {
+      href: '/registration/announcement',
+      label: 'Pengumuman',
+      icon: Megaphone,
+      activePaths: ['/registration/announcement'],
+    },
+  ];
+  
+  let menuItems: typeof applicantMenuItems | typeof adminMenuItems | typeof verifierMenuItems = [];
+  if (userRole === 'applicant') {
+    menuItems = applicantMenuItems;
+  } else if (userRole === 'admin') {
+    menuItems = adminMenuItems;
+  } else if (userRole === 'verifikator') {
+    menuItems = verifierMenuItems;
+  }
 
   const handleLogout = () => {
     removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);
