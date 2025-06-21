@@ -2,7 +2,7 @@
 const APP_PREFIX = 'admissionPortal_';
 
 export interface LoginCredentials {
-  nisn?: string;
+  username?: string;
   role?: 'applicant' | 'admin';
   rememberMe?: boolean;
 }

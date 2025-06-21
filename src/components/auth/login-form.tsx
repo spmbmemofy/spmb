@@ -39,7 +39,7 @@ const formSchema = z.object({
   role: z.enum(["applicant", "admin"], {
     required_error: "Anda harus memilih peran.",
   }),
-  nisn: z.string().min(1, { message: "NISN wajib diisi." }),
+  username: z.string().min(1, { message: "NISN atau nama pengguna wajib diisi." }),
   password: z
     .string()
     .min(6, { message: "Kata sandi minimal 6 karakter." }),
@@ -55,17 +55,19 @@ export function LoginForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nisn: "",
+      username: "",
       password: "",
       rememberMe: false,
     },
   });
 
+  const role = form.watch("role");
+
   React.useEffect(() => {
     const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
-    if (savedCredentials?.rememberMe && savedCredentials.nisn && savedCredentials.role) {
+    if (savedCredentials?.rememberMe && savedCredentials.username && savedCredentials.role) {
       form.reset({
-        nisn: savedCredentials.nisn,
+        username: savedCredentials.username,
         role: savedCredentials.role,
         password: "", // Password is not saved for security
         rememberMe: savedCredentials.rememberMe,
@@ -79,7 +81,7 @@ export function LoginForm() {
 
     if (values.rememberMe) {
       saveToLocalStorage<LoginCredentials>(LOCAL_STORAGE_LOGIN_KEY, {
-        nisn: values.nisn,
+        username: values.username,
         role: values.role,
         rememberMe: values.rememberMe,
       });
@@ -94,7 +96,7 @@ export function LoginForm() {
     if (isSuccess) {
         toast({
             title: "Login Berhasil",
-            description: `Selamat datang, ${values.role === 'applicant' ? 'Pendaftar' : 'Admin'}! (NISN: ${values.nisn})`,
+            description: `Selamat datang, ${values.role === 'applicant' ? 'Pendaftar' : 'Admin'}!`,
         });
 
         if (values.role === "applicant") {
@@ -107,7 +109,7 @@ export function LoginForm() {
         toast({
             variant: "destructive",
             title: "Login Gagal",
-            description: "NISN atau kata sandi tidak valid. Silakan coba lagi.",
+            description: "Kredensial tidak valid. Silakan coba lagi.",
         });
     }
     setIsSubmitting(false);
@@ -166,14 +168,18 @@ export function LoginForm() {
 
             <FormField
               control={form.control}
-              name="nisn"
+              name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="nisn">NISN (Nomor Induk Siswa Nasional)</FormLabel>
+                  <FormLabel htmlFor="username">{role === 'admin' ? 'Nama Pengguna' : 'NISN (Nomor Induk Siswa Nasional)'}</FormLabel>
                   <div className="relative">
-                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    {role === 'admin' ? (
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    ) : (
+                        <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    )}
                     <FormControl>
-                      <Input id="nisn" placeholder="Masukkan NISN Anda" {...field} className="pl-10" />
+                      <Input id="username" placeholder={role === 'admin' ? 'Masukkan nama pengguna' : 'Masukkan NISN Anda'} {...field} className="pl-10" />
                     </FormControl>
                   </div>
                   <FormMessage />
