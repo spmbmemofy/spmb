@@ -93,6 +93,20 @@ export const initialSchoolData: School[] = [
     telepon: "0554-24567",
     tahapPendaftaran: 2,
   },
+  {
+    id: "sman4berau",
+    namaSekolah: "SMA Negeri 4 Berau",
+    alamat: "Jl. Poros Labanan, Labanan Makmur, Teluk Bayur, Berau",
+    kecamatan: "Kec. Teluk Bayur",
+    kuota: 200,
+    akreditasi: "B",
+    type: "SMA",
+    jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 90 },
+    jumlahPendaftar: 40,
+    statusPendaftaran: "Buka",
+    telepon: "0554-25001",
+    tahapPendaftaran: 1,
+  },
 ];
 
 export interface OriginSchool {

@@ -72,10 +72,10 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       activePaths: ['/registration/document-upload'],
     },
     {
-      href: '/registration/selection',
+      href: '/registration/status',
       label: 'Status Pendaftaran',
       icon: ClipboardCheck,
-      activePaths: ['/registration/selection'],
+      activePaths: ['/registration/status'],
     },
      {
       href: '/registration/announcement',
