@@ -7,7 +7,7 @@ const lastNames = ["Saputra", "Wijayanti", "Nugroho", "Lestari", "Prabowo", "Wat
 export const jalurOptionsPlain: Jalur[] = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
 export const statusVerifikasiOptionsPlain: ApplicantStatus[] = ["Terverifikasi", "Menunggu Verifikasi", "Berkas tidak sesuai"];
 
-const prestasiScoreOptions = [30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85];
+const prestasiScoreOptions = Array.from({ length: (85 - 30) / 5 + 1 }, (_, i) => 30 + i * 5);
 const getRandomPrestasiScore = () => prestasiScoreOptions[Math.floor(Math.random() * prestasiScoreOptions.length)];
 
 export const generateAllMockApplicants = (): Applicant[] => {
@@ -67,6 +67,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
                 sekolahTujuanId: destinationSchool.id,
                 sekolahTujuanNama: destinationSchool.namaSekolah,
                 schoolSelections: schoolSelections,
+                documentStatuses: {},
                 jalur,
                 statusVerifikasi: statusVerifikasiOptionsPlain[i % statusVerifikasiOptionsPlain.length],
                 peringkat: null,

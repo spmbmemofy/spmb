@@ -6,6 +6,7 @@ export type SchoolSelection = {
 
 export type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
 export type Jalur = "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
+export type DocumentStatus = "valid" | "invalid" | null;
 
 export interface Applicant {
   id: string;
@@ -19,6 +20,7 @@ export interface Applicant {
   schoolSelections: SchoolSelection[];
   jalur: Jalur;
   statusVerifikasi: ApplicantStatus;
+  documentStatuses?: Record<string, DocumentStatus>;
   peringkat?: number | null;
   semesterGrades: {
     semester1: number;

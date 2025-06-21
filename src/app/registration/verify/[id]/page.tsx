@@ -23,7 +23,7 @@ import { Table, TableBody, TableCell, TableRow, TableFooter as ShadcnTableFooter
 
 import { useToast } from "@/hooks/use-toast";
 import { getApplicantById, updateApplicant } from "@/lib/applicantService";
-import type { Applicant, ApplicantStatus } from "@/lib/types";
+import type { Applicant, ApplicantStatus, DocumentStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { initialSchoolData } from "@/lib/schoolData";
 
@@ -67,7 +67,6 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
 };
 
 type ActionType = "verify" | "reject";
-type DocumentStatus = "valid" | "invalid" | null;
 type DocumentItem = { id: string; label: string; url: string };
 
 export default function VerifyApplicantPage() {
@@ -99,7 +98,9 @@ export default function VerifyApplicantPage() {
         setDocumentsToVerify(allDocs);
 
         const initialStatuses: Record<string, DocumentStatus> = {};
-        allDocs.forEach(doc => { initialStatuses[doc.id] = null; });
+        allDocs.forEach(doc => { 
+            initialStatuses[doc.id] = foundApplicant.documentStatuses?.[doc.id] || null;
+        });
         setDocumentStatuses(initialStatuses);
         setEditableNilaiPrestasi(foundApplicant.nilaiPrestasi || 0);
       }
@@ -132,6 +133,7 @@ export default function VerifyApplicantPage() {
         ...applicant,
         statusVerifikasi: newStatus,
         nilaiPrestasi: applicant.jalur === 'Prestasi' ? editableNilaiPrestasi : applicant.nilaiPrestasi,
+        documentStatuses: documentStatuses,
     };
 
     updateApplicant(updatedApplicant);
