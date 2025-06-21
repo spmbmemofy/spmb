@@ -15,6 +15,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 import { useToast } from "@/hooks/use-toast";
 import { generateAllMockApplicants } from "@/lib/mockData";
@@ -63,6 +65,7 @@ export default function VerifyApplicantPage() {
   const [documentStatuses, setDocumentStatuses] = React.useState<Record<string, DocumentStatus>>({});
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
   const [selectedAction, setSelectedAction] = React.useState<ActionType | null>(null);
+  const [rejectionReason, setRejectionReason] = React.useState("");
 
   React.useEffect(() => {
     if (applicantId) {
@@ -96,11 +99,20 @@ export default function VerifyApplicantPage() {
   const handleConfirmAction = () => {
     if (!applicant || !selectedAction) return;
 
+    if (selectedAction === 'reject' && !rejectionReason.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Alasan Diperlukan",
+        description: "Harap isi alasan penolakan sebelum melanjutkan.",
+      });
+      return;
+    }
+
     let toastMessage = "";
     if (selectedAction === 'verify') {
       toastMessage = `Pendaftar "${applicant.fullName}" telah berhasil diverifikasi.`;
     } else {
-      toastMessage = `Pendaftaran "${applicant.fullName}" telah ditolak karena berkas tidak valid.`;
+      toastMessage = `Pendaftaran "${applicant.fullName}" telah ditolak. Alasan: ${rejectionReason}`;
     }
     
     toast({
@@ -109,28 +121,10 @@ export default function VerifyApplicantPage() {
     });
     
     setIsAlertOpen(false);
+    setRejectionReason("");
     router.push('/registration/selection');
   };
   
-  const getActionDialogContent = () => {
-    if (!selectedAction || !applicant) return { title: "", description: "", actionText: "" };
-    switch (selectedAction) {
-      case 'verify':
-        return {
-          title: "Konfirmasi Verifikasi",
-          description: `Semua berkas pendaftar atas nama ${applicant.fullName} sudah valid. Apakah Anda yakin ingin memverifikasi pendaftaran ini?`,
-          actionText: "Ya, Verifikasi"
-        };
-      case 'reject':
-        return {
-          title: "Konfirmasi Penolakan",
-          description: `Terdapat berkas yang tidak valid untuk pendaftar ${applicant.fullName}. Apakah Anda yakin ingin menolak pendaftaran ini?`,
-           actionText: "Ya, Tolak"
-        };
-    }
-  }
-  
-  const { title, description, actionText } = getActionDialogContent();
   const allDocumentsReviewed = Object.values(documentStatuses).every(status => status !== null);
 
   if (isLoading) {
@@ -279,12 +273,31 @@ export default function VerifyApplicantPage() {
        <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{title}</AlertDialogTitle>
-            <AlertDialogDescription>{description}</AlertDialogDescription>
+            <AlertDialogTitle>
+                {selectedAction === 'verify' && "Konfirmasi Verifikasi"}
+                {selectedAction === 'reject' && "Konfirmasi Penolakan"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedAction === 'verify' && `Semua berkas pendaftar atas nama ${applicant.fullName} sudah valid. Apakah Anda yakin ingin memverifikasi pendaftaran ini?`}
+              {selectedAction === 'reject' && `Terdapat berkas yang tidak valid untuk pendaftar ${applicant.fullName}. Harap berikan keterangan penolakan untuk pendaftar.`}
+            </AlertDialogDescription>
           </AlertDialogHeader>
+           {selectedAction === 'reject' && (
+            <div className="grid gap-2 py-2">
+              <Label htmlFor="rejection-reason">Keterangan Penolakan</Label>
+              <Textarea 
+                id="rejection-reason"
+                placeholder="Contoh: Foto Kartu Keluarga buram dan tidak terbaca. Harap unggah ulang."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+              />
+            </div>
+          )}
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsAlertOpen(false)}>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmAction}>{actionText}</AlertDialogAction>
+            <AlertDialogCancel onClick={() => { setIsAlertOpen(false); setRejectionReason(""); }}>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmAction}>
+                {selectedAction === 'verify' ? "Ya, Verifikasi" : "Simpan & Tolak Pendaftaran"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
