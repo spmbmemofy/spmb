@@ -12,6 +12,7 @@ export interface RegistrationProgress {
   pathway?: string;
   documentMetadata?: { [docId: string]: { name: string; size: number; type: string } | null };
   hasProfilePhoto?: boolean;
+  profilePhotoDataUri?: string;
 }
 
 export function getFromLocalStorage<T>(key: string, defaultValue: T): T {

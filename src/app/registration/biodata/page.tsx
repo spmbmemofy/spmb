@@ -316,8 +316,13 @@ export default function BiodataPage() {
 
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
-    if (savedProgress?.hasProfilePhoto) {
-      setPersistedPhotoUploaded(true);
+    if (savedProgress) {
+        if (savedProgress.hasProfilePhoto) {
+            setPersistedPhotoUploaded(true);
+        }
+        if (savedProgress.profilePhotoDataUri) {
+            setProfilePhoto(savedProgress.profilePhotoDataUri);
+        }
     }
   }, []);
 
@@ -469,10 +474,12 @@ export default function BiodataPage() {
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfilePhoto(reader.result as string);
+        const dataUri = reader.result as string;
+        setProfilePhoto(dataUri);
         saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
           ...currentProgress,
           hasProfilePhoto: true,
+          profilePhotoDataUri: dataUri,
         });
         setPersistedPhotoUploaded(true); 
       };
