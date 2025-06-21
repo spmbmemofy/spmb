@@ -35,28 +35,30 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   const router = useRouter();
   const { toast } = useToast();
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [userRole, setUserRole] = useState<'applicant' | 'admin' | null>(null);
 
   useEffect(() => {
     const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
     
-    if (savedCredentials?.role === 'applicant') {
+    if (savedCredentials?.role === 'applicant' || savedCredentials?.role === 'admin') {
       setIsAuthorized(true);
+      setUserRole(savedCredentials.role);
     } else {
       toast({
         variant: "destructive",
         title: "Akses Ditolak",
-        description: "Halaman ini hanya untuk pendaftar. Silakan login sebagai pendaftar.",
+        description: "Anda harus login untuk mengakses halaman ini.",
       });
       router.replace('/');
     }
   }, [router, toast]);
 
-  const menuItems = [
+  const allMenuItems = [
     {
       href: '/registration/dashboard',
       label: 'BERANDA',
       icon: Home,
-      activePaths: ['/registration/dashboard', '/registration/school'], 
+      activePaths: ['/registration/dashboard', '/registration/school', '/registration/origin-school'], 
     },
     {
       href: '/registration/biodata',
@@ -78,6 +80,10 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       activePaths: ['/registration/selection'],
     },
   ];
+
+  const menuItems = userRole === 'admin' 
+    ? allMenuItems.filter(item => item.href === '/registration/dashboard')
+    : allMenuItems;
 
   const handleLogout = () => {
     removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);
