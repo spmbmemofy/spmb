@@ -20,7 +20,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
             
             applicants.push({
                 id: `app-${applicantIdCounter}`,
-                noRegistrasi: `REG2026-${String(applicantIdCounter).padStart(5, '0')}`,
+                noRegistrasi: nisn,
                 fullName,
                 nisn,
                 asalSekolahId: originSchool.id,
