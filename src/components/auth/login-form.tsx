@@ -79,15 +79,12 @@ export function LoginForm() {
     setIsSubmitting(true);
     console.log("Form values:", values);
 
-    if (values.rememberMe) {
-      saveToLocalStorage<LoginCredentials>(LOCAL_STORAGE_LOGIN_KEY, {
-        username: values.username,
-        role: values.role,
-        rememberMe: values.rememberMe,
-      });
-    } else {
-      removeFromLocalStorage(LOCAL_STORAGE_LOGIN_KEY);
-    }
+    // Always save credentials for the current session
+    saveToLocalStorage<LoginCredentials>(LOCAL_STORAGE_LOGIN_KEY, {
+      username: values.username,
+      role: values.role,
+      rememberMe: values.rememberMe,
+    });
     
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
@@ -99,11 +96,8 @@ export function LoginForm() {
             description: `Selamat datang, ${values.role === 'applicant' ? 'Pendaftar' : 'Admin'}!`,
         });
 
-        if (values.role === "applicant") {
-          router.push('/registration/dashboard'); 
-        } else if (values.role === "admin") {
+        if (values.role === "applicant" || values.role === "admin") {
           router.push('/registration/dashboard');
-          console.log("Admin logged in, redirecting to admin dashboard.");
         }
     } else {
         toast({
