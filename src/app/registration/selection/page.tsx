@@ -85,7 +85,6 @@ interface DisplaySelection {
     major: string | null;
 }
 
-// New type and function for verification status
 type VerificationStatus = "Belum verifikasi" | "Terverifikasi" | "Berkas tidak sesuai";
 
 const getVerificationBadgeVariant = (status: VerificationStatus): "default" | "destructive" | "secondary" => {
@@ -105,7 +104,6 @@ export default function SelectionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedPathway = searchParams.get("pathway");
-  // We will rely on localStorage as the primary source of truth for selections and docs
   const uploadedDocsString = searchParams.get("docs");
 
   const [displaySelections, setDisplaySelections] = React.useState<DisplaySelection[]>([]);
@@ -113,6 +111,11 @@ export default function SelectionPage() {
   const [uploadedDocIds, setUploadedDocIds] = React.useState<string[]>([]);
   
   const [storedPathway, setStoredPathway] = React.useState<string | undefined>();
+  
+  // Simulate the verification status being set by the first-choice school's admin.
+  // This status will apply to all selections.
+  // We will demonstrate the "Terverifikasi" state.
+  const applicationVerificationStatus: VerificationStatus = "Terverifikasi";
 
   React.useEffect(() => {
     let pathway = selectedPathway;
@@ -130,7 +133,7 @@ export default function SelectionPage() {
       const populatedSelections: DisplaySelection[] = schoolSelections.map(selection => {
         const school = initialSchoolData.find(s => s.id === selection.schoolId);
         return { school: school!, major: selection.major };
-      }).filter(item => item.school); // Filter out any selections where the school wasn't found
+      }).filter(item => item.school); 
 
       setDisplaySelections(populatedSelections);
     }
@@ -144,7 +147,6 @@ export default function SelectionPage() {
     }
     setDocumentsToShow(docsForPathway);
     
-    // Use URL params first, then fallback to local storage for doc IDs
     if (uploadedDocsString) {
       setUploadedDocIds(uploadedDocsString.split(','));
     } else if (savedProgress?.documentMetadata) {
@@ -160,10 +162,6 @@ export default function SelectionPage() {
       router.push('/registration/documents');
     }
   }
-
-  // Define possible verification statuses to simulate different states
-  const verificationStatuses: VerificationStatus[] = ["Belum verifikasi", "Terverifikasi", "Berkas tidak sesuai"];
-
 
   if (!storedPathway || displaySelections.length === 0) {
     return (
@@ -219,10 +217,13 @@ export default function SelectionPage() {
           </section>
 
           <section>
-            <h3 className="text-xl font-semibold mb-4 text-primary flex items-center">
+            <h3 className="text-xl font-semibold mb-2 text-primary flex items-center">
                 <Star className="mr-2 h-6 w-6" />
                 Status & Peringkat Pilihan
             </h3>
+             <p className="text-sm text-muted-foreground mb-4">
+                Status verifikasi ditentukan oleh sekolah pilihan pertama Anda dan berlaku untuk semua pilihan di bawahnya.
+            </p>
             <div className="space-y-4">
                 <div className="flex justify-between items-center rounded-md border p-4 bg-muted/30">
                     <span className="font-medium text-muted-foreground">Jalur Pendaftaran:</span>
@@ -235,9 +236,7 @@ export default function SelectionPage() {
                     const isWithinQuota = rank <= quota && quota > 0;
                     const rankStatus = isWithinQuota ? "Memenuhi Peringkat" : "Di Luar Peringkat";
                     const rankStatusVariant = isWithinQuota ? "default" : "destructive";
-                    
-                    // Simulate verification status based on user's request
-                    const verificationStatus = verificationStatuses[index % verificationStatuses.length];
+                    const verificationStatus = applicationVerificationStatus;
 
                     return (
                         <Card key={`${school.id}-${major || 'sma'}`} className="overflow-hidden">
