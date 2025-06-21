@@ -35,12 +35,12 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   const router = useRouter();
   const { toast } = useToast();
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [userRole, setUserRole] = useState<'applicant' | 'admin' | null>(null);
+  const [userRole, setUserRole] = useState<'applicant' | 'admin' | 'verifikator' | null>(null);
 
   useEffect(() => {
     const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
     
-    if (savedCredentials?.role === 'applicant' || savedCredentials?.role === 'admin') {
+    if (savedCredentials?.role === 'applicant' || savedCredentials?.role === 'admin' || savedCredentials?.role === 'verifikator') {
       setIsAuthorized(true);
       setUserRole(savedCredentials.role);
     } else {
@@ -81,9 +81,9 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     },
   ];
 
-  const menuItems = userRole === 'admin' 
+  const menuItems = (userRole === 'admin' || userRole === 'verifikator') 
     ? allMenuItems.filter(item => item.href === '/registration/dashboard')
-    : allMenuItems;
+    : allMenuItems.filter(item => item.href !== '/registration/dashboard');
 
   const handleLogout = () => {
     removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);

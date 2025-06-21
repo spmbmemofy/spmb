@@ -3,7 +3,7 @@ const APP_PREFIX = 'admissionPortal_';
 
 export interface LoginCredentials {
   username?: string;
-  role?: 'applicant' | 'admin';
+  role?: 'applicant' | 'admin' | 'verifikator';
   rememberMe?: boolean;
 }
 

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Eye, EyeOff, Hash, Lock, User, UserCog } from "lucide-react";
+import { Eye, EyeOff, Hash, Lock, User, UserCog, UserCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -36,7 +36,7 @@ import { getFromLocalStorage, saveToLocalStorage, removeFromLocalStorage, type L
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 
 const formSchema = z.object({
-  role: z.enum(["applicant", "admin"], {
+  role: z.enum(["applicant", "admin", "verifikator"], {
     required_error: "Anda harus memilih peran.",
   }),
   username: z.string().min(1, { message: "NISN atau nama pengguna wajib diisi." }),
@@ -91,12 +91,17 @@ export function LoginForm() {
     const isSuccess = Math.random() > 0.3; 
 
     if (isSuccess) {
+        const roleName = values.role === 'applicant' 
+            ? 'Pendaftar' 
+            : values.role === 'admin' 
+            ? 'Admin' 
+            : 'Verifikator';
         toast({
             title: "Login Berhasil",
-            description: `Selamat datang, ${values.role === 'applicant' ? 'Pendaftar' : 'Admin'}!`,
+            description: `Selamat datang, ${roleName}!`,
         });
 
-        if (values.role === "applicant" || values.role === "admin") {
+        if (values.role === "applicant" || values.role === "admin" || values.role === "verifikator") {
           router.push('/registration/dashboard');
         }
     } else {
@@ -133,7 +138,7 @@ export function LoginForm() {
                     <RadioGroup
                       onValueChange={field.onChange}
                       value={field.value} // ensure value is controlled
-                      className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4"
+                      className="grid grid-cols-2 sm:grid-cols-3 gap-2"
                     >
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
@@ -153,6 +158,15 @@ export function LoginForm() {
                           Admin
                         </FormLabel>
                       </FormItem>
+                       <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="verifikator" id="verifikator" />
+                        </FormControl>
+                        <FormLabel htmlFor="verifikator" className="font-normal flex items-center">
+                          <UserCheck className="mr-2 h-5 w-5 text-accent" />
+                          Verifikator
+                        </FormLabel>
+                      </FormItem>
                     </RadioGroup>
                   </FormControl>
                   <FormMessage />
@@ -165,15 +179,15 @@ export function LoginForm() {
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="username">{role === 'admin' ? 'Nama Pengguna' : 'NISN (Nomor Induk Siswa Nasional)'}</FormLabel>
+                  <FormLabel htmlFor="username">{role === 'admin' || role === 'verifikator' ? 'Nama Pengguna' : 'NISN (Nomor Induk Siswa Nasional)'}</FormLabel>
                   <div className="relative">
-                    {role === 'admin' ? (
+                    {role === 'admin' || role === 'verifikator' ? (
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     ) : (
                         <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     )}
                     <FormControl>
-                      <Input id="username" placeholder={role === 'admin' ? 'Masukkan nama pengguna' : 'Masukkan NISN Anda'} {...field} className="pl-10" />
+                      <Input id="username" placeholder={role === 'admin' || role === 'verifikator' ? 'Masukkan nama pengguna' : 'Masukkan NISN Anda'} {...field} className="pl-10" />
                     </FormControl>
                   </div>
                   <FormMessage />
