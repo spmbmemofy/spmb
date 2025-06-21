@@ -12,6 +12,40 @@ export type SchoolSelection = {
   major: string | null;
 };
 
+export interface BiodataDetails {
+  fullName: string;
+  nisn: string;
+  nik: string;
+  placeOfBirth: string;
+  dateOfBirth: string;
+  gender: string;
+  religion: string;
+  streetName: string;
+  rtRw: string;
+  village: string;
+  subdistrict: string;
+  district: string;
+  province: string;
+  previousSchool: string;
+  fatherName: string;
+  fatherDateOfBirth: string;
+  fatherOccupation: string;
+  fatherIncome: string;
+  motherName: string;
+  motherDateOfBirth: string;
+  motherOccupation: string;
+  motherIncome: string;
+  guardianName: string;
+  contactNumber: string;
+  semesterGrades: {
+    semester1: number;
+    semester2: number;
+    semester3: number;
+    semester4: number;
+    semester5: number;
+  };
+}
+
 export interface RegistrationProgress {
   schoolSelections?: SchoolSelection[];
   pathway?: string;
@@ -19,6 +53,7 @@ export interface RegistrationProgress {
   hasProfilePhoto?: boolean;
   profilePhotoDataUri?: string;
   registrationCompleted?: boolean;
+  biodata?: BiodataDetails;
 }
 
 export function getFromLocalStorage<T>(key: string, defaultValue: T): T {

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UserCircle, CheckCircle2, Edit3, Save, XCircle, Upload, Check } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadcnTableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
+import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type BiodataDetails } from "@/lib/localStorage";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 
@@ -88,7 +88,7 @@ const provinceOptions = [
 ];
 
 
-const initialBiodataDetails = {
+const initialBiodataDetails: BiodataDetails = {
   fullName: "Muhammad Rizky Pratama",
   nisn: "0056789123",
   nik: "6403011507050002",
@@ -286,8 +286,9 @@ const personalInfoEditableFields: Array<{ key: BiodataKeys; label: string; type?
 
 export default function BiodataPage() {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = React.useState(true);
   const [isConfirmed, setIsConfirmed] = React.useState(false);
-  const [biodata, setBiodata] = React.useState(initialBiodataDetails);
+  const [biodata, setBiodata] = React.useState<BiodataDetails>(initialBiodataDetails);
   
   const [editingPersonalField, setEditingPersonalField] = React.useState<BiodataKeys | null>(null);
   const [currentPersonalFieldValue, setCurrentPersonalFieldValue] = React.useState<string>("");
@@ -313,7 +314,7 @@ export default function BiodataPage() {
   const semesterLabels = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5"];
 
   React.useEffect(() => {
-    const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
+    const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
     if (savedProgress) {
         if (savedProgress.hasProfilePhoto) {
             setPersistedPhotoUploaded(true);
@@ -321,9 +322,32 @@ export default function BiodataPage() {
         if (savedProgress.profilePhotoDataUri) {
             setProfilePhoto(savedProgress.profilePhotoDataUri);
         }
+        if (savedProgress.biodata) {
+            setBiodata(savedProgress.biodata);
+        } else {
+             saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
+                ...savedProgress,
+                biodata: initialBiodataDetails,
+            });
+        }
+    } else {
+         saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
+            biodata: initialBiodataDetails,
+        });
     }
+    setIsLoading(false);
   }, []);
   
+  React.useEffect(() => {
+    if (isLoading) return;
+
+    const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
+    saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
+        ...currentProgress,
+        biodata,
+    });
+  }, [biodata, isLoading]);
+
   const overallTableValue = React.useMemo(() => {
     if (!biodata.semesterGrades) return "0.00";
     return Object.values(biodata.semesterGrades).reduce((sum, avg) => sum + avg, 0).toFixed(2);
@@ -466,6 +490,14 @@ export default function BiodataPage() {
   };
 
   const isAnyFieldBeingEdited = isEditingParentInfo || editingPersonalField !== null;
+  
+  if (isLoading) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center p-4">
+        <p>Memuat data Anda...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
