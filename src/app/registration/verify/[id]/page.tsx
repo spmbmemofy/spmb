@@ -5,7 +5,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle, FileText, Info, UserCircle, XCircle, ThumbsUp, ThumbsDown, Save, TrendingUp, BookOpen, AlertCircle, School } from 'lucide-react';
+import { ArrowLeft, CheckCircle, FileText, Info, UserCircle, XCircle, ThumbsUp, ThumbsDown, Save, TrendingUp, BookOpen, AlertCircle, School, ScrollText, FileUp } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -82,6 +82,7 @@ export default function VerifyApplicantPage() {
   const [documentsToVerify, setDocumentsToVerify] = React.useState<DocumentItem[]>([]);
   const [documentStatuses, setDocumentStatuses] = React.useState<Record<string, DocumentStatus>>({});
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
+  const [isHistoryAlertOpen, setIsHistoryAlertOpen] = React.useState(false);
   const [selectedAction, setSelectedAction] = React.useState<ActionType | null>(null);
   const [rejectionReason, setRejectionReason] = React.useState("");
   const [editableNilaiPrestasi, setEditableNilaiPrestasi] = React.useState(0);
@@ -344,7 +345,11 @@ export default function VerifyApplicantPage() {
           </div>
         </div>
         
-        <div className="mt-6 border-t pt-6 flex justify-end">
+        <div className="mt-6 border-t pt-6 flex justify-end gap-4">
+            <Button size="lg" variant="outline" onClick={() => setIsHistoryAlertOpen(true)} disabled={!isVerifierAuthorized}>
+                <ScrollText className="mr-2 h-5 w-5" />
+                Lihat Riwayat
+            </Button>
             <Button size="lg" onClick={handleSaveClick} disabled={!allDocumentsReviewed || !isVerifierAuthorized}>
                 <Save className="mr-2 h-5 w-5" />
                 Simpan Status Verifikasi
@@ -380,6 +385,64 @@ export default function VerifyApplicantPage() {
             <AlertDialogAction onClick={handleConfirmAction}>
                 {selectedAction === 'verify' ? "Ya, Verifikasi" : "Simpan & Tolak Pendaftaran"}
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isHistoryAlertOpen} onOpenChange={setIsHistoryAlertOpen}>
+        <AlertDialogContent className="sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Riwayat Aktivitas Pendaftar</AlertDialogTitle>
+            <AlertDialogDescription>
+              Jejak waktu dari proses pendaftaran dan verifikasi untuk {applicant.fullName}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4 max-h-[60vh] overflow-y-auto px-1">
+            <ul className="space-y-6">
+              <li className="flex gap-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 flex-shrink-0 mt-1">
+                      <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="flex-1">
+                      <p className="font-semibold">Pendaftaran Selesai</p>
+                      <p className="text-sm text-muted-foreground">Siswa berhasil menyelesaikan semua langkah pendaftaran dan mengirimkan berkas.</p>
+                      <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 10:30 WIB</p>
+                  </div>
+              </li>
+                <li className="flex gap-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900 flex-shrink-0 mt-1">
+                      <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div className="flex-1">
+                      <p className="font-semibold">Berkas Ditolak</p>
+                      <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> menolak berkas dengan alasan: "Foto Kartu Keluarga (KK) buram dan tidak terbaca."</p>
+                      <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 14:00 WIB</p>
+                  </div>
+              </li>
+                <li className="flex gap-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 flex-shrink-0 mt-1">
+                      <FileUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                      <p className="font-semibold">Perbaikan Berkas Selesai</p>
+                      <p className="text-sm text-muted-foreground">Siswa berhasil mengunggah ulang berkas Kartu Keluarga (KK) yang telah diperbaiki.</p>
+                      <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 09:15 WIB</p>
+                  </div>
+              </li>
+                <li className="flex gap-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 flex-shrink-0 mt-1">
+                      <ThumbsUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="flex-1">
+                      <p className="font-semibold">Berkas Diverifikasi</p>
+                      <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> memverifikasi berkas pendaftaran.</p>
+                      <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 11:00 WIB</p>
+                  </div>
+              </li>
+            </ul>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsHistoryAlertOpen(false)}>Tutup</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
