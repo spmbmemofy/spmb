@@ -226,7 +226,7 @@ export default function VerifyApplicantPage() {
               <CardHeader><CardTitle className="flex items-center text-lg"><School className="mr-2"/>Pilihan Sekolah Tujuan</CardTitle></CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  {applicant.schoolSelections.map((selection, index) => {
+                  {(applicant.schoolSelections || []).map((selection, index) => {
                     const school = initialSchoolData.find(s => s.id === selection.schoolId);
                     return (
                       <li key={`${selection.schoolId}-${index}`} className="flex items-start gap-3 rounded-md border p-3 bg-muted/20">
