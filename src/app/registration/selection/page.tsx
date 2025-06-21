@@ -110,8 +110,10 @@ export default function SelectionPage() {
     setStoredPathway(pathway);
 
     if (schoolIds.length > 0) {
-      const foundSchools = initialSchoolData.filter(s => schoolIds.includes(s.id));
-      setSelectedSchools(foundSchools);
+      const orderedSchools = schoolIds.map(id => 
+        initialSchoolData.find(s => s.id === id)
+      ).filter((s): s is School => s !== undefined);
+      setSelectedSchools(orderedSchools);
     }
 
     let docsForPathway: DocumentItem[] = [];
@@ -209,7 +211,7 @@ export default function SelectionPage() {
                 <span className="font-semibold">{storedPathway || "Tidak Diketahui"}</span>
               </div>
               <div>
-                <span className="font-medium text-muted-foreground">Sekolah Pilihan:</span>
+                <span className="font-medium text-muted-foreground">Prioritas Sekolah Pilihan:</span>
                 <ul className="list-decimal list-inside mt-2 space-y-1">
                   {selectedSchools.map(school => (
                     <li key={school.id} className="text-sm font-semibold flex items-center">
