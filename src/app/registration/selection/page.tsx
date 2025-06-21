@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, CheckSquare, XSquare, School2 } from 'lucide-react';
 import { initialSchoolData, type School } from "@/app/registration/dashboard/page"; 
-import { getFromLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
+import { getFromLocalStorage, type RegistrationProgress, type SchoolSelection } from "@/lib/localStorage";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 
@@ -80,40 +80,43 @@ const pathwaySpecificDocumentsMapConst: Record<string, DocumentItem[]> = {
   Domisili: [], 
 };
 
+interface DisplaySelection {
+    school: School;
+    major: string | null;
+}
 
 export default function SelectionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedPathway = searchParams.get("pathway");
-  const schoolIdsParam = searchParams.get("schoolIds");
+  // We will rely on localStorage as the primary source of truth for selections and docs
   const uploadedDocsString = searchParams.get("docs");
 
-  const [selectedSchools, setSelectedSchools] = React.useState<School[]>([]);
+  const [displaySelections, setDisplaySelections] = React.useState<DisplaySelection[]>([]);
   const [documentsToShow, setDocumentsToShow] = React.useState<DocumentItem[]>([]);
   const [uploadedDocIds, setUploadedDocIds] = React.useState<string[]>([]);
   
-  // State to hold pathway and school IDs from local storage for the re-upload button
   const [storedPathway, setStoredPathway] = React.useState<string | undefined>();
 
   React.useEffect(() => {
     let pathway = selectedPathway;
-    let schoolIds = schoolIdsParam ? schoolIdsParam.split(',') : [];
+    let schoolSelections: SchoolSelection[] = [];
 
-    // Fallback to localStorage if params are missing (e.g., on page refresh)
-    if (!pathway || schoolIds.length === 0) {
-      const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
-      if (savedProgress) {
+    const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+    if (savedProgress) {
         pathway = pathway || savedProgress.pathway;
-        schoolIds = schoolIds.length > 0 ? schoolIds : (savedProgress.schoolIds || []);
-      }
+        schoolSelections = savedProgress.schoolSelections || [];
     }
+    
     setStoredPathway(pathway);
 
-    if (schoolIds.length > 0) {
-      const orderedSchools = schoolIds.map(id => 
-        initialSchoolData.find(s => s.id === id)
-      ).filter((s): s is School => s !== undefined);
-      setSelectedSchools(orderedSchools);
+    if (schoolSelections.length > 0) {
+      const populatedSelections: DisplaySelection[] = schoolSelections.map(selection => {
+        const school = initialSchoolData.find(s => s.id === selection.schoolId);
+        return { school: school!, major: selection.major };
+      }).filter(item => item.school); // Filter out any selections where the school wasn't found
+
+      setDisplaySelections(populatedSelections);
     }
 
     let docsForPathway: DocumentItem[] = [];
@@ -125,16 +128,14 @@ export default function SelectionPage() {
     }
     setDocumentsToShow(docsForPathway);
     
+    // Use URL params first, then fallback to local storage for doc IDs
     if (uploadedDocsString) {
       setUploadedDocIds(uploadedDocsString.split(','));
-    } else {
-        const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
-        if (savedProgress?.documentMetadata) {
-            setUploadedDocIds(Object.keys(savedProgress.documentMetadata).filter(k => savedProgress.documentMetadata![k] !== null));
-        }
+    } else if (savedProgress?.documentMetadata) {
+        setUploadedDocIds(Object.keys(savedProgress.documentMetadata).filter(k => savedProgress.documentMetadata![k] !== null));
     }
 
-  }, [schoolIdsParam, selectedPathway, uploadedDocsString]);
+  }, [selectedPathway, uploadedDocsString]);
   
   const handleReupload = () => {
     if (storedPathway) {
@@ -145,7 +146,7 @@ export default function SelectionPage() {
   }
 
 
-  if (!storedPathway || selectedSchools.length === 0) {
+  if (!storedPathway || displaySelections.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-4 sm:p-6 md:p-8">
         <Card className="w-full max-w-lg text-center">
@@ -211,12 +212,15 @@ export default function SelectionPage() {
                 <span className="font-semibold">{storedPathway || "Tidak Diketahui"}</span>
               </div>
               <div>
-                <span className="font-medium text-muted-foreground">Prioritas Sekolah Pilihan:</span>
-                <ul className="list-decimal list-inside mt-2 space-y-1">
-                  {selectedSchools.map(school => (
-                    <li key={school.id} className="text-sm font-semibold flex items-center">
-                      <School2 className="h-4 w-4 mr-2 text-primary opacity-80" />
-                      {school.namaSekolah}
+                <span className="font-medium text-muted-foreground">Prioritas Sekolah & Jurusan Pilihan:</span>
+                <ul className="list-decimal list-inside mt-2 space-y-2">
+                  {displaySelections.map(({ school, major }) => (
+                    <li key={`${school.id}-${major || 'sma'}`} className="flex items-start">
+                      <School2 className="h-4 w-4 mr-2 mt-0.5 text-primary opacity-80 flex-shrink-0" />
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-sm">{school.namaSekolah}</span>
+                        {major && <span className="text-xs text-muted-foreground">{major}</span>}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -245,8 +249,7 @@ export default function SelectionPage() {
                     statusText = "Belum Diunggah";
                   } else {
                     icon = <FileQuestion className="h-5 w-5 mr-2 text-muted-foreground" />;
-                    badgeVariant = "secondary";
-                    statusText = "Tidak Diunggah";
+                    badgeVariant = "Tidak Diunggah";
                   }
 
                   return (

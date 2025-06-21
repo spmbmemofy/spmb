@@ -60,6 +60,7 @@ export const initialSchoolData = [
   {
     id: "sman1tanjungredeb",
     namaSekolah: "SMA Negeri 1 Tanjung Redeb",
+    type: "SMA" as const,
     akreditasi: "A",
     kuota: 266,
     jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112 },
@@ -72,6 +73,8 @@ export const initialSchoolData = [
   {
     id: "smkn1berau",
     namaSekolah: "SMK Negeri 1 Berau",
+    type: "SMK" as const,
+    majors: ["Teknik Komputer dan Jaringan", "Akuntansi dan Keuangan Lembaga", "Otomatisasi dan Tata Kelola Perkantoran", "Bisnis Daring dan Pemasaran", "Usaha Perjalanan Wisata"],
     akreditasi: "A",
     kuota: 304,
     jalurKuota: { afirmasi: 64, mutasi: 16, prestasi: 96, domisili: 128 },
@@ -84,6 +87,7 @@ export const initialSchoolData = [
   {
     id: "sman2berau",
     namaSekolah: "SMA Negeri 2 Berau",
+    type: "SMA" as const,
     akreditasi: "B",
     kuota: 228,
     jalurKuota: { afirmasi: 48, mutasi: 12, prestasi: 72, domisili: 96 },
@@ -96,6 +100,7 @@ export const initialSchoolData = [
   {
     id: "smamuhammadiyahberau",
     namaSekolah: "SMA Muhammadiyah Tanjung Redeb",
+    type: "SMA" as const,
     akreditasi: "B",
     kuota: 142,
     jalurKuota: { afirmasi: 30, mutasi: 7, prestasi: 45, domisili: 60 },
@@ -108,6 +113,8 @@ export const initialSchoolData = [
   {
     id: "smkyphbberau",
     namaSekolah: "SMK YPSHB (Yayasan Pendidikan Sinar Harapan Bangsa) Berau",
+    type: "SMK" as const,
+    majors: ["Teknik Kendaraan Ringan Otomotif", "Teknik dan Bisnis Sepeda Motor", "Multimedia"],
     akreditasi: "B",
     kuota: 190,
     jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 80 },
@@ -158,10 +165,10 @@ export const initialOriginSchoolData = [
 ];
 
 export type SchoolStatus = "Buka" | "Segera Penuh" | "Tutup";
-export type School = typeof initialSchoolData[0];
+export type School = (typeof initialSchoolData)[0];
 export type OriginSchool = typeof initialOriginSchoolData[0];
 
-type SchoolSortKey = keyof Omit<School, 'jalurKuota' | 'alamat' | 'telepon' | 'id' | 'kecamatan'>;
+type SchoolSortKey = keyof Omit<School, 'jalurKuota' | 'alamat' | 'telepon' | 'id' | 'kecamatan' | 'type' | 'majors'>;
 type SortDirection = "ascending" | "descending";
 
 interface SchoolSortConfig {
@@ -548,7 +555,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
-
-    

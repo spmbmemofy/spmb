@@ -7,8 +7,13 @@ export interface LoginCredentials {
   rememberMe?: boolean;
 }
 
+export type SchoolSelection = {
+  schoolId: string;
+  major: string | null;
+};
+
 export interface RegistrationProgress {
-  schoolIds?: string[];
+  schoolSelections?: SchoolSelection[];
   pathway?: string;
   documentMetadata?: { [docId: string]: { name: string; size: number; type: string } | null };
   hasProfilePhoto?: boolean;

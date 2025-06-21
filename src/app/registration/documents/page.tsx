@@ -9,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { FileText, Save, School, ArrowUp, ArrowDown } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { initialSchoolData } from "@/app/registration/dashboard/page"; 
-import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
+import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type SchoolSelection } from "@/lib/localStorage";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const pathwayOptions = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
@@ -22,7 +23,7 @@ const MAX_SCHOOL_SELECTION = 5;
 export default function SchoolSelectionPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [selectedSchoolIds, setSelectedSchoolIds] = React.useState<string[]>([]);
+  const [selectedSelections, setSelectedSelections] = React.useState<SchoolSelection[]>([]);
   const [selectedPathway, setSelectedPathway] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -40,7 +41,7 @@ export default function SchoolSelectionPage() {
     }
 
     if (savedProgress) {
-      if (savedProgress.schoolIds) setSelectedSchoolIds(savedProgress.schoolIds);
+      if (savedProgress.schoolSelections) setSelectedSelections(savedProgress.schoolSelections);
       if (savedProgress.pathway) setSelectedPathway(savedProgress.pathway);
     }
     setIsLoading(false);
@@ -48,24 +49,26 @@ export default function SchoolSelectionPage() {
 
   const handlePathwayChange = (pathway: string) => {
     setSelectedPathway(pathway);
-    setSelectedSchoolIds([]); // Reset school selection when pathway changes
+    setSelectedSelections([]); // Reset school selection when pathway changes
   };
 
-  const handleSchoolSelectionChange = (schoolId: string) => {
-    setSelectedSchoolIds(prevSelected => {
-      const isSelected = prevSelected.includes(schoolId);
+  const handleSchoolSelectionChange = (schoolId: string, major: string | null) => {
+    setSelectedSelections(prevSelected => {
+      const selection = { schoolId, major };
+      const isSelected = prevSelected.some(s => s.schoolId === schoolId && s.major === major);
+
       if (isSelected) {
-        return prevSelected.filter(id => id !== schoolId);
+        return prevSelected.filter(s => !(s.schoolId === schoolId && s.major === major));
       } else {
         if (prevSelected.length >= MAX_SCHOOL_SELECTION) {
           toast({
             variant: "destructive",
             title: "Batas Maksimal Tercapai",
-            description: `Anda hanya dapat memilih maksimal ${MAX_SCHOOL_SELECTION} sekolah.`,
+            description: `Anda hanya dapat memilih maksimal ${MAX_SCHOOL_SELECTION} sekolah/jurusan.`,
           });
           return prevSelected;
         }
-        return [...prevSelected, schoolId];
+        return [...prevSelected, selection];
       }
     });
   };
@@ -86,23 +89,23 @@ export default function SchoolSelectionPage() {
     const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
     saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
       ...currentProgress,
-      schoolIds: selectedSchoolIds, 
+      schoolSelections: selectedSelections, 
       pathway: selectedPathway || undefined, 
     });
-  }, [selectedSchoolIds, selectedPathway, isLoading]);
+  }, [selectedSelections, selectedPathway, isLoading]);
 
-  const handleMoveSchoolUp = (index: number) => {
+  const handleMoveSelectionUp = (index: number) => {
     if (index === 0) return;
-    setSelectedSchoolIds(prev => {
+    setSelectedSelections(prev => {
         const newSelection = [...prev];
         [newSelection[index - 1], newSelection[index]] = [newSelection[index], newSelection[index - 1]];
         return newSelection;
     });
   };
 
-  const handleMoveSchoolDown = (index: number) => {
-    if (index >= selectedSchoolIds.length - 1) return;
-    setSelectedSchoolIds(prev => {
+  const handleMoveSelectionDown = (index: number) => {
+    if (index >= selectedSelections.length - 1) return;
+    setSelectedSelections(prev => {
         const newSelection = [...prev];
         [newSelection[index], newSelection[index + 1]] = [newSelection[index + 1], newSelection[index]];
         return newSelection;
@@ -111,11 +114,11 @@ export default function SchoolSelectionPage() {
 
   const handleSubmit = () => {
     setIsSubmitting(true);
-    if (!selectedPathway || selectedSchoolIds.length === 0) {
+    if (!selectedPathway || selectedSelections.length === 0) {
       toast({
         variant: "destructive",
         title: "Pilihan Tidak Lengkap",
-        description: "Harap pilih jalur pendaftaran dan minimal satu sekolah tujuan.",
+        description: "Harap pilih jalur pendaftaran dan minimal satu sekolah/jurusan tujuan.",
       });
       setIsSubmitting(false);
       return;
@@ -124,7 +127,7 @@ export default function SchoolSelectionPage() {
     const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
     saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
       ...currentProgress,
-      schoolIds: selectedSchoolIds,
+      schoolSelections: selectedSelections,
       pathway: selectedPathway,
     });
     
@@ -138,7 +141,7 @@ export default function SchoolSelectionPage() {
     }, 1000);
   };
   
-  const isSubmitDisabled = isSubmitting || !selectedPathway || selectedSchoolIds.length < 1 || selectedSchoolIds.length > MAX_SCHOOL_SELECTION;
+  const isSubmitDisabled = isSubmitting || !selectedPathway || selectedSelections.length < 1 || selectedSelections.length > MAX_SCHOOL_SELECTION;
 
   if (isLoading) {
     return (
@@ -157,7 +160,7 @@ export default function SchoolSelectionPage() {
           </div>
           <CardTitle className="text-2xl sm:text-3xl font-headline">Pilih Jalur & Sekolah Tujuan</CardTitle>
           <CardDescription className="text-md">
-            Pilih jalur, lalu pilih 1-5 sekolah tujuan dan atur prioritasnya.
+            Pilih jalur, lalu pilih 1-5 sekolah/jurusan tujuan dan atur prioritasnya.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -181,9 +184,9 @@ export default function SchoolSelectionPage() {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
                 <div className="space-y-4">
                     <div>
-                        <Label className="font-semibold text-lg">Langkah 2: Pilih Sekolah</Label>
+                        <Label className="font-semibold text-lg">Langkah 2: Pilih Sekolah/Jurusan</Label>
                         <p className="text-sm text-muted-foreground">
-                            Terpilih: {selectedSchoolIds.length} dari {MAX_SCHOOL_SELECTION} sekolah.
+                            Terpilih: {selectedSelections.length} dari {MAX_SCHOOL_SELECTION} pilihan.
                         </p>
                         {["Afirmasi", "Domisili", "Mutasi"].includes(selectedPathway) && (
                         <p className="text-xs text-primary mt-1">
@@ -192,39 +195,57 @@ export default function SchoolSelectionPage() {
                         )}
                     </div>
                     <Card>
-                        <CardContent className="p-0">
-                        <ScrollArea className="h-72 w-full rounded-md border">
-                            <div className="p-4">
+                      <CardContent className="p-0">
+                        <ScrollArea className="h-96 w-full rounded-md border">
+                          <Accordion type="multiple" className="w-full p-2">
                             {availableSchools.length > 0 ? (
-                                availableSchools.map((school) => (
-                                <div
-                                    key={school.id}
-                                    className="flex items-center space-x-3 mb-4 last:mb-0 p-2 rounded-md hover:bg-muted"
-                                >
-                                    <Checkbox
-                                    id={school.id}
-                                    checked={selectedSchoolIds.includes(school.id)}
-                                    onCheckedChange={() => handleSchoolSelectionChange(school.id)}
-                                    />
-                                    <Label
-                                    htmlFor={school.id}
-                                    className="flex flex-col flex-grow cursor-pointer"
-                                    >
-                                    <span className="font-medium">{school.namaSekolah}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                        Akreditasi: {school.akreditasi} | {school.kecamatan}
-                                    </span>
-                                    </Label>
-                                </div>
-                                ))
+                              availableSchools.map((school) => (
+                                <AccordionItem value={school.id} key={school.id} className="border-b">
+                                  <AccordionTrigger className="text-sm hover:no-underline p-2 rounded-md hover:bg-muted">
+                                    <div className="flex-1 text-left">
+                                      <p className="font-medium">{school.namaSekolah}</p>
+                                      <p className="text-xs text-muted-foreground">{school.type} - Akreditasi: {school.akreditasi}</p>
+                                    </div>
+                                    {school.type === "SMA" && (
+                                       <div className="pl-4" onClick={(e) => e.stopPropagation()}>
+                                          <Checkbox
+                                            id={`${school.id}-sma`}
+                                            checked={selectedSelections.some(s => s.schoolId === school.id)}
+                                            onCheckedChange={() => handleSchoolSelectionChange(school.id, null)}
+                                            aria-label={`Pilih ${school.namaSekolah}`}
+                                          />
+                                        </div>
+                                    )}
+                                  </AccordionTrigger>
+                                  {school.type === "SMK" && (
+                                    <AccordionContent>
+                                      <div className="pl-4 pr-2 pt-2 pb-2 space-y-3">
+                                        <p className="text-xs font-semibold text-muted-foreground">Pilih Jurusan:</p>
+                                        {(school.majors || []).map(major => (
+                                          <div key={major} className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted/50">
+                                            <Checkbox
+                                              id={`${school.id}-${major}`}
+                                              checked={selectedSelections.some(s => s.schoolId === school.id && s.major === major)}
+                                              onCheckedChange={() => handleSchoolSelectionChange(school.id, major)}
+                                            />
+                                            <Label htmlFor={`${school.id}-${major}`} className="flex-grow cursor-pointer font-normal text-sm">
+                                              {major}
+                                            </Label>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </AccordionContent>
+                                  )}
+                                </AccordionItem>
+                              ))
                             ) : (
-                                <div className="flex items-center justify-center h-full text-muted-foreground">
+                              <div className="flex items-center justify-center h-full text-muted-foreground p-4">
                                 <p>Tidak ada sekolah yang tersedia untuk jalur ini di kecamatan Anda.</p>
-                                </div>
+                              </div>
                             )}
-                            </div>
+                          </Accordion>
                         </ScrollArea>
-                        </CardContent>
+                      </CardContent>
                     </Card>
                 </div>
 
@@ -237,27 +258,30 @@ export default function SchoolSelectionPage() {
                     </div>
                     <Card>
                         <CardContent className="p-2">
-                           <ScrollArea className="h-72 w-full">
+                           <ScrollArea className="h-96 w-full">
                                 <div className="p-2 space-y-2">
-                                {selectedSchoolIds.length === 0 ? (
+                                {selectedSelections.length === 0 ? (
                                     <div className="flex items-center justify-center h-full text-muted-foreground text-center py-20">
-                                        <p>Pilih sekolah dari daftar di sebelah kiri untuk mengatur prioritas.</p>
+                                        <p>Pilih sekolah atau jurusan dari daftar di sebelah kiri untuk mengatur prioritas.</p>
                                     </div>
                                 ) : (
-                                    selectedSchoolIds.map((schoolId, index) => {
-                                        const school = initialSchoolData.find(s => s.id === schoolId);
+                                    selectedSelections.map((selection, index) => {
+                                        const school = initialSchoolData.find(s => s.id === selection.schoolId);
                                         return (
-                                            <div key={schoolId} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
+                                            <div key={`${selection.schoolId}-${selection.major}`} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
                                                 <div className="flex items-center gap-3 flex-1 overflow-hidden">
                                                     <span className="font-bold text-lg text-primary">{index + 1}</span>
-                                                    <span className="text-sm font-medium truncate">{school?.namaSekolah}</span>
+                                                    <div className="flex flex-col">
+                                                      <span className="text-sm font-medium truncate">{school?.namaSekolah}</span>
+                                                      {selection.major && <span className="text-xs text-muted-foreground truncate">{selection.major}</span>}
+                                                    </div>
                                                 </div>
                                                 <div className="flex gap-1">
-                                                    <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => handleMoveSchoolUp(index)} disabled={index === 0}>
+                                                    <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => handleMoveSelectionUp(index)} disabled={index === 0}>
                                                         <ArrowUp className="h-4 w-4" />
                                                         <span className="sr-only">Naikkan prioritas</span>
                                                     </Button>
-                                                    <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => handleMoveSchoolDown(index)} disabled={index === selectedSchoolIds.length - 1}>
+                                                    <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => handleMoveSelectionDown(index)} disabled={index === selectedSelections.length - 1}>
                                                         <ArrowDown className="h-4 w-4" />
                                                          <span className="sr-only">Turunkan prioritas</span>
                                                     </Button>
