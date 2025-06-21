@@ -256,7 +256,7 @@ export default function VerifyApplicantPage() {
                            </CardHeader>
                            <CardContent className="p-0">
                              <div className="aspect-[3/4] bg-gray-200">
-                               <embed src={doc.url} type="application/pdf" className="w-full h-full" />
+                               <iframe src={doc.url} className="w-full h-full border-0" title={doc.label} />
                              </div>
                            </CardContent>
                            <CardFooter className="p-3 bg-muted/50 flex justify-end gap-2">
