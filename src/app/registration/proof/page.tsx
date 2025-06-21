@@ -1,0 +1,279 @@
+
+"use client";
+
+import * as React from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { getFromLocalStorage, type RegistrationProgress, type SchoolSelection } from "@/lib/localStorage";
+import { initialSchoolData, type School } from "@/app/registration/dashboard/page";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
+import { Printer, Calendar, MapPin, Edit, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
+const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
+
+const biodataDetailsMock = {
+  fullName: "Muhammad Rizky Pratama",
+  nisn: "0056789123",
+  nik: "6403011507050002",
+  placeOfBirth: "Tanjung Redeb",
+  dateOfBirth: "2008-07-15",
+  previousSchool: "SMP Negeri 1 Tanjung Redeb",
+  contactNumber: "081254321098",
+};
+
+const reportCardGradesData = [
+  { subject: "Matematika", semester1: 86, semester2: 89, semester3: 91, semester4: 88, semester5: 93 },
+  { subject: "Ilmu Pengetahuan Alam (IPA)", semester1: 89, semester2: 91, semester3: 87, semester4: 90, semester5: 92 },
+  { subject: "Ilmu Pengetahuan Sosial (IPS)", semester1: 87, semester2: 85, semester3: 90, semester4: 86, semester5: 89 },
+  { subject: "Bahasa Indonesia", semester1: 91, semester2: 88, semester3: 89, semester4: 93, semester5: 90 },
+  { subject: "Bahasa Inggris", semester1: 83, semester2: 86, semester3: 88, semester4: 89, semester5: 91 },
+  { subject: "Pendidikan Kewarganegaraan (PKN)", semester1: 88, semester2: 89, semester3: 87, semester4: 91, semester5: 90 },
+];
+const semesterKeys: (keyof typeof reportCardGradesData[0])[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
+
+
+export default function RegistrationProofPage() {
+  const router = useRouter();
+  const [isDownloading, setIsDownloading] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+  
+  const [profilePhoto, setProfilePhoto] = React.useState<string | null>(null);
+  const [pathway, setPathway] = React.useState<string | undefined>();
+  const [selections, setSelections] = React.useState<{ school: School, major: string | null }[]>([]);
+
+  React.useEffect(() => {
+    const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+    if (!savedProgress?.registrationCompleted) {
+        console.warn("Registration not completed. Redirecting...");
+        router.replace('/registration/dashboard');
+        return;
+    }
+    
+    if (savedProgress) {
+        setProfilePhoto(savedProgress.profilePhotoDataUri || null);
+        setPathway(savedProgress.pathway);
+        const populatedSelections = (savedProgress.schoolSelections || [])
+            .map(sel => ({
+                school: initialSchoolData.find(s => s.id === sel.schoolId)!,
+                major: sel.major
+            }))
+            .filter(item => item.school);
+        setSelections(populatedSelections);
+    }
+
+    setIsLoading(false);
+  }, [router]);
+
+  const handleDownloadPdf = () => {
+    setIsDownloading(true);
+    const input = document.getElementById('pdf-content');
+    if (!input) {
+      console.error("Content element not found for PDF generation.");
+      setIsDownloading(false);
+      return;
+    }
+
+    html2canvas(input, { scale: 2, useCORS: true })
+      .then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+        let imgHeight = pdfWidth / ratio;
+        let heightLeft = imgHeight;
+        
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfHeight;
+
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+            heightLeft -= pdfHeight;
+        }
+
+        pdf.save(`bukti-pendaftaran-${biodataDetailsMock.nisn}.pdf`);
+        setIsDownloading(false);
+      })
+      .catch(err => {
+        console.error("Error generating PDF:", err);
+        setIsDownloading(false);
+      });
+  };
+
+  const calculateAverage = (subject: typeof reportCardGradesData[0]): string => {
+    const grades = semesterKeys.map(key => subject[key] as number).filter(g => typeof g === 'number');
+    if (grades.length === 0) return "0.00";
+    return (grades.reduce((sum, g) => sum + g, 0) / grades.length).toFixed(2);
+  }
+
+  const overallAverage = React.useMemo(() => {
+    const allAverages = reportCardGradesData.map(subj => parseFloat(calculateAverage(subj)));
+    if (allAverages.length === 0) return "0.00";
+    return (allAverages.reduce((sum, avg) => sum + avg, 0) / allAverages.length).toFixed(2);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p>Memuat data bukti pendaftaran...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-100 dark:bg-gray-800 p-4 sm:p-8">
+       <div className="max-w-4xl mx-auto mb-6 flex justify-end">
+         <Button onClick={handleDownloadPdf} disabled={isDownloading} className="print-hide">
+            <Printer className="mr-2 h-4 w-4" />
+            {isDownloading ? "Mengunduh..." : "Unduh sebagai PDF"}
+          </Button>
+       </div>
+      <div id="pdf-content" className="max-w-4xl mx-auto bg-white dark:bg-gray-900 p-8 sm:p-12 shadow-lg rounded-md">
+        <header className="flex items-center justify-between border-b-4 border-gray-800 dark:border-gray-200 pb-4 mb-8">
+          <div className="flex items-center">
+             <Image 
+                src="https://placehold.co/80x80.png"
+                alt="Logo Dinas Pendidikan" 
+                width={80} 
+                height={80} 
+                className="h-20 w-20"
+                data-ai-hint="logo icon"
+              />
+            <div className="ml-4">
+              <h1 className="text-xl sm:text-2xl font-bold uppercase text-gray-800 dark:text-gray-100">Penerimaan Peserta Didik Baru</h1>
+              <p className="text-sm sm:text-md text-gray-600 dark:text-gray-300">Dinas Pendidikan dan Kebudayaan Kabupaten Berau - Tahun Ajaran 2024/2025</p>
+            </div>
+          </div>
+        </header>
+
+        <main className="space-y-10">
+          <h2 className="text-center text-xl sm:text-2xl font-bold underline decoration-2 underline-offset-4 text-gray-800 dark:text-gray-200">BUKTI PENDAFTARAN</h2>
+          
+          <section>
+             <h3 className="text-lg font-semibold mb-4 border-b pb-2 text-primary flex items-center"><FileText className="mr-2"/> Data Diri Pendaftar</h3>
+             <div className="flex flex-col sm:flex-row gap-8">
+                <div className="w-32 h-40 flex-shrink-0">
+                    {profilePhoto ? (
+                        <Image src={profilePhoto} alt="Foto Profil" width={128} height={160} className="object-cover border-2 border-gray-300 rounded-md" />
+                    ) : (
+                        <div className="w-32 h-40 bg-gray-200 flex items-center justify-center rounded-md">
+                            <span className="text-xs text-gray-500">Foto 3x4</span>
+                        </div>
+                    )}
+                </div>
+                <div className="flex-grow">
+                    <Table>
+                        <TableBody>
+                            <TableRow><TableCell className="font-semibold w-1/3">Nama Lengkap</TableCell><TableCell>{biodataDetailsMock.fullName}</TableCell></TableRow>
+                            <TableRow><TableCell className="font-semibold">NISN</TableCell><TableCell>{biodataDetailsMock.nisn}</TableCell></TableRow>
+                            <TableRow><TableCell className="font-semibold">NIK</TableCell><TableCell>{biodataDetailsMock.nik}</TableCell></TableRow>
+                            <TableRow><TableCell className="font-semibold">Tempat, Tanggal Lahir</TableCell><TableCell>{biodataDetailsMock.placeOfBirth}, {new Date(biodataDetailsMock.dateOfBirth).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</TableCell></TableRow>
+                             <TableRow><TableCell className="font-semibold">Sekolah Asal</TableCell><TableCell>{biodataDetailsMock.previousSchool}</TableCell></TableRow>
+                        </TableBody>
+                    </Table>
+                </div>
+             </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold mb-4 border-b pb-2 text-primary flex items-center"><Edit className="mr-2"/> Data Nilai Rapor</h3>
+            <div className="overflow-x-auto rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-bold">Mata Pelajaran</TableHead>
+                    {semesterKeys.map((key, i) => <TableHead key={key} className="text-center font-bold">Sem. {i+1}</TableHead>)}
+                    <TableHead className="text-right font-bold">Rata-rata</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reportCardGradesData.map(subject => (
+                    <TableRow key={subject.subject}>
+                      <TableCell className="font-medium">{subject.subject}</TableCell>
+                      {semesterKeys.map(key => <TableCell key={key} className="text-center">{subject[key]}</TableCell>)}
+                      <TableCell className="text-right font-medium">{calculateAverage(subject)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-right font-bold text-lg">NILAI RATA-RATA KESELURUHAN</TableCell>
+                    <TableCell className="text-right font-bold text-lg">{overallAverage}</TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold mb-4 border-b pb-2 text-primary flex items-center"><CheckCircle className="mr-2"/> Jalur dan Pilihan Sekolah</h3>
+            <Table>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-semibold w-1/3">Jalur Pendaftaran</TableCell>
+                  <TableCell className="font-bold text-primary">{pathway || "Tidak ada"}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+            <div className="overflow-x-auto rounded-md border mt-4">
+               <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="font-bold w-[10%]">Prioritas</TableHead>
+                        <TableHead className="font-bold">Nama Sekolah Tujuan</TableHead>
+                        <TableHead className="font-bold">Jurusan</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {selections.map((sel, index) => (
+                        <TableRow key={index}>
+                            <TableCell className="text-center font-bold">{index + 1}</TableCell>
+                            <TableCell>{sel.school.namaSekolah}</TableCell>
+                            <TableCell>{sel.major || "-"}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+               </Table>
+            </div>
+          </section>
+
+          <div className="pt-8 text-sm text-gray-700 dark:text-gray-300">
+            <AlertCircle className="inline h-4 w-4 mr-1"/>
+            <span className="font-semibold">Pernyataan:</span> Saya yang bertanda tangan di bawah ini menyatakan bahwa seluruh data yang saya isikan adalah benar dan dapat dipertanggungjawabkan. Apabila di kemudian hari ditemukan ketidaksesuaian, saya bersedia menerima sanksi sesuai dengan peraturan yang berlaku.
+          </div>
+
+          <footer className="pt-16">
+            <div className="flex justify-between items-start text-center text-sm">
+                <div className="w-1/2 sm:w-1/3">
+                    <p>Verifikator</p>
+                    <p className="font-semibold">{selections[0]?.school?.namaSekolah || "Sekolah Pilihan Pertama"}</p>
+                    <div className="h-24"></div>
+                    <p className="font-semibold underline">( Ahmad Syahputra, S.Kom )</p>
+                    <p>NIP. 198501012010011001</p>
+                </div>
+                 <div className="w-1/2 sm:w-1/3">
+                    <p>Berau, {new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                    <p>Pendaftar,</p>
+                    <div className="h-24"></div>
+                    <p className="font-semibold underline">( {biodataDetailsMock.fullName} )</p>
+                    <p>NISN. {biodataDetailsMock.nisn}</p>
+                </div>
+            </div>
+             <p className="text-xs text-gray-500 dark:text-gray-400 mt-12 text-center italic">
+                Dokumen ini dicetak oleh sistem pada {new Date().toLocaleString('id-ID')} dan merupakan bukti pendaftaran yang sah.
+            </p>
+          </footer>
+        </main>
+      </div>
+    </div>
+  );
+}

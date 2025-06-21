@@ -11,8 +11,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp, Printer } from 'lucide-react';
 import { initialSchoolData, type School } from "@/app/registration/dashboard/page"; 
 import { getFromLocalStorage, type RegistrationProgress, type SchoolSelection } from "@/lib/localStorage";
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 
@@ -114,7 +112,6 @@ export default function SelectionPage() {
   const [uploadedDocIds, setUploadedDocIds] = React.useState<string[]>([]);
   
   const [storedPathway, setStoredPathway] = React.useState<string | undefined>();
-  const [isDownloading, setIsDownloading] = React.useState(false);
   
   const applicationVerificationStatus: VerificationStatus = "Terverifikasi";
 
@@ -156,44 +153,6 @@ export default function SelectionPage() {
 
   }, [selectedPathway, uploadedDocsString]);
   
-  const handleDownloadPdf = () => {
-    setIsDownloading(true);
-    const input = document.getElementById('registration-proof');
-    if (input) {
-        html2canvas(input, { 
-            scale: 2,
-            useCORS: true, 
-            onclone: (document) => {
-                // Hide elements that shouldn't be in the PDF, like buttons
-                const footer = document.querySelector('.card-footer-for-pdf');
-                if (footer) {
-                    (footer as HTMLElement).style.display = 'none';
-                }
-            }
-        })
-        .then((canvas) => {
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const canvasWidth = canvas.width;
-            const canvasHeight = canvas.height;
-            const ratio = canvasWidth / canvasHeight;
-            const pdfHeight = pdfWidth / ratio;
-            
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`bukti-pendaftaran-${biodataDetailsMock.nisn}.pdf`);
-            setIsDownloading(false);
-        }).catch(err => {
-            console.error("Error generating PDF:", err);
-            setIsDownloading(false);
-        });
-    } else {
-        console.error("Element with ID 'registration-proof' not found.");
-        setIsDownloading(false);
-    }
-  };
-
-
   if (!storedPathway || displaySelections.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-4 sm:p-6 md:p-8">
@@ -223,7 +182,7 @@ export default function SelectionPage() {
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
-      <Card className="w-full max-w-3xl shadow-2xl" id="registration-proof">
+      <Card className="w-full max-w-3xl shadow-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
             <ClipboardCheck size={40} />
@@ -443,16 +402,18 @@ export default function SelectionPage() {
           </section>
 
         </CardContent>
-        <CardFooter className="flex flex-col sm:flex-row justify-center pt-6 gap-4 card-footer-for-pdf">
+        <CardFooter className="flex flex-col sm:flex-row justify-center pt-6 gap-4">
             <Button asChild variant="outline">
                 <Link href="/registration/dashboard">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Kembali ke Beranda
                 </Link>
             </Button>
-             <Button onClick={handleDownloadPdf} disabled={isDownloading}>
-                <Printer className="mr-2 h-4 w-4" />
-                {isDownloading ? "Mengunduh..." : "Unduh Bukti Pendaftaran"}
+             <Button asChild>
+                <Link href="/registration/proof" target="_blank">
+                    <Printer className="mr-2 h-4 w-4" />
+                    Buka Halaman Cetak
+                </Link>
             </Button>
         </CardFooter>
       </Card>
