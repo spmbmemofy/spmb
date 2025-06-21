@@ -346,7 +346,7 @@ export default function DashboardPage() {
           <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
             <LayoutDashboard size={40} />
           </div>
-          <CardTitle className="text-2xl sm:text-3xl font-headline">Beranda Pendaftaran</CardTitle>
+          <CardTitle className="text-2xl sm:text-3xl font-headline">Informasi Pendaftaran</CardTitle>
           <CardDescription className="text-md">
             Ringkasan data pendaftar berdasarkan jalur penerimaan dan informasi sekolah di Kabupaten Berau.
           </CardDescription>

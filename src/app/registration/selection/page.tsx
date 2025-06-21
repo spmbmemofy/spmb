@@ -187,7 +187,7 @@ export default function SelectionPage() {
           <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
             <ClipboardCheck size={40} />
           </div>
-          <CardTitle className="text-2xl sm:text-3xl font-headline">Status Pendaftaran Anda</CardTitle>
+          <CardTitle className="text-2xl sm:text-3xl font-headline">Status Verifikasi Anda</CardTitle>
           <CardDescription className="text-md">
             Berikut adalah ringkasan pendaftaran dan status verifikasi Anda.
           </CardDescription>
