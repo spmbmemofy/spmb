@@ -5,7 +5,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle, FileText, Info, UserCircle, XCircle, ThumbsUp, ThumbsDown, Save, TrendingUp, BookOpen, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, FileText, Info, UserCircle, XCircle, ThumbsUp, ThumbsDown, Save, TrendingUp, BookOpen, AlertCircle, School } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -25,6 +25,8 @@ import { useToast } from "@/hooks/use-toast";
 import { getApplicantById, updateApplicant } from "@/lib/applicantService";
 import type { Applicant, ApplicantStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { initialSchoolData } from "@/lib/schoolData";
+
 
 const VERIFIER_SCHOOL_ID = "sman4berau";
 
@@ -218,8 +220,29 @@ export default function VerifyApplicantPage() {
               <CardContent className="space-y-3 text-sm">
                    <div className="flex justify-between"><span className="text-muted-foreground">No. Registrasi</span><span className="font-medium">{applicant.noRegistrasi}</span></div>
                    <div className="flex justify-between"><span className="text-muted-foreground">Asal Sekolah</span><span className="font-medium">{applicant.asalSekolahNama}</span></div>
-                   <div className="flex justify-between"><span className="text-muted-foreground">Sekolah Tujuan</span><span className="font-medium">{applicant.sekolahTujuanNama}</span></div>
-                   <div className="flex justify-between"><span className="text-muted-foreground">Jalur</span><span className="font-medium">{applicant.jalur}</span></div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="flex items-center text-lg"><School className="mr-2"/>Pilihan Sekolah Tujuan</CardTitle></CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {applicant.schoolSelections.map((selection, index) => {
+                    const school = initialSchoolData.find(s => s.id === selection.schoolId);
+                    return (
+                      <li key={`${selection.schoolId}-${index}`} className="flex items-start gap-3 rounded-md border p-3 bg-muted/20">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm flex-shrink-0 mt-0.5">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <p className="font-medium">{school?.namaSekolah || 'Sekolah tidak ditemukan'}</p>
+                          {selection.major && (
+                            <p className="text-xs text-muted-foreground">{selection.major}</p>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               </CardContent>
             </Card>
             <Card>

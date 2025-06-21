@@ -1,4 +1,9 @@
 
+export type SchoolSelection = {
+  schoolId: string;
+  major: string | null;
+};
+
 export type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
 export type Jalur = "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
 
@@ -11,6 +16,7 @@ export interface Applicant {
   asalSekolahNama: string;
   sekolahTujuanId: string;
   sekolahTujuanNama: string;
+  schoolSelections: SchoolSelection[];
   jalur: Jalur;
   statusVerifikasi: ApplicantStatus;
   peringkat?: number | null;
