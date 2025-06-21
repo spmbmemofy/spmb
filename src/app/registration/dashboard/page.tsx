@@ -11,11 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UserCircle, CheckCircle2, Edit3, Save, XCircle, Upload, Check } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadcnTableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
-import { useRouter } from "next/navigation";
+import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type BiodataDetails } from "@/lib/localStorage";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
-const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 
 
 const genderOptions = [
@@ -678,42 +676,5 @@ function ApplicantDashboard() {
 }
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const [isReady, setIsReady] = React.useState(false);
-  const [role, setRole] = React.useState<LoginCredentials['role'] | null>(null);
-
-  React.useEffect(() => {
-    const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
-    if (savedCredentials?.role) {
-      setRole(savedCredentials.role);
-    } else {
-      router.replace('/');
-    }
-  }, [router]);
-
-  React.useEffect(() => {
-    if (!role) return;
-
-    if (role === 'admin') {
-      router.replace('/registration/all-data');
-    } else if (role === 'verifikator') {
-      router.replace('/registration/selection');
-    } else if (role === 'applicant') {
-      setIsReady(true);
-    } else {
-      router.replace('/');
-    }
-  }, [role, router]);
-
-  if (!isReady || role !== 'applicant') {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center p-4">
-        <p>Mengarahkan ke dasbor Anda...</p>
-      </div>
-    );
-  }
-
-  return <ApplicantDashboard />;
+    return <ApplicantDashboard />;
 }
-
-    

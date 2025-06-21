@@ -34,14 +34,12 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   const router = useRouter();
   const { toast } = useToast();
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [userRole, setUserRole] = useState<'applicant' | 'admin' | 'verifikator' | null>(null);
 
   useEffect(() => {
     const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
     
     if (savedCredentials?.role === 'applicant' || savedCredentials?.role === 'admin' || savedCredentials?.role === 'verifikator') {
       setIsAuthorized(true);
-      setUserRole(savedCredentials.role);
     } else {
       toast({
         variant: "destructive",
@@ -52,8 +50,8 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     }
   }, [router, toast]);
 
-  const applicantMenuItems = [
-     {
+  const menuItems = [
+    {
       href: '/registration/dashboard',
       label: 'Beranda',
       icon: Home,
@@ -77,25 +75,16 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       icon: ClipboardCheck,
       activePaths: ['/registration/status'],
     },
-     {
-      href: '/registration/announcement',
-      label: 'Pengumuman',
-      icon: Megaphone,
-      activePaths: ['/registration/announcement'],
-    },
-  ];
-
-  const adminMenuItems = [
     {
       href: '/registration/all-data',
-      label: 'Beranda',
-      icon: Home,
+      label: 'Semua Data',
+      icon: Database,
       activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'],
     },
     {
       href: '/registration/selection',
       label: 'Verifikasi',
-      icon: ClipboardCheck,
+      icon: UserCheck,
       activePaths: ['/registration/selection', '/registration/verify'],
     },
     {
@@ -105,30 +94,6 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       activePaths: ['/registration/announcement'],
     },
   ];
-  
-  const verifierMenuItems = [
-    {
-      href: '/registration/selection',
-      label: 'Beranda',
-      icon: Home,
-      activePaths: ['/registration/selection', '/registration/verify'],
-    },
-    {
-      href: '/registration/announcement',
-      label: 'Pengumuman',
-      icon: Megaphone,
-      activePaths: ['/registration/announcement'],
-    },
-  ];
-  
-  let menuItems: typeof applicantMenuItems | typeof adminMenuItems | typeof verifierMenuItems = [];
-  if (userRole === 'applicant') {
-    menuItems = applicantMenuItems;
-  } else if (userRole === 'admin') {
-    menuItems = adminMenuItems;
-  } else if (userRole === 'verifikator') {
-    menuItems = verifierMenuItems;
-  }
 
   const handleLogout = () => {
     removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);
