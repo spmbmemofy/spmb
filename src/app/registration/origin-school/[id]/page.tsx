@@ -13,7 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { initialSchoolData, initialOriginSchoolData, type OriginSchool } from "@/lib/schoolData";
 import { cn } from "@/lib/utils";
-import { generateAllMockApplicants, type Applicant, type ApplicantStatus, jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
+import { generateAllMockApplicants, jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
+import type { Applicant, ApplicantStatus } from "@/lib/mockData";
 
 
 const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
@@ -60,7 +61,6 @@ export default function OriginSchoolDetailPage() {
     } else {
       setApplicants([]);
     }
-    setCurrentPage(1);
   }, [originSchoolId]);
 
   React.useEffect(() => {

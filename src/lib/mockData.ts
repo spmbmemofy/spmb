@@ -23,13 +23,7 @@ const lastNames = ["Saputra", "Wijayanti", "Nugroho", "Lestari", "Prabowo", "Wat
 export const jalurOptionsPlain: Jalur[] = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
 export const statusVerifikasiOptionsPlain: ApplicantStatus[] = ["Terverifikasi", "Menunggu Verifikasi", "Berkas tidak sesuai"];
 
-let allApplicants: Applicant[] | null = null;
-
 export const generateAllMockApplicants = (): Applicant[] => {
-    if (allApplicants) {
-        return allApplicants;
-    }
-
     const applicants: Applicant[] = [];
     let applicantIdCounter = 1;
 
@@ -73,6 +67,5 @@ export const generateAllMockApplicants = (): Applicant[] => {
         });
     });
     
-    allApplicants = applicants;
-    return allApplicants;
+    return applicants;
 };
