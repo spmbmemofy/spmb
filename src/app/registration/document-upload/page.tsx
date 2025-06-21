@@ -100,7 +100,6 @@ export default function DocumentUploadPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedPathway = searchParams.get("pathway") || "";
-  const selectedSchoolId = searchParams.get("schoolId") || "";
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -121,20 +120,10 @@ export default function DocumentUploadPage() {
       return; 
     }
     
-    // Attempt to load pathway and schoolId from query params first
-    let currentSelectedPathway = searchParams.get("pathway") || "";
-    let currentSelectedSchoolId = searchParams.get("schoolId") || "";
+    let currentSelectedPathway = searchParams.get("pathway") || savedProgress?.pathway || "";
+    let currentSelectedSchoolIds = savedProgress?.schoolIds || [];
 
-    // If not in query params, try from localStorage (e.g., refresh)
-    if (!currentSelectedPathway && savedProgress?.pathway) {
-        currentSelectedPathway = savedProgress.pathway;
-    }
-    if (!currentSelectedSchoolId && savedProgress?.schoolId) {
-        currentSelectedSchoolId = savedProgress.schoolId;
-    }
-    
-    // If still missing after checking localStorage, redirect to documents page
-    if (!currentSelectedPathway || !currentSelectedSchoolId) {
+    if (!currentSelectedPathway || currentSelectedSchoolIds.length === 0) {
         toast({
             variant: "destructive",
             title: "Informasi Tidak Lengkap",
@@ -144,14 +133,10 @@ export default function DocumentUploadPage() {
         return;
     }
     
-    // If params were missing and found in localStorage, update URL
-    if (searchParams.get("pathway") !== currentSelectedPathway || searchParams.get("schoolId") !== currentSelectedSchoolId) {
-        router.replace(`/registration/document-upload?pathway=${currentSelectedPathway}&schoolId=${currentSelectedSchoolId}`);
-        // The component will re-render with updated searchParams, so useEffect will run again.
-        // We can return here to avoid setting state with potentially outdated params.
+    if (searchParams.get("pathway") !== currentSelectedPathway) {
+        router.replace(`/registration/document-upload?pathway=${currentSelectedPathway}`);
         return;
     }
-
 
     const currentPathwayDocs = pathwaySpecificDocumentsMap[currentSelectedPathway] || [];
     const allDocs = [...generalDocuments, ...currentPathwayDocs];
@@ -164,7 +149,7 @@ export default function DocumentUploadPage() {
     }
     setIsLoading(false);
 
-  }, [router, toast, searchParams]); // Removed selectedPathway, selectedSchoolId as direct deps
+  }, [router, toast, searchParams]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, documentId: string) => {
     const file = event.target.files?.[0];
@@ -223,13 +208,16 @@ export default function DocumentUploadPage() {
       .filter(([, file]) => file !== null)
       .map(([id]) => id);
 
+    const progress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
+    const schoolIds = progress?.schoolIds || [];
+
     setTimeout(() => {
       toast({
         title: "Berkas Berhasil Diunggah",
         description: "Semua berkas Anda telah berhasil diunggah. Melanjutkan ke halaman status pendaftaran.",
       });
       setIsSubmitting(false);
-      router.push(`/registration/selection?pathway=${selectedPathway}&schoolId=${selectedSchoolId}&docs=${successfullyUploadedDocIds.join(',')}`);
+      router.push(`/registration/selection?pathway=${selectedPathway}&schoolIds=${schoolIds.join(',')}&docs=${successfullyUploadedDocIds.join(',')}`);
     }, 2000);
   };
   

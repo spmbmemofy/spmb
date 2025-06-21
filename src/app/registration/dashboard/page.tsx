@@ -67,6 +67,7 @@ export const initialSchoolData = [
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Berau",
     telepon: "0554-21045",
+    kecamatan: "Kec. Tanjung Redeb",
   },
   {
     id: "smkn1berau",
@@ -78,6 +79,7 @@ export const initialSchoolData = [
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Berau",
     telepon: "0554-22112",
+    kecamatan: "Kec. Tanjung Redeb",
   },
   {
     id: "sman2berau",
@@ -89,6 +91,7 @@ export const initialSchoolData = [
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Berau",
     telepon: "0554-23451",
+    kecamatan: "Kec. Tanjung Redeb",
   },
   {
     id: "smamuhammadiyahberau",
@@ -100,6 +103,7 @@ export const initialSchoolData = [
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Berau",
     telepon: "0554-21987",
+    kecamatan: "Kec. Tanjung Redeb",
   },
   {
     id: "smkyphbberau",
@@ -111,6 +115,7 @@ export const initialSchoolData = [
     statusPendaftaran: "Buka" as SchoolStatus,
     alamat: "Jl. Pangeran Antasari, Teluk Bayur, Berau",
     telepon: "0554-24001",
+    kecamatan: "Kec. Teluk Bayur",
   },
 ];
 
@@ -156,7 +161,7 @@ export type SchoolStatus = "Buka" | "Segera Penuh" | "Tutup";
 export type School = typeof initialSchoolData[0];
 export type OriginSchool = typeof initialOriginSchoolData[0];
 
-type SchoolSortKey = keyof Omit<School, 'jalurKuota' | 'alamat' | 'telepon' | 'id'>;
+type SchoolSortKey = keyof Omit<School, 'jalurKuota' | 'alamat' | 'telepon' | 'id' | 'kecamatan'>;
 type SortDirection = "ascending" | "descending";
 
 interface SchoolSortConfig {

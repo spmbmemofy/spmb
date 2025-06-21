@@ -7,8 +7,11 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, CheckSquare, XSquare } from 'lucide-react';
+import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, CheckSquare, XSquare, School2 } from 'lucide-react';
 import { initialSchoolData, type School } from "@/app/registration/dashboard/page"; 
+import { getFromLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
+
+const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 
 const biodataDetailsMock = {
   fullName: "Muhammad Rizky Pratama",
@@ -82,22 +85,38 @@ export default function SelectionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedPathway = searchParams.get("pathway");
-  const selectedSchoolId = searchParams.get("schoolId");
+  const schoolIdsParam = searchParams.get("schoolIds");
   const uploadedDocsString = searchParams.get("docs");
 
-  const [school, setSchool] = React.useState<School | undefined>(undefined);
+  const [selectedSchools, setSelectedSchools] = React.useState<School[]>([]);
   const [documentsToShow, setDocumentsToShow] = React.useState<DocumentItem[]>([]);
   const [uploadedDocIds, setUploadedDocIds] = React.useState<string[]>([]);
+  
+  // State to hold pathway and school IDs from local storage for the re-upload button
+  const [storedPathway, setStoredPathway] = React.useState<string | undefined>();
 
   React.useEffect(() => {
-    if (selectedSchoolId) {
-      const foundSchool = initialSchoolData.find(s => s.id === selectedSchoolId);
-      setSchool(foundSchool);
+    let pathway = selectedPathway;
+    let schoolIds = schoolIdsParam ? schoolIdsParam.split(',') : [];
+
+    // Fallback to localStorage if params are missing (e.g., on page refresh)
+    if (!pathway || schoolIds.length === 0) {
+      const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+      if (savedProgress) {
+        pathway = pathway || savedProgress.pathway;
+        schoolIds = schoolIds.length > 0 ? schoolIds : (savedProgress.schoolIds || []);
+      }
+    }
+    setStoredPathway(pathway);
+
+    if (schoolIds.length > 0) {
+      const foundSchools = initialSchoolData.filter(s => schoolIds.includes(s.id));
+      setSelectedSchools(foundSchools);
     }
 
     let docsForPathway: DocumentItem[] = [];
-    if (selectedPathway) {
-      const pathwayDocs = pathwaySpecificDocumentsMapConst[selectedPathway] || [];
+    if (pathway) {
+      const pathwayDocs = pathwaySpecificDocumentsMapConst[pathway] || [];
       docsForPathway = [...generalDocumentsConst, ...pathwayDocs];
     } else {
       docsForPathway = [...generalDocumentsConst];
@@ -106,11 +125,25 @@ export default function SelectionPage() {
     
     if (uploadedDocsString) {
       setUploadedDocIds(uploadedDocsString.split(','));
+    } else {
+        const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+        if (savedProgress?.documentMetadata) {
+            setUploadedDocIds(Object.keys(savedProgress.documentMetadata).filter(k => savedProgress.documentMetadata![k] !== null));
+        }
     }
 
-  }, [selectedSchoolId, selectedPathway, uploadedDocsString]);
+  }, [schoolIdsParam, selectedPathway, uploadedDocsString]);
+  
+  const handleReupload = () => {
+    if (storedPathway) {
+      router.push(`/registration/document-upload?pathway=${storedPathway}`);
+    } else {
+      router.push('/registration/documents');
+    }
+  }
 
-  if (!selectedPathway || !selectedSchoolId) {
+
+  if (!storedPathway || selectedSchools.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-4 sm:p-6 md:p-8">
         <Card className="w-full max-w-lg text-center">
@@ -164,36 +197,27 @@ export default function SelectionPage() {
               <BiodataDisplayItem label="Tempat, Tanggal Lahir" value={`${biodataDetailsMock.placeOfBirth}, ${biodataDetailsMock.dateOfBirth}`} />
               <BiodataDisplayItem label="Jenis Kelamin" value={biodataDetailsMock.gender} />
               <BiodataDisplayItem label="Agama" value={biodataDetailsMock.religion} />
-              <BiodataDisplayItem label="Nama Jalan" value={biodataDetailsMock.streetName} />
-              <BiodataDisplayItem label="RT/RW" value={biodataDetailsMock.rtRw} />
-              <BiodataDisplayItem label="Kelurahan/Desa" value={biodataDetailsMock.village} />
-              <BiodataDisplayItem label="Kecamatan" value={biodataDetailsMock.subdistrict} />
-              <BiodataDisplayItem label="Kabupaten/Kota" value={biodataDetailsMock.district} />
-              <BiodataDisplayItem label="Provinsi & Kode Pos" value={biodataDetailsMock.province} />
               <BiodataDisplayItem label="Sekolah Asal" value={biodataDetailsMock.previousSchool} />
-              <BiodataDisplayItem label="Nama Ayah" value={biodataDetailsMock.fatherName} />
-              <BiodataDisplayItem label="Tanggal Lahir Ayah" value={biodataDetailsMock.fatherDateOfBirth} />
-              <BiodataDisplayItem label="Pekerjaan Ayah" value={biodataDetailsMock.fatherOccupation} />
-              <BiodataDisplayItem label="Penghasilan Ayah" value={biodataDetailsMock.fatherIncome} />
-              <BiodataDisplayItem label="Nama Ibu" value={biodataDetailsMock.motherName} />
-              <BiodataDisplayItem label="Tanggal Lahir Ibu" value={biodataDetailsMock.motherDateOfBirth} />
-              <BiodataDisplayItem label="Pekerjaan Ibu" value={biodataDetailsMock.motherOccupation} />
-              <BiodataDisplayItem label="Penghasilan Ibu" value={biodataDetailsMock.motherIncome} />
-              <BiodataDisplayItem label="Nama Wali" value={biodataDetailsMock.guardianName} />
-              <BiodataDisplayItem label="Nomor Kontak" value={biodataDetailsMock.contactNumber} />
             </div>
           </section>
 
           <section>
             <h3 className="text-xl font-semibold mb-4 text-primary">Detail Pilihan Pendaftaran</h3>
-            <div className="space-y-3 rounded-md border p-4">
-              <div className="flex justify-between">
-                <span className="font-medium text-muted-foreground">Sekolah Tujuan:</span>
-                <span className="font-semibold">{school?.namaSekolah || "Tidak Diketahui"}</span>
-              </div>
-              <div className="flex justify-between">
+            <div className="space-y-4 rounded-md border p-4">
+              <div className="flex justify-between items-center">
                 <span className="font-medium text-muted-foreground">Jalur Pendaftaran:</span>
-                <span className="font-semibold">{selectedPathway || "Tidak Diketahui"}</span>
+                <span className="font-semibold">{storedPathway || "Tidak Diketahui"}</span>
+              </div>
+              <div>
+                <span className="font-medium text-muted-foreground">Sekolah Pilihan:</span>
+                <ul className="list-decimal list-inside mt-2 space-y-1">
+                  {selectedSchools.map(school => (
+                    <li key={school.id} className="text-sm font-semibold flex items-center">
+                      <School2 className="h-4 w-4 mr-2 text-primary opacity-80" />
+                      {school.namaSekolah}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </section>
@@ -267,7 +291,7 @@ export default function SelectionPage() {
                     Kembali ke Beranda
                 </Link>
             </Button>
-             <Button onClick={() => router.push('/registration/document-upload?pathway=' + selectedPathway + '&schoolId=' + selectedSchoolId)}>
+             <Button onClick={handleReupload}>
                 <FileCheck2 className="mr-2 h-4 w-4" />
                 Ubah/Unggah Ulang Berkas
             </Button>

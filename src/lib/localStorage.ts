@@ -8,7 +8,7 @@ export interface LoginCredentials {
 }
 
 export interface RegistrationProgress {
-  schoolId?: string;
+  schoolIds?: string[];
   pathway?: string;
   documentMetadata?: { [docId: string]: { name: string; size: number; type: string } | null };
   hasProfilePhoto?: boolean;
