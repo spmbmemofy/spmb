@@ -78,38 +78,44 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     console.log("Form values:", values);
-
-    // Always save credentials for the current session
-    saveToLocalStorage<LoginCredentials>(LOCAL_STORAGE_LOGIN_KEY, {
-      username: values.username,
-      role: values.role,
-      rememberMe: values.rememberMe,
-    });
     
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    const isSuccess = Math.random() > 0.3; 
+    let isSuccess = false;
+
+    // Check for the specific applicant credentials
+    if (values.role === 'applicant' && values.username === '0987654321' && values.password === '1234567890') {
+      isSuccess = true;
+    } else {
+      // For other roles or incorrect applicant credentials, use the existing random success logic for demonstration
+      isSuccess = Math.random() > 0.3;
+    }
 
     if (isSuccess) {
-        const roleName = values.role === 'applicant' 
-            ? 'Pendaftar' 
-            : values.role === 'admin' 
-            ? 'Admin' 
-            : 'Verifikator';
-        toast({
-            title: "Login Berhasil",
-            description: `Selamat datang, ${roleName}!`,
-        });
+      // Save credentials to local storage on successful login
+      saveToLocalStorage<LoginCredentials>(LOCAL_STORAGE_LOGIN_KEY, {
+        username: values.username,
+        role: values.role,
+        rememberMe: values.rememberMe,
+      });
 
-        if (values.role === "applicant" || values.role === "admin" || values.role === "verifikator") {
-          router.push('/registration/dashboard');
-        }
+      const roleName = values.role === 'applicant' 
+          ? 'Pendaftar' 
+          : values.role === 'admin' 
+          ? 'Admin' 
+          : 'Verifikator';
+      toast({
+          title: "Login Berhasil",
+          description: `Selamat datang, ${roleName}!`,
+      });
+
+      router.push('/registration/dashboard');
     } else {
-        toast({
-            variant: "destructive",
-            title: "Login Gagal",
-            description: "Kredensial tidak valid. Silakan coba lagi.",
-        });
+      toast({
+          variant: "destructive",
+          title: "Login Gagal",
+          description: "Kredensial tidak valid. Silakan coba lagi.",
+      });
     }
     setIsSubmitting(false);
   }
