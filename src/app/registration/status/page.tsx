@@ -86,7 +86,7 @@ interface DisplaySelection {
     major: string | null;
 }
 
-type VerificationStatus = "Belum verifikasi" | "Terverifikasi" | "Berkas tidak sesuai";
+type VerificationStatus = "Menunggu Verifikasi" | "Terverifikasi" | "Berkas tidak sesuai";
 
 const getVerificationBadgeVariant = (status: VerificationStatus): "default" | "destructive" | "secondary" => {
     switch (status) {
@@ -94,11 +94,106 @@ const getVerificationBadgeVariant = (status: VerificationStatus): "default" | "d
             return "default";
         case "Berkas tidak sesuai":
             return "destructive";
-        case "Belum verifikasi":
+        case "Menunggu Verifikasi":
             return "secondary";
         default:
             return "secondary";
     }
+};
+
+const ActivityHistoryTimeline: React.FC<{ status: VerificationStatus }> = ({ status }) => {
+  const pendaftaranSelesai = (
+    <li className="flex gap-4">
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 flex-shrink-0 mt-1">
+        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+      </div>
+      <div className="flex-1">
+        <p className="font-semibold">Pendaftaran Selesai</p>
+        <p className="text-sm text-muted-foreground">Anda berhasil menyelesaikan semua langkah pendaftaran dan mengirimkan berkas.</p>
+        <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 10:30 WIB</p>
+      </div>
+    </li>
+  );
+
+  const sedangDitinjau = (
+    <li className="flex gap-4">
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900 flex-shrink-0 mt-1">
+        <FileQuestion className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+      </div>
+      <div className="flex-1">
+        <p className="font-semibold">Berkas Sedang Ditinjau</p>
+        <p className="text-sm text-muted-foreground">Berkas Anda telah kami terima dan sedang dalam proses peninjauan oleh verifikator.</p>
+        <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 10:35 WIB</p>
+      </div>
+    </li>
+  );
+
+  const berkasDitolak = (
+    <li className="flex gap-4">
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900 flex-shrink-0 mt-1">
+        <XSquare className="h-5 w-5 text-red-600 dark:text-red-400" />
+      </div>
+      <div className="flex-1">
+        <p className="font-semibold">Berkas Ditolak</p>
+        <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> menolak berkas dengan alasan: "Foto Kartu Keluarga (KK) buram dan tidak terbaca."</p>
+        <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 14:00 WIB</p>
+      </div>
+    </li>
+  );
+  
+  const perbaikanBerkas = (
+     <li className="flex gap-4">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900 flex-shrink-0 mt-1">
+            <FileUp className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+        </div>
+        <div className="flex-1">
+            <p className="font-semibold">Perbaikan Berkas Selesai</p>
+            <p className="text-sm text-muted-foreground">Anda berhasil mengunggah ulang berkas Kartu Keluarga (KK) yang telah diperbaiki.</p>
+            <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 09:15 WIB</p>
+        </div>
+    </li>
+  );
+  
+  const verifikasiUlang = (
+      <li className="flex gap-4">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 flex-shrink-0 mt-1">
+            <UserCheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+        </div>
+        <div className="flex-1">
+            <p className="font-semibold">Berkas Diverifikasi Ulang</p>
+            <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> telah memverifikasi ulang berkas perbaikan Anda.</p>
+            <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 11:00 WIB</p>
+        </div>
+    </li>
+  );
+  
+  const peringkatDiperbarui = (
+    <li className="flex gap-4">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900 flex-shrink-0 mt-1">
+            <BarChart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+        </div>
+        <div className="flex-1">
+            <p className="font-semibold">Peringkat Diperbarui</p>
+            <p className="text-sm text-muted-foreground">Sistem telah memperbarui peringkat sementara Anda setelah verifikasi berhasil.</p>
+            <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 11:05 WIB</p>
+        </div>
+    </li>
+  );
+
+  let historyItems: React.ReactNode[] = [];
+  switch (status) {
+    case 'Terverifikasi':
+      historyItems = [pendaftaranSelesai, berkasDitolak, perbaikanBerkas, verifikasiUlang, peringkatDiperbarui];
+      break;
+    case 'Berkas tidak sesuai':
+      historyItems = [pendaftaranSelesai, berkasDitolak];
+      break;
+    case 'Menunggu Verifikasi':
+      historyItems = [pendaftaranSelesai, sedangDitinjau];
+      break;
+  }
+  
+  return <ul className="space-y-6">{historyItems}</ul>;
 };
 
 export default function StatusPage() {
@@ -252,58 +347,7 @@ export default function StatusPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
-                  <ul className="space-y-6">
-                    <li className="flex gap-4">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 flex-shrink-0 mt-1">
-                            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div className="flex-1">
-                            <p className="font-semibold">Pendaftaran Selesai</p>
-                            <p className="text-sm text-muted-foreground">Anda berhasil menyelesaikan semua langkah pendaftaran dan mengirimkan berkas.</p>
-                            <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 10:30 WIB</p>
-                        </div>
-                    </li>
-                     <li className="flex gap-4">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900 flex-shrink-0 mt-1">
-                            <XSquare className="h-5 w-5 text-red-600 dark:text-red-400" />
-                        </div>
-                        <div className="flex-1">
-                            <p className="font-semibold">Berkas Ditolak</p>
-                            <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> menolak berkas dengan alasan: "Foto Kartu Keluarga (KK) buram dan tidak terbaca."</p>
-                            <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 14:00 WIB</p>
-                        </div>
-                    </li>
-                     <li className="flex gap-4">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900 flex-shrink-0 mt-1">
-                            <FileUp className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                        </div>
-                        <div className="flex-1">
-                            <p className="font-semibold">Perbaikan Berkas Selesai</p>
-                            <p className="text-sm text-muted-foreground">Anda berhasil mengunggah ulang berkas Kartu Keluarga (KK) yang telah diperbaiki.</p>
-                            <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 09:15 WIB</p>
-                        </div>
-                    </li>
-                     <li className="flex gap-4">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 flex-shrink-0 mt-1">
-                            <UserCheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div className="flex-1">
-                            <p className="font-semibold">Berkas Diverifikasi Ulang</p>
-                            <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> telah memverifikasi ulang berkas perbaikan Anda.</p>
-                            <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 11:00 WIB</p>
-                        </div>
-                    </li>
-                     <li className="flex gap-4">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900 flex-shrink-0 mt-1">
-                            <BarChart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div className="flex-1">
-                            <p className="font-semibold">Peringkat Diperbarui</p>
-                            <p className="text-sm text-muted-foreground">Sistem telah memperbarui peringkat sementara Anda setelah verifikasi berhasil.</p>
-                            <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 11:05 WIB</p>
-                        </div>
-                    </li>
-                  </ul>
+                  <ActivityHistoryTimeline status={applicationVerificationStatus} />
                 </div>
                 <DialogFooter>
                   <Button asChild>
