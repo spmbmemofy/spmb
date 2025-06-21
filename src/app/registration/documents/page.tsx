@@ -125,9 +125,11 @@ export default function SchoolSelectionPage() {
     }
 
     const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
+    const schoolIds = selectedSelections.map(s => s.schoolId);
     saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
       ...currentProgress,
       schoolSelections: selectedSelections,
+      schoolIds: schoolIds, // Keep schoolIds for backward compatibility if needed elsewhere
       pathway: selectedPathway,
     });
     
@@ -201,40 +203,47 @@ export default function SchoolSelectionPage() {
                             {availableSchools.length > 0 ? (
                               availableSchools.map((school) => (
                                 <AccordionItem value={school.id} key={school.id} className="border-b">
-                                  <AccordionTrigger className="text-sm hover:no-underline p-2 rounded-md hover:bg-muted">
-                                    <div className="flex-1 text-left">
-                                      <p className="font-medium">{school.namaSekolah}</p>
-                                      <p className="text-xs text-muted-foreground">{school.type} - Akreditasi: {school.akreditasi}</p>
-                                    </div>
-                                    {school.type === "SMA" && (
-                                       <div className="pl-4" onClick={(e) => e.stopPropagation()}>
-                                          <Checkbox
-                                            id={`${school.id}-sma`}
-                                            checked={selectedSelections.some(s => s.schoolId === school.id)}
-                                            onCheckedChange={() => handleSchoolSelectionChange(school.id, null)}
-                                            aria-label={`Pilih ${school.namaSekolah}`}
-                                          />
+                                  {school.type === "SMA" ? (
+                                    <div className="flex items-center text-sm p-2 rounded-md justify-between py-4 font-medium">
+                                        <div className="flex-1 text-left">
+                                            <p className="font-medium">{school.namaSekolah}</p>
+                                            <p className="text-xs text-muted-foreground">{school.type} - Akreditasi: {school.akreditasi}</p>
                                         </div>
-                                    )}
-                                  </AccordionTrigger>
-                                  {school.type === "SMK" && (
-                                    <AccordionContent>
-                                      <div className="pl-4 pr-2 pt-2 pb-2 space-y-3">
-                                        <p className="text-xs font-semibold text-muted-foreground">Pilih Jurusan:</p>
-                                        {(school.majors || []).map(major => (
-                                          <div key={major} className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted/50">
+                                        <div className="pl-4">
                                             <Checkbox
-                                              id={`${school.id}-${major}`}
-                                              checked={selectedSelections.some(s => s.schoolId === school.id && s.major === major)}
-                                              onCheckedChange={() => handleSchoolSelectionChange(school.id, major)}
+                                                id={`${school.id}-sma`}
+                                                checked={selectedSelections.some(s => s.schoolId === school.id)}
+                                                onCheckedChange={() => handleSchoolSelectionChange(school.id, null)}
+                                                aria-label={`Pilih ${school.namaSekolah}`}
                                             />
-                                            <Label htmlFor={`${school.id}-${major}`} className="flex-grow cursor-pointer font-normal text-sm">
-                                              {major}
-                                            </Label>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </AccordionContent>
+                                        </div>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <AccordionTrigger className="text-sm hover:no-underline p-2 rounded-md hover:bg-muted">
+                                        <div className="flex-1 text-left">
+                                          <p className="font-medium">{school.namaSekolah}</p>
+                                          <p className="text-xs text-muted-foreground">{school.type} - Akreditasi: {school.akreditasi}</p>
+                                        </div>
+                                      </AccordionTrigger>
+                                      <AccordionContent>
+                                        <div className="pl-4 pr-2 pt-2 pb-2 space-y-3">
+                                          <p className="text-xs font-semibold text-muted-foreground">Pilih Jurusan:</p>
+                                          {(school.majors || []).map(major => (
+                                            <div key={major} className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted/50">
+                                              <Checkbox
+                                                id={`${school.id}-${major}`}
+                                                checked={selectedSelections.some(s => s.schoolId === school.id && s.major === major)}
+                                                onCheckedChange={() => handleSchoolSelectionChange(school.id, major)}
+                                              />
+                                              <Label htmlFor={`${school.id}-${major}`} className="flex-grow cursor-pointer font-normal text-sm">
+                                                {major}
+                                              </Label>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </AccordionContent>
+                                    </>
                                   )}
                                 </AccordionItem>
                               ))
