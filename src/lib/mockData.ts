@@ -27,7 +27,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
                 semester5: parseFloat((Math.random() * (95 - 80) + 80).toFixed(2)),
             };
             
-            const nilaiPrestasi = jalur === 'Prestasi' ? parseFloat((Math.random() * (15 - 5) + 5).toFixed(2)) : undefined;
+            const nilaiPrestasi = jalur === 'Prestasi' ? parseFloat((Math.random() * (85 - 35) + 35).toFixed(2)) : undefined;
 
             applicants.push({
                 id: `app-${applicantIdCounter}`,
@@ -55,7 +55,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
             applicants[index].jalur = jalur;
             if (jalur === 'Prestasi') {
                 if (!applicants[index].nilaiPrestasi) {
-                    applicants[index].nilaiPrestasi = parseFloat((Math.random() * (15 - 5) + 5).toFixed(2));
+                    applicants[index].nilaiPrestasi = parseFloat((Math.random() * (85 - 35) + 35).toFixed(2));
                 }
             } else {
                 applicants[index].nilaiPrestasi = undefined;
@@ -103,7 +103,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
 
                 // Adjust prestasi score based on new jalur
                 if (requiredJalur === 'Prestasi' && !applicants[originalApplicantIndex].nilaiPrestasi) {
-                    applicants[originalApplicantIndex].nilaiPrestasi = parseFloat((Math.random() * (15 - 5) + 5).toFixed(2));
+                    applicants[originalApplicantIndex].nilaiPrestasi = parseFloat((Math.random() * (85 - 35) + 35).toFixed(2));
                 } else if (requiredJalur !== 'Prestasi') {
                     applicants[originalApplicantIndex].nilaiPrestasi = undefined;
                 }
