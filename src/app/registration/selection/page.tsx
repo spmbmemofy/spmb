@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, CheckSquare, XSquare, School2 } from 'lucide-react';
+import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star } from 'lucide-react';
 import { initialSchoolData, type School } from "@/app/registration/dashboard/page"; 
 import { getFromLocalStorage, type RegistrationProgress, type SchoolSelection } from "@/lib/localStorage";
 
@@ -173,8 +173,6 @@ export default function SelectionPage() {
     );
   }
 
-  const mockVerificationStatus = "Menunggu Verifikasi oleh Panitia"; 
-
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
       <Card className="w-full max-w-3xl shadow-2xl">
@@ -197,36 +195,61 @@ export default function SelectionPage() {
               <BiodataDisplayItem label="Nama Lengkap" value={biodataDetailsMock.fullName} />
               <BiodataDisplayItem label="NISN" value={biodataDetailsMock.nisn} />
               <BiodataDisplayItem label="NIK" value={biodataDetailsMock.nik} />
-              <BiodataDisplayItem label="Tempat, Tanggal Lahir" value={`${biodataDetailsMock.placeOfBirth}, ${biodataDetailsMock.dateOfBirth}`} />
-              <BiodataDisplayItem label="Jenis Kelamin" value={biodataDetailsMock.gender} />
-              <BiodataDisplayItem label="Agama" value={biodataDetailsMock.religion} />
               <BiodataDisplayItem label="Sekolah Asal" value={biodataDetailsMock.previousSchool} />
             </div>
           </section>
 
           <section>
-            <h3 className="text-xl font-semibold mb-4 text-primary">Detail Pilihan Pendaftaran</h3>
-            <div className="space-y-4 rounded-md border p-4">
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-muted-foreground">Jalur Pendaftaran:</span>
-                <span className="font-semibold">{storedPathway || "Tidak Diketahui"}</span>
-              </div>
-              <div>
-                <span className="font-medium text-muted-foreground">Prioritas Sekolah & Jurusan Pilihan:</span>
-                <ul className="list-decimal list-inside mt-2 space-y-2">
-                  {displaySelections.map(({ school, major }) => (
-                    <li key={`${school.id}-${major || 'sma'}`} className="flex items-start">
-                      <School2 className="h-4 w-4 mr-2 mt-0.5 text-primary opacity-80 flex-shrink-0" />
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-sm">{school.namaSekolah}</span>
-                        {major && <span className="text-xs text-muted-foreground">{major}</span>}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <h3 className="text-xl font-semibold mb-4 text-primary flex items-center">
+                <Star className="mr-2 h-6 w-6" />
+                Status & Peringkat Pilihan
+            </h3>
+            <div className="space-y-4">
+                <div className="flex justify-between items-center rounded-md border p-4 bg-muted/30">
+                    <span className="font-medium text-muted-foreground">Jalur Pendaftaran:</span>
+                    <span className="font-semibold text-lg text-primary">{storedPathway || "Tidak Diketahui"}</span>
+                </div>
+                {displaySelections.map(({ school, major }, index) => {
+                    const pathwayKey = (storedPathway?.toLowerCase() || '') as keyof typeof school.jalurKuota;
+                    const quota = school.jalurKuota ? (school.jalurKuota[pathwayKey] || 0) : 0;
+                    const rank = quota > 0 ? Math.floor(Math.random() * (quota + 20)) + 1 : Math.floor(Math.random() * 20) + 1;
+                    const isWithinQuota = rank <= quota && quota > 0;
+                    const rankStatus = isWithinQuota ? "Memenuhi Peringkat" : "Di Luar Peringkat";
+                    const rankStatusVariant = isWithinQuota ? "default" : "destructive";
+                    const verificationStatus = "Berkas Terverifikasi";
+
+                    return (
+                        <Card key={`${school.id}-${major || 'sma'}`} className="overflow-hidden">
+                            <CardHeader className="flex flex-row items-start justify-between bg-muted/50 p-4">
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Prioritas Pilihan #{index + 1}</p>
+                                    <CardTitle className="text-lg flex items-center mt-1">
+                                      <School2 className="h-5 w-5 mr-2 text-primary opacity-80" />
+                                      {school.namaSekolah}
+                                    </CardTitle>
+                                    {major && <p className="text-sm text-muted-foreground mt-1">{major}</p>}
+                                </div>
+                                <Badge variant={rankStatusVariant}>{rankStatus}</Badge>
+                            </CardHeader>
+                            <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Status Verifikasi</p>
+                                    <p className="font-semibold">{verificationStatus}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Peringkat Sementara</p>
+                                    <p className="font-semibold text-lg">{quota > 0 ? `${rank} / ${quota}` : '-'}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
             </div>
+             <p className="text-xs text-muted-foreground mt-2">
+                Peringkat bersifat sementara dan dapat berubah sewaktu-waktu hingga pengumuman akhir.
+            </p>
           </section>
+
 
           <section>
             <h3 className="text-xl font-semibold mb-4 text-primary">Kelengkapan Berkas</h3>
@@ -249,7 +272,8 @@ export default function SelectionPage() {
                     statusText = "Belum Diunggah";
                   } else {
                     icon = <FileQuestion className="h-5 w-5 mr-2 text-muted-foreground" />;
-                    badgeVariant = "Tidak Diunggah";
+                    badgeVariant = "secondary";
+                    statusText = "Tidak Diunggah";
                   }
 
                   return (
@@ -271,21 +295,6 @@ export default function SelectionPage() {
              <p className="text-xs text-muted-foreground mt-2">
                 Status "Terunggah" menunjukkan berkas telah dipilih pada sesi unggah terakhir. Verifikasi akhir dilakukan oleh panitia.
             </p>
-          </section>
-          
-          <section>
-            <h3 className="text-xl font-semibold mb-4 text-primary">Status Verifikasi Pendaftaran</h3>
-            <div className="rounded-md border p-6 text-center bg-secondary/30">
-                <div className="flex items-center justify-center mb-2">
-                    {mockVerificationStatus === "Menunggu Verifikasi oleh Panitia" && <Info className="h-6 w-6 mr-2 text-yellow-600" />}
-                    {mockVerificationStatus.toLowerCase().includes("diterima") && <CheckSquare className="h-6 w-6 mr-2 text-green-600" />}
-                    {mockVerificationStatus.toLowerCase().includes("ditolak") && <XSquare className="h-6 w-6 mr-2 text-destructive" />}
-                    <p className="text-lg font-medium text-foreground">{mockVerificationStatus}</p>
-                </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Harap periksa halaman ini secara berkala untuk pembaruan status dari panitia. Anda akan dihubungi jika ada informasi lebih lanjut.
-              </p>
-            </div>
           </section>
 
         </CardContent>
