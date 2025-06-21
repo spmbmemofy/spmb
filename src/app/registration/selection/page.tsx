@@ -85,6 +85,22 @@ interface DisplaySelection {
     major: string | null;
 }
 
+// New type and function for verification status
+type VerificationStatus = "Belum verifikasi" | "Terverifikasi" | "Berkas tidak sesuai";
+
+const getVerificationBadgeVariant = (status: VerificationStatus): "default" | "destructive" | "secondary" => {
+    switch (status) {
+        case "Terverifikasi":
+            return "default";
+        case "Berkas tidak sesuai":
+            return "destructive";
+        case "Belum verifikasi":
+            return "secondary";
+        default:
+            return "secondary";
+    }
+};
+
 export default function SelectionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -144,6 +160,9 @@ export default function SelectionPage() {
       router.push('/registration/documents');
     }
   }
+
+  // Define possible verification statuses to simulate different states
+  const verificationStatuses: VerificationStatus[] = ["Belum verifikasi", "Terverifikasi", "Berkas tidak sesuai"];
 
 
   if (!storedPathway || displaySelections.length === 0) {
@@ -216,7 +235,9 @@ export default function SelectionPage() {
                     const isWithinQuota = rank <= quota && quota > 0;
                     const rankStatus = isWithinQuota ? "Memenuhi Peringkat" : "Di Luar Peringkat";
                     const rankStatusVariant = isWithinQuota ? "default" : "destructive";
-                    const verificationStatus = "Berkas Terverifikasi";
+                    
+                    // Simulate verification status based on user's request
+                    const verificationStatus = verificationStatuses[index % verificationStatuses.length];
 
                     return (
                         <Card key={`${school.id}-${major || 'sma'}`} className="overflow-hidden">
@@ -234,7 +255,9 @@ export default function SelectionPage() {
                             <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Status Verifikasi</p>
-                                    <p className="font-semibold">{verificationStatus}</p>
+                                    <Badge variant={getVerificationBadgeVariant(verificationStatus)} className="mt-1 font-semibold">
+                                        {verificationStatus}
+                                    </Badge>
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Peringkat Sementara</p>
