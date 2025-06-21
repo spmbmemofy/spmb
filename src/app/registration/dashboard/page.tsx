@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Building, MapPin, Save } from "lucide-react";
+import { Home, MapPin, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // This is now the single source of truth for the school data model.
@@ -134,12 +134,12 @@ export default function SchoolDataPage() {
         <CardHeader>
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0 bg-primary text-primary-foreground rounded-full p-3 w-fit">
-              <Building size={28} />
+              <Home size={28} />
             </div>
             <div>
-              <CardTitle className="text-2xl sm:text-3xl font-headline">Kelola Data Sekolah</CardTitle>
+              <CardTitle className="text-2xl sm:text-3xl font-headline">Beranda</CardTitle>
               <CardDescription className="text-md mt-1">
-                Perbarui informasi sekolah, lokasi, dan kuota penerimaan.
+                Selamat datang di dasbor admin SPMB 2026.
               </CardDescription>
             </div>
           </div>

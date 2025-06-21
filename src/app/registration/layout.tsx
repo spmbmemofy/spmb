@@ -4,7 +4,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { User, FileText, Settings, LogOut, Menu as MenuIcon, Building, ClipboardCheck } from 'lucide-react';
+import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -24,7 +24,6 @@ import { useToast } from "@/hooks/use-toast";
 
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
-
 
 interface RegistrationLayoutProps {
   children: ReactNode;
@@ -56,34 +55,29 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   const allMenuItems = [
     {
       href: '/registration/dashboard',
-      label: 'DATA SEKOLAH',
-      icon: Building,
+      label: 'Beranda',
+      icon: Home,
       activePaths: ['/registration/dashboard', '/registration/school', '/registration/origin-school'], 
     },
     {
-      href: '/registration/biodata',
-      label: 'DATA PENDAFTAR',
-      icon: User,
-      activePaths: ['/registration/biodata'],
-    },
-    {
-      href: '/registration/documents',
-      label: 'PILIH SEKOLAH', 
-      icon: FileText,
-      activePaths: ['/registration/documents', '/registration/document-upload'], 
-      isPilihSekolah: true, // Custom flag
+      href: '/registration/all-data',
+      label: 'Semua Data',
+      icon: Database,
+      activePaths: ['/registration/all-data'],
     },
     {
       href: '/registration/selection',
-      label: 'VERIFIKASI',
+      label: 'Verifikasi',
       icon: ClipboardCheck,
-      activePaths: ['/registration/selection'],
+      activePaths: ['/registration/selection', '/registration/documents', '/registration/document-upload', '/registration/biodata'],
+    },
+    {
+      href: '/registration/announcement',
+      label: 'Pengumuman',
+      icon: Megaphone,
+      activePaths: ['/registration/announcement'],
     },
   ];
-
-  const menuItems = (userRole === 'admin' || userRole === 'verifikator') 
-    ? allMenuItems.filter(item => item.href === '/registration/dashboard')
-    : allMenuItems.filter(item => item.href !== '/registration/dashboard');
 
   const handleLogout = () => {
     removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);
@@ -92,24 +86,6 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       removeFromLocalStorage(LOCAL_STORAGE_LOGIN_KEY);
     }
     router.push('/');
-  };
-
-  const handleMenuItemClick = (itemHref: string, isPilihSekolah?: boolean, event?: React.MouseEvent<HTMLAnchorElement>) => {
-    if (isPilihSekolah) {
-      const progress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
-      if (!progress?.hasProfilePhoto) {
-        if (event) event.preventDefault();
-        toast({
-          variant: "destructive",
-          title: "Foto Profil Diperlukan",
-          description: "Harap unggah foto profil Anda di halaman Data Pendaftar sebelum melanjutkan ke pemilihan sekolah.",
-        });
-        return;
-      }
-    }
-    // If not 'Pilih Sekolah' or if photo check passes, Link's default behavior will navigate
-    // For direct router.push if not using Link's href:
-    // router.push(itemHref); 
   };
 
   if (!isAuthorized) {
@@ -141,17 +117,14 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {allMenuItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
                     isActive={item.activePaths.some(path => pathname.startsWith(path))}
                     tooltip={{ children: item.label, side: 'right' }}
                   >
-                    <Link 
-                      href={item.href} 
-                      onClick={(e) => handleMenuItemClick(item.href, item.isPilihSekolah, e)}
-                    >
+                    <Link href={item.href}>
                       <item.icon />
                       <span className="group-data-[state=collapsed]:hidden">{item.label}</span>
                     </Link>
