@@ -244,45 +244,53 @@ export default function VerifyApplicantPage() {
                   Tinjau setiap berkas di bawah ini dan berikan status validasi.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {documentsToVerify.map(doc => (
-                     <div key={doc.id}>
-                        <Card className="overflow-hidden group">
-                           <CardHeader className="p-3">
-                              <p className="font-medium text-sm truncate">{doc.label}</p>
-                           </CardHeader>
-                           <CardContent className="p-3 flex flex-col items-center justify-center aspect-[3/4] bg-muted/20">
-                             <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-                             <Button asChild variant="secondary">
-                                <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                                    Buka Berkas
-                                </a>
-                             </Button>
-                           </CardContent>
-                           <CardFooter className="p-3 bg-muted/50 flex justify-end gap-2">
-                                <Button 
-                                    size="sm" 
-                                    variant={documentStatuses[doc.id] === 'invalid' ? 'destructive' : 'outline'}
-                                    onClick={() => handleDocumentStatusChange(doc.id, 'invalid')}
-                                >
-                                    <ThumbsDown className="mr-2 h-4 w-4" />
-                                    Tidak Valid
-                                </Button>
-                                <Button 
-                                    size="sm"
-                                    variant={documentStatuses[doc.id] === 'valid' ? 'default' : 'outline'}
-                                    className={cn(documentStatuses[doc.id] === 'valid' && "bg-green-600 hover:bg-green-700")}
-                                    onClick={() => handleDocumentStatusChange(doc.id, 'valid')}
-                                >
-                                    <ThumbsUp className="mr-2 h-4 w-4" />
-                                    Valid
-                                </Button>
-                           </CardFooter>
-                        </Card>
-                     </div>
-                  ))}
-                </div>
+              <CardContent className="p-0">
+                 <div className="space-y-0">
+                    {documentsToVerify.map((doc, index) => (
+                      <div
+                        key={doc.id}
+                        className={cn(
+                          "flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4",
+                          index < documentsToVerify.length - 1 && "border-b"
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <FileText className="h-6 w-6 text-primary flex-shrink-0" />
+                          <div>
+                            <p className="font-medium">{doc.label}</p>
+                            <Button asChild variant="link" className="p-0 h-auto text-xs">
+                              <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                                Lihat Berkas di Tab Baru
+                              </a>
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0 flex gap-2 w-full sm:w-auto">
+                          <Button
+                            size="sm"
+                            variant={documentStatuses[doc.id] === 'invalid' ? 'destructive' : 'outline'}
+                            onClick={() => handleDocumentStatusChange(doc.id, 'invalid')}
+                            className="flex-1"
+                          >
+                            <ThumbsDown className="mr-2 h-4 w-4" />
+                            Tidak Valid
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={documentStatuses[doc.id] === 'valid' ? 'default' : 'outline'}
+                            className={cn(
+                              documentStatuses[doc.id] === 'valid' && "bg-green-600 hover:bg-green-700",
+                              "flex-1"
+                            )}
+                            onClick={() => handleDocumentStatusChange(doc.id, 'valid')}
+                          >
+                            <ThumbsUp className="mr-2 h-4 w-4" />
+                            Valid
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
               </CardContent>
             </Card>
           </div>
@@ -333,4 +341,3 @@ export default function VerifyApplicantPage() {
     </div>
   );
 }
-
