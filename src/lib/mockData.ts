@@ -21,7 +21,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
 
             const nilaiRataRataRapor = parseFloat((Math.random() * (95 - 80) + 80).toFixed(2));
             const nilaiPrestasi = jalur === 'Prestasi' ? parseFloat((Math.random() * (15 - 5) + 5).toFixed(2)) : undefined;
-            const nilaiTambahanPilihan = Math.random() > 0.5 ? 10 : 0;
+            const nilaiTambahanPilihan = Math.random() > 0.5 ? 25 : 0;
             
             applicants.push({
                 id: `app-${applicantIdCounter}`,
