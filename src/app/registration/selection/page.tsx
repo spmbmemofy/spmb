@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart } from 'lucide-react';
+import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp } from 'lucide-react';
 import { initialSchoolData, type School } from "@/app/registration/dashboard/page"; 
 import { getFromLocalStorage, type RegistrationProgress, type SchoolSelection } from "@/lib/localStorage";
 
@@ -272,13 +272,33 @@ export default function SelectionPage() {
                         </div>
                     </li>
                      <li className="flex gap-4">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900 flex-shrink-0 mt-1">
+                            <XSquare className="h-5 w-5 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div className="flex-1">
+                            <p className="font-semibold">Berkas Ditolak</p>
+                            <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> menolak berkas dengan alasan: "Foto Kartu Keluarga (KK) buram dan tidak terbaca."</p>
+                            <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 14:00 WIB</p>
+                        </div>
+                    </li>
+                     <li className="flex gap-4">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900 flex-shrink-0 mt-1">
+                            <FileUp className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <div className="flex-1">
+                            <p className="font-semibold">Perbaikan Berkas Selesai</p>
+                            <p className="text-sm text-muted-foreground">Anda berhasil mengunggah ulang berkas Kartu Keluarga (KK) yang telah diperbaiki.</p>
+                            <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 09:15 WIB</p>
+                        </div>
+                    </li>
+                     <li className="flex gap-4">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 flex-shrink-0 mt-1">
                             <UserCheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div className="flex-1">
-                            <p className="font-semibold">Berkas Diverifikasi</p>
-                            <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> dari <span className="font-medium">{displaySelections[0]?.school.namaSekolah}</span> telah memverifikasi berkas Anda.</p>
-                            <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 14:00 WIB</p>
+                            <p className="font-semibold">Berkas Diverifikasi Ulang</p>
+                            <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> telah memverifikasi ulang berkas perbaikan Anda.</p>
+                            <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 11:00 WIB</p>
                         </div>
                     </li>
                      <li className="flex gap-4">
@@ -287,8 +307,8 @@ export default function SelectionPage() {
                         </div>
                         <div className="flex-1">
                             <p className="font-semibold">Peringkat Diperbarui</p>
-                            <p className="text-sm text-muted-foreground">Sistem telah memperbarui peringkat sementara Anda berdasarkan data terbaru.</p>
-                            <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 14:05 WIB</p>
+                            <p className="text-sm text-muted-foreground">Sistem telah memperbarui peringkat sementara Anda setelah verifikasi berhasil.</p>
+                            <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 11:05 WIB</p>
                         </div>
                     </li>
                   </ul>
