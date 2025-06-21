@@ -8,11 +8,11 @@ export type School = {
   kuota: number;
   type: "SMA" | "SMK";
   majors?: string[];
-  jalurKuota?: { afirmasi: number; mutasi: number; prestasi: number; domisili: number; };
-  jumlahPendaftar?: number;
-  statusPendaftaran?: "Buka" | "Tutup" | "Segera Penuh";
-  telepon?: string;
-  tahapPendaftaran?: number;
+  jalurKuota: { afirmasi: number; mutasi: number; prestasi: number; domisili: number; };
+  jumlahPendaftar: number;
+  statusPendaftaran: "Buka" | "Tutup" | "Segera Penuh";
+  telepon: string;
+  tahapPendaftaran: number;
 };
 
 export const initialSchoolData: School[] = [
@@ -24,6 +24,11 @@ export const initialSchoolData: School[] = [
     kuota: 266,
     akreditasi: "A",
     type: "SMA",
+    jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112 },
+    jumlahPendaftar: 50, 
+    statusPendaftaran: "Buka",
+    telepon: "0554-21045",
+    tahapPendaftaran: 1,
   },
   {
     id: "smkn1berau",
@@ -39,6 +44,11 @@ export const initialSchoolData: School[] = [
       "Otomatisasi dan Tata Kelola Perkantoran",
       "Bisnis Daring dan Pemasaran",
     ],
+    jalurKuota: { afirmasi: 61, mutasi: 15, prestasi: 91, domisili: 137 },
+    jumlahPendaftar: 50,
+    statusPendaftaran: "Buka",
+    telepon: "0554-21098",
+    tahapPendaftaran: 1,
   },
   {
     id: "sman2berau",
@@ -48,6 +58,11 @@ export const initialSchoolData: School[] = [
     kuota: 228,
     akreditasi: "B",
     type: "SMA",
+    jalurKuota: { afirmasi: 46, mutasi: 11, prestasi: 68, domisili: 103 },
+    jumlahPendaftar: 50,
+    statusPendaftaran: "Buka",
+    telepon: "0554-22111",
+    tahapPendaftaran: 1,
   },
   {
     id: "smamuhammadiyahberau",
@@ -57,6 +72,11 @@ export const initialSchoolData: School[] = [
     kuota: 142,
     akreditasi: "B",
     type: "SMA",
+    jalurKuota: { afirmasi: 28, mutasi: 7, prestasi: 43, domisili: 64 },
+    jumlahPendaftar: 50,
+    statusPendaftaran: "Buka",
+    telepon: "0554-23456",
+    tahapPendaftaran: 2,
   },
   {
     id: "smkyphbberau",
@@ -67,6 +87,11 @@ export const initialSchoolData: School[] = [
     akreditasi: "B",
     type: "SMK",
     majors: ["Farmasi Klinis dan Komunitas", "Teknologi Laboratorium Medik"],
+    jalurKuota: { afirmasi: 38, mutasi: 10, prestasi: 57, domisili: 85 },
+    jumlahPendaftar: 50,
+    statusPendaftaran: "Buka",
+    telepon: "0554-24567",
+    tahapPendaftaran: 2,
   },
 ];
 

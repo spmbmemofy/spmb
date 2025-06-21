@@ -11,56 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { initialSchoolData, initialOriginSchoolData } from "@/lib/schoolData";
-
-type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
-type Jalur = "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
-
-interface Applicant {
-  id: string;
-  noRegistrasi: string;
-  fullName: string;
-  nisn: string;
-  asalSekolahId: string;
-  asalSekolahNama: string;
-  sekolahTujuanId: string;
-  sekolahTujuanNama: string;
-  jalur: Jalur;
-  statusVerifikasi: ApplicantStatus;
-}
-
-const firstNames = ["Andi", "Bima", "Clara", "Dian", "Elang", "Fitri", "Gilang", "Hana", "Ivan", "Jasmine", "Kurnia", "Lina", "Mega", "Nadia", "Oscar", "Putri", "Rangga", "Sari", "Tegar", "Vina"];
-const lastNames = ["Saputra", "Wijayanti", "Nugroho", "Lestari", "Prabowo", "Wati", "Setiawan", "Handoko", "Permatasari", "Maulana", "Santoso", "Hakim", "Effendi", "Siregar", "Putra"];
-const jalurOptionsPlain: Jalur[] = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
-const statusVerifikasiOptionsPlain: ApplicantStatus[] = ["Terverifikasi", "Menunggu Verifikasi", "Berkas tidak sesuai"];
-
-const generateAllApplicants = (): Applicant[] => {
-    const applicants: Applicant[] = [];
-    let applicantIdCounter = 1;
-
-    initialOriginSchoolData.forEach((originSchool, originIndex) => {
-        for (let i = 0; i < originSchool.jumlahPendaftar; i++) {
-            const destinationSchool = initialSchoolData[applicantIdCounter % initialSchoolData.length];
-            const fullName = `${firstNames[applicantIdCounter % firstNames.length]} ${lastNames[i % lastNames.length]}`;
-            const nisn = `00${String(10000000 + applicantIdCounter).padStart(8, '0')}`;
-            
-            applicants.push({
-                id: `app-${applicantIdCounter}`,
-                noRegistrasi: `REG2026-${String(applicantIdCounter).padStart(5, '0')}`,
-                fullName,
-                nisn,
-                asalSekolahId: originSchool.id,
-                asalSekolahNama: originSchool.namaSekolah,
-                sekolahTujuanId: destinationSchool.id,
-                sekolahTujuanNama: destinationSchool.namaSekolah,
-                jalur: jalurOptionsPlain[applicantIdCounter % jalurOptionsPlain.length],
-                statusVerifikasi: statusVerifikasiOptionsPlain[i % statusVerifikasiOptionsPlain.length],
-            });
-            applicantIdCounter++;
-        }
-    });
-    return applicants;
-};
+import { initialSchoolData } from "@/lib/schoolData";
+import { generateAllMockApplicants, type Applicant, type ApplicantStatus, jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
 
 const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
   switch (status) {
@@ -91,7 +43,7 @@ export default function AllDataPage() {
   const [currentPage, setCurrentPage] = React.useState(1);
 
   React.useEffect(() => {
-    setAllApplicants(generateAllApplicants());
+    setAllApplicants(generateAllMockApplicants());
   }, []);
 
   React.useEffect(() => {

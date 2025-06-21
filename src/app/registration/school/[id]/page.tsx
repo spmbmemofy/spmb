@@ -11,32 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { School } from "@/lib/schoolData";
 import { initialSchoolData } from "@/lib/schoolData";
 import { cn } from "@/lib/utils";
-
-// Mock data for schools - in a real app, this would come from an API
-const allSchoolsData: School[] = initialSchoolData.map(school => ({
-    ...school,
-    jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112 },
-    jumlahPendaftar: 50, 
-    statusPendaftaran: "Buka",
-    alamat: school.alamat || "Alamat belum tersedia",
-    telepon: "0554-XXXXX",
-    tahapPendaftaran: school.namaSekolah.includes("Negeri") ? 1 : 2,
-}));
-
-type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
-interface Applicant {
-  id: string;
-  noRegistrasi: string;
-  fullName: string;
-  nisn: string;
-  asalSekolah: string; 
-  jalur: "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
-  status: ApplicantStatus;
-  peringkat?: number | null; 
-}
+import { generateAllMockApplicants, type Applicant, type ApplicantStatus, jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
 
 interface PathwayStats {
   nama: string;
@@ -48,22 +25,8 @@ interface PathwayStats {
 }
 
 
-const schoolIds = ["sman1tanjungredeb", "smkn1berau", "sman2berau", "smamuhammadiyahberau", "smkyphbberau"];
-const jalurOptionsPlain: Applicant['jalur'][] = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
-const asalSekolahOptionsPlain = [ 
-    "SMP Negeri 1 Tanjung Redeb", 
-    "SMP Negeri 2 Teluk Bayur", 
-    "SMP Negeri 3 Sambaliung", 
-    "MTs Al-Kholil", 
-    "SMP IT Ash-Shohwah Berau"
-];
-const statusOptionsPlain: ApplicantStatus[] = ["Terverifikasi", "Menunggu Verifikasi", "Berkas tidak sesuai"];
-
-const firstNames = ["Ahmad", "Budi", "Citra", "Dewi", "Eka", "Fajar", "Gita", "Hendra", "Indah", "Joko", "Lia", "Mira", "Nina", "Omar", "Putu", "Rahmat", "Sari", "Tono", "Umar", "Vina", "Wati", "Yoga", "Zaki", "Amir", "Bella"];
-const lastNames = ["Santoso", "Wijaya", "Kusuma", "Lestari", "Pratama", "Wahyuni", "Setiawan", "Handayani", "Permana", "Wulandari", "Hakim", "Saleh", "Putri", "Maulana", "Siregar", "Abdullah", "Batubara", "Chandra", "Daulay", "Effendi"];
-
 const jalurOptions = ["Semua Jalur", ...jalurOptionsPlain];
-const statusOptions = ["Semua Status", ...statusOptionsPlain];
+const statusOptions = ["Semua Status", ...statusVerifikasiOptionsPlain];
 
 
 const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
@@ -79,7 +42,7 @@ const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "s
   }
 };
 
-type SortKey = keyof Omit<Applicant, 'peringkat'> | 'no' | 'peringkat' | 'asalSekolah'; 
+type SortKey = keyof Applicant | 'no'; 
 type SortDirection = "ascending" | "descending";
 
 interface SortConfig {
@@ -91,7 +54,7 @@ interface SortConfig {
 export default function SchoolDetailPage() {
   const params = useParams();
   const schoolId = params.id as string;
-  const school = allSchoolsData.find(s => s.id === schoolId);
+  const school = initialSchoolData.find(s => s.id === schoolId);
 
   const [currentSchoolApplicants, setCurrentSchoolApplicants] = React.useState<Applicant[]>([]);
 
@@ -104,86 +67,12 @@ export default function SchoolDetailPage() {
   const [currentPage, setCurrentPage] = React.useState(1);
 
   React.useEffect(() => {
-    if (!schoolId || !school) {
-      setCurrentSchoolApplicants([]);
-      return;
+    if (schoolId) {
+        const allApplicants = generateAllMockApplicants();
+        const schoolApplicants = allApplicants.filter(app => app.sekolahTujuanId === schoolId);
+        setCurrentSchoolApplicants(schoolApplicants);
     }
-
-    const schoolIndex = schoolIds.findIndex(id => id === schoolId);
-    if (schoolIndex === -1) {
-        setCurrentSchoolApplicants([]);
-        return; 
-    }
-    
-    const generatedApplicantsBase: Omit<Applicant, 'peringkat'>[] = [];
-    const mutasiQuota = school.jalurKuota?.mutasi || 0;
-    const targetVerifiedMutasiInMutasiPathway = mutasiQuota + 3; 
-    let actualMutasiApplicantsAssigned = 0;
-
-    for (let i = 0; i < 50; i++) {
-      const studentNumber = i + 1;
-      const firstNameIndex = Math.floor(Math.random() * firstNames.length);
-      const lastNameIndex = Math.floor(Math.random() * lastNames.length);
-      const nisnSchoolCode = String(schoolIndex + 1).padStart(2, '0');
-      const nisnStudentCode = String(studentNumber).padStart(3, '0');
-      const asalSekolahPilihan = asalSekolahOptionsPlain[i % asalSekolahOptionsPlain.length]; 
-
-      let jalurPilihan: Applicant['jalur'];
-      let statusPilihan: ApplicantStatus;
-
-      if (actualMutasiApplicantsAssigned < targetVerifiedMutasiInMutasiPathway) {
-          jalurPilihan = "Mutasi";
-          actualMutasiApplicantsAssigned++;
-          statusPilihan = "Terverifikasi";
-      } else {
-          const otherJalurOptions = jalurOptionsPlain.filter(j => j !== "Mutasi");
-          if (i % 7 === 0 && actualMutasiApplicantsAssigned < (mutasiQuota + 5) && jalurOptionsPlain.includes("Mutasi")) { 
-            jalurPilihan = "Mutasi";
-            actualMutasiApplicantsAssigned++;
-            statusPilihan = statusOptionsPlain[i % statusOptionsPlain.length];
-          } else if (otherJalurOptions.length > 0) {
-            jalurPilihan = otherJalurOptions[i % otherJalurOptions.length];
-            statusPilihan = statusOptionsPlain[i % statusOptionsPlain.length];
-          } else { 
-            jalurPilihan = jalurOptionsPlain[i % jalurOptionsPlain.length];
-            statusPilihan = statusOptionsPlain[i % statusOptionsPlain.length];
-          }
-      }
-      
-      generatedApplicantsBase.push({
-        id: `app${schoolIndex + 1}-${studentNumber}`,
-        noRegistrasi: `REG${schoolIndex + 1}${String(studentNumber).padStart(4, '0')}`,
-        fullName: `${firstNames[firstNameIndex]} ${lastNames[lastNameIndex]}`,
-        nisn: `005${nisnSchoolCode}${nisnStudentCode}${Math.floor(100 + Math.random() * 900)}`,
-        asalSekolah: asalSekolahPilihan, 
-        jalur: jalurPilihan,
-        status: statusPilihan,
-      });
-    }
-        
-    const rankedApplicants: Applicant[] = generatedApplicantsBase.map(app => ({ ...app, peringkat: null as number | null }));
-
-    jalurOptionsPlain.forEach(jalurName => {
-      const verifiedApplicantsInJalur = rankedApplicants
-        .filter(app => app.jalur === jalurName && app.status === "Terverifikasi")
-        .sort((a, b) => { 
-          const idANum = parseInt(a.noRegistrasi.replace(`REG${schoolIndex + 1}`, ''));
-          const idBNum = parseInt(b.noRegistrasi.replace(`REG${schoolIndex + 1}`, ''));
-          return idANum - idBNum;
-        });
-
-      verifiedApplicantsInJalur.forEach((app, index) => {
-        const originalApplicantIndex = rankedApplicants.findIndex(origApp => origApp.id === app.id);
-        if (originalApplicantIndex !== -1) {
-          rankedApplicants[originalApplicantIndex].peringkat = index + 1;
-        }
-      });
-    });
-    
-    setCurrentSchoolApplicants(rankedApplicants);
-    setCurrentPage(1); 
-
-  }, [schoolId, school]);
+  }, [schoolId]);
 
 
   React.useEffect(() => {
@@ -196,7 +85,7 @@ export default function SchoolDetailPage() {
         applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         applicant.nisn.includes(searchTerm);
       const jalurMatch = selectedJalur === "Semua Jalur" || applicant.jalur === selectedJalur;
-      const statusMatch = selectedStatus === "Semua Status" || applicant.status === selectedStatus;
+      const statusMatch = selectedStatus === "Semua Status" || applicant.statusVerifikasi === selectedStatus;
       return searchTermMatch && jalurMatch && statusMatch; 
     });
   }, [currentSchoolApplicants, searchTerm, selectedJalur, selectedStatus]);
@@ -214,13 +103,10 @@ export default function SchoolDetailPage() {
           else if (pB === null) comparison = -1; 
           else comparison = pA - pB;
         } else {
-            const valA = a[sortConfig.key as keyof Omit<Applicant, 'peringkat'| 'asalSekolah'>]; // asalSekolah might not exist if removed
-            const valB = b[sortConfig.key as keyof Omit<Applicant, 'peringkat'| 'asalSekolah'>];
+            const valA = a[sortConfig.key as keyof Applicant];
+            const valB = b[sortConfig.key as keyof Applicant];
             
-            // Handle asalSekolah explicitly if it's the sort key
-            if (sortConfig.key === 'asalSekolah') {
-                 comparison = (a.asalSekolah || "").localeCompare(b.asalSekolah || "");
-            } else if (typeof valA === 'number' && typeof valB === 'number') {
+            if (typeof valA === 'number' && typeof valB === 'number') {
                 comparison = valA - valB;
             } else if (typeof valA === 'string' && typeof valB === 'string') {
                 comparison = valA.localeCompare(valB);
@@ -254,9 +140,9 @@ export default function SchoolDetailPage() {
 
       const applicantsInPathway = currentSchoolApplicants.filter(app => app.jalur === jalurName);
 
-      const terverifikasi = applicantsInPathway.filter(app => app.status === "Terverifikasi").length;
-      const menungguVerifikasi = applicantsInPathway.filter(app => app.status === "Menunggu Verifikasi").length;
-      const berkasTidakSesuai = applicantsInPathway.filter(app => app.status === "Berkas tidak sesuai").length;
+      const terverifikasi = applicantsInPathway.filter(app => app.statusVerifikasi === "Terverifikasi").length;
+      const menungguVerifikasi = applicantsInPathway.filter(app => app.statusVerifikasi === "Menunggu Verifikasi").length;
+      const berkasTidakSesuai = applicantsInPathway.filter(app => app.statusVerifikasi === "Berkas tidak sesuai").length;
       const totalPendaftar = applicantsInPathway.length;
 
       return {
@@ -454,13 +340,13 @@ export default function SchoolDetailPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {renderSortableHeader('no' as SortKey, "No.", "w-[60px] text-center")}
-                    {renderSortableHeader('fullName' as SortKey, "Nama Lengkap")}
-                    {renderSortableHeader('nisn' as SortKey, "NISN")}
-                    {renderSortableHeader('asalSekolah' as SortKey, "Asal Sekolah")}
-                    {renderSortableHeader('status' as SortKey, "Status", "text-center")}
-                    {renderSortableHeader('jalur' as SortKey, "Jalur")}
-                    {renderSortableHeader('peringkat' as SortKey, "Peringkat", "text-right")}
+                    {renderSortableHeader('no', "No.", "w-[60px] text-center")}
+                    {renderSortableHeader('fullName', "Nama Lengkap")}
+                    {renderSortableHeader('nisn', "NISN")}
+                    {renderSortableHeader('asalSekolahNama', "Asal Sekolah")}
+                    {renderSortableHeader('statusVerifikasi', "Status", "text-center")}
+                    {renderSortableHeader('jalur', "Jalur")}
+                    {renderSortableHeader('peringkat', "Peringkat", "text-right")}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -470,10 +356,10 @@ export default function SchoolDetailPage() {
                         <TableCell className="text-center">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                         <TableCell className="font-medium">{applicant.fullName}</TableCell>
                         <TableCell>{applicant.nisn}</TableCell>
-                        <TableCell>{applicant.asalSekolah}</TableCell>
+                        <TableCell>{applicant.asalSekolahNama}</TableCell>
                         <TableCell className="text-center">
-                          <Badge variant={getApplicantStatusBadgeVariant(applicant.status)}>
-                            {applicant.status}
+                          <Badge variant={getApplicantStatusBadgeVariant(applicant.statusVerifikasi)}>
+                            {applicant.statusVerifikasi}
                           </Badge>
                         </TableCell>
                         <TableCell>{applicant.jalur}</TableCell>

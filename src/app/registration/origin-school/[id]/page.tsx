@@ -13,24 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { initialSchoolData, initialOriginSchoolData, type OriginSchool } from "@/lib/schoolData";
 import { cn } from "@/lib/utils";
+import { generateAllMockApplicants, type Applicant, type ApplicantStatus, jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
 
-type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
-interface ApplicantFromOrigin {
-  id: string;
-  noRegistrasi: string;
-  fullName: string;
-  nisn: string;
-  sekolahTujuanId: string;
-  sekolahTujuanNama: string;
-  jalur: "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
-  statusVerifikasi: ApplicantStatus;
-}
-
-const jalurOptionsPlain: ApplicantFromOrigin['jalur'][] = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
-const statusVerifikasiOptionsPlain: ApplicantStatus[] = ["Terverifikasi", "Menunggu Verifikasi", "Berkas tidak sesuai"];
-
-const firstNames = ["Andi", "Bima", "Clara", "Dian", "Elang", "Fitri", "Gilang", "Hana", "Ivan", "Jasmine"];
-const lastNames = ["Saputra", "Wijayanti", "Nugroho", "Lestari", "Prabowo", "Wati", "Setiawan", "Handoko", "Permatasari", "Maulana"];
 
 const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
   switch (status) {
@@ -41,7 +25,7 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
   }
 };
 
-type SortKey = keyof ApplicantFromOrigin | 'no' | 'sekolahTujuanNama';
+type SortKey = keyof Applicant | 'no';
 type SortDirection = "ascending" | "descending";
 interface SortConfig {
   key: SortKey | null;
@@ -54,7 +38,7 @@ export default function OriginSchoolDetailPage() {
   const originSchoolId = params.id as string;
   
   const [originSchool, setOriginSchool] = React.useState<OriginSchool | undefined>(undefined);
-  const [applicants, setApplicants] = React.useState<ApplicantFromOrigin[]>([]);
+  const [applicants, setApplicants] = React.useState<Applicant[]>([]);
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedSekolahTujuan, setSelectedSekolahTujuan] = React.useState("Semua Sekolah Tujuan");
@@ -70,29 +54,9 @@ export default function OriginSchoolDetailPage() {
     setOriginSchool(foundSchool);
 
     if (foundSchool) {
-      const generatedApplicants: ApplicantFromOrigin[] = [];
-      const numApplicants = foundSchool.jumlahPendaftar; // Use the count from initialOriginSchoolData
-      const originSchoolIndex = initialOriginSchoolData.findIndex(s => s.id === originSchoolId);
-
-
-      for (let i = 0; i < numApplicants; i++) {
-        const studentNumber = i + 1;
-        const firstNameIdx = Math.floor(Math.random() * firstNames.length);
-        const lastNameIdx = Math.floor(Math.random() * lastNames.length);
-        const destinationSchool = initialSchoolData[i % initialSchoolData.length];
-
-        generatedApplicants.push({
-          id: `origApp${originSchoolIndex}-${studentNumber}`,
-          noRegistrasi: `REG-ORIG${originSchoolIndex}${String(studentNumber).padStart(4, '0')}`,
-          fullName: `${firstNames[firstNameIdx]} ${lastNames[lastNameIdx]}`,
-          nisn: `006${String(originSchoolIndex + 1).padStart(2, '0')}${String(studentNumber).padStart(3, '0')}${Math.floor(100 + Math.random() * 900)}`,
-          sekolahTujuanId: destinationSchool.id,
-          sekolahTujuanNama: destinationSchool.namaSekolah,
-          jalur: jalurOptionsPlain[i % jalurOptionsPlain.length],
-          statusVerifikasi: statusVerifikasiOptionsPlain[i % statusVerifikasiOptionsPlain.length],
-        });
-      }
-      setApplicants(generatedApplicants);
+      const allApplicants = generateAllMockApplicants();
+      const applicantsFromOrigin = allApplicants.filter(app => app.asalSekolahId === originSchoolId);
+      setApplicants(applicantsFromOrigin);
     } else {
       setApplicants([]);
     }
@@ -119,8 +83,8 @@ export default function OriginSchoolDetailPage() {
     let sortableItems = [...filteredApplicants];
     if (sortConfig.key !== null && sortConfig.key !== 'no') {
       sortableItems.sort((a, b) => {
-        const valA = a[sortConfig.key as keyof ApplicantFromOrigin];
-        const valB = b[sortConfig.key as keyof ApplicantFromOrigin];
+        const valA = a[sortConfig.key as keyof Applicant];
+        const valB = b[sortConfig.key as keyof Applicant];
         let comparison = 0;
         if (typeof valA === 'number' && typeof valB === 'number') {
           comparison = valA - valB;
