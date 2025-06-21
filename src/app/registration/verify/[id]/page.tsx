@@ -5,7 +5,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle, FileText, Info, UserCircle, XCircle, ThumbsUp, ThumbsDown, Save } from 'lucide-react';
+import { ArrowLeft, CheckCircle, FileText, Info, UserCircle, XCircle, ThumbsUp, ThumbsDown, Save, TrendingUp } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableRow, TableFooter as ShadcnTableFooter } from "@/components/ui/table";
 
 import { useToast } from "@/hooks/use-toast";
 import { generateAllMockApplicants } from "@/lib/mockData";
@@ -166,6 +167,11 @@ export default function VerifyApplicantPage() {
   
   const allDocumentsReviewed = documentsToVerify.length > 0 && documentsToVerify.every(doc => documentStatuses[doc.id] !== null);
 
+  const nilaiRapor = applicant?.nilaiRataRataRapor || 0;
+  const nilaiPrestasi = applicant?.jalur === 'Prestasi' ? (applicant?.nilaiPrestasi || 0) : 0;
+  const nilaiTambahan = applicant?.nilaiTambahanPilihan || 0;
+  const nilaiTotal = nilaiRapor + nilaiPrestasi + nilaiTambahan;
+
   if (isLoading) {
     return <div className="flex flex-1 items-center justify-center p-4">Memuat data pendaftar...</div>;
   }
@@ -247,6 +253,37 @@ export default function VerifyApplicantPage() {
                    <div className="flex justify-between"><span className="text-muted-foreground">Jalur</span><span className="font-medium">{applicant.jalur}</span></div>
               </CardContent>
             </Card>
+            <Card>
+               <CardHeader>
+                  <CardTitle className="flex items-center text-lg"><TrendingUp className="mr-2"/>Rincian Nilai</CardTitle>
+              </CardHeader>
+              <CardContent>
+                 <Table>
+                    <TableBody>
+                        <TableRow>
+                            <TableCell className="font-medium">Nilai Rata-rata Rapor</TableCell>
+                            <TableCell className="text-right">{nilaiRapor.toFixed(2)}</TableCell>
+                        </TableRow>
+                        {applicant.jalur === 'Prestasi' && (
+                            <TableRow>
+                                <TableCell className="font-medium">Nilai Prestasi</TableCell>
+                                <TableCell className="text-right">{nilaiPrestasi.toFixed(2)}</TableCell>
+                            </TableRow>
+                        )}
+                        <TableRow>
+                            <TableCell className="font-medium">Nilai Tambahan (Pilihan Pertama)</TableCell>
+                            <TableCell className="text-right">{nilaiTambahan.toFixed(2)}</TableCell>
+                        </TableRow>
+                    </TableBody>
+                    <ShadcnTableFooter>
+                        <TableRow className="bg-muted/50">
+                            <TableCell className="font-bold">TOTAL NILAI</TableCell>
+                            <TableCell className="text-right font-bold text-lg">{nilaiTotal.toFixed(2)}</TableCell>
+                        </TableRow>
+                    </ShadcnTableFooter>
+                 </Table>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Right Column - Document Viewer */}
@@ -258,19 +295,16 @@ export default function VerifyApplicantPage() {
                   Klik nama berkas untuk melihat pratinjau. Berikan status validasi untuk setiap berkas.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-0">
-                 <div className="space-y-0">
-                    {documentsToVerify.map((doc, index) => (
+              <CardContent>
+                 <div className="space-y-2">
+                    {documentsToVerify.map((doc) => (
                       <div
                         key={doc.id}
-                        className={cn(
-                          "flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between",
-                          index === documentsToVerify.length - 1 && "border-b-0"
-                        )}
+                        className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
                       >
                          <Button
                             variant="link"
-                            className="p-0 h-auto justify-start font-medium text-left"
+                            className="p-0 h-auto justify-start text-left font-medium"
                             onClick={() => handleViewPdf(doc.url)}
                           >
                             {doc.label}
@@ -366,5 +400,4 @@ export default function VerifyApplicantPage() {
 
     </div>
   );
-
-    
+}

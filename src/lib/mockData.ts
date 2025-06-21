@@ -17,6 +17,11 @@ export const generateAllMockApplicants = (): Applicant[] => {
             const destinationSchool = initialSchoolData[applicantIdCounter % initialSchoolData.length];
             const fullName = `${firstNames[applicantIdCounter % firstNames.length]} ${lastNames[i % lastNames.length]}`;
             const nisn = `00${String(10000000 + applicantIdCounter).padStart(8, '0')}`;
+            const jalur = jalurOptionsPlain[applicantIdCounter % jalurOptionsPlain.length];
+
+            const nilaiRataRataRapor = parseFloat((Math.random() * (95 - 80) + 80).toFixed(2));
+            const nilaiPrestasi = jalur === 'Prestasi' ? parseFloat((Math.random() * (15 - 5) + 5).toFixed(2)) : undefined;
+            const nilaiTambahanPilihan = Math.random() > 0.5 ? 10 : 0;
             
             applicants.push({
                 id: `app-${applicantIdCounter}`,
@@ -27,9 +32,12 @@ export const generateAllMockApplicants = (): Applicant[] => {
                 asalSekolahNama: originSchool.namaSekolah,
                 sekolahTujuanId: destinationSchool.id,
                 sekolahTujuanNama: destinationSchool.namaSekolah,
-                jalur: jalurOptionsPlain[applicantIdCounter % jalurOptionsPlain.length],
+                jalur,
                 statusVerifikasi: statusVerifikasiOptionsPlain[i % statusVerifikasiOptionsPlain.length],
                 peringkat: null,
+                nilaiRataRataRapor,
+                nilaiPrestasi,
+                nilaiTambahanPilihan,
             });
             applicantIdCounter++;
         }

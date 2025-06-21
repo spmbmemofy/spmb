@@ -14,6 +14,9 @@ export interface Applicant {
   jalur: Jalur;
   statusVerifikasi: ApplicantStatus;
   peringkat?: number | null;
+  nilaiRataRataRapor?: number;
+  nilaiPrestasi?: number;
+  nilaiTambahanPilihan?: number;
 }
 
 export type SortKey = keyof Applicant | 'no';
