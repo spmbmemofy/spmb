@@ -2,169 +2,308 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowUp, ArrowDown, Building, Database, Filter as FilterIcon, Search as SearchIcon, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Home, MapPin, Save, Database } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { initialSchoolData, type School } from "@/lib/schoolData";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { initialSchoolData } from "@/lib/schoolData";
+import { initialOriginSchoolData } from "@/app/registration/origin-school/[id]/page";
 
+type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
+type Jalur = "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
+
+interface Applicant {
+  id: string;
+  noRegistrasi: string;
+  fullName: string;
+  nisn: string;
+  asalSekolahId: string;
+  asalSekolahNama: string;
+  sekolahTujuanId: string;
+  sekolahTujuanNama: string;
+  jalur: Jalur;
+  statusVerifikasi: ApplicantStatus;
+}
+
+const firstNames = ["Andi", "Bima", "Clara", "Dian", "Elang", "Fitri", "Gilang", "Hana", "Ivan", "Jasmine", "Kurnia", "Lina", "Mega", "Nadia", "Oscar", "Putri", "Rangga", "Sari", "Tegar", "Vina"];
+const lastNames = ["Saputra", "Wijayanti", "Nugroho", "Lestari", "Prabowo", "Wati", "Setiawan", "Handoko", "Permatasari", "Maulana", "Santoso", "Hakim", "Effendi", "Siregar", "Putra"];
+const jalurOptionsPlain: Jalur[] = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
+const statusVerifikasiOptionsPlain: ApplicantStatus[] = ["Terverifikasi", "Menunggu Verifikasi", "Berkas tidak sesuai"];
+
+const generateAllApplicants = (): Applicant[] => {
+    const applicants: Applicant[] = [];
+    let applicantIdCounter = 1;
+
+    initialOriginSchoolData.forEach((originSchool, originIndex) => {
+        for (let i = 0; i < originSchool.jumlahPendaftar; i++) {
+            const destinationSchool = initialSchoolData[applicantIdCounter % initialSchoolData.length];
+            const fullName = `${firstNames[applicantIdCounter % firstNames.length]} ${lastNames[i % lastNames.length]}`;
+            const nisn = `00${String(10000000 + applicantIdCounter).padStart(8, '0')}`;
+            
+            applicants.push({
+                id: `app-${applicantIdCounter}`,
+                noRegistrasi: `REG2026-${String(applicantIdCounter).padStart(5, '0')}`,
+                fullName,
+                nisn,
+                asalSekolahId: originSchool.id,
+                asalSekolahNama: originSchool.namaSekolah,
+                sekolahTujuanId: destinationSchool.id,
+                sekolahTujuanNama: destinationSchool.namaSekolah,
+                jalur: jalurOptionsPlain[applicantIdCounter % jalurOptionsPlain.length],
+                statusVerifikasi: statusVerifikasiOptionsPlain[i % statusVerifikasiOptionsPlain.length],
+            });
+            applicantIdCounter++;
+        }
+    });
+    return applicants;
+};
+
+const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
+  switch (status) {
+    case "Terverifikasi": return "default";
+    case "Menunggu Verifikasi": return "secondary";
+    case "Berkas tidak sesuai": return "destructive";
+    default: return "secondary";
+  }
+};
+
+type SortKey = keyof Applicant | 'no';
+type SortDirection = "ascending" | "descending";
+interface SortConfig {
+  key: SortKey | null;
+  direction: SortDirection;
+}
 
 export default function AllDataPage() {
-  const { toast } = useToast();
-  const [schoolData, setSchoolData] = React.useState<School[]>(initialSchoolData);
-  const [isSaving, setIsSaving] = React.useState(false);
+  const [allApplicants, setAllApplicants] = React.useState<Applicant[]>([]);
+  
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [selectedSekolahTujuan, setSelectedSekolahTujuan] = React.useState("Semua Sekolah Tujuan");
+  const [selectedJalur, setSelectedJalur] = React.useState("Semua Jalur");
+  const [selectedStatus, setSelectedStatus] = React.useState("Semua Status");
+  
+  const [sortConfig, setSortConfig] = React.useState<SortConfig>({ key: 'fullName', direction: 'ascending' });
+  const [pageSize, setPageSize] = React.useState(10);
+  const [currentPage, setCurrentPage] = React.useState(1);
 
-  const handleInputChange = (schoolId: string, field: keyof School, value: string | number) => {
-    setSchoolData((prevData) =>
-      prevData.map((school) =>
-        school.id === schoolId ? { ...school, [field]: value } : school
-      )
-    );
-  };
+  React.useEffect(() => {
+    setAllApplicants(generateAllApplicants());
+  }, []);
 
-  const handleSaveChanges = () => {
-    setIsSaving(true);
-    console.log("Menyimpan data sekolah:", schoolData);
-    
-    setTimeout(() => {
-      toast({
-        title: "Perubahan Disimpan",
-        description: "Data sekolah telah berhasil diperbarui.",
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedSekolahTujuan, selectedJalur, selectedStatus, pageSize]);
+
+  const filteredApplicants = React.useMemo(() => {
+    return allApplicants.filter(applicant => {
+      const searchTermMatch =
+        applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        applicant.nisn.includes(searchTerm);
+      const sekolahTujuanMatch = selectedSekolahTujuan === "Semua Sekolah Tujuan" || applicant.sekolahTujuanNama === selectedSekolahTujuan;
+      const jalurMatch = selectedJalur === "Semua Jalur" || applicant.jalur === selectedJalur;
+      const statusMatch = selectedStatus === "Semua Status" || applicant.statusVerifikasi === selectedStatus;
+      return searchTermMatch && sekolahTujuanMatch && jalurMatch && statusMatch;
+    });
+  }, [allApplicants, searchTerm, selectedSekolahTujuan, selectedJalur, selectedStatus]);
+
+  const sortedApplicants = React.useMemo(() => {
+    let sortableItems = [...filteredApplicants];
+    if (sortConfig.key !== null && sortConfig.key !== 'no') {
+      sortableItems.sort((a, b) => {
+        const valA = a[sortConfig.key as keyof Applicant];
+        const valB = b[sortConfig.key as keyof Applicant];
+        let comparison = 0;
+        if (valA > valB) {
+          comparison = 1;
+        } else if (valA < valB) {
+          comparison = -1;
+        }
+        return sortConfig.direction === 'ascending' ? comparison : -comparison;
       });
-      setIsSaving(false);
-    }, 1500);
+    }
+    return sortableItems;
+  }, [filteredApplicants, sortConfig]);
+
+  const paginatedApplicants = React.useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return sortedApplicants.slice(startIndex, startIndex + pageSize);
+  }, [sortedApplicants, currentPage, pageSize]);
+
+  const totalPages = React.useMemo(() => {
+    return Math.ceil(sortedApplicants.length / pageSize);
+  }, [sortedApplicants.length, pageSize]);
+
+  const requestSort = (key: SortKey) => {
+    let direction: SortDirection = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
   };
+
+  const getSortIcon = (key: SortKey) => {
+    if (sortConfig.key !== key) return null;
+    return sortConfig.direction === 'ascending' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />;
+  };
+
+  const renderSortableHeader = (key: SortKey, label: string, className: string = "") => (
+    <TableHead className={cn("cursor-pointer hover:bg-muted/50", className)} onClick={() => requestSort(key)}>
+      <div className="flex items-center">{label}{getSortIcon(key)}</div>
+    </TableHead>
+  );
+
+  const sekolahTujuanOptions = ["Semua Sekolah Tujuan", ...initialSchoolData.map(s => s.namaSekolah)];
+  const jalurOptions = ["Semua Jalur", ...jalurOptionsPlain];
+  const statusOptions = ["Semua Status", ...statusVerifikasiOptionsPlain];
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
-      <Card className="w-full max-w-5xl shadow-2xl">
+      <Card className="w-full max-w-7xl shadow-2xl">
         <CardHeader>
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0 bg-primary text-primary-foreground rounded-full p-3 w-fit">
               <Database size={28} />
             </div>
             <div>
-              <CardTitle className="text-2xl sm:text-3xl font-headline">Semua Data</CardTitle>
+              <CardTitle className="text-2xl sm:text-3xl font-headline">Semua Data Pendaftar</CardTitle>
               <CardDescription className="text-md mt-1">
-                Kelola semua data pendaftaran termasuk data sekolah, pendaftar, dan lainnya.
+                Kelola dan lihat semua data pendaftar di seluruh sekolah.
               </CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-8">
-          <section>
-            <h3 className="text-xl font-semibold mb-4 text-primary flex items-center">
-              <MapPin className="mr-2" />
-              Lokasi Sekolah
-            </h3>
-            <div className="border-2 border-dashed rounded-lg p-4">
-              <p className="text-center text-muted-foreground mb-4">
-                Pilih sekolah dari tabel di bawah untuk melihat atau mengubah lokasinya di peta.
-              </p>
-              <Image
-                src="https://placehold.co/1200x400.png"
-                alt="Peta Lokasi Sekolah"
-                width={1200}
-                height={400}
-                className="w-full h-auto rounded-md object-cover"
-                data-ai-hint="map view"
-              />
+        <CardContent className="space-y-6">
+          <section className="border rounded-lg p-4 space-y-4">
+            <div className="flex items-center space-x-2">
+              <FilterIcon className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold text-primary">Filter Data</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="relative">
+                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari Nama/NISN..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={selectedSekolahTujuan} onValueChange={setSelectedSekolahTujuan}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {sekolahTujuanOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={selectedJalur} onValueChange={setSelectedJalur}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {jalurOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger><SelectValue /></SelectValue>
+                <SelectContent>
+                  {statusOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </section>
 
           <section>
-            <h3 className="text-xl font-semibold mb-4 text-primary">
-              Detail Data Sekolah
-            </h3>
             <div className="overflow-x-auto rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[5%] text-center">No.</TableHead>
-                    <TableHead className="w-[30%]">Nama Sekolah</TableHead>
-                    <TableHead className="w-[40%]">Alamat</TableHead>
-                    <TableHead className="w-[12.5%] text-center">Kuota</TableHead>
-                    <TableHead className="w-[12.5%] text-center">Akreditasi</TableHead>
+                    {renderSortableHeader('no', "No.", "w-[60px] text-center")}
+                    {renderSortableHeader('fullName', "Nama Lengkap")}
+                    {renderSortableHeader('nisn', "NISN")}
+                    {renderSortableHeader('asalSekolahNama', "Asal Sekolah")}
+                    {renderSortableHeader('sekolahTujuanNama', "Sekolah Tujuan")}
+                    {renderSortableHeader('jalur', "Jalur")}
+                    {renderSortableHeader('statusVerifikasi', "Status Verifikasi", "text-center")}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {schoolData.map((school, index) => (
-                    <TableRow key={school.id}>
-                      <TableCell className="text-center font-medium">{index + 1}</TableCell>
-                      <TableCell>
-                        <Input
-                          value={school.namaSekolah}
-                          onChange={(e) =>
-                            handleInputChange(school.id, "namaSekolah", e.target.value)
-                          }
-                          className="w-full"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={school.alamat}
-                          onChange={(e) =>
-                            handleInputChange(school.id, "alamat", e.target.value)
-                          }
-                          className="w-full"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={school.kuota}
-                          onChange={(e) =>
-                            handleInputChange(
-                              school.id,
-                              "kuota",
-                              parseInt(e.target.value, 10) || 0
-                            )
-                          }
-                          className="w-full text-center"
-                        />
-                      </TableCell>
-                      <TableCell>
-                         <Input
-                          value={school.akreditasi}
-                          onChange={(e) =>
-                            handleInputChange(school.id, "akreditasi", e.target.value as School['akreditasi'])
-                          }
-                          className="w-full text-center"
-                        />
+                  {paginatedApplicants.length > 0 ? (
+                    paginatedApplicants.map((applicant, index) => (
+                      <TableRow key={applicant.id}>
+                        <TableCell className="text-center">{(currentPage - 1) * pageSize + index + 1}</TableCell>
+                        <TableCell className="font-medium">{applicant.fullName}</TableCell>
+                        <TableCell>{applicant.nisn}</TableCell>
+                        <TableCell>
+                            <Link href={`/registration/origin-school/${applicant.asalSekolahId}`} className="hover:underline text-primary flex items-center gap-2">
+                                <BookOpen className="h-4 w-4 opacity-70" />
+                                {applicant.asalSekolahNama}
+                            </Link>
+                        </TableCell>
+                        <TableCell>
+                            <Link href={`/registration/school/${applicant.sekolahTujuanId}`} className="hover:underline text-primary flex items-center gap-2">
+                                <Building className="h-4 w-4 opacity-70" />
+                                {applicant.sekolahTujuanNama}
+                            </Link>
+                        </TableCell>
+                        <TableCell>{applicant.jalur}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={getStatusBadgeVariant(applicant.statusVerifikasi)}>
+                            {applicant.statusVerifikasi}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground h-24"> 
+                        Tidak ada data pendaftar yang cocok dengan kriteria filter.
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Perubahan pada tabel akan disimpan saat Anda menekan tombol "Simpan Perubahan".
-            </p>
+             <div className="flex items-center justify-between mt-4 flex-wrap gap-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Data per halaman:</span>
+                <Select value={String(pageSize)} onValueChange={(val) => setPageSize(Number(val))}>
+                  <SelectTrigger className="w-[80px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Sebelumnya
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Halaman {currentPage} dari {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                >
+                  Berikutnya
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
           </section>
         </CardContent>
-        <CardFooter className="flex justify-end pt-6">
-          <Button size="lg" onClick={handleSaveChanges} disabled={isSaving}>
-            <Save className="mr-2 h-5 w-5" />
-            {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   );
