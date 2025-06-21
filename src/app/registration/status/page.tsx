@@ -103,7 +103,7 @@ const getVerificationBadgeVariant = (status: VerificationStatus): "default" | "d
 
 const ActivityHistoryTimeline: React.FC<{ status: VerificationStatus }> = ({ status }) => {
   const pendaftaranSelesai = (
-    <li className="flex gap-4">
+    <li key="pendaftaran-selesai" className="flex gap-4">
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 flex-shrink-0 mt-1">
         <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
       </div>
@@ -116,7 +116,7 @@ const ActivityHistoryTimeline: React.FC<{ status: VerificationStatus }> = ({ sta
   );
 
   const sedangDitinjau = (
-    <li className="flex gap-4">
+    <li key="sedang-ditinjau" className="flex gap-4">
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900 flex-shrink-0 mt-1">
         <FileQuestion className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
       </div>
@@ -129,7 +129,7 @@ const ActivityHistoryTimeline: React.FC<{ status: VerificationStatus }> = ({ sta
   );
 
   const berkasDitolak = (
-    <li className="flex gap-4">
+    <li key="berkas-ditolak" className="flex gap-4">
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900 flex-shrink-0 mt-1">
         <XSquare className="h-5 w-5 text-red-600 dark:text-red-400" />
       </div>
@@ -142,7 +142,7 @@ const ActivityHistoryTimeline: React.FC<{ status: VerificationStatus }> = ({ sta
   );
   
   const perbaikanBerkas = (
-     <li className="flex gap-4">
+     <li key="perbaikan-berkas" className="flex gap-4">
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900 flex-shrink-0 mt-1">
             <FileUp className="h-5 w-5 text-orange-600 dark:text-orange-400" />
         </div>
@@ -155,7 +155,7 @@ const ActivityHistoryTimeline: React.FC<{ status: VerificationStatus }> = ({ sta
   );
   
   const verifikasiUlang = (
-      <li className="flex gap-4">
+      <li key="verifikasi-ulang" className="flex gap-4">
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 flex-shrink-0 mt-1">
             <UserCheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
         </div>
@@ -168,7 +168,7 @@ const ActivityHistoryTimeline: React.FC<{ status: VerificationStatus }> = ({ sta
   );
   
   const peringkatDiperbarui = (
-    <li className="flex gap-4">
+    <li key="peringkat-diperbarui" className="flex gap-4">
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900 flex-shrink-0 mt-1">
             <BarChart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
         </div>
@@ -464,5 +464,3 @@ export default function StatusPage() {
     </div>
   );
 }
-
-    
