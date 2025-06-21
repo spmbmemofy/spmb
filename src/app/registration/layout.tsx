@@ -102,7 +102,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       href: '/registration/selection',
       label: 'Verifikasi',
       icon: ClipboardCheck,
-      activePaths: ['/registration/selection', '/registration/documents', '/registration/document-upload'],
+      activePaths: ['/registration/selection', '/registration/verify'],
     },
     {
       href: '/registration/announcement',
