@@ -28,7 +28,6 @@ export const generateAllMockApplicants = (): Applicant[] => {
             };
             
             const nilaiPrestasi = jalur === 'Prestasi' ? parseFloat((Math.random() * (15 - 5) + 5).toFixed(2)) : undefined;
-            const nilaiRataRataRapor = Object.values(semesterGrades).reduce((a, b) => a + b, 0) / Object.values(semesterGrades).length;
 
             applicants.push({
                 id: `app-${applicantIdCounter}`,
@@ -43,7 +42,6 @@ export const generateAllMockApplicants = (): Applicant[] => {
                 statusVerifikasi: statusVerifikasiOptionsPlain[i % statusVerifikasiOptionsPlain.length],
                 peringkat: null,
                 semesterGrades,
-                nilaiRataRataRapor,
                 nilaiPrestasi,
                 nilaiTambahanPilihan: 0,
             });
@@ -51,16 +49,19 @@ export const generateAllMockApplicants = (): Applicant[] => {
         }
     });
 
-    // Ensure at least one applicant from each pathway exists
-    const pathwaysInDataset = new Set(applicants.map(app => app.jalur));
-    jalurOptionsPlain.forEach((requiredJalur, index) => {
-        if (!pathwaysInDataset.has(requiredJalur)) {
-            // If a pathway is missing, assign it to an existing applicant.
-            if (applicants.length > index) {
-                applicants[index].jalur = requiredJalur;
+    // Ensure the first few applicants represent all pathways for predictable testing/demo
+    if (applicants.length >= jalurOptionsPlain.length) {
+        jalurOptionsPlain.forEach((jalur, index) => {
+            applicants[index].jalur = jalur;
+            if (jalur === 'Prestasi') {
+                if (!applicants[index].nilaiPrestasi) {
+                    applicants[index].nilaiPrestasi = parseFloat((Math.random() * (15 - 5) + 5).toFixed(2));
+                }
+            } else {
+                applicants[index].nilaiPrestasi = undefined;
             }
-        }
-    });
+        });
+    }
 
 
     // Add ranking logic
@@ -69,7 +70,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
             const verifiedApplicantsInJalur = applicants
               .filter(app => app.sekolahTujuanId === school.id && app.jalur === jalurName && app.statusVerifikasi === "Terverifikasi")
               .map(app => {
-                  const totalNilaiRapor = app.nilaiRataRataRapor || 0;
+                  const totalNilaiRapor = Object.values(app.semesterGrades).reduce((a, b) => a + b, 0);
                   const nilaiPrestasi = app.jalur === 'Prestasi' ? (app.nilaiPrestasi || 0) : 0;
                   // The check for first choice school is now inside the component, but let's simulate it here for ranking
                   const nilaiTambahan = 25; // Assuming for this ranking context, all are first choice for simplicity
