@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import Link from 'next/link';
 import { useRouter } from "next/navigation";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -10,7 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { FileText, Save, School, ArrowUp, ArrowDown } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { FileText, Save, School, ArrowUp, ArrowDown, AlertTriangle, ClipboardCheck } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { initialSchoolData } from "@/app/registration/dashboard/page"; 
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type SchoolSelection } from "@/lib/localStorage";
@@ -27,6 +29,7 @@ export default function SchoolSelectionPage() {
   const [selectedPathway, setSelectedPathway] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isLocked, setIsLocked] = React.useState(false);
 
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
@@ -43,6 +46,9 @@ export default function SchoolSelectionPage() {
     if (savedProgress) {
       if (savedProgress.schoolSelections) setSelectedSelections(savedProgress.schoolSelections);
       if (savedProgress.pathway) setSelectedPathway(savedProgress.pathway);
+      if (savedProgress.registrationCompleted) {
+        setIsLocked(true);
+      }
     }
     setIsLoading(false);
   }, [router, toast]);
@@ -85,14 +91,14 @@ export default function SchoolSelectionPage() {
   }, [selectedPathway]);
 
   React.useEffect(() => {
-    if (isLoading) return; 
+    if (isLoading || isLocked) return; 
     const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
     saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
       ...currentProgress,
       schoolSelections: selectedSelections, 
       pathway: selectedPathway || undefined, 
     });
-  }, [selectedSelections, selectedPathway, isLoading]);
+  }, [selectedSelections, selectedPathway, isLoading, isLocked]);
 
   const handleMoveSelectionUp = (index: number) => {
     if (index === 0) return;
@@ -129,7 +135,7 @@ export default function SchoolSelectionPage() {
     saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
       ...currentProgress,
       schoolSelections: selectedSelections,
-      schoolIds: schoolIds, // Keep schoolIds for backward compatibility if needed elsewhere
+      schoolIds: schoolIds,
       pathway: selectedPathway,
     });
     
@@ -162,13 +168,24 @@ export default function SchoolSelectionPage() {
           </div>
           <CardTitle className="text-2xl sm:text-3xl font-headline">Pilih Jalur & Sekolah Tujuan</CardTitle>
           <CardDescription className="text-md">
-            Pilih jalur, lalu pilih 1-5 sekolah/jurusan tujuan dan atur prioritasnya.
+            {isLocked
+              ? "Anda telah menyelesaikan tahap ini. Pilihan Anda telah disimpan."
+              : "Pilih jalur, lalu pilih 1-5 sekolah/jurusan tujuan dan atur prioritasnya."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {isLocked && (
+            <Alert variant="default" className="mb-6 bg-yellow-100 border-yellow-300 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700/50 dark:text-yellow-300 [&>svg]:text-yellow-600 dark:[&>svg]:text-yellow-400">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Pilihan Telah Disimpan Permanen</AlertTitle>
+                <AlertDescription>
+                    Anda telah menyelesaikan tahap ini. Pilihan jalur dan sekolah tidak dapat diubah lagi. Anda dapat melihat status pendaftaran Anda.
+                </AlertDescription>
+            </Alert>
+          )}
           <div className="space-y-2">
             <Label htmlFor="pathway-select" className="font-semibold text-lg">Langkah 1: Pilih Jalur Pendaftaran</Label>
-            <Select value={selectedPathway} onValueChange={handlePathwayChange}>
+            <Select value={selectedPathway} onValueChange={handlePathwayChange} disabled={isLocked}>
               <SelectTrigger id="pathway-select" className="w-full">
                 <SelectValue placeholder="Pilih jalur pendaftaran Anda" />
               </SelectTrigger>
@@ -215,12 +232,13 @@ export default function SchoolSelectionPage() {
                                                 checked={selectedSelections.some(s => s.schoolId === school.id)}
                                                 onCheckedChange={() => handleSchoolSelectionChange(school.id, null)}
                                                 aria-label={`Pilih ${school.namaSekolah}`}
+                                                disabled={isLocked}
                                             />
                                         </div>
                                     </div>
                                   ) : (
                                     <>
-                                      <AccordionTrigger className="text-sm hover:no-underline p-2 rounded-md hover:bg-muted">
+                                      <AccordionTrigger className="text-sm hover:no-underline p-2 rounded-md hover:bg-muted" disabled={isLocked}>
                                         <div className="flex-1 text-left">
                                           <p className="font-medium">{school.namaSekolah}</p>
                                           <p className="text-xs text-muted-foreground">{school.type} - Akreditasi: {school.akreditasi}</p>
@@ -235,6 +253,7 @@ export default function SchoolSelectionPage() {
                                                 id={`${school.id}-${major}`}
                                                 checked={selectedSelections.some(s => s.schoolId === school.id && s.major === major)}
                                                 onCheckedChange={() => handleSchoolSelectionChange(school.id, major)}
+                                                disabled={isLocked}
                                               />
                                               <Label htmlFor={`${school.id}-${major}`} className="flex-grow cursor-pointer font-normal text-sm">
                                                 {major}
@@ -286,11 +305,11 @@ export default function SchoolSelectionPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex gap-1">
-                                                    <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => handleMoveSelectionUp(index)} disabled={index === 0}>
+                                                    <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => handleMoveSelectionUp(index)} disabled={isLocked || index === 0}>
                                                         <ArrowUp className="h-4 w-4" />
                                                         <span className="sr-only">Naikkan prioritas</span>
                                                     </Button>
-                                                    <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => handleMoveSelectionDown(index)} disabled={index === selectedSelections.length - 1}>
+                                                    <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => handleMoveSelectionDown(index)} disabled={isLocked || index === selectedSelections.length - 1}>
                                                         <ArrowDown className="h-4 w-4" />
                                                          <span className="sr-only">Turunkan prioritas</span>
                                                     </Button>
@@ -308,10 +327,19 @@ export default function SchoolSelectionPage() {
           )}
         </CardContent>
         <CardFooter className="flex justify-end pt-6">
-          <Button onClick={handleSubmit} disabled={isSubmitDisabled}>
-            <Save className="mr-2 h-4 w-4" />
-            {isSubmitting ? "Menyimpan..." : "Simpan dan Lanjutkan"}
-          </Button>
+          {isLocked ? (
+            <Button asChild>
+              <Link href="/registration/selection">
+                <ClipboardCheck className="mr-2 h-4 w-4" />
+                Lihat Status Pendaftaran
+              </Link>
+            </Button>
+          ) : (
+            <Button onClick={handleSubmit} disabled={isSubmitDisabled}>
+              <Save className="mr-2 h-4 w-4" />
+              {isSubmitting ? "Menyimpan..." : "Simpan dan Lanjutkan"}
+            </Button>
+          )}
         </CardFooter>
       </Card>
     </div>

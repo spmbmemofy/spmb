@@ -121,9 +121,9 @@ export default function DocumentUploadPage() {
     }
     
     let currentSelectedPathway = searchParams.get("pathway") || savedProgress?.pathway || "";
-    let currentSelectedSchoolIds = savedProgress?.schoolIds || [];
+    let currentSchoolSelections = savedProgress?.schoolSelections || [];
 
-    if (!currentSelectedPathway || currentSelectedSchoolIds.length === 0) {
+    if (!currentSelectedPathway || currentSchoolSelections.length === 0) {
         toast({
             variant: "destructive",
             title: "Informasi Tidak Lengkap",
@@ -209,13 +209,20 @@ export default function DocumentUploadPage() {
       .map(([id]) => id);
 
     const progress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
-    const schoolIds = progress?.schoolIds || [];
+    const schoolSelections = progress?.schoolSelections || [];
+    const schoolIds = schoolSelections.map(s => s.schoolId);
 
     setTimeout(() => {
       toast({
         title: "Berkas Berhasil Diunggah",
         description: "Semua berkas Anda telah berhasil diunggah. Melanjutkan ke halaman status pendaftaran.",
       });
+      
+      saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
+        ...progress,
+        registrationCompleted: true,
+      });
+
       setIsSubmitting(false);
       router.push(`/registration/selection?pathway=${selectedPathway}&schoolIds=${schoolIds.join(',')}&docs=${successfullyUploadedDocIds.join(',')}`);
     }, 2000);

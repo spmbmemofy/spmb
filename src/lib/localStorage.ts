@@ -18,6 +18,7 @@ export interface RegistrationProgress {
   documentMetadata?: { [docId: string]: { name: string; size: number; type: string } | null };
   hasProfilePhoto?: boolean;
   profilePhotoDataUri?: string;
+  registrationCompleted?: boolean;
 }
 
 export function getFromLocalStorage<T>(key: string, defaultValue: T): T {
