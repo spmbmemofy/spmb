@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star } from 'lucide-react';
+import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck } from 'lucide-react';
 import { initialSchoolData, type School } from "@/app/registration/dashboard/page"; 
 import { getFromLocalStorage, type RegistrationProgress, type SchoolSelection } from "@/lib/localStorage";
 
@@ -112,9 +112,6 @@ export default function SelectionPage() {
   
   const [storedPathway, setStoredPathway] = React.useState<string | undefined>();
   
-  // Simulate the verification status being set by the first-choice school's admin.
-  // This status will apply to all selections.
-  // We will demonstrate the "Terverifikasi" state.
   const applicationVerificationStatus: VerificationStatus = "Terverifikasi";
 
   React.useEffect(() => {
@@ -224,6 +221,31 @@ export default function SelectionPage() {
              <p className="text-sm text-muted-foreground mb-4">
                 Status verifikasi ditentukan oleh sekolah pilihan pertama Anda dan berlaku untuk semua pilihan di bawahnya.
             </p>
+             <Card className="mb-6 bg-muted/30">
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                        <ShieldCheck className="mr-3 h-6 w-6 text-primary" />
+                        Ringkasan Verifikasi Berkas
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-4 text-sm">
+                    <div>
+                        <p className="font-medium text-muted-foreground mb-1">Status</p>
+                        <Badge variant={getVerificationBadgeVariant(applicationVerificationStatus)} className="font-semibold text-base px-3 py-1">
+                            {applicationVerificationStatus}
+                        </Badge>
+                    </div>
+                    <div>
+                        <p className="font-medium text-muted-foreground mb-1">Diverifikasi oleh Sekolah</p>
+                        <p className="font-semibold">{displaySelections[0]?.school.namaSekolah || '-'}</p>
+                    </div>
+                    <div>
+                        <p className="font-medium text-muted-foreground mb-1">Nama Verifikator</p>
+                        <p className="font-semibold">Ahmad Syahputra, S.Kom</p>
+                    </div>
+                </CardContent>
+            </Card>
+
             <div className="space-y-4">
                 <div className="flex justify-between items-center rounded-md border p-4 bg-muted/30">
                     <span className="font-medium text-muted-foreground">Jalur Pendaftaran:</span>
@@ -236,7 +258,6 @@ export default function SelectionPage() {
                     const isWithinQuota = rank <= quota && quota > 0;
                     const rankStatus = isWithinQuota ? "Memenuhi Peringkat" : "Di Luar Peringkat";
                     const rankStatusVariant = isWithinQuota ? "default" : "destructive";
-                    const verificationStatus = applicationVerificationStatus;
 
                     return (
                         <Card key={`${school.id}-${major || 'sma'}`} className="overflow-hidden">
@@ -251,13 +272,7 @@ export default function SelectionPage() {
                                 </div>
                                 <Badge variant={rankStatusVariant}>{rankStatus}</Badge>
                             </CardHeader>
-                            <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Status Verifikasi</p>
-                                    <Badge variant={getVerificationBadgeVariant(verificationStatus)} className="mt-1 font-semibold">
-                                        {verificationStatus}
-                                    </Badge>
-                                </div>
+                            <CardContent className="p-4">
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Peringkat Sementara</p>
                                     <p className="font-semibold text-lg">{quota > 0 ? `${rank} / ${quota}` : '-'}</p>
