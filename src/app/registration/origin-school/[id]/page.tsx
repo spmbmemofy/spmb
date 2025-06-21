@@ -11,9 +11,28 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { OriginSchool } from "@/app/registration/dashboard/page";
-import { initialOriginSchoolData, initialSchoolData } from "@/app/registration/dashboard/page";
+import { initialSchoolData } from "@/lib/schoolData";
 import { cn } from "@/lib/utils";
+
+
+export interface OriginSchool {
+  id: string;
+  namaSekolah: string;
+  status: "Negeri" | "Swasta";
+  akreditasi: "A" | "B" | "C" | "Belum Terakreditasi";
+  jumlahPendaftar: number;
+}
+
+
+export const initialOriginSchoolData: OriginSchool[] = [
+    { id: "smpn1tanjungredeb", namaSekolah: "SMP Negeri 1 Tanjung Redeb", status: "Negeri", akreditasi: "A", jumlahPendaftar: 25 },
+    { id: "smpn2telukbayur", namaSekolah: "SMP Negeri 2 Teluk Bayur", status: "Negeri", akreditasi: "B", jumlahPendaftar: 18 },
+    { id: "smpn3sambaliung", namaSekolah: "SMP Negeri 3 Sambaliung", status: "Negeri", akreditasi: "B", jumlahPendaftar: 22 },
+    { id: "mtsalkholil", namaSekolah: "MTs Al-Kholil", status: "Swasta", akreditasi: "A", jumlahPendaftar: 15 },
+    { id: "smpitashshohwah", namaSekolah: "SMP IT Ash-Shohwah Berau", status: "Swasta", akreditasi: "A", jumlahPendaftar: 20 },
+    { id: "smpmuhammadiyah", namaSekolah: "SMP Muhammadiyah Tanjung Redeb", status: "Swasta", akreditasi: "B", jumlahPendaftar: 12 },
+];
+
 
 type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
 interface ApplicantFromOrigin {
@@ -179,9 +198,9 @@ export default function OriginSchoolDetailPage() {
             <p>Maaf, data untuk sekolah asal ini tidak dapat ditemukan.</p>
           </CardContent>
           <CardFooter>
-            <Button className="mx-auto" onClick={() => router.push('/registration/dashboard')}>
+            <Button className="mx-auto" onClick={() => router.push('/registration/all-data')}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Kembali ke Beranda
+              Kembali ke Semua Data
             </Button>
           </CardFooter>
         </Card>
@@ -202,7 +221,7 @@ export default function OriginSchoolDetailPage() {
               <OriginSchoolIcon className="h-8 w-8 text-primary" />
               <CardTitle className="text-xl sm:text-2xl md:text-3xl font-headline">{originSchool.namaSekolah}</CardTitle>
             </div>
-            <Button variant="outline" asChild size="sm" className="w-full sm:w-auto" onClick={() => router.push('/registration/dashboard')}>
+            <Button variant="outline" asChild size="sm" className="w-full sm:w-auto" onClick={() => router.push('/registration/all-data')}>
               <>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Kembali
@@ -361,6 +380,3 @@ export default function OriginSchoolDetailPage() {
     </div>
   );
 }
-    
-
-    

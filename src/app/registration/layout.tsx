@@ -4,7 +4,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone } from 'lucide-react';
+import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, User, School, FileText, UserCircle } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { getFromLocalStorage, removeFromLocalStorage, type LoginCredentials, type RegistrationProgress } from "@/lib/localStorage";
+import { getFromLocalStorage, removeFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { useToast } from "@/hooks/use-toast";
 
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
@@ -52,24 +52,57 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     }
   }, [router, toast]);
 
-  const allMenuItems = [
+  const applicantMenuItems = [
+     {
+      href: '/registration/dashboard',
+      label: 'Beranda',
+      icon: Home,
+      activePaths: ['/registration/dashboard'],
+    },
+    {
+      href: '/registration/documents',
+      label: 'Pilihan Sekolah',
+      icon: School,
+      activePaths: ['/registration/documents'],
+    },
+     {
+      href: '/registration/document-upload',
+      label: 'Unggah Berkas',
+      icon: FileText,
+      activePaths: ['/registration/document-upload'],
+    },
+    {
+      href: '/registration/selection',
+      label: 'Status Pendaftaran',
+      icon: ClipboardCheck,
+      activePaths: ['/registration/selection'],
+    },
+     {
+      href: '/registration/announcement',
+      label: 'Pengumuman',
+      icon: Megaphone,
+      activePaths: ['/registration/announcement'],
+    },
+  ];
+
+  const adminMenuItems = [
     {
       href: '/registration/dashboard',
       label: 'Beranda',
       icon: Home,
-      activePaths: ['/registration/dashboard', '/registration/school', '/registration/origin-school'], 
+      activePaths: ['/registration/dashboard'], 
     },
     {
       href: '/registration/all-data',
       label: 'Semua Data',
       icon: Database,
-      activePaths: ['/registration/all-data'],
+      activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'],
     },
     {
       href: '/registration/selection',
       label: 'Verifikasi',
       icon: ClipboardCheck,
-      activePaths: ['/registration/selection', '/registration/documents', '/registration/document-upload', '/registration/biodata'],
+      activePaths: ['/registration/selection', '/registration/documents', '/registration/document-upload'],
     },
     {
       href: '/registration/announcement',
@@ -78,6 +111,8 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       activePaths: ['/registration/announcement'],
     },
   ];
+  
+  const menuItems = userRole === 'applicant' ? applicantMenuItems : adminMenuItems;
 
   const handleLogout = () => {
     removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);
@@ -117,7 +152,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {allMenuItems.map((item) => (
+              {menuItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild

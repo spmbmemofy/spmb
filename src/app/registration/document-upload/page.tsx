@@ -116,7 +116,7 @@ export default function DocumentUploadPage() {
         title: "Akses Ditolak",
         description: "Harap unggah foto profil Anda di halaman Data Pendaftar sebelum melanjutkan.",
       });
-      router.replace('/registration/biodata');
+      router.replace('/registration/dashboard');
       return; 
     }
     

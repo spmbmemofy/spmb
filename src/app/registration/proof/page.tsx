@@ -5,7 +5,7 @@ import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { getFromLocalStorage, type RegistrationProgress, type SchoolSelection } from "@/lib/localStorage";
-import { initialSchoolData, type School } from "@/app/registration/dashboard/page";
+import { initialSchoolData, type School } from "@/lib/schoolData";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Printer, Calendar, MapPin, Edit, FileText, CheckCircle, AlertCircle } from 'lucide-react';

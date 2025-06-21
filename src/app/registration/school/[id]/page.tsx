@@ -11,72 +11,20 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { School } from "@/app/registration/dashboard/page"; 
+import type { School } from "@/lib/schoolData";
+import { initialSchoolData } from "@/lib/schoolData";
 import { cn } from "@/lib/utils";
 
 // Mock data for schools - in a real app, this would come from an API
-const allSchoolsData: School[] = [
-  {
-    id: "sman1tanjungredeb",
-    namaSekolah: "SMA Negeri 1 Tanjung Redeb",
-    akreditasi: "A",
-    kuota: 266,
+const allSchoolsData: School[] = initialSchoolData.map(school => ({
+    ...school,
     jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112 },
     jumlahPendaftar: 50, 
     statusPendaftaran: "Buka",
-    alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Kab. Berau, Kalimantan Timur",
-    telepon: "0554-21045",
-    tahapPendaftaran: 1,
-  },
-  {
-    id: "smkn1berau",
-    namaSekolah: "SMK Negeri 1 Berau",
-    akreditasi: "A",
-    kuota: 304,
-    jalurKuota: { afirmasi: 64, mutasi: 16, prestasi: 96, domisili: 128 },
-    jumlahPendaftar: 50,
-    statusPendaftaran: "Buka",
-    alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Kab. Berau, Kalimantan Timur",
-    telepon: "0554-22112",
-    tahapPendaftaran: 2,
-  },
-  {
-    id: "sman2berau",
-    namaSekolah: "SMA Negeri 2 Berau",
-    akreditasi: "B",
-    kuota: 228,
-    jalurKuota: { afirmasi: 48, mutasi: 12, prestasi: 72, domisili: 96 },
-    jumlahPendaftar: 50,
-    statusPendaftaran: "Buka",
-    alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Kab. Berau, Kalimantan Timur",
-    telepon: "0554-23451",
-    tahapPendaftaran: 1,
-  },
-  {
-    id: "smamuhammadiyahberau",
-    namaSekolah: "SMA Muhammadiyah Tanjung Redeb",
-    akreditasi: "B",
-    kuota: 142,
-    jalurKuota: { afirmasi: 30, mutasi: 7, prestasi: 45, domisili: 60 },
-    jumlahPendaftar: 50,
-    statusPendaftaran: "Buka",
-    alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Kab. Berau, Kalimantan Timur",
-    telepon: "0554-21987",
-    tahapPendaftaran: 2,
-  },
-  {
-    id: "smkyphbberau",
-    namaSekolah: "SMK YPSHB Berau",
-    akreditasi: "B",
-    kuota: 190,
-    jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 80 },
-    jumlahPendaftar: 50,
-    statusPendaftaran: "Buka",
-    alamat: "Jl. Pangeran Antasari, Teluk Bayur, Kab. Berau, Kalimantan Timur",
-    telepon: "0554-24001",
-    tahapPendaftaran: 1,
-  },
-];
+    alamat: school.alamat || "Alamat belum tersedia",
+    telepon: "0554-XXXXX",
+    tahapPendaftaran: school.namaSekolah.includes("Negeri") ? 1 : 2,
+}));
 
 type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
 interface Applicant {
@@ -168,7 +116,7 @@ export default function SchoolDetailPage() {
     }
     
     const generatedApplicantsBase: Omit<Applicant, 'peringkat'>[] = [];
-    const mutasiQuota = school.jalurKuota.mutasi || 0;
+    const mutasiQuota = school.jalurKuota?.mutasi || 0;
     const targetVerifiedMutasiInMutasiPathway = mutasiQuota + 3; 
     let actualMutasiApplicantsAssigned = 0;
 
@@ -353,9 +301,9 @@ export default function SchoolDetailPage() {
           </CardContent>
           <CardFooter>
             <Button asChild className="mx-auto">
-              <Link href="/registration/dashboard">
+              <Link href="/registration/all-data">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Kembali ke Beranda
+                Kembali ke Semua Data
               </Link>
             </Button>
           </CardFooter>
@@ -396,7 +344,7 @@ export default function SchoolDetailPage() {
               <CardTitle className="text-xl sm:text-2xl md:text-3xl font-headline">{school.namaSekolah}</CardTitle>
             </div>
             <Button variant="outline" asChild size="sm" className="w-full sm:w-auto">
-              <Link href="/registration/dashboard">
+              <Link href="/registration/all-data">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Kembali
               </Link>
@@ -534,7 +482,7 @@ export default function SchoolDetailPage() {
                                 "text-right font-medium",
                                 (() => {
                                 if (applicant.peringkat && school.jalurKuota) {
-                                    const pathwayKey = applicant.jalur.toLowerCase() as keyof typeof school.jalurKuota;
+                                    const pathwayKey = applicant.jalur.toLowerCase() as keyof NonNullable<typeof school.jalurKuota>;
                                     const pathwayQuota = school.jalurKuota[pathwayKey];
                                     if (pathwayQuota !== undefined && applicant.peringkat <= pathwayQuota) {
                                     return 'text-green-600';

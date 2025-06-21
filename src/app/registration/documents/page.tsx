@@ -14,7 +14,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FileText, Save, School, ArrowUp, ArrowDown, AlertTriangle, ClipboardCheck } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { initialSchoolData } from "@/app/registration/dashboard/page"; 
+import { initialSchoolData } from "@/lib/schoolData"; 
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type SchoolSelection } from "@/lib/localStorage";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
@@ -39,7 +39,7 @@ export default function SchoolSelectionPage() {
         title: "Akses Ditolak",
         description: "Harap unggah foto profil Anda di halaman Data Pendaftar sebelum melanjutkan.",
       });
-      router.replace('/registration/biodata');
+      router.replace('/registration/dashboard');
       return; 
     }
 
