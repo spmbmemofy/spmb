@@ -241,7 +241,7 @@ export default function VerifyApplicantPage() {
               <CardHeader>
                 <CardTitle className="flex items-center text-lg"><FileText className="mr-2"/>Berkas Pendaftaran</CardTitle>
                 <CardDescription>
-                  Klik pada area abu-abu untuk membuka berkas PDF. Beri status pada setiap berkas di bawah.
+                  Tinjau setiap berkas di bawah ini dan berikan status validasi.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -249,14 +249,16 @@ export default function VerifyApplicantPage() {
                   {documentsToVerify.map(doc => (
                      <div key={doc.id}>
                         <Card className="overflow-hidden group">
-                           <a href={doc.url} target="_blank" rel="noopener noreferrer" className="block">
-                            <div className="aspect-[3/4] bg-muted overflow-hidden flex items-center justify-center p-4">
-                                <FileText className="w-24 h-24 text-muted-foreground group-hover:text-primary transition-colors" />
-                            </div>
-                            <CardHeader className="p-3">
-                                <p className="text-sm font-medium truncate">{doc.label}</p>
-                            </CardHeader>
-                           </a>
+                           <CardHeader className="p-3">
+                              <a href={doc.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary font-medium text-sm truncate">
+                                {doc.label}
+                              </a>
+                           </CardHeader>
+                           <CardContent className="p-0">
+                             <div className="aspect-[3/4] bg-gray-200">
+                               <embed src={doc.url} type="application/pdf" className="w-full h-full" />
+                             </div>
+                           </CardContent>
                            <CardFooter className="p-3 bg-muted/50 flex justify-end gap-2">
                                 <Button 
                                     size="sm" 
@@ -330,5 +332,3 @@ export default function VerifyApplicantPage() {
     </div>
   );
 }
-
-    
