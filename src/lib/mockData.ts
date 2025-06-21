@@ -7,6 +7,9 @@ const lastNames = ["Saputra", "Wijayanti", "Nugroho", "Lestari", "Prabowo", "Wat
 export const jalurOptionsPlain: Jalur[] = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
 export const statusVerifikasiOptionsPlain: ApplicantStatus[] = ["Terverifikasi", "Menunggu Verifikasi", "Berkas tidak sesuai"];
 
+const prestasiScoreOptions = [30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85];
+const getRandomPrestasiScore = () => prestasiScoreOptions[Math.floor(Math.random() * prestasiScoreOptions.length)];
+
 export const generateAllMockApplicants = (): Applicant[] => {
     const applicants: Applicant[] = [];
     let applicantIdCounter = 1;
@@ -27,7 +30,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
                 semester5: parseFloat((Math.random() * (95 - 80) + 80).toFixed(2)),
             };
             
-            const nilaiPrestasi = jalur === 'Prestasi' ? parseFloat((Math.random() * (85 - 35) + 35).toFixed(2)) : undefined;
+            const nilaiPrestasi = jalur === 'Prestasi' ? getRandomPrestasiScore() : undefined;
 
             applicants.push({
                 id: `app-${applicantIdCounter}`,
@@ -55,7 +58,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
             applicants[index].jalur = jalur;
             if (jalur === 'Prestasi') {
                 if (!applicants[index].nilaiPrestasi) {
-                    applicants[index].nilaiPrestasi = parseFloat((Math.random() * (85 - 35) + 35).toFixed(2));
+                    applicants[index].nilaiPrestasi = getRandomPrestasiScore();
                 }
             } else {
                 applicants[index].nilaiPrestasi = undefined;
@@ -103,7 +106,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
 
                 // Adjust prestasi score based on new jalur
                 if (requiredJalur === 'Prestasi' && !applicants[originalApplicantIndex].nilaiPrestasi) {
-                    applicants[originalApplicantIndex].nilaiPrestasi = parseFloat((Math.random() * (85 - 35) + 35).toFixed(2));
+                    applicants[originalApplicantIndex].nilaiPrestasi = getRandomPrestasiScore();
                 } else if (requiredJalur !== 'Prestasi') {
                     applicants[originalApplicantIndex].nilaiPrestasi = undefined;
                 }
