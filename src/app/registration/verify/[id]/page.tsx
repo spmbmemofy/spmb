@@ -33,12 +33,29 @@ const applicantDetailsMock = {
   religion: "Islam",
   address: "Jl. Durian III No. 25, RT 10/RW 03, Kel. Tanjung Redeb, Kec. Tanjung Redeb, Kabupaten Berau, Kalimantan Timur 77311",
   contactNumber: "081254321098",
-  documents: [
-    { id: 'kk', label: 'Kartu Keluarga (KK)', url: 'https://placehold.co/800x1100.png', hint: 'document paper' },
-    { id: 'akta', label: 'Akta Kelahiran', url: 'https://placehold.co/800x1100.png', hint: 'document birth' },
-    { id: 'skl', label: 'Surat Keterangan Lulus (SKL)', url: 'https://placehold.co/800x1100.png', hint: 'document certificate' },
-    { id: 'rapor_gabungan', label: 'Rapor Semester 1-5', url: 'https://placehold.co/800x1100.png', hint: 'document report' },
-  ]
+};
+
+const DUMMY_PDF_URL = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+
+const generalDocuments = [
+    { id: 'kk', label: 'Kartu Keluarga (KK)', url: DUMMY_PDF_URL },
+    { id: 'akta', label: 'Akta Kelahiran', url: DUMMY_PDF_URL },
+    { id: 'skl', label: 'Surat Keterangan Lulus (SKL)', url: DUMMY_PDF_URL },
+    { id: 'rapor_gabungan', label: 'Rapor Semester 1-5', url: DUMMY_PDF_URL },
+];
+
+const pathwaySpecificDocuments: Record<string, {id: string, label: string, url: string}[]> = {
+  Afirmasi: [
+    { id: "kip_kks_pkh", label: "KIP / KKS / PKH", url: DUMMY_PDF_URL },
+  ],
+  Prestasi: [
+    { id: "sertifikat_prestasi", label: "Sertifikat Prestasi", url: DUMMY_PDF_URL },
+    { id: "sk_prestasi", label: "SK Prestasi Sekolah", url: DUMMY_PDF_URL },
+  ],
+  Mutasi: [
+    { id: "sk_penempatan", label: "SK Mutasi Orang Tua", url: DUMMY_PDF_URL },
+  ],
+  Domisili: [], 
 };
 
 const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
@@ -52,6 +69,7 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
 
 type ActionType = "verify" | "reject";
 type DocumentStatus = "valid" | "invalid" | null;
+type DocumentItem = { id: string; label: string; url: string };
 
 export default function VerifyApplicantPage() {
   const params = useParams();
@@ -62,6 +80,7 @@ export default function VerifyApplicantPage() {
   const [applicant, setApplicant] = React.useState<Applicant | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   
+  const [documentsToVerify, setDocumentsToVerify] = React.useState<DocumentItem[]>([]);
   const [documentStatuses, setDocumentStatuses] = React.useState<Record<string, DocumentStatus>>({});
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
   const [selectedAction, setSelectedAction] = React.useState<ActionType | null>(null);
@@ -73,11 +92,17 @@ export default function VerifyApplicantPage() {
       const foundApplicant = allApplicants.find(app => app.id === applicantId);
       setApplicant(foundApplicant || null);
 
-      const initialStatuses: Record<string, DocumentStatus> = {};
-      applicantDetailsMock.documents.forEach(doc => {
-        initialStatuses[doc.id] = null;
-      });
-      setDocumentStatuses(initialStatuses);
+      if (foundApplicant) {
+        const specificDocs = pathwaySpecificDocuments[foundApplicant.jalur] || [];
+        const allDocs = [...generalDocuments, ...specificDocs];
+        setDocumentsToVerify(allDocs);
+
+        const initialStatuses: Record<string, DocumentStatus> = {};
+        allDocs.forEach(doc => {
+          initialStatuses[doc.id] = null;
+        });
+        setDocumentStatuses(initialStatuses);
+      }
     }
     setIsLoading(false);
   }, [applicantId]);
@@ -125,7 +150,7 @@ export default function VerifyApplicantPage() {
     router.push('/registration/selection');
   };
   
-  const allDocumentsReviewed = Object.values(documentStatuses).every(status => status !== null);
+  const allDocumentsReviewed = documentsToVerify.length > 0 && documentsToVerify.every(doc => documentStatuses[doc.id] !== null);
 
   if (isLoading) {
     return <div className="flex flex-1 items-center justify-center p-4">Memuat data pendaftar...</div>;
@@ -216,17 +241,17 @@ export default function VerifyApplicantPage() {
               <CardHeader>
                 <CardTitle className="flex items-center text-lg"><FileText className="mr-2"/>Berkas Pendaftaran</CardTitle>
                 <CardDescription>
-                  Klik pada gambar untuk melihat versi lebih besar. Beri status pada setiap berkas di bawah.
+                  Klik pada area abu-abu untuk membuka berkas PDF. Beri status pada setiap berkas di bawah.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {applicantDetailsMock.documents.map(doc => (
+                  {documentsToVerify.map(doc => (
                      <div key={doc.id}>
                         <Card className="overflow-hidden group">
                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="block">
-                            <div className="aspect-[3/4] bg-muted overflow-hidden">
-                                <Image src={doc.url} alt={`Gambar pratinjau ${doc.label}`} width={400} height={550} className="w-full h-full object-cover group-hover:scale-105 transition-transform" data-ai-hint={doc.hint} />
+                            <div className="aspect-[3/4] bg-muted overflow-hidden flex items-center justify-center p-4">
+                                <FileText className="w-24 h-24 text-muted-foreground group-hover:text-primary transition-colors" />
                             </div>
                             <CardHeader className="p-3">
                                 <p className="text-sm font-medium truncate">{doc.label}</p>
@@ -305,3 +330,5 @@ export default function VerifyApplicantPage() {
     </div>
   );
 }
+
+    
