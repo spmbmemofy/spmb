@@ -5,7 +5,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle, FileText, Info, UserCircle, XCircle, ThumbsUp, ThumbsDown, Save, TrendingUp, BookOpen } from 'lucide-react';
+import { ArrowLeft, CheckCircle, FileText, Info, UserCircle, XCircle, ThumbsUp, ThumbsDown, Save, TrendingUp, BookOpen, AlertCircle } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableRow, TableFooter as ShadcnTableFooter, TableHead, TableHeader } from "@/components/ui/table";
@@ -23,6 +24,8 @@ import { useToast } from "@/hooks/use-toast";
 import { generateAllMockApplicants } from "@/lib/mockData";
 import type { Applicant, ApplicantStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+const VERIFIER_SCHOOL_ID = "sman4berau";
 
 const applicantDetailsMock = {
   profilePhoto: "https://placehold.co/128x160.png",
@@ -83,6 +86,7 @@ export default function VerifyApplicantPage() {
 
   const [applicant, setApplicant] = React.useState<Applicant | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isVerifierAuthorized, setIsVerifierAuthorized] = React.useState(false);
   
   const [documentsToVerify, setDocumentsToVerify] = React.useState<DocumentItem[]>([]);
   const [documentStatuses, setDocumentStatuses] = React.useState<Record<string, DocumentStatus>>({});
@@ -97,6 +101,7 @@ export default function VerifyApplicantPage() {
       setApplicant(foundApplicant || null);
 
       if (foundApplicant) {
+        setIsVerifierAuthorized(foundApplicant.sekolahTujuanId === VERIFIER_SCHOOL_ID);
         const specificDocs = pathwaySpecificDocuments[foundApplicant.jalur] || [];
         const allDocs = [...generalDocuments, ...specificDocs];
         setDocumentsToVerify(allDocs);
@@ -147,11 +152,12 @@ export default function VerifyApplicantPage() {
     const allAverages = reportCardGradesData.map(subj => parseFloat(calculateAverage(subj)));
     return allAverages.reduce((sum, avg) => sum + avg, 0) / allAverages.length;
   }, []);
+  
+  const nilaiPrestasi = applicant?.jalur === 'Prestasi' ? (applicant?.nilaiPrestasi || 0) : 0;
+  const nilaiTambahan = isVerifierAuthorized ? 25 : 0;
+  const nilaiTotal = nilaiRapor + nilaiPrestasi + nilaiTambahan;
 
   const allDocumentsReviewed = documentsToVerify.length > 0 && documentsToVerify.every(doc => documentStatuses[doc.id] !== null);
-  const nilaiPrestasi = applicant?.jalur === 'Prestasi' ? (applicant?.nilaiPrestasi || 0) : 0;
-  const nilaiTambahan = applicant?.nilaiTambahanPilihan || 0;
-  const nilaiTotal = nilaiRapor + nilaiPrestasi + nilaiTambahan;
 
   if (isLoading) {
     return <div className="flex flex-1 items-center justify-center p-4">Memuat data pendaftar...</div>;
@@ -187,6 +193,16 @@ export default function VerifyApplicantPage() {
             </div>
           </div>
         </div>
+        
+        {!isVerifierAuthorized && (
+          <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Akses Ditolak</AlertTitle>
+              <AlertDescription>
+                  Verifikasi hanya dapat dilakukan oleh sekolah pilihan pertama pendaftar.
+              </AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
@@ -287,10 +303,10 @@ export default function VerifyApplicantPage() {
                             {doc.label}
                           </a>
                         <div className="flex-shrink-0 flex gap-2 w-full sm:w-auto">
-                          <Button size="sm" variant={documentStatuses[doc.id] === 'invalid' ? 'destructive' : 'outline'} onClick={() => handleDocumentStatusChange(doc.id, 'invalid')} className="flex-1">
+                          <Button size="sm" variant={documentStatuses[doc.id] === 'invalid' ? 'destructive' : 'outline'} onClick={() => handleDocumentStatusChange(doc.id, 'invalid')} className="flex-1" disabled={!isVerifierAuthorized}>
                             <ThumbsDown className="mr-2 h-4 w-4" />Tidak Valid
                           </Button>
-                          <Button size="sm" variant={documentStatuses[doc.id] === 'valid' ? 'default' : 'outline'} className={cn(documentStatuses[doc.id] === 'valid' && "bg-green-600 hover:bg-green-700", "flex-1")} onClick={() => handleDocumentStatusChange(doc.id, 'valid')}>
+                          <Button size="sm" variant={documentStatuses[doc.id] === 'valid' ? 'default' : 'outline'} className={cn(documentStatuses[doc.id] === 'valid' && "bg-green-600 hover:bg-green-700", "flex-1")} onClick={() => handleDocumentStatusChange(doc.id, 'valid')} disabled={!isVerifierAuthorized}>
                             <ThumbsUp className="mr-2 h-4 w-4" />Valid
                           </Button>
                         </div>
@@ -303,7 +319,7 @@ export default function VerifyApplicantPage() {
         </div>
         
         <div className="mt-6 border-t pt-6 flex justify-end">
-            <Button size="lg" onClick={handleSaveClick} disabled={!allDocumentsReviewed}>
+            <Button size="lg" onClick={handleSaveClick} disabled={!allDocumentsReviewed || !isVerifierAuthorized}>
                 <Save className="mr-2 h-5 w-5" />
                 Simpan Status Verifikasi
             </Button>
