@@ -1,10 +1,10 @@
 
 "use client";
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, User, School, FileText, UserCircle, UserCheck } from 'lucide-react';
+import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, School, FileText, UserCheck } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -33,13 +33,13 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [userRole, setUserRole] = useState<LoginCredentials['role'] | null>(null);
 
   useEffect(() => {
     const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
     
-    if (savedCredentials?.role === 'applicant' || savedCredentials?.role === 'admin' || savedCredentials?.role === 'verifikator') {
-      setIsAuthorized(true);
+    if (savedCredentials?.role) {
+      setUserRole(savedCredentials.role);
     } else {
       toast({
         variant: "destructive",
@@ -50,50 +50,34 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     }
   }, [router, toast]);
 
-  const menuItems = [
-    {
-      href: '/registration/dashboard',
-      label: 'Beranda',
-      icon: Home,
-      activePaths: ['/registration/dashboard'],
-    },
-    {
-      href: '/registration/documents',
-      label: 'Pilihan Sekolah',
-      icon: School,
-      activePaths: ['/registration/documents'],
-    },
-     {
-      href: '/registration/document-upload',
-      label: 'Unggah Berkas',
-      icon: FileText,
-      activePaths: ['/registration/document-upload'],
-    },
-    {
-      href: '/registration/status',
-      label: 'Status Pendaftaran',
-      icon: ClipboardCheck,
-      activePaths: ['/registration/status'],
-    },
-    {
-      href: '/registration/all-data',
-      label: 'Semua Data',
-      icon: Database,
-      activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'],
-    },
-    {
-      href: '/registration/selection',
-      label: 'Verifikasi',
-      icon: UserCheck,
-      activePaths: ['/registration/selection', '/registration/verify'],
-    },
-    {
-      href: '/registration/announcement',
-      label: 'Pengumuman',
-      icon: Megaphone,
-      activePaths: ['/registration/announcement'],
-    },
-  ];
+  const menuItems = useMemo(() => {
+    const applicantMenu = [
+      { href: '/registration/dashboard', label: 'Beranda', icon: Home, activePaths: ['/registration/dashboard'] },
+      { href: '/registration/documents', label: 'Pilihan Sekolah', icon: School, activePaths: ['/registration/documents'] },
+      { href: '/registration/document-upload', label: 'Unggah Berkas', icon: FileText, activePaths: ['/registration/document-upload'] },
+      { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'] },
+      { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
+    ];
+
+    const verifierMenu = [
+      { href: '/registration/selection', label: 'Beranda', icon: Home, activePaths: ['/registration/selection', '/registration/verify'] },
+      { href: '/registration/all-data', label: 'Semua Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
+      { href: '/registration/selection', label: 'Verifikasi', icon: UserCheck, activePaths: ['/registration/selection', '/registration/verify'] },
+      { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
+    ];
+    
+    const adminMenu = [
+      { href: '/registration/all-data', label: 'Beranda', icon: Home, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
+      { href: '/registration/selection', label: 'Verifikasi', icon: UserCheck, activePaths: ['/registration/selection', '/registration/verify'] },
+      { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
+    ];
+
+    if (userRole === 'applicant') return applicantMenu;
+    if (userRole === 'verifikator') return verifierMenu;
+    if (userRole === 'admin') return adminMenu;
+    
+    return [];
+  }, [userRole]);
 
   const handleLogout = () => {
     removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);
@@ -104,7 +88,13 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     router.push('/');
   };
 
-  if (!isAuthorized) {
+  const homeLink = useMemo(() => {
+    if (userRole === 'admin') return '/registration/all-data';
+    if (userRole === 'verifikator') return '/registration/selection';
+    return '/registration/dashboard';
+  }, [userRole]);
+
+  if (!userRole) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background">
         <p>Memverifikasi akses...</p>
@@ -118,7 +108,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
         <Sidebar collapsible="icon" className="border-r">
           <SidebarHeader>
             <div className="flex h-14 items-center justify-center p-2 group-data-[state=expanded]:border-b">
-               <Link href="/registration/dashboard" className="flex items-center gap-2">
+               <Link href={homeLink} className="flex items-center gap-2">
                  <Image 
                     src="https://placehold.co/40x40.png"
                     alt="Ikon Aplikasi" 
@@ -134,7 +124,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
           <SidebarContent>
             <SidebarMenu>
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
+                <SidebarMenuItem key={item.href + item.label}>
                   <SidebarMenuButton
                     asChild
                     isActive={item.activePaths.some(path => pathname.startsWith(path))}
