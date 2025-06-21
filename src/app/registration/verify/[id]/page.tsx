@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
@@ -82,6 +83,7 @@ export default function VerifyApplicantPage() {
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
   const [selectedAction, setSelectedAction] = React.useState<ActionType | null>(null);
   const [rejectionReason, setRejectionReason] = React.useState("");
+  const [editableNilaiPrestasi, setEditableNilaiPrestasi] = React.useState(0);
 
   React.useEffect(() => {
     if (applicantId) {
@@ -98,6 +100,7 @@ export default function VerifyApplicantPage() {
         const initialStatuses: Record<string, DocumentStatus> = {};
         allDocs.forEach(doc => { initialStatuses[doc.id] = null; });
         setDocumentStatuses(initialStatuses);
+        setEditableNilaiPrestasi(foundApplicant.nilaiPrestasi || 0);
       }
     }
     setIsLoading(false);
@@ -131,8 +134,8 @@ export default function VerifyApplicantPage() {
   };
   
   const totalNilaiRapor = applicant ? Object.values(applicant.semesterGrades).reduce((sum, grade) => sum + grade, 0) : 0;
-  const nilaiPrestasi = applicant?.jalur === 'Prestasi' ? (applicant?.nilaiPrestasi || 0) : 0;
   const nilaiTambahan = isVerifierAuthorized ? 25 : 0;
+  const nilaiPrestasi = applicant?.jalur === 'Prestasi' ? editableNilaiPrestasi : 0;
   const nilaiTotal = totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
 
   const allDocumentsReviewed = documentsToVerify.length > 0 && documentsToVerify.every(doc => documentStatuses[doc.id] !== null);
@@ -208,7 +211,7 @@ export default function VerifyApplicantPage() {
                    <div className="flex justify-between"><span className="text-muted-foreground">Jalur</span><span className="font-medium">{applicant.jalur}</span></div>
               </CardContent>
             </Card>
-             <Card>
+            <Card>
                <CardHeader><CardTitle className="flex items-center text-lg"><BookOpen className="mr-2"/>Rincian Nilai Rapor</CardTitle></CardHeader>
                <CardContent>
                 <Table>
@@ -235,14 +238,25 @@ export default function VerifyApplicantPage() {
                  <Table>
                     <TableBody>
                         <TableRow>
-                            <TableCell className="font-medium">Total Nilai Rapor (Jumlah Rata-rata Semester)</TableCell>
+                            <TableCell className="font-medium">Total Nilai Rapor</TableCell>
                             <TableCell className="text-right">{totalNilaiRapor.toFixed(2)}</TableCell>
                         </TableRow>
-                        {applicant.jalur === 'Prestasi' && (
-                            <TableRow>
-                                <TableCell className="font-medium">Nilai Tambahan Prestasi</TableCell>
-                                <TableCell className="text-right">{nilaiPrestasi.toFixed(2)}</TableCell>
-                            </TableRow>
+                         {applicant.jalur === 'Prestasi' && (
+                          <TableRow>
+                            <TableCell className="font-medium">
+                                Nilai Tambahan Prestasi
+                                <p className="text-xs text-muted-foreground">Dapat diedit oleh verifikator</p>
+                            </TableCell>
+                            <TableCell className="text-right w-[120px]">
+                                <Input
+                                    type="number"
+                                    value={editableNilaiPrestasi}
+                                    onChange={(e) => setEditableNilaiPrestasi(Number(e.target.value))}
+                                    disabled={!isVerifierAuthorized}
+                                    className="text-right"
+                                />
+                            </TableCell>
+                          </TableRow>
                         )}
                         <TableRow>
                             <TableCell className="font-medium">Nilai Tambahan (Pilihan Pertama)</TableCell>
