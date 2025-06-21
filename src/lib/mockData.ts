@@ -89,5 +89,27 @@ export const generateAllMockApplicants = (): Applicant[] => {
         });
     });
     
+    // Ensure the verifier's school has at least one applicant from each pathway for demo purposes.
+    const VERIFIER_SCHOOL_ID = "sman4berau";
+    const verifierSchoolApplicants = applicants.filter(app => app.sekolahTujuanId === VERIFIER_SCHOOL_ID);
+    
+    if (verifierSchoolApplicants.length >= jalurOptionsPlain.length) {
+        jalurOptionsPlain.forEach((requiredJalur, index) => {
+            const applicantToChange = verifierSchoolApplicants[index];
+            const originalApplicantIndex = applicants.findIndex(app => app.id === applicantToChange.id);
+
+            if (originalApplicantIndex !== -1) {
+                applicants[originalApplicantIndex].jalur = requiredJalur;
+
+                // Adjust prestasi score based on new jalur
+                if (requiredJalur === 'Prestasi' && !applicants[originalApplicantIndex].nilaiPrestasi) {
+                    applicants[originalApplicantIndex].nilaiPrestasi = parseFloat((Math.random() * (15 - 5) + 5).toFixed(2));
+                } else if (requiredJalur !== 'Prestasi') {
+                    applicants[originalApplicantIndex].nilaiPrestasi = undefined;
+                }
+            }
+        });
+    }
+
     return applicants;
 };
