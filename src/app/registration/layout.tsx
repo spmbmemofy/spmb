@@ -4,7 +4,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, User, School, FileText, UserCircle } from 'lucide-react';
+import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, User, School, FileText, UserCircle, UserCheck } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
