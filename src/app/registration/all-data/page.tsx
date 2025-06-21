@@ -4,6 +4,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { ArrowUp, ArrowDown, Building, Database, Filter as FilterIcon, Search as SearchIcon, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { initialSchoolData } from "@/lib/schoolData";
 import { generateAllMockApplicants, jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
-import type { Applicant, ApplicantStatus } from "@/lib/mockData";
+import type { Applicant, ApplicantStatus, SortConfig, SortDirection, SortKey } from "@/lib/types";
 
 const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
   switch (status) {
@@ -23,13 +24,6 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
     default: return "secondary";
   }
 };
-
-type SortKey = keyof Applicant | 'no';
-type SortDirection = "ascending" | "descending";
-interface SortConfig {
-  key: SortKey | null;
-  direction: SortDirection;
-}
 
 export default function AllDataPage() {
   const [allApplicants, setAllApplicants] = React.useState<Applicant[]>([]);
@@ -67,14 +61,21 @@ export default function AllDataPage() {
     let sortableItems = [...filteredApplicants];
     if (sortConfig.key !== null && sortConfig.key !== 'no') {
       sortableItems.sort((a, b) => {
-        const valA = a[sortConfig.key as keyof Applicant];
-        const valB = b[sortConfig.key as keyof Applicant];
+        const key = sortConfig.key as keyof Applicant;
+        const valA = a[key];
+        const valB = b[key];
+
         let comparison = 0;
-        if (valA > valB) {
-          comparison = 1;
-        } else if (valA < valB) {
-          comparison = -1;
+        
+        if (valA === null || valA === undefined) comparison = 1;
+        else if (valB === null || valB === undefined) comparison = -1;
+        else if (typeof valA === 'number' && typeof valB === 'number') {
+            comparison = valA - valB;
+        } 
+        else {
+            comparison = String(valA).localeCompare(String(valB));
         }
+        
         return sortConfig.direction === 'ascending' ? comparison : -comparison;
       });
     }
@@ -102,12 +103,6 @@ export default function AllDataPage() {
     if (sortConfig.key !== key) return null;
     return sortConfig.direction === 'ascending' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />;
   };
-
-  const renderSortableHeader = (key: SortKey, label: string, className: string = "") => (
-    <TableHead className={cn("cursor-pointer hover:bg-muted/50", className)} onClick={() => requestSort(key)}>
-      <div className="flex items-center">{label}{getSortIcon(key)}</div>
-    </TableHead>
-  );
 
   const sekolahTujuanOptions = ["Semua Sekolah Tujuan", ...initialSchoolData.map(s => s.namaSekolah)];
   const jalurOptions = ["Semua Jalur", ...jalurOptionsPlain];
@@ -158,7 +153,7 @@ export default function AllDataPage() {
                 </SelectContent>
               </Select>
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger><SelectValue /></SelectValue>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {statusOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
                 </SelectContent>
@@ -171,13 +166,27 @@ export default function AllDataPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {renderSortableHeader('no', "No.", "w-[60px] text-center")}
-                    {renderSortableHeader('fullName', "Nama Lengkap")}
-                    {renderSortableHeader('nisn', "NISN")}
-                    {renderSortableHeader('asalSekolahNama', "Asal Sekolah")}
-                    {renderSortableHeader('sekolahTujuanNama', "Sekolah Tujuan")}
-                    {renderSortableHeader('jalur', "Jalur")}
-                    {renderSortableHeader('statusVerifikasi', "Status Verifikasi", "text-center")}
+                    <TableHead className="w-[60px] cursor-pointer text-center hover:bg-muted/50" onClick={() => requestSort('no')}>
+                      <div className="flex items-center justify-center">No.{getSortIcon('no')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('fullName')}>
+                      <div className="flex items-center">Nama Lengkap{getSortIcon('fullName')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('nisn')}>
+                      <div className="flex items-center">NISN{getSortIcon('nisn')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('asalSekolahNama')}>
+                      <div className="flex items-center">Asal Sekolah{getSortIcon('asalSekolahNama')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('sekolahTujuanNama')}>
+                      <div className="flex items-center">Sekolah Tujuan{getSortIcon('sekolahTujuanNama')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('jalur')}>
+                      <div className="flex items-center">Jalur{getSortIcon('jalur')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer text-center hover:bg-muted/50" onClick={() => requestSort('statusVerifikasi')}>
+                      <div className="flex items-center justify-center">Status Verifikasi{getSortIcon('statusVerifikasi')}</div>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -260,5 +269,3 @@ export default function AllDataPage() {
     </div>
   );
 }
-
-    

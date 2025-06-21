@@ -5,16 +5,18 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, BookOpen as OriginSchoolIcon, Users, Filter as FilterIcon, Search as SearchIcon, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Building } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { initialSchoolData, initialOriginSchoolData, type OriginSchool } from "@/lib/schoolData";
+import { initialSchoolData, initialOriginSchoolData } from "@/lib/schoolData";
+import type { OriginSchool } from "@/lib/schoolData";
 import { cn } from "@/lib/utils";
 import { generateAllMockApplicants, jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
-import type { Applicant, ApplicantStatus } from "@/lib/mockData";
+import type { Applicant, ApplicantStatus, SortConfig, SortDirection, SortKey } from "@/lib/types";
 
 
 const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
@@ -25,13 +27,6 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
     default: return "default";
   }
 };
-
-type SortKey = keyof Applicant | 'no';
-type SortDirection = "ascending" | "descending";
-interface SortConfig {
-  key: SortKey | null;
-  direction: SortDirection;
-}
 
 export default function OriginSchoolDetailPage() {
   const params = useParams();
@@ -83,16 +78,21 @@ export default function OriginSchoolDetailPage() {
     let sortableItems = [...filteredApplicants];
     if (sortConfig.key !== null && sortConfig.key !== 'no') {
       sortableItems.sort((a, b) => {
-        const valA = a[sortConfig.key as keyof Applicant];
-        const valB = b[sortConfig.key as keyof Applicant];
+        const key = sortConfig.key as keyof Applicant;
+        const valA = a[key];
+        const valB = b[key];
+
         let comparison = 0;
-        if (typeof valA === 'number' && typeof valB === 'number') {
-          comparison = valA - valB;
-        } else if (typeof valA === 'string' && typeof valB === 'string') {
-          comparison = valA.localeCompare(valB);
-        } else {
-          comparison = String(valA).localeCompare(String(valB));
+        
+        if (valA === null || valA === undefined) comparison = 1;
+        else if (valB === null || valB === undefined) comparison = -1;
+        else if (typeof valA === 'number' && typeof valB === 'number') {
+            comparison = valA - valB;
+        } 
+        else {
+            comparison = String(valA).localeCompare(String(valB));
         }
+        
         return sortConfig.direction === 'ascending' ? comparison : -comparison;
       });
     }
@@ -121,12 +121,6 @@ export default function OriginSchoolDetailPage() {
     return sortConfig.direction === 'ascending' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />;
   };
 
-  const renderSortableHeader = (key: SortKey, label: string, className: string = "") => (
-    <TableHead className={cn("cursor-pointer hover:bg-muted/50", className)} onClick={() => requestSort(key)}>
-      <div className="flex items-center">{label}{getSortIcon(key)}</div>
-    </TableHead>
-  );
-  
   const handlePageSizeChange = (value: string) => setPageSize(parseInt(value, 10));
   const handlePreviousPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
   const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
@@ -241,12 +235,24 @@ export default function OriginSchoolDetailPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {renderSortableHeader('no', "No.", "w-[60px] text-center")}
-                    {renderSortableHeader('fullName', "Nama Lengkap")}
-                    {renderSortableHeader('nisn', "NISN")}
-                    {renderSortableHeader('sekolahTujuanNama', "Sekolah Tujuan")}
-                    {renderSortableHeader('jalur', "Jalur Pendaftaran")}
-                    {renderSortableHeader('statusVerifikasi', "Status Verifikasi", "text-center")}
+                    <TableHead className="w-[60px] cursor-pointer text-center hover:bg-muted/50" onClick={() => requestSort('no')}>
+                      <div className="flex items-center justify-center">No.{getSortIcon('no')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('fullName')}>
+                      <div className="flex items-center">Nama Lengkap{getSortIcon('fullName')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('nisn')}>
+                      <div className="flex items-center">NISN{getSortIcon('nisn')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('sekolahTujuanNama')}>
+                      <div className="flex items-center">Sekolah Tujuan{getSortIcon('sekolahTujuanNama')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('jalur')}>
+                      <div className="flex items-center">Jalur Pendaftaran{getSortIcon('jalur')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer text-center hover:bg-muted/50" onClick={() => requestSort('statusVerifikasi')}>
+                      <div className="flex items-center justify-center">Status Verifikasi{getSortIcon('statusVerifikasi')}</div>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -290,7 +296,8 @@ export default function OriginSchoolDetailPage() {
                   <SelectContent>
                     <SelectItem value="10">10</SelectItem>
                     <SelectItem value="25">25</SelectItem>
-                    <SelectItem value={(sortedApplicants.length > 0 ? sortedApplicants.length.toString() : "25")}>Semua</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

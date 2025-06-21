@@ -5,6 +5,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, School as SchoolIcon, Users, Filter as FilterIcon, Search as SearchIcon, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, PieChart } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { initialSchoolData } from "@/lib/schoolData";
 import { cn } from "@/lib/utils";
 import { generateAllMockApplicants, jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
-import type { Applicant, ApplicantStatus } from "@/lib/mockData";
+import type { Applicant, ApplicantStatus, SortConfig, SortKey, SortDirection } from "@/lib/types";
 
 interface PathwayStats {
   nama: string;
@@ -42,15 +43,6 @@ const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "s
       return "default";
   }
 };
-
-type SortKey = keyof Applicant | 'no'; 
-type SortDirection = "ascending" | "descending";
-
-interface SortConfig {
-  key: SortKey | null;
-  direction: SortDirection;
-}
-
 
 export default function SchoolDetailPage() {
   const params = useParams();
@@ -95,26 +87,25 @@ export default function SchoolDetailPage() {
     let sortableItems = [...filteredApplicants];
     if (sortConfig.key !== null && sortConfig.key !== 'no') {
       sortableItems.sort((a, b) => {
+        const key = sortConfig.key as keyof Applicant;
+        const valA = a[key];
+        const valB = b[key];
+
         let comparison = 0;
-        if (sortConfig.key === 'peringkat') {
-          const pA = a.peringkat;
-          const pB = b.peringkat;
-          if (pA === null && pB === null) comparison = 0;
-          else if (pA === null) comparison = 1; 
-          else if (pB === null) comparison = -1; 
-          else comparison = pA - pB;
-        } else {
-            const valA = a[sortConfig.key as keyof Applicant];
-            const valB = b[sortConfig.key as keyof Applicant];
-            
-            if (typeof valA === 'number' && typeof valB === 'number') {
-                comparison = valA - valB;
-            } else if (typeof valA === 'string' && typeof valB === 'string') {
-                comparison = valA.localeCompare(valB);
-            } else {
-                comparison = String(valA).localeCompare(String(valB));
-            }
+        
+        if ((valA === null || valA === undefined) && (valB === null || valB === undefined)) comparison = 0;
+        else if (valA === null || valA === undefined) comparison = 1;
+        else if (valB === null || valB === undefined) comparison = -1;
+        else if (key === 'peringkat') {
+          comparison = (valA as number) - (valB as number);
         }
+        else if (typeof valA === 'number' && typeof valB === 'number') {
+            comparison = valA - valB;
+        } 
+        else {
+            comparison = String(valA).localeCompare(String(valB));
+        }
+        
         return sortConfig.direction === 'ascending' ? comparison : -comparison;
       });
     }
@@ -198,15 +189,6 @@ export default function SchoolDetailPage() {
       </div>
     );
   }
-
-  const renderSortableHeader = (key: SortKey, label: string, className: string = "") => (
-    <TableHead className={cn("cursor-pointer hover:bg-muted/50", className)} onClick={() => requestSort(key)}>
-      <div className="flex items-center">
-        {label}
-        {getSortIcon(key)}
-      </div>
-    </TableHead>
-  );
 
   const handlePageSizeChange = (value: string) => {
     setPageSize(parseInt(value, 10));
@@ -341,13 +323,27 @@ export default function SchoolDetailPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {renderSortableHeader('no', "No.", "w-[60px] text-center")}
-                    {renderSortableHeader('fullName', "Nama Lengkap")}
-                    {renderSortableHeader('nisn', "NISN")}
-                    {renderSortableHeader('asalSekolahNama', "Asal Sekolah")}
-                    {renderSortableHeader('statusVerifikasi', "Status", "text-center")}
-                    {renderSortableHeader('jalur', "Jalur")}
-                    {renderSortableHeader('peringkat', "Peringkat", "text-right")}
+                     <TableHead className="w-[60px] cursor-pointer text-center hover:bg-muted/50" onClick={() => requestSort('no')}>
+                      <div className="flex items-center justify-center">No.{getSortIcon('no')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('fullName')}>
+                      <div className="flex items-center">Nama Lengkap{getSortIcon('fullName')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('nisn')}>
+                      <div className="flex items-center">NISN{getSortIcon('nisn')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('asalSekolahNama')}>
+                      <div className="flex items-center">Asal Sekolah{getSortIcon('asalSekolahNama')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer text-center hover:bg-muted/50" onClick={() => requestSort('statusVerifikasi')}>
+                      <div className="flex items-center justify-center">Status{getSortIcon('statusVerifikasi')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('jalur')}>
+                      <div className="flex items-center">Jalur{getSortIcon('jalur')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer text-right hover:bg-muted/50" onClick={() => requestSort('peringkat')}>
+                      <div className="flex items-center justify-end">Peringkat{getSortIcon('peringkat')}</div>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -405,7 +401,7 @@ export default function SchoolDetailPage() {
                     <SelectItem value="10">10</SelectItem>
                     <SelectItem value="25">25</SelectItem>
                     <SelectItem value="50">50</SelectItem>
-                    <SelectItem value={sortedApplicants.length > 0 ? sortedApplicants.length.toString() : "50"}>Semua</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

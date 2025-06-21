@@ -1,22 +1,6 @@
 
 import { initialSchoolData, initialOriginSchoolData } from './schoolData';
-
-export type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
-export type Jalur = "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
-
-export interface Applicant {
-  id: string;
-  noRegistrasi: string;
-  fullName: string;
-  nisn: string;
-  asalSekolahId: string;
-  asalSekolahNama: string;
-  sekolahTujuanId: string;
-  sekolahTujuanNama: string;
-  jalur: Jalur;
-  statusVerifikasi: ApplicantStatus;
-  peringkat?: number | null;
-}
+import type { Applicant, Jalur, ApplicantStatus } from '@/lib/types';
 
 const firstNames = ["Andi", "Bima", "Clara", "Dian", "Elang", "Fitri", "Gilang", "Hana", "Ivan", "Jasmine", "Kurnia", "Lina", "Mega", "Nadia", "Oscar", "Putri", "Rangga", "Sari", "Tegar", "Vina", "Ahmad", "Budi", "Citra", "Dewi", "Eka", "Fajar", "Gita", "Hendra", "Indah", "Joko"];
 const lastNames = ["Saputra", "Wijayanti", "Nugroho", "Lestari", "Prabowo", "Wati", "Setiawan", "Handoko", "Permatasari", "Maulana", "Santoso", "Hakim", "Effendi", "Siregar", "Putra", "Kusuma", "Wahyuni", "Saleh", "Abdullah", "Batubara"];
