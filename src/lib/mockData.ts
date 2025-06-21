@@ -28,7 +28,8 @@ export const generateAllMockApplicants = (): Applicant[] => {
             };
             
             const nilaiPrestasi = jalur === 'Prestasi' ? parseFloat((Math.random() * (15 - 5) + 5).toFixed(2)) : undefined;
-            
+            const nilaiRataRataRapor = Object.values(semesterGrades).reduce((a, b) => a + b, 0) / Object.values(semesterGrades).length;
+
             applicants.push({
                 id: `app-${applicantIdCounter}`,
                 noRegistrasi: nisn,
@@ -42,6 +43,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
                 statusVerifikasi: statusVerifikasiOptionsPlain[i % statusVerifikasiOptionsPlain.length],
                 peringkat: null,
                 semesterGrades,
+                nilaiRataRataRapor,
                 nilaiPrestasi,
                 nilaiTambahanPilihan: 0,
             });
@@ -49,15 +51,28 @@ export const generateAllMockApplicants = (): Applicant[] => {
         }
     });
 
+    // Ensure at least one applicant from each pathway exists
+    const pathwaysInDataset = new Set(applicants.map(app => app.jalur));
+    jalurOptionsPlain.forEach((requiredJalur, index) => {
+        if (!pathwaysInDataset.has(requiredJalur)) {
+            // If a pathway is missing, assign it to an existing applicant.
+            if (applicants.length > index) {
+                applicants[index].jalur = requiredJalur;
+            }
+        }
+    });
+
+
     // Add ranking logic
     initialSchoolData.forEach(school => {
         jalurOptionsPlain.forEach(jalurName => {
             const verifiedApplicantsInJalur = applicants
               .filter(app => app.sekolahTujuanId === school.id && app.jalur === jalurName && app.statusVerifikasi === "Terverifikasi")
               .map(app => {
-                  const totalNilaiRapor = Object.values(app.semesterGrades).reduce((sum, grade) => sum + grade, 0);
+                  const totalNilaiRapor = app.nilaiRataRataRapor || 0;
                   const nilaiPrestasi = app.jalur === 'Prestasi' ? (app.nilaiPrestasi || 0) : 0;
-                  const nilaiTambahan = app.sekolahTujuanId === school.id ? 25 : 0; 
+                  // The check for first choice school is now inside the component, but let's simulate it here for ranking
+                  const nilaiTambahan = 25; // Assuming for this ranking context, all are first choice for simplicity
                   const totalNilai = totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
                   return { ...app, totalNilai };
               })
@@ -67,6 +82,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
               const originalApplicantIndex = applicants.findIndex(origApp => origApp.id === appWithScore.id);
               if (originalApplicantIndex !== -1) {
                 applicants[originalApplicantIndex].peringkat = index + 1;
+                applicants[originalApplicantIndex].nilaiTambahanPilihan = 25; // Mark that they got the bonus
               }
             });
         });
