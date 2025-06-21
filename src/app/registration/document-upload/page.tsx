@@ -209,8 +209,6 @@ export default function DocumentUploadPage() {
       .map(([id]) => id);
 
     const progress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
-    const schoolSelections = progress?.schoolSelections || [];
-    const schoolIds = schoolSelections.map(s => s.schoolId);
 
     setTimeout(() => {
       toast({
@@ -224,7 +222,7 @@ export default function DocumentUploadPage() {
       });
 
       setIsSubmitting(false);
-      router.push(`/registration/selection?pathway=${selectedPathway}&schoolIds=${schoolIds.join(',')}&docs=${successfullyUploadedDocIds.join(',')}`);
+      router.push(`/registration/status?pathway=${selectedPathway}&docs=${successfullyUploadedDocIds.join(',')}`);
     }, 2000);
   };
   
