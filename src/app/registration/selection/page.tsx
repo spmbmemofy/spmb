@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp } from 'lucide-react';
+import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp, Printer } from 'lucide-react';
 import { initialSchoolData, type School } from "@/app/registration/dashboard/page"; 
 import { getFromLocalStorage, type RegistrationProgress, type SchoolSelection } from "@/lib/localStorage";
 
@@ -153,13 +153,9 @@ export default function SelectionPage() {
 
   }, [selectedPathway, uploadedDocsString]);
   
-  const handleReupload = () => {
-    if (storedPathway) {
-      router.push(`/registration/document-upload?pathway=${storedPathway}`);
-    } else {
-      router.push('/registration/documents');
-    }
-  }
+  const handlePrint = () => {
+    window.print();
+  };
 
   if (!storedPathway || displaySelections.length === 0) {
     return (
@@ -417,9 +413,9 @@ export default function SelectionPage() {
                     Kembali ke Beranda
                 </Link>
             </Button>
-             <Button onClick={handleReupload}>
-                <FileCheck2 className="mr-2 h-4 w-4" />
-                Ubah/Unggah Ulang Berkas
+             <Button onClick={handlePrint}>
+                <Printer className="mr-2 h-4 w-4" />
+                Cetak Bukti Pendaftaran
             </Button>
         </CardFooter>
       </Card>
