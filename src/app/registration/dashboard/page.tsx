@@ -24,58 +24,89 @@ import { Input } from "@/components/ui/input";
 import { Building, MapPin, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-type SchoolData = {
+// This is now the single source of truth for the school data model.
+export type School = {
   id: string;
   namaSekolah: string;
   alamat: string;
-  kuota: number;
+  kecamatan: string;
   akreditasi: "A" | "B" | "C" | "Belum Terakreditasi";
+  kuota: number;
+  type: "SMA" | "SMK";
+  majors?: string[];
+  // Optional fields used in other pages
+  jalurKuota?: { afirmasi: number; mutasi: number; prestasi: number; domisili: number; };
+  jumlahPendaftar?: number;
+  statusPendaftaran?: "Buka" | "Tutup" | "Segera Penuh";
+  telepon?: string;
+  tahapPendaftaran?: number;
 };
 
-const initialSchoolData: SchoolData[] = [
+// This is now the single source of truth for initial school data.
+export const initialSchoolData: School[] = [
   {
     id: "sman1tanjungredeb",
     namaSekolah: "SMA Negeri 1 Tanjung Redeb",
     alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Berau",
+    kecamatan: "Kec. Tanjung Redeb",
     kuota: 266,
     akreditasi: "A",
+    type: "SMA",
   },
   {
     id: "smkn1berau",
     namaSekolah: "SMK Negeri 1 Berau",
     alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Berau",
+    kecamatan: "Kec. Tanjung Redeb",
     kuota: 304,
     akreditasi: "A",
+    type: "SMK",
+    majors: [
+      "Teknik Komputer dan Jaringan",
+      "Akuntansi dan Keuangan Lembaga",
+      "Otomatisasi dan Tata Kelola Perkantoran",
+      "Bisnis Daring dan Pemasaran",
+    ],
   },
   {
     id: "sman2berau",
     namaSekolah: "SMA Negeri 2 Berau",
     alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Berau",
+    kecamatan: "Kec. Tanjung Redeb",
     kuota: 228,
     akreditasi: "B",
+    type: "SMA",
   },
   {
     id: "smamuhammadiyahberau",
     namaSekolah: "SMA Muhammadiyah Tanjung Redeb",
     alamat: "Jl. SA Maulana, Bugis, Tanjung Redeb, Berau",
+    kecamatan: "Kec. Tanjung Redeb",
     kuota: 142,
     akreditasi: "B",
+    type: "SMA",
   },
   {
     id: "smkyphbberau",
     namaSekolah: "SMK YPSHB (Yayasan Pendidikan Sinar Harapan Bangsa) Berau",
     alamat: "Jl. Pangeran Antasari, Teluk Bayur, Berau",
+    kecamatan: "Kec. Teluk Bayur",
     kuota: 190,
     akreditasi: "B",
+    type: "SMK",
+    majors: ["Farmasi Klinis dan Komunitas", "Teknologi Laboratorium Medik"],
   },
 ];
 
+
 export default function SchoolDataPage() {
   const { toast } = useToast();
-  const [schoolData, setSchoolData] = React.useState<SchoolData[]>(initialSchoolData);
+  // The component now uses the unified 'School' type
+  const [schoolData, setSchoolData] = React.useState<School[]>(initialSchoolData);
   const [isSaving, setIsSaving] = React.useState(false);
 
-  const handleInputChange = (schoolId: string, field: keyof SchoolData, value: string | number) => {
+  // The handleInputChange function is updated to use 'keyof School'
+  const handleInputChange = (schoolId: string, field: keyof School, value: string | number) => {
     setSchoolData((prevData) =>
       prevData.map((school) =>
         school.id === schoolId ? { ...school, [field]: value } : school
@@ -189,7 +220,7 @@ export default function SchoolDataPage() {
                          <Input
                           value={school.akreditasi}
                           onChange={(e) =>
-                            handleInputChange(school.id, "akreditasi", e.target.value)
+                            handleInputChange(school.id, "akreditasi", e.target.value as School['akreditasi'])
                           }
                           className="w-full text-center"
                         />
