@@ -15,6 +15,12 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -86,6 +92,9 @@ export default function VerifyApplicantPage() {
   const [selectedAction, setSelectedAction] = React.useState<ActionType | null>(null);
   const [rejectionReason, setRejectionReason] = React.useState("");
 
+  const [selectedPdfUrl, setSelectedPdfUrl] = React.useState<string | null>(null);
+  const [isPdfModalOpen, setIsPdfModalOpen] = React.useState(false);
+
   React.useEffect(() => {
     if (applicantId) {
       const allApplicants = generateAllMockApplicants();
@@ -106,6 +115,11 @@ export default function VerifyApplicantPage() {
     }
     setIsLoading(false);
   }, [applicantId]);
+
+  const handleViewPdf = (url: string) => {
+    setSelectedPdfUrl(url);
+    setIsPdfModalOpen(true);
+  };
 
   const handleDocumentStatusChange = (docId: string, status: 'valid' | 'invalid') => {
     setDocumentStatuses(prev => ({
@@ -241,7 +255,7 @@ export default function VerifyApplicantPage() {
               <CardHeader>
                 <CardTitle className="flex items-center text-lg"><FileText className="mr-2"/>Berkas Pendaftaran</CardTitle>
                 <CardDescription>
-                  Tinjau setiap berkas di bawah ini dan berikan status validasi.
+                  Klik nama berkas untuk melihat pratinjau. Berikan status validasi untuk setiap berkas.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
@@ -250,21 +264,17 @@ export default function VerifyApplicantPage() {
                       <div
                         key={doc.id}
                         className={cn(
-                          "flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4",
-                          index < documentsToVerify.length - 1 && "border-b"
+                          "flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between",
+                          index === documentsToVerify.length - 1 && "border-b-0"
                         )}
                       >
-                        <div className="flex items-center gap-3">
-                          <FileText className="h-6 w-6 text-primary flex-shrink-0" />
-                          <div>
-                            <p className="font-medium">{doc.label}</p>
-                            <Button asChild variant="link" className="p-0 h-auto text-xs">
-                              <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                                Lihat Berkas di Tab Baru
-                              </a>
-                            </Button>
-                          </div>
-                        </div>
+                         <Button
+                            variant="link"
+                            className="p-0 h-auto justify-start font-medium text-left"
+                            onClick={() => handleViewPdf(doc.url)}
+                          >
+                            {doc.label}
+                          </Button>
                         <div className="flex-shrink-0 flex gap-2 w-full sm:w-auto">
                           <Button
                             size="sm"
@@ -303,8 +313,24 @@ export default function VerifyApplicantPage() {
                 Simpan Status Verifikasi
             </Button>
         </div>
-
       </div>
+
+      <Dialog open={isPdfModalOpen} onOpenChange={setIsPdfModalOpen}>
+        <DialogContent className="max-w-4xl h-[90vh] p-0 flex flex-col">
+          <DialogHeader className="p-4 border-b shrink-0">
+            <DialogTitle>Pratinjau Berkas</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            {selectedPdfUrl && (
+              <iframe
+                src={selectedPdfUrl}
+                className="w-full h-full"
+                title="Pratinjau Berkas"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
       
        <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
@@ -340,4 +366,5 @@ export default function VerifyApplicantPage() {
 
     </div>
   );
-}
+
+    
