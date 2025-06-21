@@ -250,14 +250,15 @@ export default function VerifyApplicantPage() {
                      <div key={doc.id}>
                         <Card className="overflow-hidden group">
                            <CardHeader className="p-3">
-                              <a href={doc.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary font-medium text-sm truncate">
-                                {doc.label}
-                              </a>
+                              <p className="font-medium text-sm truncate">{doc.label}</p>
                            </CardHeader>
-                           <CardContent className="p-0">
-                             <div className="aspect-[3/4] bg-gray-200">
-                               <iframe src={doc.url} className="w-full h-full border-0" title={doc.label} />
-                             </div>
+                           <CardContent className="p-3 flex flex-col items-center justify-center aspect-[3/4] bg-muted/20">
+                             <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+                             <Button asChild variant="secondary">
+                                <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                                    Buka Berkas
+                                </a>
+                             </Button>
                            </CardContent>
                            <CardFooter className="p-3 bg-muted/50 flex justify-end gap-2">
                                 <Button 
@@ -332,3 +333,4 @@ export default function VerifyApplicantPage() {
     </div>
   );
 }
+
