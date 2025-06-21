@@ -4,7 +4,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { User, FileText, Settings, LogOut, Menu as MenuIcon, Info, ClipboardCheck } from 'lucide-react';
+import { User, FileText, Settings, LogOut, Menu as MenuIcon, Building, ClipboardCheck } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -56,8 +56,8 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   const allMenuItems = [
     {
       href: '/registration/dashboard',
-      label: 'INFORMASI',
-      icon: Info,
+      label: 'DATA SEKOLAH',
+      icon: Building,
       activePaths: ['/registration/dashboard', '/registration/school', '/registration/origin-school'], 
     },
     {
