@@ -127,17 +127,32 @@ export default function HomePage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nama Sekolah</TableHead>
-                  <TableHead className="text-right">Jumlah Pendaftar</TableHead>
+                  <TableHead rowSpan={2} className="align-bottom text-center w-[50px]">Peringkat</TableHead>
+                  <TableHead rowSpan={2} className="align-bottom">Nama Sekolah</TableHead>
+                  <TableHead colSpan={5} className="text-center border-b pb-2">Kuota Penerimaan</TableHead>
+                  <TableHead rowSpan={2} className="text-right align-bottom">Jml. Pendaftar</TableHead>
+                </TableRow>
+                <TableRow>
+                  <TableHead className="text-center font-normal">Total</TableHead>
+                  <TableHead className="text-center font-normal">Afirmasi</TableHead>
+                  <TableHead className="text-center font-normal">Mutasi</TableHead>
+                  <TableHead className="text-center font-normal">Prestasi</TableHead>
+                  <TableHead className="text-center font-normal">Domisili</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedSchoolsByDestination.map((school) => (
+                {sortedSchoolsByDestination.map((school, index) => (
                   <TableRow key={school.id}>
+                    <TableCell className="text-center font-medium">{index + 1}</TableCell>
                     <TableCell>
                       <Link href={`/registration/school/${school.id}`} className="font-medium hover:underline text-primary">{school.namaSekolah}</Link>
                     </TableCell>
-                    <TableCell className="text-right">{school.jumlahPendaftar}</TableCell>
+                    <TableCell className="text-center font-bold">{school.kuota}</TableCell>
+                    <TableCell className="text-center">{school.jalurKuota.afirmasi}</TableCell>
+                    <TableCell className="text-center">{school.jalurKuota.mutasi}</TableCell>
+                    <TableCell className="text-center">{school.jalurKuota.prestasi}</TableCell>
+                    <TableCell className="text-center">{school.jalurKuota.domisili}</TableCell>
+                    <TableCell className="text-right font-bold">{school.jumlahPendaftar}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
