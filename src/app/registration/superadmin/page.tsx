@@ -45,6 +45,8 @@ const userFormSchema = z.object({
   username: z.string().min(3, { message: "Username minimal 3 karakter." }),
   role: z.enum(["applicant", "admin", "verifikator", "smp_operator", "superadmin", "headmaster"], { required_error: "Peran wajib dipilih."}),
   password: z.string().min(6, { message: "Kata sandi minimal 6 karakter." }).optional().or(z.literal('')),
+  npsn: z.string().optional(),
+  namaSekolah: z.string().optional(),
 });
 
 type UserFormValues = z.infer<typeof userFormSchema>;
@@ -61,8 +63,10 @@ export default function SuperadminPage() {
 
     const form = useForm<UserFormValues>({
         resolver: zodResolver(userFormSchema),
-        defaultValues: { id: '', fullName: '', username: '', role: 'applicant', password: '' },
+        defaultValues: { id: '', fullName: '', username: '', role: 'applicant', password: '', npsn: '', namaSekolah: '' },
     });
+    
+    const selectedFormRole = form.watch("role");
 
     React.useEffect(() => {
         setUsers(getUsers());
@@ -82,7 +86,7 @@ export default function SuperadminPage() {
         if (user) {
             form.reset({ ...user, password: '' });
         } else {
-            form.reset({ id: undefined, fullName: '', username: '', role: 'applicant', password: '' });
+            form.reset({ id: undefined, fullName: '', username: '', role: 'applicant', password: '', npsn: '', namaSekolah: '' });
         }
         setIsDialogOpen(true);
     };
@@ -124,7 +128,7 @@ export default function SuperadminPage() {
     return (
         <>
             <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
-                <Card className="w-full max-w-5xl shadow-2xl">
+                <Card className="w-full max-w-7xl shadow-2xl">
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div className="flex items-center space-x-3">
@@ -175,6 +179,9 @@ export default function SuperadminPage() {
                                         <TableHead>Nama Lengkap</TableHead>
                                         <TableHead>Username</TableHead>
                                         <TableHead>Peran</TableHead>
+                                        <TableHead>Password</TableHead>
+                                        <TableHead>NPSN</TableHead>
+                                        <TableHead>Nama Sekolah</TableHead>
                                         <TableHead className="text-right">Aksi</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -190,6 +197,9 @@ export default function SuperadminPage() {
                                                         {roleDisplayNames[user.role]}
                                                     </Badge>
                                                 </TableCell>
+                                                <TableCell>{user.password}</TableCell>
+                                                <TableCell>{user.npsn || '-'}</TableCell>
+                                                <TableCell>{user.namaSekolah || '-'}</TableCell>
                                                 <TableCell className="text-right">
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
@@ -214,7 +224,7 @@ export default function SuperadminPage() {
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                            <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                                                 Tidak ada pengguna yang cocok dengan kriteria.
                                             </TableCell>
                                         </TableRow>
@@ -258,7 +268,7 @@ export default function SuperadminPage() {
                              <FormField control={form.control} name="role" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Peran</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                             <SelectTrigger><SelectValue /></SelectTrigger>
                                         </FormControl>
@@ -271,6 +281,24 @@ export default function SuperadminPage() {
                                     <FormMessage />
                                 </FormItem>
                             )} />
+                            {['verifikator', 'smp_operator', 'headmaster'].includes(selectedFormRole) && (
+                                <>
+                                    <FormField control={form.control} name="npsn" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>NPSN</FormLabel>
+                                            <FormControl><Input {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                     <FormField control={form.control} name="namaSekolah" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Nama Sekolah</FormLabel>
+                                            <FormControl><Input {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                </>
+                            )}
                             <DialogFooter>
                                 <DialogClose asChild>
                                     <Button type="button" variant="secondary">Batal</Button>
