@@ -12,8 +12,45 @@ const getRandomPrestasiScore = () => prestasiScoreOptions[Math.floor(Math.random
 
 export const generateAllMockApplicants = (): Applicant[] => {
     const applicants: Applicant[] = [];
-    let applicantIdCounter = 1;
+    
+    // Create our specific test user for the correction flow
+    const testUserDestinationSchool = initialSchoolData.find(s => s.id === 'sman4berau') || initialSchoolData[0];
+    const testUserOriginSchool = initialOriginSchoolData[0];
+    const testUserSelections: SchoolSelection[] = [
+        { schoolId: testUserDestinationSchool.id, major: null },
+        { schoolId: initialSchoolData[1].id, major: "Teknik Komputer dan Jaringan" }
+    ];
+    
+    applicants.push({
+        id: 'app-0056789123',
+        noRegistrasi: '0056789123',
+        fullName: 'Muhammad Rizky Pratama',
+        nisn: '0056789123',
+        asalSekolahId: testUserOriginSchool.id,
+        asalSekolahNama: testUserOriginSchool.namaSekolah,
+        sekolahTujuanId: testUserDestinationSchool.id,
+        sekolahTujuanNama: testUserDestinationSchool.namaSekolah,
+        schoolSelections: testUserSelections,
+        jalur: 'Domisili',
+        statusVerifikasi: 'Berkas tidak sesuai',
+        rejectionReason: 'Foto Kartu Keluarga (KK) buram dan tidak terbaca. Harap unggah ulang file yang lebih jelas.',
+        documentStatuses: {
+            'kk': 'invalid',
+            'akta': 'valid',
+            'skl': 'valid',
+            'rapor_gabungan': 'valid',
+        },
+        peringkat: null,
+        semesterGrades: {
+            semester1: 86.50, semester2: 89.20, semester3: 91.00,
+            semester4: 88.75, semester5: 93.10,
+        },
+        nilaiPrestasi: undefined,
+        nilaiTambahanPilihan: 25,
+    });
 
+
+    let applicantIdCounter = 1;
     initialOriginSchoolData.forEach((originSchool) => {
         const numApplicants = originSchool.jumlahPendaftar;
         for (let i = 0; i < numApplicants; i++) {
@@ -82,13 +119,16 @@ export const generateAllMockApplicants = (): Applicant[] => {
 
     if (applicants.length >= jalurOptionsPlain.length) {
         jalurOptionsPlain.forEach((jalur, index) => {
-            applicants[index].jalur = jalur;
-            if (jalur === 'Prestasi') {
-                if (!applicants[index].nilaiPrestasi) {
-                    applicants[index].nilaiPrestasi = getRandomPrestasiScore();
+            const targetIndex = index + 1; // Skip the test user
+            if (applicants[targetIndex]) {
+                 applicants[targetIndex].jalur = jalur;
+                if (jalur === 'Prestasi') {
+                    if (!applicants[targetIndex].nilaiPrestasi) {
+                        applicants[targetIndex].nilaiPrestasi = getRandomPrestasiScore();
+                    }
+                } else {
+                    applicants[targetIndex].nilaiPrestasi = undefined;
                 }
-            } else {
-                applicants[index].nilaiPrestasi = undefined;
             }
         });
     }
@@ -121,16 +161,18 @@ export const generateAllMockApplicants = (): Applicant[] => {
     
     if (verifierSchoolApplicants.length >= jalurOptionsPlain.length) {
         jalurOptionsPlain.forEach((requiredJalur, index) => {
-            const applicantToChange = verifierSchoolApplicants[index];
-            const originalApplicantIndex = applicants.findIndex(app => app.id === applicantToChange.id);
+            if (verifierSchoolApplicants[index]) {
+                const applicantToChange = verifierSchoolApplicants[index];
+                const originalApplicantIndex = applicants.findIndex(app => app.id === applicantToChange.id);
 
-            if (originalApplicantIndex !== -1) {
-                applicants[originalApplicantIndex].jalur = requiredJalur;
+                if (originalApplicantIndex !== -1) {
+                    applicants[originalApplicantIndex].jalur = requiredJalur;
 
-                if (requiredJalur === 'Prestasi' && !applicants[originalApplicantIndex].nilaiPrestasi) {
-                    applicants[originalApplicantIndex].nilaiPrestasi = getRandomPrestasiScore();
-                } else if (requiredJalur !== 'Prestasi') {
-                    applicants[originalApplicantIndex].nilaiPrestasi = undefined;
+                    if (requiredJalur === 'Prestasi' && !applicants[originalApplicantIndex].nilaiPrestasi) {
+                        applicants[originalApplicantIndex].nilaiPrestasi = getRandomPrestasiScore();
+                    } else if (requiredJalur !== 'Prestasi') {
+                        applicants[originalApplicantIndex].nilaiPrestasi = undefined;
+                    }
                 }
             }
         });
