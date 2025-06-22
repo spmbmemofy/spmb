@@ -24,7 +24,7 @@ import { type ManagedSchool, type SchoolJenjang, type SchoolJenis } from "@/lib/
 const schoolFormSchema = z.object({
   npsn: z.string().min(8, { message: "NPSN harus memiliki minimal 8 karakter." }).max(8, { message: "NPSN tidak boleh lebih dari 8 karakter." }),
   namaSekolah: z.string().min(3, { message: "Nama sekolah minimal 3 karakter." }),
-  jenjang: z.enum(["SMP", "SMA"], { required_error: "Jenjang sekolah wajib dipilih."}),
+  jenjang: z.enum(["SMP", "SMA", "SMK"], { required_error: "Jenjang sekolah wajib dipilih."}),
   jenis: z.enum(["Negeri", "Swasta"], { required_error: "Jenis sekolah wajib dipilih."}),
 });
 
@@ -222,7 +222,8 @@ export default function SchoolManagementPage() {
                                         </FormControl>
                                         <SelectContent>
                                             <SelectItem value="SMP">SMP</SelectItem>
-                                            <SelectItem value="SMA">SMA/SMK</SelectItem>
+                                            <SelectItem value="SMA">SMA</SelectItem>
+                                            <SelectItem value="SMK">SMK</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
