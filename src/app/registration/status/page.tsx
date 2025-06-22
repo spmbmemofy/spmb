@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp, Printer } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp, Printer, AlertCircle } from 'lucide-react';
 import { initialSchoolData, type School } from "@/lib/schoolData"; 
 import { getFromLocalStorage, type RegistrationProgress, type SchoolSelection } from "@/lib/localStorage";
 
@@ -208,7 +209,7 @@ export default function StatusPage() {
   
   const [storedPathway, setStoredPathway] = React.useState<string | undefined>();
   
-  const applicationVerificationStatus: VerificationStatus = "Terverifikasi";
+  const applicationVerificationStatus: VerificationStatus = "Berkas tidak sesuai";
 
   React.useEffect(() => {
     let pathway = selectedPathway;
@@ -309,6 +310,24 @@ export default function StatusPage() {
              <p className="text-sm text-muted-foreground mb-4">
                 Status verifikasi ditentukan oleh sekolah pilihan pertama Anda dan berlaku untuk semua pilihan di bawahnya.
             </p>
+            {applicationVerificationStatus === 'Berkas tidak sesuai' && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Verifikasi Gagal: Berkas Tidak Sesuai</AlertTitle>
+                <AlertDescription>
+                  Pendaftaran Anda tidak dapat diproses lebih lanjut karena ada berkas yang ditolak oleh verifikator. Silakan perbaiki berkas yang diperlukan.
+                </AlertDescription>
+                 <div className="mt-4">
+                    <Button variant="outline" size="sm" asChild className="border-current text-current hover:bg-destructive/10">
+                        <Link href={`/registration/document-upload?pathway=${storedPathway}`}>
+                            <FileUp className="mr-2 h-4 w-4" />
+                            Perbaiki Berkas Sekarang
+                        </Link>
+                    </Button>
+                </div>
+              </Alert>
+            )}
+
             <Dialog>
               <DialogTrigger asChild>
                  <Card className="mb-6 bg-muted/30 hover:bg-muted/40 cursor-pointer transition-colors">
@@ -363,12 +382,36 @@ export default function StatusPage() {
                     <span className="font-semibold text-lg text-primary">{storedPathway || "Tidak Diketahui"}</span>
                 </div>
                 {displaySelections.map(({ school, major }, index) => {
-                    const pathwayKey = (storedPathway?.toLowerCase() || '') as keyof typeof school.jalurKuota;
-                    const quota = school.jalurKuota ? (school.jalurKuota[pathwayKey] || 0) : 0;
-                    const rank = quota > 0 ? Math.floor(Math.random() * (quota + 20)) + 1 : Math.floor(Math.random() * 20) + 1;
-                    const isWithinQuota = rank <= quota && quota > 0;
-                    const rankStatus = isWithinQuota ? "Memenuhi Peringkat" : "Di Luar Peringkat";
-                    const rankStatusVariant = isWithinQuota ? "default" : "destructive";
+                    let rankStatus: string;
+                    let rankStatusVariant: "default" | "destructive" | "secondary";
+                    let rankText: string;
+                    let quotaInfo: string;
+
+                    switch (applicationVerificationStatus) {
+                        case "Berkas tidak sesuai":
+                            rankStatus = 'Pendaftaran Ditolak';
+                            rankStatusVariant = 'destructive';
+                            rankText = '-';
+                            quotaInfo = "Verifikasi berkas gagal";
+                            break;
+                        case "Menunggu Verifikasi":
+                            rankStatus = 'Menunggu Peringkat';
+                            rankStatusVariant = 'secondary';
+                            rankText = '-';
+                            quotaInfo = "Menunggu verifikasi";
+                            break;
+                        case "Terverifikasi":
+                        default:
+                            const pathwayKey = (storedPathway?.toLowerCase() || '') as keyof typeof school.jalurKuota;
+                            const quota = school.jalurKuota ? (school.jalurKuota[pathwayKey] || 0) : 0;
+                            const rank = quota > 0 ? Math.floor(Math.random() * (quota + 20)) + 1 : Math.floor(Math.random() * 20) + 1;
+                            const isWithinQuota = rank <= quota && quota > 0;
+                            rankStatus = isWithinQuota ? "Memenuhi Peringkat" : "Di Luar Peringkat";
+                            rankStatusVariant = isWithinQuota ? "default" : "destructive";
+                            rankText = quota > 0 ? `${rank} / ${quota}` : '-';
+                            quotaInfo = `Kuota Jalur: ${quota}`;
+                            break;
+                    }
 
                     return (
                         <Card key={`${school.id}-${major || 'sma'}`} className="overflow-hidden">
@@ -383,10 +426,14 @@ export default function StatusPage() {
                                 </div>
                                 <Badge variant={rankStatusVariant}>{rankStatus}</Badge>
                             </CardHeader>
-                            <CardContent className="p-4">
+                            <CardContent className="p-4 grid grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Peringkat Sementara</p>
-                                    <p className="font-semibold text-lg">{quota > 0 ? `${rank} / ${quota}` : '-'}</p>
+                                    <p className="font-semibold text-lg">{rankText}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Info Kuota</p>
+                                    <p className="text-sm font-semibold">{quotaInfo}</p>
                                 </div>
                             </CardContent>
                         </Card>
