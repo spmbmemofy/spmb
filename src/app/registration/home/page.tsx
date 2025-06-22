@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { TrendingUp, Users, School, BookOpen } from 'lucide-react';
 import { initialSchoolData } from '@/lib/schoolData';
 import { initialOriginSchoolData } from '@/lib/schoolData';
