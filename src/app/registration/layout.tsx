@@ -69,7 +69,6 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     const adminMenu = [
       { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
       { href: '/registration/all-data', label: 'Semua Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
-      { href: '/registration/selection', label: 'Verifikasi', icon: UserCheck, activePaths: ['/registration/selection', '/registration/verify'] },
       { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
       { href: '/registration/school-management', label: 'Manajemen Sekolah', icon: Building, activePaths: ['/registration/school-management'] },
       { href: '/registration/superadmin', label: 'Manajemen Pengguna', icon: Shield, activePaths: ['/registration/superadmin'] }
