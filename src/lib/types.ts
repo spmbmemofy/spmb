@@ -41,3 +41,29 @@ export interface SortConfig {
   key: SortKey | null;
   direction: SortDirection;
 }
+
+export interface ManagedApplicant {
+  id: string;
+  fullName: string;
+  nisn: string;
+  gender: 'Laki-laki' | 'Perempuan';
+  asalSekolahId: string;
+  semesterGrades: {
+    semester1: number;
+    semester2: number;
+    semester3: number;
+    semester4: number;
+    semester5: number;
+  };
+}
+
+export interface ExcelRow {
+  "Nama Lengkap": string;
+  "NISN": string;
+  "Jenis Kelamin": "Laki-laki" | "Perempuan";
+  "Nilai Semester 1": number;
+  "Nilai Semester 2": number;
+  "Nilai Semester 3": number;
+  "Nilai Semester 4": number;
+  "Nilai Semester 5": number;
+}
