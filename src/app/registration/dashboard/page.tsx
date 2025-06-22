@@ -13,6 +13,7 @@ import { UserCircle, CheckCircle2, Edit3, Save, XCircle, Upload, Check, User } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadcnTableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
+import { addressData, getDistricts, getSubdistricts, getVillages } from "@/lib/addressData";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
@@ -56,34 +57,6 @@ const incomeOptions = [
     { value: "> Rp 15.000.000", label: "> Rp 15.000.000" },
 ];
 
-const villageOptions = [
-  { value: "Kel. Tanjung Redeb", label: "Kel. Tanjung Redeb" },
-  { value: "Kel. Gayam", label: "Kel. Gayam" },
-  { value: "Kel. Karang Ambun", label: "Kel. Karang Ambun" },
-  { value: "Kel. Bugis", label: "Kel. Bugis" },
-  { value: "Kel. Sungai Bedungun", label: "Kel. Sungai Bedungun" },
-  { value: "Desa Labanan Makmur", label: "Desa Labanan Makmur" },
-  { value: "Desa Sukan Tengah", label: "Desa Sukan Tengah" },
-];
-
-const subdistrictOptions = [
-  { value: "Kec. Tanjung Redeb", label: "Kec. Tanjung Redeb" },
-  { value: "Kec. Teluk Bayur", label: "Kec. Teluk Bayur" },
-  { value: "Kec. Sambaliung", label: "Kec. Sambaliung" },
-  { value: "Kec. Gunung Tabur", label: "Kec. Gunung Tabur" },
-  { value: "Kec. Segah", label: "Kec. Segah" },
-  { value: "Kec. Pulau Derawan", label: "Kec. Pulau Derawan" },
-];
-
-const districtOptions = [
-  { value: "Kabupaten Berau", label: "Kabupaten Berau" },
-];
-
-const provinceOptions = [
-  { value: "Kalimantan Timur 77311", label: "Kalimantan Timur 77311" },
-];
-
-
 const initialBiodataDetails: BiodataDetails = {
   fullName: "Muhammad Rizky Pratama",
   nisn: "0056789123",
@@ -97,7 +70,7 @@ const initialBiodataDetails: BiodataDetails = {
   village: "Kel. Tanjung Redeb",
   subdistrict: "Kec. Tanjung Redeb",
   district: "Kabupaten Berau",
-  province: "Kalimantan Timur 77311",
+  province: "Kalimantan Timur",
   previousSchool: "SMP Negeri 1 Tanjung Redeb",
   fatherName: "Abdullah Siregar",
   fatherDateOfBirth: "1975-03-20",
@@ -270,11 +243,6 @@ const personalInfoEditableFields: Array<{ key: BiodataKeys; label: string; type?
     { key: "dateOfBirth", label: "Tanggal Lahir", type: "date" },
     { key: "gender", label: "Jenis Kelamin", selectOptions: genderOptions },
     { key: "religion", label: "Agama", selectOptions: religionOptions },
-    { key: "streetName", label: "Nama Jalan & No. Rumah" },
-    { key: "rtRw", label: "RT/RW" },
-    { key: "village", label: "Kelurahan/Desa", selectOptions: villageOptions },
-    { key: "subdistrict", label: "Kecamatan", selectOptions: subdistrictOptions },
-    { key: "province", label: "Provinsi & Kode Pos", selectOptions: provinceOptions },
     { key: "previousSchool", label: "Sekolah Asal" },
     { key: "contactNumber", label: "Nomor Kontak (Siswa/Orang Tua)", type: "tel" },
 ];
@@ -302,12 +270,27 @@ function ApplicantDashboard() {
     guardianName: initialBiodataDetails.guardianName,
   });
 
+  const [isEditingAddress, setIsEditingAddress] = React.useState(false);
+  const [editableAddress, setEditableAddress] = React.useState({
+    streetName: biodata.streetName,
+    rtRw: biodata.rtRw,
+    province: biodata.province,
+    district: biodata.district,
+    subdistrict: biodata.subdistrict,
+    village: biodata.village,
+  });
+
   const [profilePhoto, setProfilePhoto] = React.useState<string | null>(null);
   const [persistedPhotoUploaded, setPersistedPhotoUploaded] = React.useState<boolean>(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const semesterKeys: (keyof typeof initialBiodataDetails.semesterGrades)[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
   const semesterLabels = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5"];
+  
+  const provinceOptions = Object.keys(addressData);
+  const districtOptions = getDistricts(editableAddress.province as any);
+  const subdistrictOptions = getSubdistricts(editableAddress.province as any, editableAddress.district as any);
+  const villageOptions = getVillages(editableAddress.province as any, editableAddress.district as any, editableAddress.subdistrict);
 
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
@@ -351,8 +334,8 @@ function ApplicantDashboard() {
 
 
   const handleStartEditPersonalField = (fieldKey: BiodataKeys, currentValue: string) => {
-    if (isEditingParentInfo) {
-      toast({ variant: "destructive", title: "Selesaikan Edit Dahulu", description: "Harap simpan atau batalkan perubahan pada informasi orang tua sebelum menyunting field lain." });
+    if (isEditingParentInfo || isEditingAddress) {
+      toast({ variant: "destructive", title: "Selesaikan Edit Dahulu", description: "Harap simpan atau batalkan perubahan pada informasi lain sebelum menyunting field ini." });
       return;
     }
     if (editingPersonalField && editingPersonalField !== fieldKey) {
@@ -378,7 +361,7 @@ function ApplicantDashboard() {
 
 
   const handleConfirm = () => {
-    if (isEditingParentInfo || editingPersonalField) {
+    if (isEditingParentInfo || editingPersonalField || isEditingAddress) {
       toast({
         variant: "destructive",
         title: "Simpan Perubahan Dahulu",
@@ -404,8 +387,8 @@ function ApplicantDashboard() {
   };
 
   const handleEditParentInfo = () => {
-    if (editingPersonalField) {
-      toast({ variant: "destructive", title: "Selesaikan Edit Dahulu", description: "Harap simpan atau batalkan perubahan pada informasi pribadi sebelum menyunting info orang tua." });
+    if (editingPersonalField || isEditingAddress) {
+      toast({ variant: "destructive", title: "Selesaikan Edit Dahulu", description: "Harap simpan atau batalkan perubahan lain sebelum menyunting info orang tua." });
       return;
     }
     setEditableParentInfo({
@@ -420,6 +403,22 @@ function ApplicantDashboard() {
       guardianName: biodata.guardianName,
     });
     setIsEditingParentInfo(true);
+  };
+  
+  const handleEditAddress = () => {
+    if (editingPersonalField || isEditingParentInfo) {
+      toast({ variant: "destructive", title: "Selesaikan Edit Dahulu", description: "Harap simpan atau batalkan perubahan lain sebelum menyunting alamat." });
+      return;
+    }
+    setEditableAddress({
+        streetName: biodata.streetName,
+        rtRw: biodata.rtRw,
+        province: biodata.province,
+        district: biodata.district,
+        subdistrict: biodata.subdistrict,
+        village: biodata.village,
+    });
+    setIsEditingAddress(true);
   };
 
   const handleParentInputChange = (name: ParentInfoKeys, value: string) => {
@@ -440,6 +439,33 @@ function ApplicantDashboard() {
 
   const handleCancelEditParentInfo = () => {
     setIsEditingParentInfo(false);
+  };
+  
+  const handleAddressInputChange = (field: keyof typeof editableAddress, value: string) => {
+    setEditableAddress(prev => {
+        const newState = {...prev, [field]: value};
+        if (field === 'province') {
+            newState.district = '';
+            newState.subdistrict = '';
+            newState.village = '';
+        } else if (field === 'district') {
+            newState.subdistrict = '';
+            newState.village = '';
+        } else if (field === 'subdistrict') {
+            newState.village = '';
+        }
+        return newState;
+    })
+  };
+  
+  const handleSaveAddress = () => {
+    setBiodata(prev => ({...prev, ...editableAddress}));
+    setIsEditingAddress(false);
+    toast({ title: "Alamat Diperbarui", description: "Informasi alamat Anda telah berhasil disimpan." });
+  };
+
+  const handleCancelEditAddress = () => {
+    setIsEditingAddress(false);
   };
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -485,7 +511,7 @@ function ApplicantDashboard() {
     }
   };
 
-  const isAnyFieldBeingEdited = isEditingParentInfo || editingPersonalField !== null;
+  const isAnyFieldBeingEdited = isEditingParentInfo || editingPersonalField !== null || isEditingAddress;
   
   if (isLoading) {
     return (
@@ -556,13 +582,83 @@ function ApplicantDashboard() {
                   onSaveClick={handleSavePersonalField}
                   onCancelClick={handleCancelEditPersonalField}
                   onInputChange={setCurrentPersonalFieldValue}
-                  disableEditButton={(editingPersonalField !== null && editingPersonalField !== field.key) || isEditingParentInfo}
+                  disableEditButton={isAnyFieldBeingEdited && editingPersonalField !== field.key}
                   inputType={field.type}
                   selectOptions={field.selectOptions}
                 />
               ))}
-              <BiodataItem label="Kabupaten/Kota" value="Kabupaten Berau" />
             </div>
+          </section>
+
+          <section>
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <CardTitle className="text-lg">Alamat Lengkap</CardTitle>
+                        {!isEditingAddress && (
+                            <Button variant="outline" size="sm" onClick={handleEditAddress} disabled={isAnyFieldBeingEdited}>
+                                <Edit3 className="mr-2 h-4 w-4" /> Edit Alamat
+                            </Button>
+                        )}
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    {isEditingAddress ? (
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="sm:col-span-2">
+                                    <Label htmlFor="streetName">Nama Jalan & No. Rumah</Label>
+                                    <Input id="streetName" value={editableAddress.streetName} onChange={(e) => handleAddressInputChange('streetName', e.target.value)} />
+                                </div>
+                                <div>
+                                    <Label htmlFor="rtRw">RT/RW</Label>
+                                    <Input id="rtRw" value={editableAddress.rtRw} onChange={(e) => handleAddressInputChange('rtRw', e.target.value)} />
+                                </div>
+                                <div>
+                                    <Label>Provinsi</Label>
+                                    <Select onValueChange={(v) => handleAddressInputChange('province', v)} value={editableAddress.province}>
+                                        <SelectTrigger><SelectValue placeholder="Pilih Provinsi" /></SelectTrigger>
+                                        <SelectContent>{provinceOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label>Kabupaten/Kota</Label>
+                                    <Select onValueChange={(v) => handleAddressInputChange('district', v)} value={editableAddress.district} disabled={!editableAddress.province}>
+                                        <SelectTrigger><SelectValue placeholder="Pilih Kabupaten/Kota" /></SelectTrigger>
+                                        <SelectContent>{districtOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label>Kecamatan</Label>
+                                    <Select onValueChange={(v) => handleAddressInputChange('subdistrict', v)} value={editableAddress.subdistrict} disabled={!editableAddress.district}>
+                                        <SelectTrigger><SelectValue placeholder="Pilih Kecamatan" /></SelectTrigger>
+                                        <SelectContent>{subdistrictOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label>Kelurahan/Desa</Label>
+                                    <Select onValueChange={(v) => handleAddressInputChange('village', v)} value={editableAddress.village} disabled={!editableAddress.subdistrict}>
+                                        <SelectTrigger><SelectValue placeholder="Pilih Kelurahan/Desa" /></SelectTrigger>
+                                        <SelectContent>{villageOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 pt-4">
+                                <Button variant="ghost" onClick={handleCancelEditAddress}>Batal</Button>
+                                <Button onClick={handleSaveAddress}><Save className="mr-2 h-4 w-4" /> Simpan Alamat</Button>
+                            </div>
+                        </div>
+                    ) : (
+                       <div className="text-sm space-y-2">
+                           <p><strong className="font-medium text-muted-foreground">Alamat:</strong> {biodata.streetName}, {biodata.rtRw}</p>
+                           <p><strong className="font-medium text-muted-foreground">Kel/Desa:</strong> {biodata.village}</p>
+                           <p><strong className="font-medium text-muted-foreground">Kecamatan:</strong> {biodata.subdistrict}</p>
+                           <p><strong className="font-medium text-muted-foreground">Kab/Kota:</strong> {biodata.district}</p>
+                           <p><strong className="font-medium text-muted-foreground">Provinsi:</strong> {biodata.province}</p>
+                       </div>
+                    )}
+                </CardContent>
+            </Card>
           </section>
 
           <section>
@@ -573,7 +669,7 @@ function ApplicantDashboard() {
                   onClick={handleEditParentInfo} 
                   variant="outline" 
                   size="sm"
-                  disabled={editingPersonalField !== null}
+                  disabled={isAnyFieldBeingEdited}
                 >
                   <Edit3 className="mr-2 h-4 w-4" /> Edit Info Orang Tua
                 </Button>

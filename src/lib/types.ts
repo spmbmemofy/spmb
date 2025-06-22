@@ -89,7 +89,7 @@ export interface ExcelRow {
   "Kelurahan/Desa"?: string;
   "Kecamatan"?: string;
   "Kabupaten/Kota"?: string;
-  "Provinsi & Kode Pos"?: string;
+  "Provinsi"?: string;
   "Nama Ayah"?: string;
   "Pekerjaan Ayah"?: string;
   "Penghasilan Ayah"?: string;

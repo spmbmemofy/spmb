@@ -20,21 +20,17 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-
 
 import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { getSchoolByNPSN, type School } from "@/lib/schoolService";
 import { getUsers } from "@/lib/userService";
 import { getManagedApplicants, addManagedApplicant, updateManagedApplicant, deleteManagedApplicant } from "@/lib/managedApplicantService";
 import type { ManagedApplicant, ExcelRow } from "@/lib/types";
+import { addressData, getDistricts, getSubdistricts, getVillages } from "@/lib/addressData";
 
 const religionOptions = [ "Islam", "Kristen Protestan", "Katolik", "Hindu", "Buddha", "Konghucu", "Lainnya" ];
 const occupationOptions = [ "Tidak Bekerja", "Ibu Rumah Tangga", "PNS/TNI/Polri", "Pegawai Swasta", "Wiraswasta", "Petani/Nelayan/Peternak", "Buruh", "Profesional", "Pensiunan", "Lainnya" ];
 const incomeOptions = [ "-", "< Rp 1.000.000", "Rp 1.000.000 - Rp 2.500.000", "Rp 2.500.001 - Rp 5.000.000", "Rp 5.000.001 - Rp 7.500.000", "Rp 7.500.001 - Rp 15.000.000", "> Rp 15.000.000" ];
-const villageOptions = [ "Kel. Tanjung Redeb", "Kel. Gayam", "Kel. Karang Ambun", "Kel. Bugis", "Kel. Sungai Bedungun", "Desa Labanan Makmur", "Desa Sukan Tengah" ];
-const subdistrictOptions = [ "Kec. Tanjung Redeb", "Kec. Teluk Bayur", "Kec. Sambaliung", "Kec. Gunung Tabur", "Kec. Segah", "Kec. Pulau Derawan" ];
-
 
 const applicantFormSchema = z.object({
   id: z.string().optional(),
@@ -49,10 +45,10 @@ const applicantFormSchema = z.object({
   
   streetName: z.string().optional(),
   rtRw: z.string().optional(),
-  village: z.string().optional(),
-  subdistrict: z.string().optional(),
-  district: z.string().default("Kabupaten Berau"),
-  province: z.string().optional(),
+  province: z.string().min(1, "Provinsi harus dipilih."),
+  district: z.string().min(1, "Kabupaten/Kota harus dipilih."),
+  subdistrict: z.string().min(1, "Kecamatan harus dipilih."),
+  village: z.string().min(1, "Kelurahan/Desa harus dipilih."),
 
   fatherName: z.string().optional(),
   fatherOccupation: z.string().optional(),
@@ -75,7 +71,7 @@ type TabValue = "personal" | "parent" | "grades";
 
 const defaultFormValues: ApplicantFormValues = {
     fullName: '', nisn: '', nik: '', placeOfBirth: '', dateOfBirth: '', gender: 'Laki-laki', religion: '', contactNumber: '', 
-    streetName: '', rtRw: '', village: '', subdistrict: '', district: 'Kabupaten Berau', province: '',
+    streetName: '', rtRw: '', province: 'Kalimantan Timur', district: 'Kabupaten Berau', subdistrict: '', village: '',
     fatherName: '', fatherOccupation: '', fatherIncome: '', motherName: '', motherOccupation: '', motherIncome: '', guardianName: '',
     semesterGrades: { semester1: 0, semester2: 0, semester3: 0, semester4: 0, semester5: 0 }
 };
@@ -97,6 +93,15 @@ export default function ManagedApplicantPage() {
         resolver: zodResolver(applicantFormSchema),
         defaultValues: defaultFormValues,
     });
+    
+    const watchedProvince = form.watch("province");
+    const watchedDistrict = form.watch("district");
+    const watchedSubdistrict = form.watch("subdistrict");
+    
+    const provinceOptions = Object.keys(addressData);
+    const districtOptions = getDistricts(watchedProvince as any);
+    const subdistrictOptions = getSubdistricts(watchedProvince as any, watchedDistrict as any);
+    const villageOptions = getVillages(watchedProvince as any, watchedDistrict as any, watchedSubdistrict);
 
     React.useEffect(() => {
         const credentials = getFromLocalStorage<LoginCredentials | null>("loginCredentials", null);
@@ -129,6 +134,7 @@ export default function ManagedApplicantPage() {
             form.reset({
                 ...defaultFormValues,
                 ...applicant,
+                province: applicant.province || "Kalimantan Timur",
                 district: applicant.district || "Kabupaten Berau",
             });
         } else {
@@ -222,8 +228,8 @@ export default function ManagedApplicantPage() {
                             rtRw: row["RT/RW"],
                             village: row["Kelurahan/Desa"],
                             subdistrict: row["Kecamatan"],
-                            district: row["Kabupaten/Kota"] || "Kabupaten Berau",
-                            province: row["Provinsi & Kode Pos"],
+                            district: row["Kabupaten/Kota"],
+                            province: row["Provinsi"],
                             asalSekolahId: operatorSchool.id,
                             fatherName: row["Nama Ayah"],
                             fatherOccupation: row["Pekerjaan Ayah"],
@@ -374,10 +380,10 @@ export default function ManagedApplicantPage() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <FormField control={form.control} name="streetName" render={({ field }) => ( <FormItem><FormLabel>Nama Jalan & No. Rumah</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                                             <FormField control={form.control} name="rtRw" render={({ field }) => ( <FormItem><FormLabel>RT/RW</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                                            <FormField control={form.control} name="village" render={({ field }) => ( <FormItem><FormLabel>Kelurahan/Desa</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Kelurahan/Desa" /></SelectTrigger></FormControl><SelectContent>{villageOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
-                                            <FormField control={form.control} name="subdistrict" render={({ field }) => ( <FormItem><FormLabel>Kecamatan</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Kecamatan" /></SelectTrigger></FormControl><SelectContent>{subdistrictOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
-                                            <FormField control={form.control} name="district" render={({ field }) => ( <FormItem><FormLabel>Kabupaten/Kota</FormLabel><FormControl><Input {...field} disabled /></FormControl><FormMessage /></FormItem> )} />
-                                            <FormField control={form.control} name="province" render={({ field }) => ( <FormItem><FormLabel>Provinsi & Kode Pos</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="province" render={({ field }) => ( <FormItem><FormLabel>Provinsi</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue("district", ""); form.setValue("subdistrict", ""); form.setValue("village", ""); }} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Provinsi" /></SelectTrigger></FormControl><SelectContent>{provinceOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="district" render={({ field }) => ( <FormItem><FormLabel>Kabupaten/Kota</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue("subdistrict", ""); form.setValue("village", ""); }} value={field.value} disabled={!watchedProvince}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Kabupaten/Kota" /></SelectTrigger></FormControl><SelectContent>{districtOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="subdistrict" render={({ field }) => ( <FormItem><FormLabel>Kecamatan</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue("village", ""); }} value={field.value} disabled={!watchedDistrict}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Kecamatan" /></SelectTrigger></FormControl><SelectContent>{subdistrictOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="village" render={({ field }) => ( <FormItem><FormLabel>Kelurahan/Desa</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!watchedSubdistrict}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Kelurahan/Desa" /></SelectTrigger></FormControl><SelectContent>{villageOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
                                         </div>
                                     </div>
                                 </TabsContent>
