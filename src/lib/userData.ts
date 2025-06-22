@@ -11,7 +11,7 @@ export interface User {
 
 // In a real application, this data would come from a secure database.
 // Passwords should NEVER be stored in plaintext. This is for demonstration only.
-const users: User[] = [
+export const users: User[] = [
   // Pendaftar
   { id: 'user-1', username: '0056789123', password: 'password123', role: 'applicant', fullName: 'Muhammad Rizky Pratama' },
   { id: 'user-2', username: '0012345678', password: 'password123', role: 'applicant', fullName: 'Budi Santoso' },
