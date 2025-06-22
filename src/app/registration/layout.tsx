@@ -54,15 +54,14 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     const applicantMenu = [
       { href: '/registration/dashboard', label: 'Data Pendaftar', icon: User, activePaths: ['/registration/dashboard'] },
       { href: '/registration/documents', label: 'Pilihan Sekolah', icon: School, activePaths: ['/registration/documents'] },
-      { href: '/registration/document-upload', label: 'Unggah Berkas', icon: FileText, activePaths: ['/registration/document-upload'] },
       { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'] },
       { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
     ];
 
     const verifierMenu = [
       { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
-      { href: '/registration/selection', label: 'Verifikasi', icon: UserCheck, activePaths: ['/registration/selection', '/registration/verify'] },
       { href: '/registration/all-data', label: 'Semua Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
+      { href: '/registration/selection', label: 'Verifikasi', icon: UserCheck, activePaths: ['/registration/selection', '/registration/verify'] },
       { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
     ];
     
