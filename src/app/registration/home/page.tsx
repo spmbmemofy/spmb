@@ -130,6 +130,7 @@ export default function HomePage() {
                   <TableHead className="text-center w-[50px]">Peringkat</TableHead>
                   <TableHead>Nama Sekolah</TableHead>
                   <TableHead>Alamat</TableHead>
+                  <TableHead className="text-right">Kuota</TableHead>
                   <TableHead className="text-right">Jml. Pendaftar</TableHead>
                 </TableRow>
               </TableHeader>
@@ -141,6 +142,7 @@ export default function HomePage() {
                       <Link href={`/registration/school/${school.id}`} className="font-medium hover:underline text-primary">{school.namaSekolah}</Link>
                     </TableCell>
                     <TableCell>{school.alamat}</TableCell>
+                    <TableCell className="text-right">{school.kuota}</TableCell>
                     <TableCell className="text-right font-bold">{school.jumlahPendaftar}</TableCell>
                   </TableRow>
                 ))}
