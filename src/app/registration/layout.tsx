@@ -4,7 +4,7 @@
 import { ReactNode, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, School, FileText, UserCheck, User } from 'lucide-react';
+import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, School, UserCheck, User } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -52,6 +52,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
 
   const menuItems = useMemo(() => {
     const applicantMenu = [
+      { href: '/registration/dashboard', label: 'Beranda', icon: Home, activePaths: ['/registration/dashboard'] },
       { href: '/registration/dashboard', label: 'Data Pendaftar', icon: User, activePaths: ['/registration/dashboard'] },
       { href: '/registration/documents', label: 'Pilihan Sekolah', icon: School, activePaths: ['/registration/documents'] },
       { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'] },
