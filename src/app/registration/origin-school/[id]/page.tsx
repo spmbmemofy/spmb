@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { initialSchoolData, initialOriginSchoolData } from "@/lib/schoolData";
 import type { OriginSchool } from "@/lib/schoolData";
@@ -100,6 +100,19 @@ export default function OriginSchoolDetailPage() {
 
     return Array.from(summaryMap.values()).sort((a, b) => b.total - a.total);
   }, [applicants]);
+
+  const summaryTotals = React.useMemo(() => {
+    return schoolSummary.reduce(
+      (acc, summary) => {
+        acc.total += summary.total;
+        acc.terverifikasi += summary.terverifikasi;
+        acc.menunggu += summary.menunggu;
+        acc.tidakSesuai += summary.tidakSesuai;
+        return acc;
+      },
+      { total: 0, terverifikasi: 0, menunggu: 0, tidakSesuai: 0 }
+    );
+  }, [schoolSummary]);
 
   const filteredApplicants = React.useMemo(() => {
     return applicants.filter(applicant => {
@@ -254,6 +267,15 @@ export default function OriginSchoolDetailPage() {
                             </TableRow>
                         )}
                     </TableBody>
+                    <TableFooter>
+                        <TableRow className="bg-muted/50">
+                            <TableCell className="font-bold">Total</TableCell>
+                            <TableCell className="text-center font-bold">{summaryTotals.total}</TableCell>
+                            <TableCell className="text-center font-bold">{summaryTotals.terverifikasi}</TableCell>
+                            <TableCell className="text-center font-bold">{summaryTotals.menunggu}</TableCell>
+                            <TableCell className="text-center font-bold">{summaryTotals.tidakSesuai}</TableCell>
+                        </TableRow>
+                    </TableFooter>
                 </Table>
             </div>
           </section>
