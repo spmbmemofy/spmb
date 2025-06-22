@@ -1,9 +1,10 @@
 
 'use client';
 
-import { getFromLocalStorage, saveToLocalStorage } from './localStorage';
+import { getFromLocalStorage, saveToLocalStorage, type LoginCredentials, type RegistrationProgress } from './localStorage';
 import { generateAllMockApplicants } from './mockData';
-import type { Applicant } from './types';
+import type { Applicant, Jalur } from './types';
+import { getSchoolById, getSchools } from './schoolService';
 
 const APPLICANTS_STORAGE_KEY = 'allApplicantsData';
 
@@ -44,5 +45,55 @@ export function updateApplicant(updatedApplicant: Applicant): void {
     saveToLocalStorage(APPLICANTS_STORAGE_KEY, applicants);
   } else {
     console.error("Applicant not found for update");
+  }
+}
+
+/**
+ * Creates or updates an applicant record after they complete the registration flow.
+ * @param progress The registration progress object from localStorage.
+ * @param creds The login credentials of the current user.
+ * @returns The created or updated applicant object.
+ */
+export function createOrUpdateApplicantFromRegistration(progress: RegistrationProgress, creds: LoginCredentials): Applicant {
+  if (!progress.biodata || !progress.pathway || !progress.schoolSelections) {
+    throw new Error("Data pendaftaran tidak lengkap untuk disubmit.");
+  }
+
+  const applicants = getApplicants();
+  const existingApplicant = applicants.find(a => a.nisn === creds.username);
+  const allSchools = getSchools();
+  const originSchool = allSchools.find(s => s.namaSekolah === progress.biodata!.previousSchool);
+
+  const applicantCoreData = {
+    noRegistrasi: creds.username!,
+    fullName: progress.biodata.fullName,
+    nisn: progress.biodata.nisn,
+    asalSekolahId: originSchool?.id || 'unknown-origin',
+    asalSekolahNama: progress.biodata.previousSchool,
+    sekolahTujuanId: progress.schoolSelections[0].schoolId,
+    sekolahTujuanNama: getSchoolById(progress.schoolSelections[0].schoolId)?.namaSekolah || 'Unknown Destination',
+    schoolSelections: progress.schoolSelections,
+    jalur: progress.pathway as Jalur,
+    semesterGrades: progress.biodata.semesterGrades,
+    statusVerifikasi: 'Menunggu Verifikasi' as const,
+    rejectionReason: undefined,
+    documentStatuses: {},
+    peringkat: null,
+    nilaiPrestasi: undefined,
+    nilaiTambahanPilihan: 0,
+  };
+
+  if (existingApplicant) {
+    const updatedApplicant = { ...existingApplicant, ...applicantCoreData };
+    updateApplicant(updatedApplicant);
+    return updatedApplicant;
+  } else {
+    const newApplicant: Applicant = {
+      ...applicantCoreData,
+      id: `app-${creds.username}`,
+    };
+    const updatedApplicants = [...applicants, newApplicant];
+    saveToLocalStorage(APPLICANTS_STORAGE_KEY, updatedApplicants);
+    return newApplicant;
   }
 }

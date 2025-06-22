@@ -10,7 +10,7 @@ import { UploadCloud, FileUp, Paperclip, CheckCircle2, AlertCircle } from 'lucid
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
-import { getApplicants, updateApplicant } from "@/lib/applicantService";
+import { getApplicants, updateApplicant, createOrUpdateApplicantFromRegistration } from "@/lib/applicantService";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
@@ -210,7 +210,7 @@ export default function DocumentUploadPage() {
     if (documentsToUpload.length === 0) return false;
     return documentsToUpload
       .filter(doc => doc.required)
-      .every(doc => uploadedFiles[doc.id] !== null);
+      .every(doc => uploadedFiles[doc.id] || fileMetadataStore[doc.id]);
   };
 
   const handleSubmit = () => {
@@ -248,16 +248,25 @@ export default function DocumentUploadPage() {
             setIsSubmitting(false);
         }
     } else {
-        console.log("Mengunggah berkas (actual File objects):", uploadedFiles);
-        const successfullyUploadedDocIds = Object.entries(uploadedFiles).filter(([, file]) => file !== null).map(([id]) => id);
         const progress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
+        if (!progress || !progress.biodata || !progress.pathway || !progress.schoolSelections) {
+             toast({ variant: "destructive", title: "Data Pendaftaran Tidak Lengkap", description: "Harap kembali dan lengkapi data Anda." });
+             setIsSubmitting(false);
+             return;
+        }
 
         setTimeout(() => {
-          toast({ title: "Berkas Berhasil Diunggah", description: "Semua berkas Anda telah berhasil diunggah." });
-          saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, { ...progress, registrationCompleted: true });
-          setIsSubmitting(false);
-          router.push(`/registration/status?pathway=${selectedPathwayParam}&docs=${successfullyUploadedDocIds.join(',')}`);
-        }, 2000);
+          try {
+            createOrUpdateApplicantFromRegistration(progress, loggedInUser);
+            toast({ title: "Pendaftaran Berhasil Dikirim", description: "Berkas dan data Anda akan segera diverifikasi oleh panitia." });
+            saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, { ...progress, registrationCompleted: true });
+            setIsSubmitting(false);
+            router.push(`/registration/status`);
+          } catch (error: any) {
+             toast({ variant: "destructive", title: "Gagal Mengirim Pendaftaran", description: error.message });
+             setIsSubmitting(false);
+          }
+        }, 1500);
     }
   };
   
