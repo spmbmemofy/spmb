@@ -90,7 +90,19 @@ export default function HomePage() {
 
 
   const sortedSchoolsByDestination = [...initialSchoolData].sort((a, b) => b.jumlahPendaftar - a.jumlahPendaftar).slice(0, 5);
-  const sortedSchoolsByOrigin = [...initialOriginSchoolData].sort((a, b) => b.jumlahPendaftar - a.jumlahPendaftar).slice(0, 5);
+  const sortedSchoolsByOrigin = React.useMemo(() => {
+    const schoolsWithStats = initialOriginSchoolData.map(school => {
+        const applicantsFromSchool = allApplicants.filter(app => app.asalSekolahId === school.id);
+        const terverifikasi = applicantsFromSchool.filter(app => app.statusVerifikasi === 'Terverifikasi').length;
+        const prosesVerifikasi = applicantsFromSchool.filter(app => app.statusVerifikasi !== 'Terverifikasi').length;
+        return {
+            ...school,
+            terverifikasi,
+            prosesVerifikasi,
+        };
+    });
+    return schoolsWithStats.sort((a, b) => b.jumlahPendaftar - a.jumlahPendaftar).slice(0, 5);
+  }, [allApplicants]);
 
   return (
     <div className="flex flex-1 flex-col p-4 sm:p-6 md:p-8 space-y-6">
@@ -279,7 +291,8 @@ export default function HomePage() {
                   <TableHead className="text-center w-[50px]">Peringkat</TableHead>
                   <TableHead>Nama Sekolah</TableHead>
                   <TableHead>Alamat</TableHead>
-                  <TableHead className="text-right">Jumlah Pendaftar</TableHead>
+                  <TableHead className="text-right">Terverifikasi</TableHead>
+                  <TableHead className="text-right">Proses Verifikasi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -290,7 +303,8 @@ export default function HomePage() {
                        <Link href={`/registration/origin-school/${school.id}`} className="font-medium hover:underline text-primary">{school.namaSekolah}</Link>
                     </TableCell>
                     <TableCell>{school.alamat}</TableCell>
-                    <TableCell className="text-right">{school.jumlahPendaftar}</TableCell>
+                    <TableCell className="text-right">{school.terverifikasi}</TableCell>
+                    <TableCell className="text-right">{school.prosesVerifikasi}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
