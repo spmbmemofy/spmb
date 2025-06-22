@@ -21,6 +21,7 @@ export interface Applicant {
   jalur: Jalur;
   statusVerifikasi: ApplicantStatus;
   documentStatuses?: Record<string, DocumentStatus>;
+  rejectionReason?: string;
   peringkat?: number | null;
   semesterGrades: {
     semester1: number;

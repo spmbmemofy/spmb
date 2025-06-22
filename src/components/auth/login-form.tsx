@@ -84,7 +84,7 @@ export function LoginForm() {
     let isSuccess = false;
 
     // Check for the specific applicant credentials
-    if (values.role === 'applicant' && values.username === '0987654321' && values.password === '1234567890') {
+    if (values.role === 'applicant' && values.username === '0056789123' && values.password === '1234567890') {
       isSuccess = true;
     } else {
       // For other roles or incorrect applicant credentials, use the existing random success logic for demonstration

@@ -70,6 +70,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
                 documentStatuses: {},
                 jalur,
                 statusVerifikasi: statusVerifikasiOptionsPlain[i % statusVerifikasiOptionsPlain.length],
+                rejectionReason: undefined,
                 peringkat: null,
                 semesterGrades,
                 nilaiPrestasi,

@@ -135,6 +135,7 @@ export default function VerifyApplicantPage() {
         statusVerifikasi: newStatus,
         nilaiPrestasi: applicant.jalur === 'Prestasi' ? editableNilaiPrestasi : applicant.nilaiPrestasi,
         documentStatuses: documentStatuses,
+        rejectionReason: selectedAction === 'reject' ? rejectionReason : undefined,
     };
 
     updateApplicant(updatedApplicant);
