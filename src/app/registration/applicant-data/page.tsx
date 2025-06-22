@@ -19,6 +19,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+
 
 import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { getSchoolByNPSN, type School } from "@/lib/schoolService";
@@ -26,11 +29,28 @@ import { getUsers } from "@/lib/userService";
 import { getManagedApplicants, addManagedApplicant, updateManagedApplicant, deleteManagedApplicant } from "@/lib/managedApplicantService";
 import type { ManagedApplicant, ExcelRow } from "@/lib/types";
 
+const religionOptions = [ "Islam", "Kristen Protestan", "Katolik", "Hindu", "Buddha", "Konghucu", "Lainnya" ];
+const occupationOptions = [ "Tidak Bekerja", "Ibu Rumah Tangga", "PNS/TNI/Polri", "Pegawai Swasta", "Wiraswasta", "Petani/Nelayan/Peternak", "Buruh", "Profesional", "Pensiunan", "Lainnya" ];
+const incomeOptions = [ "-", "< Rp 1.000.000", "Rp 1.000.000 - Rp 2.500.000", "Rp 2.500.001 - Rp 5.000.000", "Rp 5.000.001 - Rp 7.500.000", "Rp 7.500.001 - Rp 15.000.000", "> Rp 15.000.000" ];
+
 const applicantFormSchema = z.object({
   id: z.string().optional(),
   fullName: z.string().min(3, { message: "Nama lengkap minimal 3 karakter." }),
   nisn: z.string().length(10, { message: "NISN harus 10 digit." }),
+  nik: z.string().length(16, { message: "NIK harus 16 digit." }).optional().or(z.literal('')),
+  placeOfBirth: z.string().optional(),
+  dateOfBirth: z.string().optional(),
   gender: z.enum(["Laki-laki", "Perempuan"], { required_error: "Jenis kelamin harus dipilih." }),
+  religion: z.string().optional(),
+  contactNumber: z.string().optional(),
+  address: z.string().optional(),
+  fatherName: z.string().optional(),
+  fatherOccupation: z.string().optional(),
+  fatherIncome: z.string().optional(),
+  motherName: z.string().optional(),
+  motherOccupation: z.string().optional(),
+  motherIncome: z.string().optional(),
+  guardianName: z.string().optional(),
   semesterGrades: z.object({
     semester1: z.coerce.number().min(0).max(100),
     semester2: z.coerce.number().min(0).max(100),
@@ -41,6 +61,12 @@ const applicantFormSchema = z.object({
 });
 
 type ApplicantFormValues = z.infer<typeof applicantFormSchema>;
+
+const defaultFormValues: ApplicantFormValues = {
+    fullName: '', nisn: '', nik: '', placeOfBirth: '', dateOfBirth: '', gender: 'Laki-laki', religion: '', contactNumber: '', address: '',
+    fatherName: '', fatherOccupation: '', fatherIncome: '', motherName: '', motherOccupation: '', motherIncome: '', guardianName: '',
+    semesterGrades: { semester1: 0, semester2: 0, semester3: 0, semester4: 0, semester5: 0 }
+};
 
 export default function ManagedApplicantPage() {
     const router = useRouter();
@@ -56,7 +82,7 @@ export default function ManagedApplicantPage() {
 
     const form = useForm<ApplicantFormValues>({
         resolver: zodResolver(applicantFormSchema),
-        defaultValues: { semesterGrades: { semester1: 0, semester2: 0, semester3: 0, semester4: 0, semester5: 0 } },
+        defaultValues: defaultFormValues,
     });
 
     React.useEffect(() => {
@@ -86,9 +112,12 @@ export default function ManagedApplicantPage() {
     const handleOpenDialog = (applicant: ManagedApplicant | null = null) => {
         setEditingApplicant(applicant);
         if (applicant) {
-            form.reset(applicant);
+            form.reset({
+                ...defaultFormValues,
+                ...applicant
+            });
         } else {
-            form.reset({ fullName: '', nisn: '', gender: 'Laki-laki', semesterGrades: { semester1: 0, semester2: 0, semester3: 0, semester4: 0, semester5: 0 } });
+            form.reset(defaultFormValues);
         }
         setIsDialogOpen(true);
     };
@@ -155,8 +184,21 @@ export default function ManagedApplicantPage() {
                         const newApplicant: Omit<ManagedApplicant, 'id'> = {
                             fullName: row["Nama Lengkap"],
                             nisn: String(row["NISN"]),
+                            nik: row["NIK"] ? String(row["NIK"]) : undefined,
+                            placeOfBirth: row["Tempat Lahir"],
+                            dateOfBirth: row["Tanggal Lahir"],
                             gender: row["Jenis Kelamin"],
+                            religion: row["Agama"],
+                            contactNumber: row["No. Kontak"],
+                            address: row["Alamat"],
                             asalSekolahId: operatorSchool.id,
+                            fatherName: row["Nama Ayah"],
+                            fatherOccupation: row["Pekerjaan Ayah"],
+                            fatherIncome: row["Penghasilan Ayah"],
+                            motherName: row["Nama Ibu"],
+                            motherOccupation: row["Pekerjaan Ibu"],
+                            motherIncome: row["Penghasilan Ibu"],
+                            guardianName: row["Nama Wali"],
                             semesterGrades: {
                                 semester1: row["Nilai Semester 1"],
                                 semester2: row["Nilai Semester 2"],
@@ -236,7 +278,11 @@ export default function ManagedApplicantPage() {
                                     {applicants.length > 0 ? (
                                         applicants.map(applicant => (
                                             <TableRow key={applicant.id}>
-                                                <TableCell className="font-medium">{applicant.fullName}</TableCell>
+                                                <TableCell className="font-medium">
+                                                    <button onClick={() => handleOpenDialog(applicant)} className="text-primary hover:underline text-left">
+                                                        {applicant.fullName}
+                                                    </button>
+                                                </TableCell>
                                                 <TableCell>{applicant.nisn}</TableCell>
                                                 <TableCell>{applicant.gender}</TableCell>
                                                 <TableCell>{calculateAverage(applicant.semesterGrades)}</TableCell>
@@ -266,28 +312,72 @@ export default function ManagedApplicantPage() {
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="sm:max-w-2xl">
+                <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>{editingApplicant ? "Edit Pendaftar" : "Tambah Pendaftar Baru"}</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(processForm)} className="space-y-4 py-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormField control={form.control} name="fullName" render={({ field }) => ( <FormItem><FormLabel>Nama Lengkap</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                                <FormField control={form.control} name="nisn" render={({ field }) => ( <FormItem><FormLabel>NISN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                            </div>
-                            <FormField control={form.control} name="gender" render={({ field }) => ( <FormItem><FormLabel>Jenis Kelamin</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Laki-laki">Laki-laki</SelectItem><SelectItem value="Perempuan">Perempuan</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
-                            <Card>
-                                <CardHeader><CardTitle className="text-base">Nilai Rapor</CardTitle></CardHeader>
-                                <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                                    <FormField control={form.control} name="semesterGrades.semester1" render={({ field }) => (<FormItem><FormLabel>SMT 1</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name="semesterGrades.semester2" render={({ field }) => (<FormItem><FormLabel>SMT 2</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name="semesterGrades.semester3" render={({ field }) => (<FormItem><FormLabel>SMT 3</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name="semesterGrades.semester4" render={({ field }) => (<FormItem><FormLabel>SMT 4</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name="semesterGrades.semester5" render={({ field }) => (<FormItem><FormLabel>SMT 5</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                </CardContent>
-                            </Card>
-                            <DialogFooter>
+                        <form onSubmit={form.handleSubmit(processForm)} className="space-y-4 py-4 pr-2">
+                            <Tabs defaultValue="personal" className="w-full">
+                                <TabsList className="grid w-full grid-cols-3">
+                                    <TabsTrigger value="personal">Data Diri</TabsTrigger>
+                                    <TabsTrigger value="parent">Data Orang Tua</TabsTrigger>
+                                    <TabsTrigger value="grades">Nilai Rapor</TabsTrigger>
+                                </TabsList>
+                                
+                                <TabsContent value="personal" className="pt-4 space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField control={form.control} name="fullName" render={({ field }) => ( <FormItem><FormLabel>Nama Lengkap</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                        <FormField control={form.control} name="nisn" render={({ field }) => ( <FormItem><FormLabel>NISN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                        <FormField control={form.control} name="nik" render={({ field }) => ( <FormItem><FormLabel>NIK</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                        <FormField control={form.control} name="gender" render={({ field }) => ( <FormItem><FormLabel>Jenis Kelamin</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Laki-laki">Laki-laki</SelectItem><SelectItem value="Perempuan">Perempuan</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
+                                        <FormField control={form.control} name="placeOfBirth" render={({ field }) => ( <FormItem><FormLabel>Tempat Lahir</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                        <FormField control={form.control} name="dateOfBirth" render={({ field }) => ( <FormItem><FormLabel>Tanggal Lahir</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                        <FormField control={form.control} name="religion" render={({ field }) => ( <FormItem><FormLabel>Agama</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Agama"/></SelectTrigger></FormControl><SelectContent>{religionOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                                        <FormField control={form.control} name="contactNumber" render={({ field }) => ( <FormItem><FormLabel>No. Kontak</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                    </div>
+                                    <FormField control={form.control} name="address" render={({ field }) => ( <FormItem><FormLabel>Alamat Lengkap</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                </TabsContent>
+
+                                <TabsContent value="parent" className="pt-4 space-y-6">
+                                    <Card>
+                                        <CardHeader><CardTitle className="text-base">Data Ayah</CardTitle></CardHeader>
+                                        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <FormField control={form.control} name="fatherName" render={({ field }) => ( <FormItem><FormLabel>Nama Ayah</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="fatherOccupation" render={({ field }) => ( <FormItem><FormLabel>Pekerjaan Ayah</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Pekerjaan"/></SelectTrigger></FormControl><SelectContent>{occupationOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="fatherIncome" render={({ field }) => ( <FormItem><FormLabel>Penghasilan Ayah</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Penghasilan"/></SelectTrigger></FormControl><SelectContent>{incomeOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                                        </CardContent>
+                                    </Card>
+                                     <Card>
+                                        <CardHeader><CardTitle className="text-base">Data Ibu</CardTitle></CardHeader>
+                                        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <FormField control={form.control} name="motherName" render={({ field }) => ( <FormItem><FormLabel>Nama Ibu</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="motherOccupation" render={({ field }) => ( <FormItem><FormLabel>Pekerjaan Ibu</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Pekerjaan"/></SelectTrigger></FormControl><SelectContent>{occupationOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="motherIncome" render={({ field }) => ( <FormItem><FormLabel>Penghasilan Ibu</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Penghasilan"/></SelectTrigger></FormControl><SelectContent>{incomeOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                                        </CardContent>
+                                    </Card>
+                                     <Card>
+                                        <CardHeader><CardTitle className="text-base">Data Wali (opsional)</CardTitle></CardHeader>
+                                        <CardContent>
+                                            <FormField control={form.control} name="guardianName" render={({ field }) => ( <FormItem><FormLabel>Nama Wali</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+                                
+                                <TabsContent value="grades" className="pt-4">
+                                     <Card>
+                                        <CardHeader><CardTitle className="text-base">Nilai Rapor</CardTitle></CardHeader>
+                                        <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                            <FormField control={form.control} name="semesterGrades.semester1" render={({ field }) => (<FormItem><FormLabel>SMT 1</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="semesterGrades.semester2" render={({ field }) => (<FormItem><FormLabel>SMT 2</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="semesterGrades.semester3" render={({ field }) => (<FormItem><FormLabel>SMT 3</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="semesterGrades.semester4" render={({ field }) => (<FormItem><FormLabel>SMT 4</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="semesterGrades.semester5" render={({ field }) => (<FormItem><FormLabel>SMT 5</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+                            </Tabs>
+                            <DialogFooter className="pt-4">
                                 <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
                                 <Button type="submit">Simpan</Button>
                             </DialogFooter>

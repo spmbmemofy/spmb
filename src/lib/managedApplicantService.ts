@@ -11,8 +11,16 @@ const initialManagedApplicants: ManagedApplicant[] = [
         id: 'managed-1',
         fullName: 'Calon Siswa Contoh 1',
         nisn: '9988776655',
+        nik: '6403011234560001',
+        placeOfBirth: 'Tanjung Redeb',
+        dateOfBirth: '2008-05-10',
         gender: 'Laki-laki',
+        religion: 'Islam',
+        contactNumber: '081234567890',
+        address: 'Jl. Contoh Alamat No. 1, Tanjung Redeb, Berau',
         asalSekolahId: 'smpn1tanjungredeb',
+        fatherName: 'Ayah Siswa 1',
+        motherName: 'Ibu Siswa 1',
         semesterGrades: { semester1: 85, semester2: 88, semester3: 90, semester4: 87, semester5: 91 }
     },
     {
