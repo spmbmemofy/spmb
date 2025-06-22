@@ -71,12 +71,12 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       { href: '/registration/all-data', label: 'Semua Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
       { href: '/registration/selection', label: 'Verifikasi', icon: UserCheck, activePaths: ['/registration/selection', '/registration/verify'] },
       { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
+      { href: '/registration/superadmin', label: 'Manajemen Sistem', icon: Shield, activePaths: ['/registration/superadmin'] }
     ];
     
     // Placeholder menus for new roles
     const superAdminMenu = [
         ...adminMenu,
-        { href: '/registration/superadmin', label: 'Manajemen Sistem', icon: Shield, activePaths: ['/registration/superadmin'] }
     ];
     const headmasterMenu = [
         { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
