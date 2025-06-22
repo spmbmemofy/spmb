@@ -15,7 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { initialSchoolData, initialOriginSchoolData } from "@/lib/schoolData";
 import type { OriginSchool } from "@/lib/schoolData";
 import { cn } from "@/lib/utils";
-import { generateAllMockApplicants, jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
+import { jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
+import { getApplicants } from "@/lib/applicantService";
 import type { Applicant, ApplicantStatus, SortConfig, SortDirection, SortKey } from "@/lib/types";
 
 
@@ -50,7 +51,7 @@ export default function OriginSchoolDetailPage() {
     setOriginSchool(foundSchool);
 
     if (foundSchool) {
-      const allApplicants = generateAllMockApplicants();
+      const allApplicants = getApplicants();
       const applicantsFromOrigin = allApplicants.filter(app => app.asalSekolahId === originSchoolId);
       setApplicants(applicantsFromOrigin);
     } else {
