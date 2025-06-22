@@ -42,7 +42,7 @@ export function updateApplicant(updatedApplicant: Applicant): void {
   const index = applicants.findIndex(app => app.id === updatedApplicant.id);
   if (index !== -1) {
     applicants[index] = updatedApplicant;
-    saveToLocalStorage(APPLICANTS_STORAGE_KEY, applicants);
+    saveToLocalStorage(APPLICIPANTS_STORAGE_KEY, applicants);
   } else {
     console.error("Applicant not found for update");
   }
@@ -96,4 +96,22 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
     saveToLocalStorage(APPLICANTS_STORAGE_KEY, updatedApplicants);
     return newApplicant;
   }
+}
+
+/**
+ * Deletes an applicant from the list based on their NISN.
+ * @param nisn The NISN of the applicant to delete.
+ * @returns True if an applicant was deleted, false otherwise.
+ */
+export function deleteApplicantByNisn(nisn: string): boolean {
+  let applicants = getApplicants();
+  const initialLength = applicants.length;
+  const updatedApplicants = applicants.filter(app => app.nisn !== nisn);
+  
+  if (updatedApplicants.length < initialLength) {
+    saveToLocalStorage(APPLICANTS_STORAGE_KEY, updatedApplicants);
+    return true;
+  }
+  
+  return false;
 }
