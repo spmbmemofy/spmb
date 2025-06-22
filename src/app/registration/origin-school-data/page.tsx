@@ -4,19 +4,30 @@
 import * as React from "react";
 import Link from 'next/link';
 import { useRouter } from "next/navigation";
-import { Building, Users, AlertCircle } from 'lucide-react';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Building, Users, AlertCircle, Edit } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+
 import { useToast } from "@/hooks/use-toast";
 import { getApplicants } from "@/lib/applicantService";
-import { getSchoolByNPSN, type School } from "@/lib/schoolService";
+import { getSchoolByNPSN, getSchoolById, updateSchool, type School } from "@/lib/schoolService";
 import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import type { Applicant, ApplicantStatus } from "@/lib/types";
 import { getUsers } from "@/lib/userService";
+import { schoolFormSchema } from "@/app/registration/school-management/page";
+
 
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 
@@ -29,12 +40,20 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
     }
 };
 
+type SchoolFormValues = z.infer<typeof schoolFormSchema>;
+
 export default function OriginSchoolDataPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = React.useState(true);
     const [school, setSchool] = React.useState<School | null>(null);
     const [applicants, setApplicants] = React.useState<Applicant[]>([]);
+    const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+
+    const form = useForm<SchoolFormValues>({
+        resolver: zodResolver(schoolFormSchema),
+        defaultValues: {},
+    });
 
     React.useEffect(() => {
         const credentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
@@ -57,13 +76,48 @@ export default function OriginSchoolDataPage() {
         
         if (userSchool) {
             setSchool(userSchool);
+            form.reset({
+                ...userSchool,
+                majors: userSchool.majors ? userSchool.majors.join('\n') : '',
+            });
         }
 
         const allApplicants = getApplicants();
         const schoolApplicants = allApplicants.filter(app => app.asalSekolahId === userSchool?.id);
         setApplicants(schoolApplicants);
         setIsLoading(false);
-    }, [router, toast]);
+    }, [router, toast, form]);
+
+    const handleOpenDialog = () => {
+        if (school) {
+            form.reset({
+                ...school,
+                majors: school.majors ? school.majors.join('\n') : '',
+            });
+            setIsDialogOpen(true);
+        }
+    };
+
+    const processForm = (data: SchoolFormValues) => {
+        if (!school) return;
+        try {
+            const schoolData = {
+                ...data,
+                majors: data.majors ? data.majors.split('\n').filter(m => m.trim() !== '') : [],
+            };
+
+            updateSchool(schoolData as School);
+            toast({ title: "Sekolah Diperbarui", description: `Data untuk ${data.namaSekolah} telah diperbarui.` });
+            
+            const updatedSchool = getSchoolById(school.id);
+            setSchool(updatedSchool || null);
+
+            setIsDialogOpen(false);
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Gagal Menyimpan", description: error.message });
+        }
+    };
+
 
     if (isLoading) {
         return (
@@ -90,6 +144,7 @@ export default function OriginSchoolDataPage() {
     }
 
     return (
+        <>
         <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
             <Card className="w-full max-w-5xl shadow-2xl">
                 <CardHeader>
@@ -107,20 +162,19 @@ export default function OriginSchoolDataPage() {
                 </CardHeader>
                 <CardContent className="space-y-8">
                     <section>
-                        <h3 className="text-xl font-semibold mb-4 text-primary">Profil Sekolah</h3>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-semibold text-primary">Profil Sekolah</h3>
+                            <Button variant="outline" size="sm" onClick={handleOpenDialog}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Data Sekolah
+                            </Button>
+                        </div>
                         <div className="space-y-2 rounded-md border p-4">
                              <div className="flex justify-between py-1"><span className="font-medium text-muted-foreground">NPSN</span><span>{school.npsn}</span></div>
                              <div className="flex justify-between py-1"><span className="font-medium text-muted-foreground">Jenis</span><span>{school.jenis}</span></div>
                              <div className="flex justify-between py-1"><span className="font-medium text-muted-foreground">Akreditasi</span><span>{school.akreditasi}</span></div>
                              <div className="flex justify-between py-1"><span className="font-medium text-muted-foreground">Alamat</span><span>{school.alamat}</span></div>
                         </div>
-                         <Alert className="mt-4">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Perubahan Data</AlertTitle>
-                            <AlertDescription>
-                                Untuk mengubah data profil sekolah, silakan hubungi Admin Dinas Pendidikan.
-                            </AlertDescription>
-                        </Alert>
                     </section>
 
                     <section>
@@ -165,5 +219,33 @@ export default function OriginSchoolDataPage() {
                 </CardContent>
             </Card>
         </div>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Edit Data Sekolah</DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(processForm)} className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={form.control} name="npsn" render={({ field }) => ( <FormItem><FormLabel>NPSN</FormLabel><FormControl><Input {...field} disabled /></FormControl><FormMessage /></FormItem> )} />
+                            <FormField control={form.control} name="namaSekolah" render={({ field }) => ( <FormItem><FormLabel>Nama Sekolah</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                            <FormField control={form.control} name="jenjang" render={({ field }) => ( <FormItem><FormLabel>Jenjang</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="SMP">SMP</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
+                            <FormField control={form.control} name="jenis" render={({ field }) => ( <FormItem><FormLabel>Jenis Sekolah</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Negeri">Negeri</SelectItem><SelectItem value="Swasta">Swasta</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
+                            <FormField control={form.control} name="akreditasi" render={({ field }) => ( <FormItem><FormLabel>Akreditasi</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="A">A</SelectItem><SelectItem value="B">B</SelectItem><SelectItem value="C">C</SelectItem><SelectItem value="Belum Terakreditasi">Belum Terakreditasi</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
+                            <FormField control={form.control} name="telepon" render={({ field }) => ( <FormItem><FormLabel>Telepon</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                        </div>
+                        <FormField control={form.control} name="alamat" render={({ field }) => ( <FormItem><FormLabel>Alamat</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
+                        <FormField control={form.control} name="kecamatan" render={({ field }) => ( <FormItem><FormLabel>Kecamatan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                        
+                        <DialogFooter className="pt-4">
+                            <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
+                            <Button type="submit">Simpan Perubahan</Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+        </>
     );
 }

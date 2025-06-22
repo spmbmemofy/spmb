@@ -22,7 +22,7 @@ import { getSchools, addSchool, updateSchool, deleteSchool, type School, type Sc
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
-const schoolFormSchema = z.object({
+export const schoolFormSchema = z.object({
   id: z.string(),
   npsn: z.string().length(8, { message: "NPSN harus memiliki 8 karakter." }),
   namaSekolah: z.string().min(3, { message: "Nama sekolah minimal 3 karakter." }),
