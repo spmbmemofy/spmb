@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { getFromLocalStorage, saveToLocalStorage, type LoginCredentials } from "@/lib/localStorage";
-import { findUserByUsername } from "@/lib/userData";
+import { getUsers } from "@/lib/userService";
 import type { UserRole } from "@/lib/userData";
 
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
@@ -97,7 +97,10 @@ export function LoginForm() {
     
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    const user = findUserByUsername(values.username);
+    const allUsers = getUsers();
+    const user = allUsers.find(
+      (u) => u.username.toLowerCase() === values.username.toLowerCase()
+    );
 
     if (user && user.role === values.role && user.password === values.password) {
       saveToLocalStorage<LoginCredentials>(LOCAL_STORAGE_LOGIN_KEY, {

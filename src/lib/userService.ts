@@ -1,0 +1,58 @@
+
+'use client';
+
+import { getFromLocalStorage, saveToLocalStorage } from './localStorage';
+import { initialUsers, type User } from './userData';
+
+const USERS_STORAGE_KEY = 'allUsersData';
+
+const initializeUsers = (): User[] => {
+  const storedUsers = getFromLocalStorage<User[] | null>(USERS_STORAGE_KEY, null);
+  if (!storedUsers || storedUsers.length === 0) {
+    saveToLocalStorage(USERS_STORAGE_KEY, initialUsers);
+    return initialUsers;
+  }
+  return storedUsers;
+};
+
+export function getUsers(): User[] {
+  return getFromLocalStorage<User[]>(USERS_STORAGE_KEY, initialUsers);
+}
+
+export function addUser(newUser: Omit<User, 'id'>): User {
+  const users = getUsers();
+  const userWithId: User = { ...newUser, id: `user-${Date.now()}` };
+  const updatedUsers = [...users, userWithId];
+  saveToLocalStorage(USERS_STORAGE_KEY, updatedUsers);
+  return userWithId;
+}
+
+export function updateUser(updatedUser: User): User | undefined {
+  let users = getUsers();
+  const index = users.findIndex(u => u.id === updatedUser.id);
+  if (index !== -1) {
+    // If password is not provided or empty, keep the old one
+    if (!updatedUser.password) {
+      updatedUser.password = users[index].password;
+    }
+    users[index] = updatedUser;
+    saveToLocalStorage(USERS_STORAGE_KEY, users);
+    return updatedUser;
+  }
+  return undefined;
+}
+
+export function deleteUser(userId: string): boolean {
+  let users = getUsers();
+  const newUsers = users.filter(u => u.id !== userId);
+  if (newUsers.length < users.length) {
+    saveToLocalStorage(USERS_STORAGE_KEY, newUsers);
+    return true;
+  }
+  return false;
+}
+
+// Ensure data is initialized on first load
+if (typeof window !== 'undefined') {
+  initializeUsers();
+}
