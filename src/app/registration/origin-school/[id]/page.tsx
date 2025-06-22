@@ -231,7 +231,7 @@ export default function OriginSchoolDetailPage() {
           <section className="border rounded-lg p-4 space-y-4">
             <div className="flex items-center space-x-2">
                 <PieChart className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold text-primary">Ringkasan Pilihan Sekolah Tujuan</h3>
+                <h3 className="text-lg font-semibold text-primary">Ringkasan Pilihan Sekolah Tujuan (Total: {summaryTotals.total} Pendaftar)</h3>
             </div>
             <div className="overflow-x-auto rounded-md border">
                 <Table>
@@ -269,7 +269,7 @@ export default function OriginSchoolDetailPage() {
                     </TableBody>
                     <TableFooter>
                         <TableRow className="bg-muted/50">
-                            <TableCell className="font-bold">Total</TableCell>
+                            <TableCell className="font-bold">Total Keseluruhan</TableCell>
                             <TableCell className="text-center font-bold">{summaryTotals.total}</TableCell>
                             <TableCell className="text-center font-bold">{summaryTotals.terverifikasi}</TableCell>
                             <TableCell className="text-center font-bold">{summaryTotals.menunggu}</TableCell>
