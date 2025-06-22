@@ -6,7 +6,7 @@ import { initialUsers, type User } from './userData';
 
 const USERS_STORAGE_KEY = 'allUsersData_v2';
 
-const initializeUsers = (): User[] => {
+export const initializeUsers = (): User[] => {
   const storedUsers = getFromLocalStorage<User[] | null>(USERS_STORAGE_KEY, null);
   if (!storedUsers || storedUsers.length === 0) {
     saveToLocalStorage(USERS_STORAGE_KEY, initialUsers);
@@ -50,9 +50,4 @@ export function deleteUser(userId: string): boolean {
     return true;
   }
   return false;
-}
-
-// Ensure data is initialized on first load
-if (typeof window !== 'undefined') {
-  initializeUsers();
 }

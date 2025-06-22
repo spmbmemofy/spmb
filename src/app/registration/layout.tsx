@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { getFromLocalStorage, removeFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { useToast } from "@/hooks/use-toast";
+import { initializeAllData } from '@/lib/initializeDatabase';
 
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
@@ -34,6 +35,10 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   const router = useRouter();
   const { toast } = useToast();
   const [userRole, setUserRole] = useState<LoginCredentials['role'] | null>(null);
+
+  useEffect(() => {
+    initializeAllData();
+  }, []);
 
   useEffect(() => {
     const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);

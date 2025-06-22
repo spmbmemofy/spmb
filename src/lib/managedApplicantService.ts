@@ -4,8 +4,6 @@
 import { getFromLocalStorage, saveToLocalStorage } from './localStorage';
 import type { ManagedApplicant } from './types';
 
-const MANAGED_APPLICANTS_STORAGE_KEY = 'managedApplicantsData';
-
 const initialManagedApplicants: ManagedApplicant[] = [
     {
         id: 'managed-1',
@@ -17,7 +15,12 @@ const initialManagedApplicants: ManagedApplicant[] = [
         gender: 'Laki-laki',
         religion: 'Islam',
         contactNumber: '081234567890',
-        address: 'Jl. Contoh Alamat No. 1, Tanjung Redeb, Berau',
+        streetName: 'Jl. Contoh Alamat No. 1',
+        rtRw: '01/01',
+        village: 'Kel. Tanjung Redeb',
+        subdistrict: 'Kec. Tanjung Redeb',
+        district: 'Kabupaten Berau',
+        province: 'Kalimantan Timur',
         asalSekolahId: 'smpn1tanjungredeb',
         fatherName: 'Ayah Siswa 1',
         motherName: 'Ibu Siswa 1',
@@ -33,7 +36,9 @@ const initialManagedApplicants: ManagedApplicant[] = [
     }
 ];
 
-const initializeManagedApplicantsData = (): ManagedApplicant[] => {
+const MANAGED_APPLICANTS_STORAGE_KEY = 'managedApplicantsData';
+
+export const initializeManagedApplicantsData = (): ManagedApplicant[] => {
   const storedData = getFromLocalStorage<ManagedApplicant[] | null>(MANAGED_APPLICANTS_STORAGE_KEY, null);
   if (!storedData || storedData.length === 0) {
     saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, initialManagedApplicants);
@@ -82,9 +87,4 @@ export function deleteManagedApplicant(applicantId: string): boolean {
     return true;
   }
   return false;
-}
-
-// Ensure data is initialized on first load
-if (typeof window !== 'undefined') {
-  initializeManagedApplicantsData();
 }

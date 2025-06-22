@@ -60,7 +60,7 @@ const initialSchools: School[] = [
 const SCHOOLS_STORAGE_KEY = 'allSchoolsData_v2';
 
 // Service Functions
-const initializeSchoolsData = (): School[] => {
+export const initializeSchoolsData = (): School[] => {
   const storedSchools = getFromLocalStorage<School[] | null>(SCHOOLS_STORAGE_KEY, null);
   if (!storedSchools || storedSchools.length === 0) {
     saveToLocalStorage(SCHOOLS_STORAGE_KEY, initialSchools);
@@ -114,9 +114,4 @@ export function deleteSchool(schoolId: string): boolean {
     return true;
   }
   return false;
-}
-
-// Ensure data is initialized on first load
-if (typeof window !== 'undefined') {
-  initializeSchoolsData();
 }
