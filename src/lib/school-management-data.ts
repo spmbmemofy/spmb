@@ -7,13 +7,14 @@ export interface ManagedSchool {
   namaSekolah: string;
   jenjang: SchoolJenjang;
   jenis: SchoolJenis;
+  wilayah?: string;
 }
 
 export const initialManagedSchools: ManagedSchool[] = [
   { npsn: '30401918', namaSekolah: 'SMP Negeri 1 Tanjung Redeb', jenjang: 'SMP', jenis: 'Negeri' },
   { npsn: '30401878', namaSekolah: 'SMP Negeri 2 Teluk Bayur', jenjang: 'SMP', jenis: 'Negeri' },
   { npsn: '69753308', namaSekolah: 'MTs Al-Kholil', jenjang: 'SMP', jenis: 'Swasta' },
-  { npsn: '30401827', namaSekolah: 'SMA Negeri 1 Tanjung Redeb', jenjang: 'SMA', jenis: 'Negeri' },
-  { npsn: '30401828', namaSekolah: 'SMK Negeri 1 Berau', jenjang: 'SMK', jenis: 'Negeri' },
-  { npsn: '30404228', namaSekolah: 'SMA Negeri 4 Berau', jenjang: 'SMA', jenis: 'Negeri' },
+  { npsn: '30401827', namaSekolah: 'SMA Negeri 1 Tanjung Redeb', jenjang: 'SMA', jenis: 'Negeri', wilayah: 'Wilayah 1' },
+  { npsn: '30401828', namaSekolah: 'SMK Negeri 1 Berau', jenjang: 'SMK', jenis: 'Negeri', wilayah: 'Wilayah 1' },
+  { npsn: '30404228', namaSekolah: 'SMA Negeri 4 Berau', jenjang: 'SMA', jenis: 'Negeri', wilayah: 'Wilayah 2' },
 ];

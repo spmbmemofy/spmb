@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -27,6 +26,7 @@ const schoolFormSchema = z.object({
   namaSekolah: z.string().min(3, { message: "Nama sekolah minimal 3 karakter." }),
   jenjang: z.enum(["SMP", "SMA", "SMK"], { required_error: "Jenjang sekolah wajib dipilih."}),
   jenis: z.enum(["Negeri", "Swasta"], { required_error: "Jenis sekolah wajib dipilih."}),
+  wilayah: z.string().optional(),
 });
 
 type SchoolFormValues = z.infer<typeof schoolFormSchema>;
@@ -43,8 +43,10 @@ export default function SchoolManagementPage() {
 
     const form = useForm<SchoolFormValues>({
         resolver: zodResolver(schoolFormSchema),
-        defaultValues: { npsn: '', namaSekolah: '', jenjang: 'SMA', jenis: 'Negeri' },
+        defaultValues: { npsn: '', namaSekolah: '', jenjang: 'SMA', jenis: 'Negeri', wilayah: '' },
     });
+
+    const selectedJenjang = form.watch("jenjang");
 
     React.useEffect(() => {
         setSchools(getManagedSchools());
@@ -71,7 +73,7 @@ export default function SchoolManagementPage() {
         if (school) {
             form.reset(school);
         } else {
-            form.reset({ npsn: '', namaSekolah: '', jenjang: 'SMA', jenis: 'Negeri' });
+            form.reset({ npsn: '', namaSekolah: '', jenjang: 'SMA', jenis: 'Negeri', wilayah: '' });
         }
         setIsDialogOpen(true);
     };
@@ -107,13 +109,14 @@ export default function SchoolManagementPage() {
         }
     };
 
-    const renderSchoolTable = (schoolList: ManagedSchool[]) => (
+    const renderSchoolTable = (schoolList: ManagedSchool[], type: 'smp' | 'sma_smk') => (
         <div className="rounded-md border">
             <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead>NPSN</TableHead>
                         <TableHead>Nama Sekolah</TableHead>
+                        {type === 'sma_smk' && <TableHead>Wilayah</TableHead>}
                         <TableHead>Jenjang</TableHead>
                         <TableHead>Jenis</TableHead>
                         <TableHead className="text-right">Aksi</TableHead>
@@ -125,6 +128,7 @@ export default function SchoolManagementPage() {
                             <TableRow key={school.npsn}>
                                 <TableCell className="font-mono">{school.npsn}</TableCell>
                                 <TableCell className="font-medium">{school.namaSekolah}</TableCell>
+                                {type === 'sma_smk' && <TableCell>{school.wilayah || '-'}</TableCell>}
                                 <TableCell>
                                     <Badge variant={school.jenjang === 'SMA' || school.jenjang === 'SMK' ? 'default' : 'secondary'}>
                                         {school.jenjang}
@@ -157,7 +161,7 @@ export default function SchoolManagementPage() {
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                            <TableCell colSpan={type === 'sma_smk' ? 6 : 5} className="h-24 text-center text-muted-foreground">
                                 Tidak ada sekolah yang cocok dengan kriteria.
                             </TableCell>
                         </TableRow>
@@ -208,7 +212,7 @@ export default function SchoolManagementPage() {
                                         />
                                     </div>
                                 </div>
-                                {renderSchoolTable(filteredSmaSmkSchools)}
+                                {renderSchoolTable(filteredSmaSmkSchools, 'sma_smk')}
                             </TabsContent>
                             <TabsContent value="smp" className="space-y-4">
                                 <div className="flex items-center gap-4 pt-4">
@@ -222,7 +226,7 @@ export default function SchoolManagementPage() {
                                         />
                                     </div>
                                 </div>
-                                {renderSchoolTable(filteredSmpSchools)}
+                                {renderSchoolTable(filteredSmpSchools, 'smp')}
                             </TabsContent>
                         </Tabs>
                     </CardContent>
@@ -281,6 +285,15 @@ export default function SchoolManagementPage() {
                                     <FormMessage />
                                 </FormItem>
                             )} />
+                            {(selectedJenjang === 'SMA' || selectedJenjang === 'SMK') && (
+                                <FormField control={form.control} name="wilayah" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Wilayah</FormLabel>
+                                        <FormControl><Input {...field} placeholder="Contoh: Wilayah 1" /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                            )}
                             <DialogFooter>
                                 <DialogClose asChild>
                                     <Button type="button" variant="secondary">Batal</Button>
