@@ -52,7 +52,12 @@ export interface ManagedApplicant {
   gender: 'Laki-laki' | 'Perempuan';
   religion?: string;
   contactNumber?: string;
-  address?: string;
+  streetName?: string;
+  rtRw?: string;
+  village?: string;
+  subdistrict?: string;
+  district?: string;
+  province?: string;
   asalSekolahId: string;
   fatherName?: string;
   fatherOccupation?: string;
@@ -79,7 +84,12 @@ export interface ExcelRow {
   "Jenis Kelamin": "Laki-laki" | "Perempuan";
   "Agama"?: string;
   "No. Kontak"?: string;
-  "Alamat"?: string;
+  "Nama Jalan & No. Rumah"?: string;
+  "RT/RW"?: string;
+  "Kelurahan/Desa"?: string;
+  "Kecamatan"?: string;
+  "Kabupaten/Kota"?: string;
+  "Provinsi & Kode Pos"?: string;
   "Nama Ayah"?: string;
   "Pekerjaan Ayah"?: string;
   "Penghasilan Ayah"?: string;

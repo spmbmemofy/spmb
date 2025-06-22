@@ -4,7 +4,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { getFromLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
+import { getFromLocalStorage, type RegistrationProgress, type BiodataDetails } from "@/lib/localStorage";
 import { getSchoolById, type School } from "@/lib/schoolService";
 import { type SchoolSelection } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -15,24 +15,7 @@ import html2canvas from 'html2canvas';
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 
-const biodataDetailsMock = {
-  fullName: "Muhammad Rizky Pratama",
-  nisn: "0056789123",
-  nik: "6403011507050002",
-  placeOfBirth: "Tanjung Redeb",
-  dateOfBirth: "2008-07-15",
-  previousSchool: "SMP Negeri 1 Tanjung Redeb",
-  contactNumber: "081254321098",
-  semesterGrades: {
-    semester1: 86.50,
-    semester2: 89.20,
-    semester3: 91.00,
-    semester4: 88.75,
-    semester5: 93.10,
-  }
-};
-
-const semesterKeys: (keyof typeof biodataDetailsMock.semesterGrades)[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
+const semesterKeys: (keyof BiodataDetails['semesterGrades'])[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
 const semesterLabels = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5"];
 
 export default function RegistrationProofPage() {
@@ -40,19 +23,21 @@ export default function RegistrationProofPage() {
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   
+  const [biodata, setBiodata] = React.useState<BiodataDetails | null>(null);
   const [profilePhoto, setProfilePhoto] = React.useState<string | null>(null);
   const [pathway, setPathway] = React.useState<string | undefined>();
   const [selections, setSelections] = React.useState<{ school: School, major: string | null }[]>([]);
 
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
-    if (!savedProgress?.registrationCompleted) {
-        console.warn("Registration not completed. Redirecting...");
+    if (!savedProgress?.registrationCompleted || !savedProgress.biodata) {
+        console.warn("Registration not completed or biodata missing. Redirecting...");
         router.replace('/registration/dashboard');
         return;
     }
     
     if (savedProgress) {
+        setBiodata(savedProgress.biodata);
         setProfilePhoto(savedProgress.profilePhotoDataUri || null);
         setPathway(savedProgress.pathway);
         const populatedSelections = (savedProgress.schoolSelections || [])
@@ -70,8 +55,8 @@ export default function RegistrationProofPage() {
   const handleDownloadPdf = () => {
     setIsDownloading(true);
     const input = document.getElementById('pdf-content');
-    if (!input) {
-      console.error("Content element not found for PDF generation.");
+    if (!input || !biodata) {
+      console.error("Content element or biodata not found for PDF generation.");
       setIsDownloading(false);
       return;
     }
@@ -100,7 +85,7 @@ export default function RegistrationProofPage() {
             heightLeft -= pdfHeight;
         }
 
-        pdf.save(`bukti-pendaftaran-${biodataDetailsMock.nisn}.pdf`);
+        pdf.save(`bukti-pendaftaran-${biodata.nisn}.pdf`);
         setIsDownloading(false);
       })
       .catch(err => {
@@ -110,10 +95,11 @@ export default function RegistrationProofPage() {
   };
 
   const totalNilai = React.useMemo(() => {
-    return Object.values(biodataDetailsMock.semesterGrades).reduce((acc, val) => acc + val, 0).toFixed(2);
-  }, []);
+    if (!biodata) return "0.00";
+    return Object.values(biodata.semesterGrades).reduce((acc, val) => acc + val, 0).toFixed(2);
+  }, [biodata]);
 
-  if (isLoading) {
+  if (isLoading || !biodata) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p>Memuat data bukti pendaftaran...</p>
@@ -165,11 +151,11 @@ export default function RegistrationProofPage() {
                 <div className="flex-grow">
                     <Table>
                         <TableBody>
-                            <TableRow><TableCell className="font-semibold w-1/3">Nama Lengkap</TableCell><TableCell>{biodataDetailsMock.fullName}</TableCell></TableRow>
-                            <TableRow><TableCell className="font-semibold">NISN</TableCell><TableCell>{biodataDetailsMock.nisn}</TableCell></TableRow>
-                            <TableRow><TableCell className="font-semibold">NIK</TableCell><TableCell>{biodataDetailsMock.nik}</TableCell></TableRow>
-                            <TableRow><TableCell className="font-semibold">Tempat, Tanggal Lahir</TableCell><TableCell>{biodataDetailsMock.placeOfBirth}, {new Date(biodataDetailsMock.dateOfBirth).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</TableCell></TableRow>
-                             <TableRow><TableCell className="font-semibold">Sekolah Asal</TableCell><TableCell>{biodataDetailsMock.previousSchool}</TableCell></TableRow>
+                            <TableRow><TableCell className="font-semibold w-1/3">Nama Lengkap</TableCell><TableCell>{biodata.fullName}</TableCell></TableRow>
+                            <TableRow><TableCell className="font-semibold">NISN</TableCell><TableCell>{biodata.nisn}</TableCell></TableRow>
+                            <TableRow><TableCell className="font-semibold">NIK</TableCell><TableCell>{biodata.nik}</TableCell></TableRow>
+                            <TableRow><TableCell className="font-semibold">Tempat, Tanggal Lahir</TableCell><TableCell>{biodata.placeOfBirth}, {new Date(biodata.dateOfBirth).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</TableCell></TableRow>
+                             <TableRow><TableCell className="font-semibold">Sekolah Asal</TableCell><TableCell>{biodata.previousSchool}</TableCell></TableRow>
                         </TableBody>
                     </Table>
                 </div>
@@ -190,7 +176,7 @@ export default function RegistrationProofPage() {
                   {semesterKeys.map((key, index) => (
                     <TableRow key={key}>
                       <TableCell className="font-medium">{semesterLabels[index]}</TableCell>
-                      <TableCell className="text-right">{biodataDetailsMock.semesterGrades[key].toFixed(2)}</TableCell>
+                      <TableCell className="text-right">{biodata.semesterGrades[key].toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -254,8 +240,8 @@ export default function RegistrationProofPage() {
                     <p>Berau, {new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
                     <p>Pendaftar,</p>
                     <div className="h-24"></div>
-                    <p className="font-semibold underline">( {biodataDetailsMock.fullName} )</p>
-                    <p>NISN. {biodataDetailsMock.nisn}</p>
+                    <p className="font-semibold underline">( {biodata.fullName} )</p>
+                    <p>NISN. {biodata.nisn}</p>
                 </div>
             </div>
              <p className="text-xs text-gray-500 dark:text-gray-400 mt-12 text-center italic">

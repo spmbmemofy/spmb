@@ -43,7 +43,14 @@ const applicantFormSchema = z.object({
   gender: z.enum(["Laki-laki", "Perempuan"], { required_error: "Jenis kelamin harus dipilih." }),
   religion: z.string().optional(),
   contactNumber: z.string().optional(),
-  address: z.string().optional(),
+  
+  streetName: z.string().optional(),
+  rtRw: z.string().optional(),
+  village: z.string().optional(),
+  subdistrict: z.string().optional(),
+  district: z.string().optional(),
+  province: z.string().optional(),
+
   fatherName: z.string().optional(),
   fatherOccupation: z.string().optional(),
   fatherIncome: z.string().optional(),
@@ -64,7 +71,8 @@ type ApplicantFormValues = z.infer<typeof applicantFormSchema>;
 type TabValue = "personal" | "parent" | "grades";
 
 const defaultFormValues: ApplicantFormValues = {
-    fullName: '', nisn: '', nik: '', placeOfBirth: '', dateOfBirth: '', gender: 'Laki-laki', religion: '', contactNumber: '', address: '',
+    fullName: '', nisn: '', nik: '', placeOfBirth: '', dateOfBirth: '', gender: 'Laki-laki', religion: '', contactNumber: '', 
+    streetName: '', rtRw: '', village: '', subdistrict: '', district: '', province: '',
     fatherName: '', fatherOccupation: '', fatherIncome: '', motherName: '', motherOccupation: '', motherIncome: '', guardianName: '',
     semesterGrades: { semester1: 0, semester2: 0, semester3: 0, semester4: 0, semester5: 0 }
 };
@@ -206,7 +214,12 @@ export default function ManagedApplicantPage() {
                             gender: row["Jenis Kelamin"],
                             religion: row["Agama"],
                             contactNumber: row["No. Kontak"],
-                            address: row["Alamat"],
+                            streetName: row["Nama Jalan & No. Rumah"],
+                            rtRw: row["RT/RW"],
+                            village: row["Kelurahan/Desa"],
+                            subdistrict: row["Kecamatan"],
+                            district: row["Kabupaten/Kota"],
+                            province: row["Provinsi & Kode Pos"],
                             asalSekolahId: operatorSchool.id,
                             fatherName: row["Nama Ayah"],
                             fatherOccupation: row["Pekerjaan Ayah"],
@@ -352,7 +365,17 @@ export default function ManagedApplicantPage() {
                                         <FormField control={form.control} name="religion" render={({ field }) => ( <FormItem><FormLabel>Agama</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Agama"/></SelectTrigger></FormControl><SelectContent>{religionOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
                                         <FormField control={form.control} name="contactNumber" render={({ field }) => ( <FormItem><FormLabel>No. Kontak</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                                     </div>
-                                    <FormField control={form.control} name="address" render={({ field }) => ( <FormItem><FormLabel>Alamat Lengkap</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                    <div className="space-y-4 rounded-md border p-4">
+                                        <h3 className="text-sm font-medium text-muted-foreground">Alamat Lengkap</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <FormField control={form.control} name="streetName" render={({ field }) => ( <FormItem><FormLabel>Nama Jalan & No. Rumah</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="rtRw" render={({ field }) => ( <FormItem><FormLabel>RT/RW</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="village" render={({ field }) => ( <FormItem><FormLabel>Kelurahan/Desa</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="subdistrict" render={({ field }) => ( <FormItem><FormLabel>Kecamatan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="district" render={({ field }) => ( <FormItem><FormLabel>Kabupaten/Kota</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="province" render={({ field }) => ( <FormItem><FormLabel>Provinsi & Kode Pos</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                        </div>
+                                    </div>
                                 </TabsContent>
 
                                 <TabsContent value="parent" className="pt-4 space-y-6">
@@ -418,5 +441,4 @@ export default function ManagedApplicantPage() {
             </AlertDialog>
         </>
     );
-
-    
+}

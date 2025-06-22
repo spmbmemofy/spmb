@@ -26,20 +26,12 @@ import { getApplicantById, updateApplicant } from "@/lib/applicantService";
 import type { Applicant, ApplicantStatus, DocumentStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { getSchoolById } from "@/lib/schoolService";
+import { getFromLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
 
 
 const VERIFIER_SCHOOL_ID = "sman4berau";
+const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 
-const applicantDetailsMock = {
-  profilePhoto: "https://placehold.co/128x160.png",
-  nik: "6403011507050002",
-  placeOfBirth: "Tanjung Redeb",
-  dateOfBirth: "2008-07-15",
-  gender: "Laki-laki",
-  religion: "Islam",
-  address: "Jl. Durian III No. 25, RT 10/RW 03, Kel. Tanjung Redeb, Kec. Tanjung Redeb, Kabupaten Berau, Kalimantan Timur 77311",
-  contactNumber: "081254321098",
-};
 
 const DUMMY_PDF_URL = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
 
@@ -76,6 +68,7 @@ export default function VerifyApplicantPage() {
   const applicantId = params.id as string;
 
   const [applicant, setApplicant] = React.useState<Applicant | null>(null);
+  const [applicantBiodata, setApplicantBiodata] = React.useState<any>(null); // To hold biodata from localStorage
   const [isLoading, setIsLoading] = React.useState(true);
   const [isVerifierAuthorized, setIsVerifierAuthorized] = React.useState(false);
   
@@ -104,6 +97,12 @@ export default function VerifyApplicantPage() {
         });
         setDocumentStatuses(initialStatuses);
         setEditableNilaiPrestasi(foundApplicant.nilaiPrestasi || 0);
+
+        // Fetch biodata from localStorage for display purposes
+        const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+        if(savedProgress?.biodata?.nisn === foundApplicant.nisn) {
+          setApplicantBiodata(savedProgress.biodata);
+        }
       }
     }
     setIsLoading(false);
@@ -176,6 +175,17 @@ export default function VerifyApplicantPage() {
       </div>
     );
   }
+  
+  const fullAddress = applicantBiodata 
+    ? [
+        applicantBiodata.streetName, 
+        applicantBiodata.rtRw, 
+        applicantBiodata.village, 
+        applicantBiodata.subdistrict, 
+        applicantBiodata.district, 
+        applicantBiodata.province
+      ].filter(Boolean).join(', ')
+    : "Alamat tidak tersedia";
 
   return (
     <div className="flex flex-1 flex-col p-4 sm:p-6 md:p-8">
@@ -208,15 +218,15 @@ export default function VerifyApplicantPage() {
               <CardHeader><CardTitle className="flex items-center text-lg"><UserCircle className="mr-2"/>Biodata</CardTitle></CardHeader>
               <CardContent className="space-y-3 text-sm">
                   <div className="flex justify-center mb-4">
-                    <Image src={applicantDetailsMock.profilePhoto} alt="Foto Profil" width={100} height={125} className="rounded-md border" data-ai-hint="profile picture" />
+                    <Image src={applicantBiodata?.profilePhotoDataUri || "https://placehold.co/128x160.png"} alt="Foto Profil" width={100} height={125} className="rounded-md border" data-ai-hint="profile picture" />
                   </div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Status Saat Ini</span><Badge variant={getStatusBadgeVariant(applicant.statusVerifikasi)}>{applicant.statusVerifikasi}</Badge></div>
                   <Separator/>
-                  <div className="flex justify-between"><span className="text-muted-foreground">NIK</span><span className="font-medium">{applicantDetailsMock.nik}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">TTL</span><span className="font-medium">{applicantDetailsMock.placeOfBirth}, {applicantDetailsMock.dateOfBirth}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Jenis Kelamin</span><span className="font-medium">{applicantDetailsMock.gender}</span></div>
-                   <div className="flex justify-between"><span className="text-muted-foreground">Agama</span><span className="font-medium">{applicantDetailsMock.religion}</span></div>
-                  <div><p className="text-muted-foreground">Alamat</p><p className="font-medium">{applicantDetailsMock.address}</p></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">NIK</span><span className="font-medium">{applicantBiodata?.nik || '-'}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">TTL</span><span className="font-medium">{applicantBiodata?.placeOfBirth || '-'}, {applicantBiodata?.dateOfBirth || '-'}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Jenis Kelamin</span><span className="font-medium">{applicantBiodata?.gender || '-'}</span></div>
+                   <div className="flex justify-between"><span className="text-muted-foreground">Agama</span><span className="font-medium">{applicantBiodata?.religion || '-'}</span></div>
+                  <div><p className="text-muted-foreground">Alamat</p><p className="font-medium">{fullAddress}</p></div>
               </CardContent>
             </Card>
             <Card>
