@@ -820,3 +820,5 @@ export default function DashboardPage() {
     
     return <ApplicantDashboard />;
 }
+
+    

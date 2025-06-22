@@ -71,7 +71,7 @@ type TabValue = "personal" | "parent" | "grades";
 
 const defaultFormValues: ApplicantFormValues = {
     fullName: '', nisn: '', nik: '', placeOfBirth: '', dateOfBirth: '', gender: 'Laki-laki', religion: '', contactNumber: '', 
-    streetName: '', rtRw: '', province: 'Kalimantan Timur', district: 'Kabupaten Berau', subdistrict: '', village: '',
+    province: 'Kalimantan Timur', district: 'Kabupaten Berau', subdistrict: '', village: '', streetName: '', rtRw: '',
     fatherName: '', fatherOccupation: '', fatherIncome: '', motherName: '', motherOccupation: '', motherIncome: '', guardianName: '',
     semesterGrades: { semester1: 0, semester2: 0, semester3: 0, semester4: 0, semester5: 0 }
 };
@@ -505,3 +505,5 @@ export default function ManagedApplicantPage() {
         </>
     );
 }
+
+    
