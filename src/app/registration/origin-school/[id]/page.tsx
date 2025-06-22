@@ -198,11 +198,9 @@ export default function OriginSchoolDetailPage() {
               <OriginSchoolIcon className="h-8 w-8 text-primary" />
               <CardTitle className="text-xl sm:text-2xl md:text-3xl font-headline">{originSchool.namaSekolah}</CardTitle>
             </div>
-            <Button variant="outline" asChild size="sm" className="w-full sm:w-auto" onClick={() => router.push('/registration/all-data')}>
-              <>
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => router.push('/registration/all-data')}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Kembali
-              </>
             </Button>
           </div>
           <CardDescription>Detail informasi sekolah asal dan daftar siswa pendaftarnya.</CardDescription>
