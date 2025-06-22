@@ -24,9 +24,12 @@ export const initialUsers: User[] = [
 
   // Operator SMP
   { id: 'user-5', username: 'operator_smpn1', password: 'password123', role: 'smp_operator', fullName: 'Operator SMPN 1', npsn: '30401918', namaSekolah: 'SMP Negeri 1 Tanjung Redeb' },
+  { id: 'user-10', username: 'operator_smpn2', password: 'password123', role: 'smp_operator', fullName: 'Operator SMPN 2', npsn: '30401878', namaSekolah: 'SMP Negeri 2 Teluk Bayur' },
+
 
   // Kepala Sekolah
   { id: 'user-6', username: 'kepsek_sman4', password: 'password123', role: 'headmaster', fullName: 'Dr. Retno Wulandari, M.Pd', npsn: '30401831', namaSekolah: 'SMA Negeri 4 Berau' },
+  { id: 'user-9', username: 'kepsek_smkn1', password: 'password123', role: 'headmaster', fullName: 'Drs. H. Susilo, M.M.', npsn: '30401828', namaSekolah: 'SMK Negeri 1 Berau' },
   
   // Admin
   { id: 'user-7', username: 'admin_disdik', password: 'password123', role: 'admin', fullName: 'Admin Disdik' },
