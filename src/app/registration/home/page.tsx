@@ -276,16 +276,20 @@ export default function HomePage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="text-center w-[50px]">Peringkat</TableHead>
                   <TableHead>Nama Sekolah</TableHead>
+                  <TableHead>Alamat</TableHead>
                   <TableHead className="text-right">Jumlah Pendaftar</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedSchoolsByOrigin.map((school) => (
+                {sortedSchoolsByOrigin.map((school, index) => (
                   <TableRow key={school.id}>
+                    <TableCell className="text-center font-medium">{index + 1}</TableCell>
                     <TableCell>
                        <Link href={`/registration/origin-school/${school.id}`} className="font-medium hover:underline text-primary">{school.namaSekolah}</Link>
                     </TableCell>
+                    <TableCell>{school.alamat}</TableCell>
                     <TableCell className="text-right">{school.jumlahPendaftar}</TableCell>
                   </TableRow>
                 ))}

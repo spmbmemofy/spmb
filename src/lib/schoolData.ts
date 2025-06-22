@@ -112,16 +112,17 @@ export const initialSchoolData: School[] = [
 export interface OriginSchool {
   id: string;
   namaSekolah: string;
+  alamat: string;
   status: "Negeri" | "Swasta";
   akreditasi: "A" | "B" | "C" | "Belum Terakreditasi";
   jumlahPendaftar: number;
 }
 
 export const initialOriginSchoolData: OriginSchool[] = [
-    { id: "smpn1tanjungredeb", namaSekolah: "SMP Negeri 1 Tanjung Redeb", status: "Negeri", akreditasi: "A", jumlahPendaftar: 25 },
-    { id: "smpn2telukbayur", namaSekolah: "SMP Negeri 2 Teluk Bayur", status: "Negeri", akreditasi: "B", jumlahPendaftar: 18 },
-    { id: "smpn3sambaliung", namaSekolah: "SMP Negeri 3 Sambaliung", status: "Negeri", akreditasi: "B", jumlahPendaftar: 22 },
-    { id: "mtsalkholil", namaSekolah: "MTs Al-Kholil", status: "Swasta", akreditasi: "A", jumlahPendaftar: 15 },
-    { id: "smpitashshohwah", namaSekolah: "SMP IT Ash-Shohwah Berau", status: "Swasta", akreditasi: "A", jumlahPendaftar: 20 },
-    { id: "smpmuhammadiyah", namaSekolah: "SMP Muhammadiyah Tanjung Redeb", status: "Swasta", akreditasi: "B", jumlahPendaftar: 12 },
+    { id: "smpn1tanjungredeb", namaSekolah: "SMP Negeri 1 Tanjung Redeb", alamat: "Jl. M. I. Swadji, Tanjung Redeb", status: "Negeri", akreditasi: "A", jumlahPendaftar: 25 },
+    { id: "smpn2telukbayur", namaSekolah: "SMP Negeri 2 Teluk Bayur", alamat: "Jl. Poros Labanan, Teluk Bayur", status: "Negeri", akreditasi: "B", jumlahPendaftar: 18 },
+    { id: "smpn3sambaliung", namaSekolah: "SMP Negeri 3 Sambaliung", alamat: "Jl. Raya Sambaliung", status: "Negeri", akreditasi: "B", jumlahPendaftar: 22 },
+    { id: "mtsalkholil", namaSekolah: "MTs Al-Kholil", alamat: "Jl. H. Isa III, Karang Ambun", status: "Swasta", akreditasi: "A", jumlahPendaftar: 15 },
+    { id: "smpitashshohwah", namaSekolah: "SMP IT Ash-Shohwah Berau", alamat: "Jl. Manunggal, Teluk Bayur", status: "Swasta", akreditasi: "A", jumlahPendaftar: 20 },
+    { id: "smpmuhammadiyah", namaSekolah: "SMP Muhammadiyah Tanjung Redeb", alamat: "Jl. SA Maulana, Bugis", status: "Swasta", akreditasi: "B", jumlahPendaftar: 12 },
 ];
