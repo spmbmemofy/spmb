@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Eye, EyeOff, Hash, Lock, User, UserCog, UserCheck } from "lucide-react";
+import { Building, Eye, EyeOff, GraduationCap, Hash, Lock, Shield, User, UserCog, UserCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,20 +31,37 @@ import {
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { getFromLocalStorage, saveToLocalStorage, removeFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
+import { getFromLocalStorage, saveToLocalStorage, type LoginCredentials } from "@/lib/localStorage";
+import { findUserByUsername } from "@/lib/userData";
+import type { UserRole } from "@/lib/userData";
 
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 
 const formSchema = z.object({
-  role: z.enum(["applicant", "admin", "verifikator"], {
+  role: z.enum(["applicant", "admin", "verifikator", "smp_operator", "superadmin", "headmaster"], {
     required_error: "Anda harus memilih peran.",
   }),
-  username: z.string().min(1, { message: "NISN atau nama pengguna wajib diisi." }),
+  username: z.string().min(1, { message: "Nama pengguna atau NISN wajib diisi." }),
   password: z
     .string()
     .min(6, { message: "Kata sandi minimal 6 karakter." }),
   rememberMe: z.boolean().default(false).optional(),
 });
+
+type RoleInfo = {
+    value: UserRole;
+    label: string;
+    icon: React.ElementType;
+}
+
+const roles: RoleInfo[] = [
+    { value: "applicant", label: "Pendaftar", icon: User },
+    { value: "verifikator", label: "Verifikator", icon: UserCheck },
+    { value: "smp_operator", label: "Operator SMP", icon: Building },
+    { value: "headmaster", label: "Kepala Sekolah", icon: GraduationCap },
+    { value: "admin", label: "Admin", icon: UserCog },
+    { value: "superadmin", label: "Superadmin", icon: Shield },
+];
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -61,7 +78,7 @@ export function LoginForm() {
     },
   });
 
-  const role = form.watch("role");
+  const selectedRole = form.watch("role");
 
   React.useEffect(() => {
     const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
@@ -77,36 +94,21 @@ export function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    console.log("Form values:", values);
     
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    let isSuccess = false;
+    const user = findUserByUsername(values.username);
 
-    // Check for the specific applicant credentials
-    if (values.role === 'applicant' && values.username === '0056789123' && values.password === '1234567890') {
-      isSuccess = true;
-    } else {
-      // For other roles or incorrect applicant credentials, use the existing random success logic for demonstration
-      isSuccess = Math.random() > 0.3;
-    }
-
-    if (isSuccess) {
-      // Save credentials to local storage on successful login
+    if (user && user.role === values.role && user.password === values.password) {
       saveToLocalStorage<LoginCredentials>(LOCAL_STORAGE_LOGIN_KEY, {
         username: values.username,
         role: values.role,
         rememberMe: values.rememberMe,
       });
 
-      const roleName = values.role === 'applicant' 
-          ? 'Pendaftar' 
-          : values.role === 'admin' 
-          ? 'Admin' 
-          : 'Verifikator';
       toast({
           title: "Login Berhasil",
-          description: `Selamat datang, ${roleName}!`,
+          description: `Selamat datang, ${user.fullName}!`,
       });
 
       router.push('/registration/dashboard');
@@ -114,10 +116,20 @@ export function LoginForm() {
       toast({
           variant: "destructive",
           title: "Login Gagal",
-          description: "Kredensial tidak valid. Silakan coba lagi.",
+          description: "Kombinasi peran, nama pengguna, atau kata sandi tidak valid.",
       });
     }
     setIsSubmitting(false);
+  }
+
+  const getUsernameLabel = () => {
+    if (selectedRole === 'applicant') return "NISN (Nomor Induk Siswa Nasional)";
+    return "Nama Pengguna";
+  }
+  
+  const getUsernamePlaceholder = () => {
+    if (selectedRole === 'applicant') return "Masukkan NISN Anda";
+    return "Masukkan nama pengguna";
   }
 
   return (
@@ -143,36 +155,20 @@ export function LoginForm() {
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      value={field.value} // ensure value is controlled
-                      className="grid grid-cols-2 sm:grid-cols-3 gap-2"
+                      value={field.value}
+                      className="grid grid-cols-2 sm:grid-cols-3 gap-x-2 gap-y-4"
                     >
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="applicant" id="applicant" />
-                        </FormControl>
-                        <FormLabel htmlFor="applicant" className="font-normal flex items-center">
-                          <User className="mr-2 h-5 w-5 text-accent" />
-                          Pendaftar
-                        </FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="admin" id="admin" />
-                        </FormControl>
-                        <FormLabel htmlFor="admin" className="font-normal flex items-center">
-                          <UserCog className="mr-2 h-5 w-5 text-accent" />
-                          Admin
-                        </FormLabel>
-                      </FormItem>
-                       <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="verifikator" id="verifikator" />
-                        </FormControl>
-                        <FormLabel htmlFor="verifikator" className="font-normal flex items-center">
-                          <UserCheck className="mr-2 h-5 w-5 text-accent" />
-                          Verifikator
-                        </FormLabel>
-                      </FormItem>
+                      {roles.map((roleInfo) => (
+                        <FormItem key={roleInfo.value} className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value={roleInfo.value} id={roleInfo.value} />
+                          </FormControl>
+                          <FormLabel htmlFor={roleInfo.value} className="font-normal flex items-center gap-2 cursor-pointer">
+                            <roleInfo.icon className="h-5 w-5 text-accent" />
+                            {roleInfo.label}
+                          </FormLabel>
+                        </FormItem>
+                      ))}
                     </RadioGroup>
                   </FormControl>
                   <FormMessage />
@@ -185,15 +181,15 @@ export function LoginForm() {
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="username">{role === 'admin' || role === 'verifikator' ? 'Nama Pengguna' : 'NISN (Nomor Induk Siswa Nasional)'}</FormLabel>
+                  <FormLabel htmlFor="username">{getUsernameLabel()}</FormLabel>
                   <div className="relative">
-                    {role === 'admin' || role === 'verifikator' ? (
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    ) : (
+                     {selectedRole === 'applicant' ? (
                         <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    ) : (
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     )}
                     <FormControl>
-                      <Input id="username" placeholder={role === 'admin' || role === 'verifikator' ? 'Masukkan nama pengguna' : 'Masukkan NISN Anda'} {...field} className="pl-10" />
+                      <Input id="username" placeholder={getUsernamePlaceholder()} {...field} className="pl-10" />
                     </FormControl>
                   </div>
                   <FormMessage />
@@ -228,6 +224,9 @@ export function LoginForm() {
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </Button>
                   </div>
+                   <FormDescription>
+                       Untuk demo, gunakan: password123
+                    </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -247,15 +246,12 @@ export function LoginForm() {
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel htmlFor="rememberMe" className="font-normal">Ingat saya</FormLabel>
-                      <FormDescription>
-                        Biarkan saya tetap masuk selama 2 minggu.
-                      </FormDescription>
                     </div>
                   </FormItem>
                 )}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="w-full" disabled={isSubmitting || !selectedRole}>
               {isSubmitting ? "Sedang Masuk..." : "Masuk"}
             </Button>
           </form>

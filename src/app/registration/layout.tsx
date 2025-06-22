@@ -4,7 +4,7 @@
 import { ReactNode, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, School, UserCheck, User, FileUp } from 'lucide-react';
+import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, School, UserCheck, User, FileUp, Shield, GraduationCap, Building } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -72,12 +72,33 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       { href: '/registration/selection', label: 'Verifikasi', icon: UserCheck, activePaths: ['/registration/selection', '/registration/verify'] },
       { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
     ];
-
-    if (userRole === 'applicant') return applicantMenu;
-    if (userRole === 'verifikator') return verifierMenu;
-    if (userRole === 'admin') return adminMenu;
     
-    return [];
+    // Placeholder menus for new roles
+    const superAdminMenu = [
+        ...adminMenu,
+        { href: '/registration/superadmin', label: 'Manajemen Sistem', icon: Shield, activePaths: ['/registration/superadmin'] }
+    ];
+    const headmasterMenu = [
+        { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
+        { href: '/registration/all-data', label: 'Lihat Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
+        { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
+    ];
+     const smpOperatorMenu = [
+        { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
+        { href: '/registration/origin-school-data', label: 'Data Sekolah Asal', icon: Building, activePaths: ['/registration/origin-school-data'] },
+    ];
+
+
+    switch (userRole) {
+        case 'applicant': return applicantMenu;
+        case 'verifikator': return verifierMenu;
+        case 'admin': return adminMenu;
+        case 'superadmin': return superAdminMenu;
+        case 'headmaster': return headmasterMenu;
+        case 'smp_operator': return smpOperatorMenu;
+        default: return [];
+    }
+    
   }, [userRole]);
 
   const handleLogout = () => {
@@ -90,9 +111,17 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   };
 
   const homeLink = useMemo(() => {
-    if (userRole === 'admin') return '/registration/home';
-    if (userRole === 'verifikator') return '/registration/home';
-    return '/registration/dashboard';
+    switch (userRole) {
+        case 'admin':
+        case 'verifikator':
+        case 'superadmin':
+        case 'headmaster':
+        case 'smp_operator':
+            return '/registration/home';
+        case 'applicant':
+        default:
+            return '/registration/dashboard';
+    }
   }, [userRole]);
 
   if (!userRole) {

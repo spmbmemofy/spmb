@@ -1,9 +1,10 @@
 // src/lib/localStorage.ts
+import type { UserRole } from './userData';
 const APP_PREFIX = 'admissionPortal_';
 
 export interface LoginCredentials {
   username?: string;
-  role?: 'applicant' | 'admin' | 'verifikator';
+  role?: UserRole;
   rememberMe?: boolean;
 }
 
