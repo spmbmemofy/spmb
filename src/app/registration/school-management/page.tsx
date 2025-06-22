@@ -296,7 +296,7 @@ export default function SchoolManagementPage() {
                                 <FormField control={form.control} name="wilayah" render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Wilayah</FormLabel>
-                                        <FormControl><Input {...field} placeholder="Contoh: 1" /></FormControl>
+                                        <FormControl><Input {...field} value={field.value ?? ''} placeholder="Contoh: 1" /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )} />
