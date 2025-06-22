@@ -20,6 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { getUsers, addUser, updateUser, deleteUser } from "@/lib/userService";
 import { type User, type UserRole } from "@/lib/userData";
+import { getManagedSchools } from "@/lib/schoolManagementService";
+import { type ManagedSchool } from "@/lib/school-management-data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const roleDisplayNames: Record<UserRole, string> = {
@@ -47,13 +49,13 @@ const userFormSchema = z.object({
   role: z.enum(["applicant", "admin", "verifikator", "smp_operator", "superadmin", "headmaster"], { required_error: "Peran wajib dipilih."}),
   password: z.string().min(6, { message: "Kata sandi minimal 6 karakter." }).optional().or(z.literal('')),
   npsn: z.string().optional(),
-  namaSekolah: z.string().optional(),
 });
 
 type UserFormValues = z.infer<typeof userFormSchema>;
 
 export default function SuperadminPage() {
     const [users, setUsers] = React.useState<User[]>([]);
+    const [managedSchools, setManagedSchools] = React.useState<ManagedSchool[]>([]);
     const [systemSearchTerm, setSystemSearchTerm] = React.useState("");
     const [applicantSearchTerm, setApplicantSearchTerm] = React.useState("");
     const [roleFilter, setRoleFilter] = React.useState<UserRole | "all">("all");
@@ -64,16 +66,16 @@ export default function SuperadminPage() {
     const { toast } = useToast();
     const [visiblePasswordId, setVisiblePasswordId] = React.useState<string | null>(null);
 
-
     const form = useForm<UserFormValues>({
         resolver: zodResolver(userFormSchema),
-        defaultValues: { id: '', fullName: '', username: '', role: 'applicant', password: '', npsn: '', namaSekolah: '' },
+        defaultValues: { id: '', fullName: '', username: '', role: 'applicant', password: '', npsn: '' },
     });
     
     const selectedFormRole = form.watch("role");
 
     React.useEffect(() => {
         setUsers(getUsers());
+        setManagedSchools(getManagedSchools());
     }, []);
 
     const filteredSystemUsers = React.useMemo(() => {
@@ -99,7 +101,7 @@ export default function SuperadminPage() {
         if (user) {
             form.reset({ ...user, password: '' });
         } else {
-            form.reset({ id: undefined, fullName: '', username: '', role: 'applicant', password: '', npsn: '', namaSekolah: '' });
+            form.reset({ id: undefined, fullName: '', username: '', role: 'applicant', password: '', npsn: '' });
         }
         setIsDialogOpen(true);
     };
@@ -155,60 +157,65 @@ export default function SuperadminPage() {
                 </TableHeader>
                 <TableBody>
                     {userList.length > 0 ? (
-                        userList.map((user, index) => (
-                            <TableRow key={user.id}>
-                                <TableCell className="text-center">{index + 1}</TableCell>
-                                <TableCell className="font-medium">{user.fullName}</TableCell>
-                                <TableCell>{user.username}</TableCell>
-                                <TableCell>
-                                    <Badge variant={roleBadgeVariants[user.role]}>
-                                        {roleDisplayNames[user.role]}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-mono">
-                                            {visiblePasswordId === user.id ? user.password : '********'}
-                                        </span>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7"
-                                            onClick={() => setVisiblePasswordId(visiblePasswordId === user.id ? null : user.id)}
-                                        >
-                                            <span className="sr-only">Toggle password visibility</span>
-                                            {visiblePasswordId === user.id ? (
-                                                <EyeOff className="h-4 w-4" />
-                                            ) : (
-                                                <Eye className="h-4 w-4" />
-                                            )}
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                                <TableCell>{user.npsn || '-'}</TableCell>
-                                <TableCell>{user.namaSekolah || '-'}</TableCell>
-                                <TableCell className="text-right">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                <span className="sr-only">Buka menu</span>
-                                                <MoreHorizontal className="h-4 w-4" />
+                        userList.map((user, index) => {
+                            const schoolName = user.npsn
+                                ? managedSchools.find(s => s.npsn === user.npsn)?.namaSekolah || "Sekolah tidak ditemukan"
+                                : "-";
+                            return (
+                                <TableRow key={user.id}>
+                                    <TableCell className="text-center">{index + 1}</TableCell>
+                                    <TableCell className="font-medium">{user.fullName}</TableCell>
+                                    <TableCell>{user.username}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={roleBadgeVariants[user.role]}>
+                                            {roleDisplayNames[user.role]}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-mono">
+                                                {visiblePasswordId === user.id ? user.password : '********'}
+                                            </span>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                onClick={() => setVisiblePasswordId(visiblePasswordId === user.id ? null : user.id)}
+                                            >
+                                                <span className="sr-only">Toggle password visibility</span>
+                                                {visiblePasswordId === user.id ? (
+                                                    <EyeOff className="h-4 w-4" />
+                                                ) : (
+                                                    <Eye className="h-4 w-4" />
+                                                )}
                                             </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => handleOpenDialog(user)}>
-                                                <Edit className="mr-2 h-4 w-4" />
-                                                <span>Edit</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleDeleteClick(user.id)} className="text-destructive focus:text-destructive">
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                <span>Hapus</span>
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
-                            </TableRow>
-                        ))
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>{user.npsn || '-'}</TableCell>
+                                    <TableCell>{schoolName}</TableCell>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <span className="sr-only">Buka menu</span>
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => handleOpenDialog(user)}>
+                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    <span>Edit</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleDeleteClick(user.id)} className="text-destructive focus:text-destructive">
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    <span>Hapus</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        })
                     ) : (
                         <TableRow>
                             <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
@@ -220,6 +227,16 @@ export default function SuperadminPage() {
             </Table>
         </div>
     );
+    
+    const relevantSchools = React.useMemo(() => {
+        if (selectedFormRole === "smp_operator") {
+            return managedSchools.filter(s => s.jenjang === "SMP");
+        }
+        if (selectedFormRole === "verifikator" || selectedFormRole === "headmaster") {
+            return managedSchools.filter(s => s.jenjang === "SMA" || s.jenjang === "SMK");
+        }
+        return [];
+    }, [selectedFormRole, managedSchools]);
 
     return (
         <>
@@ -342,22 +359,28 @@ export default function SuperadminPage() {
                                 </FormItem>
                             )} />
                             {['verifikator', 'smp_operator', 'headmaster'].includes(selectedFormRole) && (
-                                <>
-                                    <FormField control={form.control} name="npsn" render={({ field }) => (
+                                <FormField
+                                    control={form.control}
+                                    name="npsn"
+                                    render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>NPSN</FormLabel>
-                                            <FormControl><Input {...field} /></FormControl>
+                                            <FormLabel>Sekolah Terkait</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger><SelectValue placeholder="Pilih sekolah terkait" /></SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {relevantSchools.map(school => (
+                                                        <SelectItem key={school.npsn} value={school.npsn}>
+                                                            {school.namaSekolah}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                             <FormMessage />
                                         </FormItem>
-                                    )} />
-                                     <FormField control={form.control} name="namaSekolah" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Nama Sekolah</FormLabel>
-                                            <FormControl><Input {...field} /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
-                                </>
+                                    )}
+                                />
                             )}
                             <DialogFooter>
                                 <DialogClose asChild>
