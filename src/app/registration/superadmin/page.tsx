@@ -5,7 +5,7 @@ import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Shield, UserPlus, MoreHorizontal, Edit, Trash2, Search as SearchIcon } from 'lucide-react';
+import { Shield, UserPlus, MoreHorizontal, Edit, Trash2, Search as SearchIcon, Eye, EyeOff } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,6 +62,8 @@ export default function SuperadminPage() {
     const [isAlertOpen, setIsAlertOpen] = React.useState(false);
     const [userToDeleteId, setUserToDeleteId] = React.useState<string | null>(null);
     const { toast } = useToast();
+    const [visiblePasswordId, setVisiblePasswordId] = React.useState<string | null>(null);
+
 
     const form = useForm<UserFormValues>({
         resolver: zodResolver(userFormSchema),
@@ -145,7 +147,7 @@ export default function SuperadminPage() {
                         <TableHead>Nama Lengkap</TableHead>
                         <TableHead>Username/NISN</TableHead>
                         <TableHead>Peran</TableHead>
-                        <TableHead>Password</TableHead>
+                        <TableHead>Kata Sandi</TableHead>
                         <TableHead>NPSN</TableHead>
                         <TableHead>Nama Sekolah</TableHead>
                         <TableHead className="text-right">Aksi</TableHead>
@@ -163,7 +165,26 @@ export default function SuperadminPage() {
                                         {roleDisplayNames[user.role]}
                                     </Badge>
                                 </TableCell>
-                                <TableCell>{user.password}</TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-mono">
+                                            {visiblePasswordId === user.id ? user.password : '********'}
+                                        </span>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            onClick={() => setVisiblePasswordId(visiblePasswordId === user.id ? null : user.id)}
+                                        >
+                                            <span className="sr-only">Toggle password visibility</span>
+                                            {visiblePasswordId === user.id ? (
+                                                <EyeOff className="h-4 w-4" />
+                                            ) : (
+                                                <Eye className="h-4 w-4" />
+                                            )}
+                                        </Button>
+                                    </div>
+                                </TableCell>
                                 <TableCell>{user.npsn || '-'}</TableCell>
                                 <TableCell>{user.namaSekolah || '-'}</TableCell>
                                 <TableCell className="text-right">
@@ -368,5 +389,3 @@ export default function SuperadminPage() {
         </>
     );
 }
-
-    
