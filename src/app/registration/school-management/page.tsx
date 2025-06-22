@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -26,7 +27,13 @@ const schoolFormSchema = z.object({
   namaSekolah: z.string().min(3, { message: "Nama sekolah minimal 3 karakter." }),
   jenjang: z.enum(["SMP", "SMA", "SMK"], { required_error: "Jenjang sekolah wajib dipilih."}),
   jenis: z.enum(["Negeri", "Swasta"], { required_error: "Jenis sekolah wajib dipilih."}),
-  wilayah: z.string().optional(),
+  wilayah: z.string().optional().refine((val) => {
+    if (!val) return true; // Allow empty or undefined
+    const num = Number(val);
+    return !isNaN(num) && num >= 1 && num <= 10 && Number.isInteger(num);
+  }, {
+    message: "Wilayah harus berupa angka bulat antara 1 dan 10.",
+  }),
 });
 
 type SchoolFormValues = z.infer<typeof schoolFormSchema>;
@@ -289,7 +296,7 @@ export default function SchoolManagementPage() {
                                 <FormField control={form.control} name="wilayah" render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Wilayah</FormLabel>
-                                        <FormControl><Input {...field} placeholder="Contoh: Wilayah 1" /></FormControl>
+                                        <FormControl><Input {...field} placeholder="Contoh: 1" /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )} />
