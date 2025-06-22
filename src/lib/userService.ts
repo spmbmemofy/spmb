@@ -4,7 +4,7 @@
 import { getFromLocalStorage, saveToLocalStorage } from './localStorage';
 import { initialUsers, type User } from './userData';
 
-const USERS_STORAGE_KEY = 'allUsersData';
+const USERS_STORAGE_KEY = 'allUsersData_v2';
 
 const initializeUsers = (): User[] => {
   const storedUsers = getFromLocalStorage<User[] | null>(USERS_STORAGE_KEY, null);

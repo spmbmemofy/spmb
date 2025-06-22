@@ -20,8 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { getUsers, addUser, updateUser, deleteUser } from "@/lib/userService";
 import { type User, type UserRole } from "@/lib/userData";
-import { getManagedSchools } from "@/lib/schoolManagementService";
-import { type ManagedSchool } from "@/lib/school-management-data";
+import { getSchools, type School } from "@/lib/schoolService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const roleDisplayNames: Record<UserRole, string> = {
@@ -55,7 +54,7 @@ type UserFormValues = z.infer<typeof userFormSchema>;
 
 export default function SuperadminPage() {
     const [users, setUsers] = React.useState<User[]>([]);
-    const [managedSchools, setManagedSchools] = React.useState<ManagedSchool[]>([]);
+    const [allSchools, setAllSchools] = React.useState<School[]>([]);
     const [systemSearchTerm, setSystemSearchTerm] = React.useState("");
     const [applicantSearchTerm, setApplicantSearchTerm] = React.useState("");
     const [roleFilter, setRoleFilter] = React.useState<UserRole | "all">("all");
@@ -75,7 +74,7 @@ export default function SuperadminPage() {
 
     React.useEffect(() => {
         setUsers(getUsers());
-        setManagedSchools(getManagedSchools());
+        setAllSchools(getSchools());
     }, []);
 
     const filteredSystemUsers = React.useMemo(() => {
@@ -159,7 +158,7 @@ export default function SuperadminPage() {
                     {userList.length > 0 ? (
                         userList.map((user, index) => {
                             const schoolName = user.npsn
-                                ? managedSchools.find(s => s.npsn === user.npsn)?.namaSekolah || "Sekolah tidak ditemukan"
+                                ? allSchools.find(s => s.npsn === user.npsn)?.namaSekolah || "Sekolah tidak ditemukan"
                                 : "-";
                             return (
                                 <TableRow key={user.id}>
@@ -230,13 +229,13 @@ export default function SuperadminPage() {
     
     const relevantSchools = React.useMemo(() => {
         if (selectedFormRole === "smp_operator") {
-            return managedSchools.filter(s => s.jenjang === "SMP");
+            return allSchools.filter(s => s.jenjang === "SMP");
         }
         if (selectedFormRole === "verifikator" || selectedFormRole === "headmaster") {
-            return managedSchools.filter(s => s.jenjang === "SMA" || s.jenjang === "SMK");
+            return allSchools.filter(s => s.jenjang === "SMA" || s.jenjang === "SMK");
         }
         return [];
-    }, [selectedFormRole, managedSchools]);
+    }, [selectedFormRole, allSchools]);
 
     return (
         <>
@@ -365,14 +364,14 @@ export default function SuperadminPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Sekolah Terkait</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger><SelectValue placeholder="Pilih sekolah terkait" /></SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
                                                     {relevantSchools.map(school => (
                                                         <SelectItem key={school.npsn} value={school.npsn}>
-                                                            {school.namaSekolah}
+                                                            {school.namaSekolah} ({school.npsn})
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>

@@ -1,5 +1,5 @@
 
-import { initialSchoolData, initialOriginSchoolData } from './schoolData';
+import { getSchools } from './schoolService';
 import type { Applicant, Jalur, ApplicantStatus, SchoolSelection } from '@/lib/types';
 
 const firstNames = ["Andi", "Bima", "Clara", "Dian", "Elang", "Fitri", "Gilang", "Hana", "Ivan", "Jasmine", "Kurnia", "Lina", "Mega", "Nadia", "Oscar", "Putri", "Rangga", "Sari", "Tegar", "Vina", "Ahmad", "Budi", "Citra", "Dewi", "Eka", "Fajar", "Gita", "Hendra", "Indah", "Joko"];
@@ -12,13 +12,16 @@ const getRandomPrestasiScore = () => prestasiScoreOptions[Math.floor(Math.random
 
 export const generateAllMockApplicants = (): Applicant[] => {
     const applicants: Applicant[] = [];
+    const allSchools = getSchools();
+    const destinationSchools = allSchools.filter(s => s.jenjang !== 'SMP');
+    const originSchools = allSchools.filter(s => s.jenjang === 'SMP');
     
     // Create our specific test user for the correction flow
-    const testUserDestinationSchool = initialSchoolData.find(s => s.id === 'sman4berau') || initialSchoolData[0];
-    const testUserOriginSchool = initialOriginSchoolData[0];
+    const testUserDestinationSchool = destinationSchools.find(s => s.id === 'sman4berau') || destinationSchools[0];
+    const testUserOriginSchool = originSchools[0];
     const testUserSelections: SchoolSelection[] = [
         { schoolId: testUserDestinationSchool.id, major: null },
-        { schoolId: initialSchoolData[1].id, major: "Teknik Komputer dan Jaringan" }
+        { schoolId: destinationSchools[1].id, major: "Teknik Komputer dan Jaringan" }
     ];
     
     applicants.push({
@@ -26,7 +29,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
         noRegistrasi: '0056789123',
         fullName: 'Muhammad Rizky Pratama',
         nisn: '0056789123',
-        asalSekolahId: testUserOriginSchool.npsn,
+        asalSekolahId: testUserOriginSchool.id,
         asalSekolahNama: testUserOriginSchool.namaSekolah,
         sekolahTujuanId: testUserDestinationSchool.id,
         sekolahTujuanNama: testUserDestinationSchool.namaSekolah,
@@ -51,10 +54,10 @@ export const generateAllMockApplicants = (): Applicant[] => {
 
 
     let applicantIdCounter = 1;
-    initialOriginSchoolData.forEach((originSchool) => {
-        const numApplicants = originSchool.jumlahPendaftar;
+    originSchools.forEach((originSchool) => {
+        const numApplicants = Math.floor(Math.random() * 15) + 10; // Generate 10-25 applicants per origin school
         for (let i = 0; i < numApplicants; i++) {
-            const destinationSchool = initialSchoolData[applicantIdCounter % initialSchoolData.length];
+            const destinationSchool = destinationSchools[applicantIdCounter % destinationSchools.length];
             const fullName = `${firstNames[applicantIdCounter % firstNames.length]} ${lastNames[i % lastNames.length]}`;
             const nisn = `00${String(10000000 + applicantIdCounter).padStart(8, '0')}`;
             const jalur = jalurOptionsPlain[applicantIdCounter % jalurOptionsPlain.length];
@@ -71,11 +74,11 @@ export const generateAllMockApplicants = (): Applicant[] => {
 
             const numSelections = Math.floor(Math.random() * 3) + 1;
             const schoolSelections: SchoolSelection[] = [];
-            const availableSchools = [...initialSchoolData];
+            const availableSchools = [...destinationSchools];
 
             const firstChoiceSchool = destinationSchool;
             let firstChoiceMajor: string | null = null;
-            if (firstChoiceSchool.type === 'SMK' && firstChoiceSchool.majors && firstChoiceSchool.majors.length > 0) {
+            if (firstChoiceSchool.jenjang === 'SMK' && firstChoiceSchool.majors && firstChoiceSchool.majors.length > 0) {
                 firstChoiceMajor = firstChoiceSchool.majors[Math.floor(Math.random() * firstChoiceSchool.majors.length)];
             }
             schoolSelections.push({ schoolId: firstChoiceSchool.id, major: firstChoiceMajor });
@@ -87,7 +90,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
                 const nextSchoolIndex = Math.floor(Math.random() * availableSchools.length);
                 const nextSchool = availableSchools[nextSchoolIndex];
                 let nextMajor: string | null = null;
-                if (nextSchool.type === 'SMK' && nextSchool.majors && nextSchool.majors.length > 0) {
+                if (nextSchool.jenjang === 'SMK' && nextSchool.majors && nextSchool.majors.length > 0) {
                     nextMajor = nextSchool.majors[Math.floor(Math.random() * nextSchool.majors.length)];
                 }
                 schoolSelections.push({ schoolId: nextSchool.id, major: nextMajor });
@@ -99,7 +102,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
                 noRegistrasi: nisn,
                 fullName,
                 nisn,
-                asalSekolahId: originSchool.npsn,
+                asalSekolahId: originSchool.id,
                 asalSekolahNama: originSchool.namaSekolah,
                 sekolahTujuanId: destinationSchool.id,
                 sekolahTujuanNama: destinationSchool.namaSekolah,
@@ -133,7 +136,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
         });
     }
 
-    initialSchoolData.forEach(school => {
+    destinationSchools.forEach(school => {
         jalurOptionsPlain.forEach(jalurName => {
             const verifiedApplicantsInJalur = applicants
               .filter(app => app.sekolahTujuanId === school.id && app.jalur === jalurName && app.statusVerifikasi === "Terverifikasi")

@@ -25,7 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getApplicantById, updateApplicant } from "@/lib/applicantService";
 import type { Applicant, ApplicantStatus, DocumentStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { initialSchoolData } from "@/lib/schoolData";
+import { getSchoolById } from "@/lib/schoolService";
 
 
 const VERIFIER_SCHOOL_ID = "sman4berau";
@@ -231,7 +231,7 @@ export default function VerifyApplicantPage() {
               <CardContent>
                 <ul className="space-y-2">
                   {(applicant.schoolSelections || []).map((selection, index) => {
-                    const school = initialSchoolData.find(s => s.id === selection.schoolId);
+                    const school = getSchoolById(selection.schoolId);
                     return (
                       <li key={`${selection.schoolId}-${index}`} className="flex items-start gap-3 rounded-md border p-3 bg-muted/20">
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm flex-shrink-0 mt-0.5">

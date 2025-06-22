@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { initialSchoolData } from "@/lib/schoolData";
+import { getSchools } from "@/lib/schoolService";
 import { generateAllMockApplicants, jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
 import type { Applicant, ApplicantStatus, SortConfig, SortDirection, SortKey } from "@/lib/types";
 
@@ -27,6 +27,7 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
 
 export default function AllDataPage() {
   const [allApplicants, setAllApplicants] = React.useState<Applicant[]>([]);
+  const [schools, setSchools] = React.useState<ReturnType<typeof getSchools>>([]);
   
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedSekolahTujuan, setSelectedSekolahTujuan] = React.useState("Semua Sekolah Tujuan");
@@ -39,6 +40,7 @@ export default function AllDataPage() {
 
   React.useEffect(() => {
     setAllApplicants(generateAllMockApplicants());
+    setSchools(getSchools());
   }, []);
 
   React.useEffect(() => {
@@ -104,7 +106,7 @@ export default function AllDataPage() {
     return sortConfig.direction === 'ascending' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />;
   };
 
-  const sekolahTujuanOptions = ["Semua Sekolah Tujuan", ...initialSchoolData.map(s => s.namaSekolah)];
+  const sekolahTujuanOptions = ["Semua Sekolah Tujuan", ...schools.filter(s => s.jenjang !== 'SMP').map(s => s.namaSekolah)];
   const jalurOptions = ["Semua Jalur", ...jalurOptionsPlain];
   const statusOptions = ["Semua Status", ...statusVerifikasiOptionsPlain];
 

@@ -14,7 +14,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FileText, Save, School, ArrowUp, ArrowDown, AlertTriangle, ClipboardCheck } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { initialSchoolData } from "@/lib/schoolData"; 
+import { getSchools } from "@/lib/schoolService"; 
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
 import { type SchoolSelection } from "@/lib/types";
 import { jalurOptionsPlain } from "@/lib/mockData";
@@ -26,6 +26,7 @@ const MAX_SCHOOL_SELECTION = 5;
 export default function SchoolSelectionPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const [allSchools, setAllSchools] = React.useState<ReturnType<typeof getSchools>>([]);
   const [selectedSelections, setSelectedSelections] = React.useState<SchoolSelection[]>([]);
   const [selectedPathway, setSelectedPathway] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -33,6 +34,9 @@ export default function SchoolSelectionPage() {
   const [isLocked, setIsLocked] = React.useState(false);
 
   React.useEffect(() => {
+    const schools = getSchools();
+    setAllSchools(schools);
+
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
     if (!savedProgress?.hasProfilePhoto) {
       toast({
@@ -83,13 +87,15 @@ export default function SchoolSelectionPage() {
   const availableSchools = React.useMemo(() => {
     if (!selectedPathway) return [];
 
+    const destinationSchools = allSchools.filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
+    
     const restrictedPathways = ["Afirmasi", "Domisili", "Mutasi"];
     if (restrictedPathways.includes(selectedPathway)) {
-      return initialSchoolData.filter(school => school.kecamatan === studentSubdistrict);
+      return destinationSchools.filter(school => school.kecamatan === studentSubdistrict);
     }
     
-    return initialSchoolData;
-  }, [selectedPathway]);
+    return destinationSchools;
+  }, [selectedPathway, allSchools]);
 
   React.useEffect(() => {
     if (isLoading || isLocked) return; 
@@ -132,7 +138,6 @@ export default function SchoolSelectionPage() {
     }
 
     const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
-    const schoolIds = selectedSelections.map(s => s.schoolId);
     saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
       ...currentProgress,
       schoolSelections: selectedSelections,
@@ -220,11 +225,11 @@ export default function SchoolSelectionPage() {
                             {availableSchools.length > 0 ? (
                               availableSchools.map((school) => (
                                 <AccordionItem value={school.id} key={school.id} className="border-b">
-                                  {school.type === "SMA" ? (
+                                  {school.jenjang === "SMA" ? (
                                     <div className="flex items-center text-sm p-2 rounded-md justify-between py-4 font-medium">
                                         <div className="flex-1 text-left">
                                             <p className="font-medium">{school.namaSekolah}</p>
-                                            <p className="text-xs text-muted-foreground">{school.type} - Akreditasi: {school.akreditasi}</p>
+                                            <p className="text-xs text-muted-foreground">{school.jenjang} - Akreditasi: {school.akreditasi}</p>
                                         </div>
                                         <div className="pl-4">
                                             <Checkbox
@@ -241,7 +246,7 @@ export default function SchoolSelectionPage() {
                                       <AccordionTrigger className="text-sm hover:no-underline p-2 rounded-md hover:bg-muted" disabled={isLocked}>
                                         <div className="flex-1 text-left">
                                           <p className="font-medium">{school.namaSekolah}</p>
-                                          <p className="text-xs text-muted-foreground">{school.type} - Akreditasi: {school.akreditasi}</p>
+                                          <p className="text-xs text-muted-foreground">{school.jenjang} - Akreditasi: {school.akreditasi}</p>
                                         </div>
                                       </AccordionTrigger>
                                       <AccordionContent>
@@ -294,7 +299,7 @@ export default function SchoolSelectionPage() {
                                     </div>
                                 ) : (
                                     selectedSelections.map((selection, index) => {
-                                        const school = initialSchoolData.find(s => s.id === selection.schoolId);
+                                        const school = allSchools.find(s => s.id === selection.schoolId);
                                         return (
                                             <div key={`${selection.schoolId}-${selection.major}`} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
                                                 <div className="flex items-center gap-3 flex-1 overflow-hidden">

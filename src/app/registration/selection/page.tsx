@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import { getApplicants } from "@/lib/applicantService";
 import { jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
-import { initialSchoolData } from "@/lib/schoolData";
+import { getSchoolById } from "@/lib/schoolService";
 import type { Applicant, ApplicantStatus } from "@/lib/types";
 
 const VERIFIER_SCHOOL_ID = "sman4berau";
@@ -43,7 +43,7 @@ export default function VerificationPage() {
     const verifierSchoolApplicants = applicantsData.filter(app => app.sekolahTujuanId === VERIFIER_SCHOOL_ID);
     setAllApplicants(verifierSchoolApplicants);
 
-    const school = initialSchoolData.find(s => s.id === VERIFIER_SCHOOL_ID);
+    const school = getSchoolById(VERIFIER_SCHOOL_ID);
     setSchoolName(school?.namaSekolah || "Sekolah Tidak Ditemukan");
   }, []);
 

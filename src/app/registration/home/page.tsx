@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { TrendingUp, Users, School, BookOpen, Star, UserCheck } from 'lucide-react';
-import { initialSchoolData, initialOriginSchoolData } from '@/lib/schoolData';
+import { getSchools } from '@/lib/schoolService';
 import { generateAllMockApplicants } from '@/lib/mockData';
 import type { Applicant, Jalur } from '@/lib/types';
 
@@ -32,14 +32,38 @@ const barChartConfig = {
 
 export default function HomePage() {
   const [allApplicants, setAllApplicants] = React.useState<Applicant[]>([]);
+  const [schools, setSchools] = React.useState<ReturnType<typeof getSchools>>([]);
 
   React.useEffect(() => {
-    // In a real app, this would be a fetch call.
-    // For now, we generate mock data once on component mount.
     setAllApplicants(generateAllMockApplicants());
+    setSchools(getSchools());
   }, []);
 
-  const stats = React.useMemo(() => {
+  const schoolStats = React.useMemo(() => {
+     const schoolsWithPendaftar = schools.map(school => {
+        const pendaftarCount = allApplicants.filter(app => 
+            school.jenjang === 'SMP' 
+                ? app.asalSekolahId === school.id 
+                : app.sekolahTujuanId === school.id
+        ).length;
+        const terverifikasi = allApplicants.filter(app => app.asalSekolahId === school.id && app.statusVerifikasi === 'Terverifikasi').length;
+        const prosesVerifikasi = pendaftarCount - terverifikasi;
+        return { ...school, jumlahPendaftar: pendaftarCount, terverifikasi, prosesVerifikasi };
+    });
+
+    const destinationSchools = schoolsWithPendaftar
+      .filter(s => s.jenjang !== 'SMP')
+      .sort((a, b) => (b.jumlahPendaftar || 0) - (a.jumlahPendaftar || 0));
+
+    const originSchools = schoolsWithPendaftar
+      .filter(s => s.jenjang === 'SMP')
+      .sort((a, b) => (b.jumlahPendaftar || 0) - (a.jumlahPendaftar || 0));
+
+    return { destinationSchools, originSchools };
+  }, [allApplicants, schools]);
+
+
+  const globalStats = React.useMemo(() => {
     if (allApplicants.length === 0) {
       return {
         totalPendaftar: 0,
@@ -59,15 +83,12 @@ export default function HomePage() {
     }
 
     const totalPendaftar = allApplicants.length;
-    const totalKuota = initialSchoolData.reduce((acc, school) => acc + school.kuota, 0);
+    const totalKuota = schoolStats.destinationSchools.reduce((acc, school) => acc + (school.kuota || 0), 0);
     const kuotaTerisi = Math.min(totalPendaftar, totalKuota);
     const persentaseKuota = totalKuota > 0 ? ((kuotaTerisi / totalKuota) * 100).toFixed(1) : "0.0";
     
-    const sortedSchoolsByDestination = [...initialSchoolData].sort((a, b) => b.jumlahPendaftar - a.jumlahPendaftar);
-    const sekolahTujuanTeratas = sortedSchoolsByDestination[0]?.namaSekolah || '-';
-
-    const sortedSchoolsByOrigin = [...initialOriginSchoolData].sort((a, b) => b.jumlahPendaftar - a.jumlahPendaftar);
-    const sekolahAsalTeratas = sortedSchoolsByOrigin[0]?.namaSekolah || '-';
+    const sekolahTujuanTeratas = schoolStats.destinationSchools[0]?.namaSekolah || '-';
+    const sekolahAsalTeratas = schoolStats.originSchools[0]?.namaSekolah || '-';
     
     const menungguVerifikasi = allApplicants.filter(app => app.statusVerifikasi === "Menunggu Verifikasi").length;
 
@@ -82,11 +103,10 @@ export default function HomePage() {
 
     const jalurDistribution = Object.entries(jalurCounts).map(([name, value]) => ({ name, value, fill: `var(--color-${name.toLowerCase()})` }));
 
-    // New calculations for the new table
     const terverifikasi = allApplicants.filter(app => app.statusVerifikasi === 'Terverifikasi').length;
     const jumlahSiswa = totalPendaftar;
-    const belumAktivasi = 0; // Placeholder as data is not available
-    const belumMendaftar = 0; // Placeholder as data is not available
+    const belumAktivasi = 0; // Placeholder
+    const belumMendaftar = 0; // Placeholder
 
     return { 
         totalPendaftar, 
@@ -103,7 +123,7 @@ export default function HomePage() {
         belumAktivasi,
         belumMendaftar,
     };
-  }, [allApplicants]);
+  }, [allApplicants, schoolStats]);
   
   const pieChartConfig = {
     pendaftar: { label: "Pendaftar" },
@@ -112,22 +132,6 @@ export default function HomePage() {
     Prestasi: { label: "Prestasi", color: "hsl(var(--chart-3))" },
     Domisili: { label: "Domisili", color: "hsl(var(--chart-4))" },
   } satisfies ChartConfig;
-
-
-  const sortedSchoolsByDestination = [...initialSchoolData].sort((a, b) => b.jumlahPendaftar - a.jumlahPendaftar).slice(0, 5);
-  const sortedSchoolsByOrigin = React.useMemo(() => {
-    const schoolsWithStats = initialOriginSchoolData.map(school => {
-        const applicantsFromSchool = allApplicants.filter(app => app.asalSekolahId === school.npsn);
-        const terverifikasi = applicantsFromSchool.filter(app => app.statusVerifikasi === 'Terverifikasi').length;
-        const prosesVerifikasi = applicantsFromSchool.filter(app => app.statusVerifikasi !== 'Terverifikasi').length;
-        return {
-            ...school,
-            terverifikasi,
-            prosesVerifikasi,
-        };
-    });
-    return schoolsWithStats.sort((a, b) => b.jumlahPendaftar - a.jumlahPendaftar).slice(0, 5);
-  }, [allApplicants]);
 
   return (
     <div className="flex flex-1 flex-col p-4 sm:p-6 md:p-8 space-y-6">
@@ -156,11 +160,11 @@ export default function HomePage() {
               </TableHeader>
               <TableBody>
                 <TableRow>
-                  <TableCell className="text-center text-lg font-bold">{stats.jumlahSiswa}</TableCell>
-                  <TableCell className="text-center text-lg font-bold">{stats.belumAktivasi}</TableCell>
-                  <TableCell className="text-center text-lg font-bold">{stats.belumMendaftar}</TableCell>
-                  <TableCell className="text-center text-lg font-bold">{stats.menungguVerifikasi}</TableCell>
-                  <TableCell className="text-center text-lg font-bold">{stats.terverifikasi}</TableCell>
+                  <TableCell className="text-center text-lg font-bold">{globalStats.jumlahSiswa}</TableCell>
+                  <TableCell className="text-center text-lg font-bold">{globalStats.belumAktivasi}</TableCell>
+                  <TableCell className="text-center text-lg font-bold">{globalStats.belumMendaftar}</TableCell>
+                  <TableCell className="text-center text-lg font-bold">{globalStats.menungguVerifikasi}</TableCell>
+                  <TableCell className="text-center text-lg font-bold">{globalStats.terverifikasi}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -175,7 +179,7 @@ export default function HomePage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalPendaftar}</div>
+            <div className="text-2xl font-bold">{globalStats.totalPendaftar}</div>
             <p className="text-xs text-muted-foreground">+5% dari kemarin</p>
           </CardContent>
         </Card>
@@ -185,8 +189,8 @@ export default function HomePage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.persentaseKuota}%</div>
-            <p className="text-xs text-muted-foreground">{stats.kuotaTerisi} dari {stats.totalKuota} total kuota</p>
+            <div className="text-2xl font-bold">{globalStats.persentaseKuota}%</div>
+            <p className="text-xs text-muted-foreground">{globalStats.kuotaTerisi} dari {globalStats.totalKuota} total kuota</p>
           </CardContent>
         </Card>
         <Card className="xl:col-span-1">
@@ -195,7 +199,7 @@ export default function HomePage() {
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.menungguVerifikasi}</div>
+            <div className="text-2xl font-bold">{globalStats.menungguVerifikasi}</div>
             <p className="text-xs text-muted-foreground">Pendaftar perlu ditinjau</p>
           </CardContent>
         </Card>
@@ -205,7 +209,7 @@ export default function HomePage() {
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold truncate">{stats.jalurFavorit}</div>
+            <div className="text-lg font-bold truncate">{globalStats.jalurFavorit}</div>
             <p className="text-xs text-muted-foreground">Paling banyak dipilih</p>
           </CardContent>
         </Card>
@@ -215,7 +219,7 @@ export default function HomePage() {
             <School className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold truncate">{stats.sekolahTujuanTeratas}</div>
+            <div className="text-lg font-bold truncate">{globalStats.sekolahTujuanTeratas}</div>
             <p className="text-xs text-muted-foreground">Paling banyak diminati</p>
           </CardContent>
         </Card>
@@ -225,7 +229,7 @@ export default function HomePage() {
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold truncate">{stats.sekolahAsalTeratas}</div>
+            <div className="text-lg font-bold truncate">{globalStats.sekolahAsalTeratas}</div>
             <p className="text-xs text-muted-foreground">Pendaftar terbanyak</p>
           </CardContent>
         </Card>
@@ -276,7 +280,7 @@ export default function HomePage() {
                   content={<ChartTooltipContent hideLabel nameKey="value" />}
                 />
                 <Pie
-                  data={stats.jalurDistribution}
+                  data={globalStats.jalurDistribution}
                   dataKey="value"
                   nameKey="name"
                   innerRadius={60}
@@ -325,7 +329,7 @@ export default function HomePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedSchoolsByDestination.map((school, index) => (
+                {schoolStats.destinationSchools.slice(0, 5).map((school, index) => (
                   <TableRow key={school.id}>
                     <TableCell className="text-center font-medium">{index + 1}</TableCell>
                     <TableCell>
@@ -356,11 +360,11 @@ export default function HomePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedSchoolsByOrigin.map((school, index) => (
+                {schoolStats.originSchools.slice(0, 5).map((school, index) => (
                   <TableRow key={school.npsn}>
                     <TableCell className="text-center font-medium">{index + 1}</TableCell>
                     <TableCell>
-                       <Link href={`/registration/origin-school/${school.npsn}`} className="font-medium hover:underline text-primary">{school.namaSekolah}</Link>
+                       <Link href={`/registration/origin-school/${school.id}`} className="font-medium hover:underline text-primary">{school.namaSekolah}</Link>
                     </TableCell>
                     <TableCell>{school.alamat}</TableCell>
                     <TableCell className="text-right">{school.terverifikasi}</TableCell>

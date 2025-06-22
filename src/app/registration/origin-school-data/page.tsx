@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { getApplicants } from "@/lib/applicantService";
-import { initialOriginSchoolData, type OriginSchool } from "@/lib/schoolData";
+import { getSchoolByNPSN, type School } from "@/lib/schoolService";
 import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import type { Applicant, ApplicantStatus } from "@/lib/types";
 import { getUsers } from "@/lib/userService";
@@ -33,7 +33,7 @@ export default function OriginSchoolDataPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = React.useState(true);
-    const [school, setSchool] = React.useState<OriginSchool | null>(null);
+    const [school, setSchool] = React.useState<School | null>(null);
     const [applicants, setApplicants] = React.useState<Applicant[]>([]);
 
     React.useEffect(() => {
@@ -53,14 +53,14 @@ export default function OriginSchoolDataPage() {
             return;
         }
 
-        const userSchool = initialOriginSchoolData.find(s => s.npsn === currentUser.npsn);
+        const userSchool = getSchoolByNPSN(currentUser.npsn);
         
         if (userSchool) {
             setSchool(userSchool);
         }
 
         const allApplicants = getApplicants();
-        const schoolApplicants = allApplicants.filter(app => app.asalSekolahId === currentUser.npsn);
+        const schoolApplicants = allApplicants.filter(app => app.asalSekolahId === userSchool?.id);
         setApplicants(schoolApplicants);
         setIsLoading(false);
     }, [router, toast]);
@@ -110,7 +110,7 @@ export default function OriginSchoolDataPage() {
                         <h3 className="text-xl font-semibold mb-4 text-primary">Profil Sekolah</h3>
                         <div className="space-y-2 rounded-md border p-4">
                              <div className="flex justify-between py-1"><span className="font-medium text-muted-foreground">NPSN</span><span>{school.npsn}</span></div>
-                             <div className="flex justify-between py-1"><span className="font-medium text-muted-foreground">Status</span><span>{school.status}</span></div>
+                             <div className="flex justify-between py-1"><span className="font-medium text-muted-foreground">Jenis</span><span>{school.jenis}</span></div>
                              <div className="flex justify-between py-1"><span className="font-medium text-muted-foreground">Akreditasi</span><span>{school.akreditasi}</span></div>
                              <div className="flex justify-between py-1"><span className="font-medium text-muted-foreground">Alamat</span><span>{school.alamat}</span></div>
                         </div>

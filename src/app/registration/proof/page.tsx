@@ -5,7 +5,7 @@ import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { getFromLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
-import { initialSchoolData, type School } from "@/lib/schoolData";
+import { getSchoolById, type School } from "@/lib/schoolService";
 import { type SchoolSelection } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
@@ -57,7 +57,7 @@ export default function RegistrationProofPage() {
         setPathway(savedProgress.pathway);
         const populatedSelections = (savedProgress.schoolSelections || [])
             .map(sel => ({
-                school: initialSchoolData.find(s => s.id === sel.schoolId)!,
+                school: getSchoolById(sel.schoolId)!,
                 major: sel.major
             }))
             .filter(item => item.school);

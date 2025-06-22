@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { initialSchoolData, initialOriginSchoolData, type OriginSchool } from "@/lib/schoolData";
+import { getSchools, getSchoolById, type School } from "@/lib/schoolService";
 import { cn } from "@/lib/utils";
 import { jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
 import { getApplicants } from "@/lib/applicantService";
@@ -33,8 +33,9 @@ export default function OriginSchoolDetailPage() {
   const router = useRouter();
   const originSchoolId = params.id as string;
   
-  const [originSchool, setOriginSchool] = React.useState<OriginSchool | undefined>(undefined);
+  const [originSchool, setOriginSchool] = React.useState<School | undefined>(undefined);
   const [applicants, setApplicants] = React.useState<Applicant[]>([]);
+  const [schools, setSchools] = React.useState<School[]>([]);
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedSekolahTujuan, setSelectedSekolahTujuan] = React.useState("Semua Sekolah Tujuan");
@@ -46,8 +47,10 @@ export default function OriginSchoolDetailPage() {
   const [currentPage, setCurrentPage] = React.useState(1);
 
   React.useEffect(() => {
-    const foundSchool = initialOriginSchoolData.find(s => s.npsn === originSchoolId);
+    const foundSchool = getSchoolById(originSchoolId);
+    const allSchools = getSchools();
     setOriginSchool(foundSchool);
+    setSchools(allSchools.filter(s => s.jenjang !== 'SMP'));
 
     if (foundSchool) {
       const allApplicants = getApplicants();
@@ -197,7 +200,7 @@ export default function OriginSchoolDetailPage() {
     );
   }
   
-  const sekolahTujuanOptions = ["Semua Sekolah Tujuan", ...initialSchoolData.map(s => s.namaSekolah)];
+  const sekolahTujuanOptions = ["Semua Sekolah Tujuan", ...schools.map(s => s.namaSekolah)];
   const jalurOptions = ["Semua Jalur", ...jalurOptionsPlain];
   const statusOptions = ["Semua Status", ...statusVerifikasiOptionsPlain];
 
@@ -221,9 +224,9 @@ export default function OriginSchoolDetailPage() {
           <section className="border rounded-lg p-4 space-y-4">
             <h3 className="text-lg font-semibold mb-3 text-primary">Informasi Umum Sekolah Asal</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-              <div><span className="font-medium text-muted-foreground">Status Sekolah:</span> {originSchool.status}</div>
+              <div><span className="font-medium text-muted-foreground">Jenis Sekolah:</span> {originSchool.jenis}</div>
               <div><span className="font-medium text-muted-foreground">Akreditasi:</span> {originSchool.akreditasi}</div>
-              <div><span className="font-medium text-muted-foreground">Jumlah Pendaftar dari Sekolah Ini:</span> {originSchool.jumlahPendaftar}</div>
+              <div><span className="font-medium text-muted-foreground">Jumlah Pendaftar dari Sekolah Ini:</span> {applicants.length}</div>
             </div>
           </section>
 

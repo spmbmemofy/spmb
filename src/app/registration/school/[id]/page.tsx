@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { initialSchoolData } from "@/lib/schoolData";
+import { getSchoolById, type School } from "@/lib/schoolService";
 import { cn } from "@/lib/utils";
 import { generateAllMockApplicants, jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
 import type { Applicant, ApplicantStatus, SortConfig, SortKey, SortDirection } from "@/lib/types";
@@ -47,8 +47,8 @@ const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "s
 export default function SchoolDetailPage() {
   const params = useParams();
   const schoolId = params.id as string;
-  const school = initialSchoolData.find(s => s.id === schoolId);
-
+  
+  const [school, setSchool] = React.useState<School | undefined>();
   const [currentSchoolApplicants, setCurrentSchoolApplicants] = React.useState<Applicant[]>([]);
 
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -61,6 +61,8 @@ export default function SchoolDetailPage() {
 
   React.useEffect(() => {
     if (schoolId) {
+        const foundSchool = getSchoolById(schoolId);
+        setSchool(foundSchool);
         const allApplicants = generateAllMockApplicants();
         const schoolApplicants = allApplicants.filter(app => app.sekolahTujuanId === schoolId);
         setCurrentSchoolApplicants(schoolApplicants);
@@ -128,7 +130,7 @@ export default function SchoolDetailPage() {
 
     return jalurOptionsPlain.map(jalurName => {
       const pathwayKey = jalurName.toLowerCase() as keyof typeof school.jalurKuota;
-      const kuota = school.jalurKuota[pathwayKey] ?? 0;
+      const kuota = school.jalurKuota?.[pathwayKey] ?? 0;
 
       const applicantsInPathway = currentSchoolApplicants.filter(app => app.jalur === jalurName);
 

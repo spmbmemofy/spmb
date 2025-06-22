@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp, Printer, AlertCircle } from 'lucide-react';
-import { initialSchoolData, type School } from "@/lib/schoolData"; 
+import { getSchoolById, type School } from "@/lib/schoolService"; 
 import { getFromLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
 import { type SchoolSelection, type ApplicantStatus } from "@/lib/types";
 
@@ -226,7 +226,7 @@ export default function StatusPage() {
 
     if (schoolSelections.length > 0) {
       const populatedSelections: DisplaySelection[] = schoolSelections.map(selection => {
-        const school = initialSchoolData.find(s => s.id === selection.schoolId);
+        const school = getSchoolById(selection.schoolId);
         return { school: school!, major: selection.major };
       }).filter(item => item.school); 
 
