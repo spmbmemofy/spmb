@@ -1,5 +1,7 @@
-// src/lib/localStorage.ts
+
 import type { UserRole } from './userData';
+import type { SchoolSelection } from './types';
+
 const APP_PREFIX = 'admissionPortal_';
 
 export interface LoginCredentials {
@@ -7,11 +9,6 @@ export interface LoginCredentials {
   role?: UserRole;
   rememberMe?: boolean;
 }
-
-export type SchoolSelection = {
-  schoolId: string;
-  major: string | null;
-};
 
 export interface BiodataDetails {
   fullName: string;

@@ -15,10 +15,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FileText, Save, School, ArrowUp, ArrowDown, AlertTriangle, ClipboardCheck } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { initialSchoolData } from "@/lib/schoolData"; 
-import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type SchoolSelection } from "@/lib/localStorage";
+import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
+import { type SchoolSelection } from "@/lib/types";
+import { jalurOptionsPlain } from "@/lib/mockData";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
-const pathwayOptions = ["Afirmasi", "Mutasi", "Prestasi", "Domisili"];
 const studentSubdistrict = "Kec. Tanjung Redeb"; // Mock data, should come from student's biodata
 const MAX_SCHOOL_SELECTION = 5;
 
@@ -135,7 +136,6 @@ export default function SchoolSelectionPage() {
     saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
       ...currentProgress,
       schoolSelections: selectedSelections,
-      schoolIds: schoolIds,
       pathway: selectedPathway,
     });
     
@@ -190,7 +190,7 @@ export default function SchoolSelectionPage() {
                 <SelectValue placeholder="Pilih jalur pendaftaran Anda" />
               </SelectTrigger>
               <SelectContent>
-                {pathwayOptions.map((pathway) => (
+                {jalurOptionsPlain.map((pathway) => (
                   <SelectItem key={pathway} value={pathway}>
                     {pathway}
                   </SelectItem>
@@ -329,7 +329,7 @@ export default function SchoolSelectionPage() {
         <CardFooter className="flex justify-end pt-6">
           {isLocked ? (
             <Button asChild>
-              <Link href="/registration/selection">
+              <Link href="/registration/status">
                 <ClipboardCheck className="mr-2 h-4 w-4" />
                 Lihat Status Pendaftaran
               </Link>

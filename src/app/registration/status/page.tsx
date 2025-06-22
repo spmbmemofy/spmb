@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp, Printer, AlertCircle } from 'lucide-react';
 import { initialSchoolData, type School } from "@/lib/schoolData"; 
-import { getFromLocalStorage, type RegistrationProgress, type SchoolSelection } from "@/lib/localStorage";
+import { getFromLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
+import { type SchoolSelection, type ApplicantStatus } from "@/lib/types";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 
@@ -87,7 +88,7 @@ interface DisplaySelection {
     major: string | null;
 }
 
-type VerificationStatus = "Menunggu Verifikasi" | "Terverifikasi" | "Berkas tidak sesuai";
+type VerificationStatus = ApplicantStatus;
 
 const getVerificationBadgeVariant = (status: VerificationStatus): "default" | "destructive" | "secondary" => {
     switch (status) {
