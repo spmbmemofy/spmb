@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { getUsers, addUser, updateUser, deleteUser } from "@/lib/userService";
 import { type User, type UserRole } from "@/lib/userData";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const roleDisplayNames: Record<UserRole, string> = {
   applicant: "Pendaftar",
@@ -53,7 +54,8 @@ type UserFormValues = z.infer<typeof userFormSchema>;
 
 export default function SuperadminPage() {
     const [users, setUsers] = React.useState<User[]>([]);
-    const [searchTerm, setSearchTerm] = React.useState("");
+    const [systemSearchTerm, setSystemSearchTerm] = React.useState("");
+    const [applicantSearchTerm, setApplicantSearchTerm] = React.useState("");
     const [roleFilter, setRoleFilter] = React.useState<UserRole | "all">("all");
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
     const [editingUser, setEditingUser] = React.useState<User | null>(null);
@@ -72,14 +74,23 @@ export default function SuperadminPage() {
         setUsers(getUsers());
     }, []);
 
-    const filteredUsers = React.useMemo(() => {
+    const filteredSystemUsers = React.useMemo(() => {
         return users.filter(user => {
-            const searchMatch = user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                user.username.toLowerCase().includes(searchTerm.toLowerCase());
+            if (user.role === 'applicant') return false;
+            const searchMatch = user.fullName.toLowerCase().includes(systemSearchTerm.toLowerCase()) ||
+                                user.username.toLowerCase().includes(systemSearchTerm.toLowerCase());
             const roleMatch = roleFilter === "all" || user.role === roleFilter;
             return searchMatch && roleMatch;
         });
-    }, [users, searchTerm, roleFilter]);
+    }, [users, systemSearchTerm, roleFilter]);
+
+    const filteredApplicantUsers = React.useMemo(() => {
+        return users.filter(user => {
+            if (user.role !== 'applicant') return false;
+            return user.fullName.toLowerCase().includes(applicantSearchTerm.toLowerCase()) ||
+                   user.username.toLowerCase().includes(applicantSearchTerm.toLowerCase());
+        });
+    }, [users, applicantSearchTerm]);
 
     const handleOpenDialog = (user: User | null = null) => {
         setEditingUser(user);
@@ -125,6 +136,70 @@ export default function SuperadminPage() {
         setIsDialogOpen(false);
     };
 
+    const renderUserTable = (userList: User[]) => (
+        <div className="rounded-md border">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="w-[50px] text-center">No.</TableHead>
+                        <TableHead>Nama Lengkap</TableHead>
+                        <TableHead>Username/NISN</TableHead>
+                        <TableHead>Peran</TableHead>
+                        <TableHead>Password</TableHead>
+                        <TableHead>NPSN</TableHead>
+                        <TableHead>Nama Sekolah</TableHead>
+                        <TableHead className="text-right">Aksi</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {userList.length > 0 ? (
+                        userList.map((user, index) => (
+                            <TableRow key={user.id}>
+                                <TableCell className="text-center">{index + 1}</TableCell>
+                                <TableCell className="font-medium">{user.fullName}</TableCell>
+                                <TableCell>{user.username}</TableCell>
+                                <TableCell>
+                                    <Badge variant={roleBadgeVariants[user.role]}>
+                                        {roleDisplayNames[user.role]}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>{user.password}</TableCell>
+                                <TableCell>{user.npsn || '-'}</TableCell>
+                                <TableCell>{user.namaSekolah || '-'}</TableCell>
+                                <TableCell className="text-right">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                                <span className="sr-only">Buka menu</span>
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => handleOpenDialog(user)}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                <span>Edit</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleDeleteClick(user.id)} className="text-destructive focus:text-destructive">
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                <span>Hapus</span>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                                Tidak ada pengguna yang cocok dengan kriteria.
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+        </div>
+    );
+
     return (
         <>
             <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
@@ -149,89 +224,53 @@ export default function SuperadminPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center gap-4 py-4">
-                            <div className="relative flex-1">
-                                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="Cari berdasarkan nama atau username..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
-                            <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value as UserRole | "all")}>
-                                <SelectTrigger className="w-full sm:w-[180px]">
-                                    <SelectValue placeholder="Filter berdasarkan peran" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Semua Peran</SelectItem>
-                                    {Object.entries(roleDisplayNames).map(([role, name]) => (
-                                        <SelectItem key={role} value={role}>{name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[50px] text-center">No.</TableHead>
-                                        <TableHead>Nama Lengkap</TableHead>
-                                        <TableHead>Username</TableHead>
-                                        <TableHead>Peran</TableHead>
-                                        <TableHead>Password</TableHead>
-                                        <TableHead>NPSN</TableHead>
-                                        <TableHead>Nama Sekolah</TableHead>
-                                        <TableHead className="text-right">Aksi</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredUsers.length > 0 ? (
-                                        filteredUsers.map((user, index) => (
-                                            <TableRow key={user.id}>
-                                                <TableCell className="text-center">{index + 1}</TableCell>
-                                                <TableCell className="font-medium">{user.fullName}</TableCell>
-                                                <TableCell>{user.username}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant={roleBadgeVariants[user.role]}>
-                                                        {roleDisplayNames[user.role]}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell>{user.password}</TableCell>
-                                                <TableCell>{user.npsn || '-'}</TableCell>
-                                                <TableCell>{user.namaSekolah || '-'}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <span className="sr-only">Buka menu</span>
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => handleOpenDialog(user)}>
-                                                                <Edit className="mr-2 h-4 w-4" />
-                                                                <span>Edit</span>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => handleDeleteClick(user.id)} className="text-destructive focus:text-destructive">
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                <span>Hapus</span>
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                                                Tidak ada pengguna yang cocok dengan kriteria.
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
+                        <Tabs defaultValue="system-users" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="system-users">Pengguna Sistem</TabsTrigger>
+                                <TabsTrigger value="pendaftar">Pendaftar</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="system-users" className="mt-4">
+                                <div className="flex items-center gap-4 py-4">
+                                    <div className="relative flex-1">
+                                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            placeholder="Cari berdasarkan nama atau username..."
+                                            value={systemSearchTerm}
+                                            onChange={(e) => setSystemSearchTerm(e.target.value)}
+                                            className="pl-10"
+                                        />
+                                    </div>
+                                    <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value as UserRole | "all")}>
+                                        <SelectTrigger className="w-full sm:w-[200px]">
+                                            <SelectValue placeholder="Filter berdasarkan peran" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Semua Peran Sistem</SelectItem>
+                                            {Object.entries(roleDisplayNames)
+                                                .filter(([role]) => role !== 'applicant')
+                                                .map(([role, name]) => (
+                                                    <SelectItem key={role} value={role}>{name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                {renderUserTable(filteredSystemUsers)}
+                            </TabsContent>
+                            <TabsContent value="pendaftar" className="mt-4">
+                                <div className="flex items-center gap-4 py-4">
+                                    <div className="relative flex-1">
+                                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            placeholder="Cari berdasarkan nama atau NISN..."
+                                            value={applicantSearchTerm}
+                                            onChange={(e) => setApplicantSearchTerm(e.target.value)}
+                                            className="pl-10"
+                                        />
+                                    </div>
+                                </div>
+                                {renderUserTable(filteredApplicantUsers)}
+                            </TabsContent>
+                        </Tabs>
                     </CardContent>
                 </Card>
             </div>
@@ -329,3 +368,5 @@ export default function SuperadminPage() {
         </>
     );
 }
+
+    
