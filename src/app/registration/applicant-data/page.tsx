@@ -61,6 +61,7 @@ const applicantFormSchema = z.object({
 });
 
 type ApplicantFormValues = z.infer<typeof applicantFormSchema>;
+type TabValue = "personal" | "parent" | "grades";
 
 const defaultFormValues: ApplicantFormValues = {
     fullName: '', nisn: '', nik: '', placeOfBirth: '', dateOfBirth: '', gender: 'Laki-laki', religion: '', contactNumber: '', address: '',
@@ -79,6 +80,7 @@ export default function ManagedApplicantPage() {
     const [isAlertOpen, setIsAlertOpen] = React.useState(false);
     const [applicantToDelete, setApplicantToDelete] = React.useState<ManagedApplicant | null>(null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [activeTab, setActiveTab] = React.useState<TabValue>('personal');
 
     const form = useForm<ApplicantFormValues>({
         resolver: zodResolver(applicantFormSchema),
@@ -110,6 +112,7 @@ export default function ManagedApplicantPage() {
     }, [router, toast]);
 
     const handleOpenDialog = (applicant: ManagedApplicant | null = null) => {
+        setActiveTab('personal');
         setEditingApplicant(applicant);
         if (applicant) {
             form.reset({
@@ -137,20 +140,33 @@ export default function ManagedApplicantPage() {
         setApplicantToDelete(null);
     };
 
-    const processForm = (data: ApplicantFormValues) => {
+    const processFormAndNavigate = (data: ApplicantFormValues) => {
         if (!operatorSchool) return;
         try {
             const applicantData = { ...data, asalSekolahId: operatorSchool.id };
+            let isNew = false;
             if (editingApplicant) {
                 const updated = updateManagedApplicant({ ...applicantData, id: editingApplicant.id });
                 if (updated) setApplicants(prev => prev.map(a => a.id === updated.id ? updated : a));
-                toast({ title: "Data Diperbarui" });
             } else {
                 const added = addManagedApplicant(applicantData);
                 setApplicants(prev => [...prev, added]);
-                toast({ title: "Pendaftar Ditambahkan" });
+                setEditingApplicant(added); // Transition to edit mode after creation
+                isNew = true;
             }
-            setIsDialogOpen(false);
+            
+            const tabsOrder: TabValue[] = ['personal', 'parent', 'grades'];
+            const currentTabIndex = tabsOrder.indexOf(activeTab);
+            const isLastTab = currentTabIndex === tabsOrder.length - 1;
+
+            if (isLastTab) {
+                toast({ title: "Data Disimpan", description: "Semua data pendaftar telah berhasil disimpan." });
+                setIsDialogOpen(false);
+            } else {
+                toast({ title: "Data Disimpan", description: `Data pada tab ini disimpan. Melanjutkan...` });
+                setActiveTab(tabsOrder[currentTabIndex + 1]);
+            }
+
         } catch (error: any) {
             toast({ variant: "destructive", title: "Gagal Menyimpan", description: error.message });
         }
@@ -317,8 +333,8 @@ export default function ManagedApplicantPage() {
                         <DialogTitle>{editingApplicant ? "Edit Pendaftar" : "Tambah Pendaftar Baru"}</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(processForm)} className="space-y-4 py-4 pr-2">
-                            <Tabs defaultValue="personal" className="w-full">
+                        <form onSubmit={form.handleSubmit(processFormAndNavigate)} className="space-y-4 py-4 pr-2">
+                            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)} className="w-full">
                                 <TabsList className="grid w-full grid-cols-3">
                                     <TabsTrigger value="personal">Data Diri</TabsTrigger>
                                     <TabsTrigger value="parent">Data Orang Tua</TabsTrigger>
@@ -379,7 +395,9 @@ export default function ManagedApplicantPage() {
                             </Tabs>
                             <DialogFooter className="pt-4">
                                 <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
-                                <Button type="submit">Simpan</Button>
+                                <Button type="submit">
+                                    {activeTab === 'grades' ? 'Simpan' : 'Simpan dan lanjutkan'}
+                                </Button>
                             </DialogFooter>
                         </form>
                     </Form>
@@ -400,4 +418,5 @@ export default function ManagedApplicantPage() {
             </AlertDialog>
         </>
     );
-}
+
+    
