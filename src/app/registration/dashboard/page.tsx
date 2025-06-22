@@ -77,17 +77,10 @@ const subdistrictOptions = [
 
 const districtOptions = [
   { value: "Kabupaten Berau", label: "Kabupaten Berau" },
-  { value: "Kota Samarinda", label: "Kota Samarinda" },
-  { value: "Kota Balikpapan", label: "Kota Balikpapan" },
-  { value: "Kabupaten Kutai Kartanegara", label: "Kabupaten Kutai Kartanegara" },
 ];
 
 const provinceOptions = [
   { value: "Kalimantan Timur 77311", label: "Kalimantan Timur 77311" },
-  { value: "Kalimantan Timur 75111", label: "Kalimantan Timur 75111 (Samarinda)" },
-  { value: "Kalimantan Utara 77111", label: "Kalimantan Utara 77111" },
-  { value: "Jawa Timur 60234", label: "Jawa Timur 60234" },
-  { value: "DKI Jakarta 10110", label: "DKI Jakarta 10110" },
 ];
 
 
@@ -277,11 +270,10 @@ const personalInfoEditableFields: Array<{ key: BiodataKeys; label: string; type?
     { key: "dateOfBirth", label: "Tanggal Lahir", type: "date" },
     { key: "gender", label: "Jenis Kelamin", selectOptions: genderOptions },
     { key: "religion", label: "Agama", selectOptions: religionOptions },
-    { key: "streetName", label: "Nama Jalan" },
+    { key: "streetName", label: "Nama Jalan & No. Rumah" },
     { key: "rtRw", label: "RT/RW" },
     { key: "village", label: "Kelurahan/Desa", selectOptions: villageOptions },
     { key: "subdistrict", label: "Kecamatan", selectOptions: subdistrictOptions },
-    { key: "district", label: "Kabupaten/Kota", selectOptions: districtOptions },
     { key: "province", label: "Provinsi & Kode Pos", selectOptions: provinceOptions },
     { key: "previousSchool", label: "Sekolah Asal" },
     { key: "contactNumber", label: "Nomor Kontak (Siswa/Orang Tua)", type: "tel" },
@@ -569,6 +561,7 @@ function ApplicantDashboard() {
                   selectOptions={field.selectOptions}
                 />
               ))}
+              <BiodataItem label="Kabupaten/Kota" value="Kabupaten Berau" />
             </div>
           </section>
 
