@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,37 +11,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp, Printer, AlertCircle } from 'lucide-react';
 import { getSchoolById, type School } from "@/lib/schoolService"; 
-import { getFromLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
+import { getFromLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
+import { getApplicants, type Applicant } from "@/lib/applicantService";
 import { type SchoolSelection, type ApplicantStatus } from "@/lib/types";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
+const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 
-const biodataDetailsMock = {
-  fullName: "Muhammad Rizky Pratama",
-  nisn: "0056789123",
-  nik: "6403011507050002",
-  placeOfBirth: "Tanjung Redeb",
-  dateOfBirth: "2008-07-15",
-  gender: "Laki-laki",
-  religion: "Islam",
-  streetName: "Jl. Durian III No. 25",
-  rtRw: "RT 10 RW 03",
-  village: "Kel. Tanjung Redeb",
-  subdistrict: "Kec. Tanjung Redeb",
-  district: "Kabupaten Berau",
-  province: "Kalimantan Timur 77311",
-  previousSchool: "SMP Negeri 1 Tanjung Redeb",
-  fatherName: "Abdullah Siregar",
-  fatherDateOfBirth: "1975-03-20",
-  fatherOccupation: "Wiraswasta",
-  fatherIncome: "Rp 7.500.000 - Rp 15.000.000",
-  motherName: "Siti Fatimah",
-  motherDateOfBirth: "1980-08-10",
-  motherOccupation: "Ibu Rumah Tangga",
-  motherIncome: "-",
-  guardianName: "-",
-  contactNumber: "081254321098",
-};
 
 interface BiodataDisplayItemProps {
   label: string;
@@ -103,7 +79,9 @@ const getVerificationBadgeVariant = (status: VerificationStatus): "default" | "d
     }
 };
 
-const ActivityHistoryTimeline: React.FC<{ status: VerificationStatus }> = ({ status }) => {
+const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ applicant }) => {
+  if (!applicant) return null;
+
   const pendaftaranSelesai = (
     <li key="pendaftaran-selesai" className="flex gap-4">
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 flex-shrink-0 mt-1">
@@ -137,7 +115,7 @@ const ActivityHistoryTimeline: React.FC<{ status: VerificationStatus }> = ({ sta
       </div>
       <div className="flex-1">
         <p className="font-semibold">Berkas Ditolak</p>
-        <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> menolak berkas dengan alasan: "Foto Kartu Keluarga (KK) buram dan tidak terbaca."</p>
+        <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> menolak berkas dengan alasan: <span className="italic">"{applicant.rejectionReason || 'Tidak ada alasan spesifik yang diberikan.'}"</span></p>
         <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 14:00 WIB</p>
       </div>
     </li>
@@ -150,7 +128,7 @@ const ActivityHistoryTimeline: React.FC<{ status: VerificationStatus }> = ({ sta
         </div>
         <div className="flex-1">
             <p className="font-semibold">Perbaikan Berkas Selesai</p>
-            <p className="text-sm text-muted-foreground">Anda berhasil mengunggah ulang berkas Kartu Keluarga (KK) yang telah diperbaiki.</p>
+            <p className="text-sm text-muted-foreground">Anda berhasil mengunggah ulang berkas yang diperlukan.</p>
             <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 09:15 WIB</p>
         </div>
     </li>
@@ -183,56 +161,65 @@ const ActivityHistoryTimeline: React.FC<{ status: VerificationStatus }> = ({ sta
   );
 
   let historyItems: React.ReactNode[] = [];
-  switch (status) {
+  switch (applicant.statusVerifikasi) {
     case 'Terverifikasi':
-      historyItems = [pendaftaranSelesai, berkasDitolak, perbaikanBerkas, verifikasiUlang, peringkatDiperbarui];
+      // This is a more realistic timeline for a re-verified user
+      historyItems = [pendaftaranSelesai, sedangDitinjau, berkasDitolak, perbaikanBerkas, verifikasiUlang, peringkatDiperbarui];
       break;
     case 'Berkas tidak sesuai':
-      historyItems = [pendaftaranSelesai, berkasDitolak];
+      historyItems = [pendaftaranSelesai, sedangDitinjau, berkasDitolak];
       break;
     case 'Menunggu Verifikasi':
       historyItems = [pendaftaranSelesai, sedangDitinjau];
       break;
   }
   
-  return <ul className="space-y-6">{historyItems}</ul>;
+  return <ul className="space-y-6">{historyItems.reverse()}</ul>;
 };
 
 export default function StatusPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const selectedPathway = searchParams.get("pathway");
-  const uploadedDocsString = searchParams.get("docs");
-
+  const [isLoading, setIsLoading] = React.useState(true);
+  
+  const [applicant, setApplicant] = React.useState<Applicant | null>(null);
+  const [biodata, setBiodata] = React.useState<BiodataDetails | null>(null);
   const [displaySelections, setDisplaySelections] = React.useState<DisplaySelection[]>([]);
   const [documentsToShow, setDocumentsToShow] = React.useState<DocumentItem[]>([]);
   const [uploadedDocIds, setUploadedDocIds] = React.useState<string[]>([]);
-  
-  const [storedPathway, setStoredPathway] = React.useState<string | undefined>();
-  
-  const applicationVerificationStatus: VerificationStatus = "Berkas tidak sesuai";
 
   React.useEffect(() => {
-    let pathway = selectedPathway;
-    let schoolSelections: SchoolSelection[] = [];
+    const loginCreds = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
+    if (!loginCreds?.username) {
+        router.replace('/');
+        return;
+    }
 
-    const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
-    if (savedProgress) {
-        pathway = pathway || savedProgress.pathway;
-        schoolSelections = savedProgress.schoolSelections || [];
+    const allApplicants = getApplicants();
+    const currentApplicant = allApplicants.find(app => app.nisn === loginCreds.username);
+    
+    if (!currentApplicant) {
+        setIsLoading(false);
+        return;
     }
     
-    setStoredPathway(pathway);
+    setApplicant(currentApplicant);
 
+    const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+
+    if (savedProgress?.biodata) {
+        setBiodata(savedProgress.biodata);
+    }
+    
+    const schoolSelections = currentApplicant.schoolSelections || [];
     if (schoolSelections.length > 0) {
       const populatedSelections: DisplaySelection[] = schoolSelections.map(selection => {
         const school = getSchoolById(selection.schoolId);
         return { school: school!, major: selection.major };
       }).filter(item => item.school); 
-
       setDisplaySelections(populatedSelections);
     }
 
+    const pathway = currentApplicant.jalur;
     let docsForPathway: DocumentItem[] = [];
     if (pathway) {
       const pathwayDocs = pathwaySpecificDocumentsMapConst[pathway] || [];
@@ -242,15 +229,22 @@ export default function StatusPage() {
     }
     setDocumentsToShow(docsForPathway);
     
-    if (uploadedDocsString) {
-      setUploadedDocIds(uploadedDocsString.split(','));
-    } else if (savedProgress?.documentMetadata) {
+    if (savedProgress?.documentMetadata) {
         setUploadedDocIds(Object.keys(savedProgress.documentMetadata).filter(k => savedProgress.documentMetadata![k] !== null));
     }
 
-  }, [selectedPathway, uploadedDocsString]);
+    setIsLoading(false);
+  }, [router]);
   
-  if (!storedPathway || displaySelections.length === 0) {
+  if (isLoading) {
+    return (
+        <div className="flex flex-1 items-center justify-center p-4">
+            <p>Memuat status pendaftaran...</p>
+        </div>
+    );
+  }
+
+  if (!applicant || displaySelections.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-4 sm:p-6 md:p-8">
         <Card className="w-full max-w-lg text-center">
@@ -260,7 +254,7 @@ export default function StatusPage() {
             </div>
             <CardTitle className="text-xl sm:text-2xl">Informasi Tidak Lengkap</CardTitle>
             <CardDescription>
-              Tidak dapat menampilkan status pendaftaran karena informasi jalur atau sekolah tidak ditemukan.
+              Tidak dapat menampilkan status pendaftaran karena data pendaftaran Anda belum lengkap atau belum dikirimkan.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -296,10 +290,10 @@ export default function StatusPage() {
               Detail Biodata Pendaftar
             </h3>
             <div className="space-y-1 rounded-md border p-4">
-              <BiodataDisplayItem label="Nama Lengkap" value={biodataDetailsMock.fullName} />
-              <BiodataDisplayItem label="NISN" value={biodataDetailsMock.nisn} />
-              <BiodataDisplayItem label="NIK" value={biodataDetailsMock.nik} />
-              <BiodataDisplayItem label="Sekolah Asal" value={biodataDetailsMock.previousSchool} />
+              <BiodataDisplayItem label="Nama Lengkap" value={biodata?.fullName || applicant.fullName} />
+              <BiodataDisplayItem label="NISN" value={biodata?.nisn || applicant.nisn} />
+              <BiodataDisplayItem label="NIK" value={biodata?.nik} />
+              <BiodataDisplayItem label="Sekolah Asal" value={biodata?.previousSchool || applicant.asalSekolahNama} />
             </div>
           </section>
 
@@ -311,16 +305,16 @@ export default function StatusPage() {
              <p className="text-sm text-muted-foreground mb-4">
                 Status verifikasi ditentukan oleh sekolah pilihan pertama Anda dan berlaku untuk semua pilihan di bawahnya.
             </p>
-            {applicationVerificationStatus === 'Berkas tidak sesuai' && (
+            {applicant.statusVerifikasi === 'Berkas tidak sesuai' && (
               <Alert variant="destructive" className="mb-6">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Verifikasi Gagal: Berkas Tidak Sesuai</AlertTitle>
                 <AlertDescription>
-                  Pendaftaran Anda tidak dapat diproses lebih lanjut karena ada berkas yang ditolak oleh verifikator. Silakan perbaiki berkas yang diperlukan.
+                  Pendaftaran Anda tidak dapat diproses lebih lanjut karena ada berkas yang ditolak oleh verifikator. Alasan: <span className="italic">"{applicant.rejectionReason || 'Tidak ada alasan spesifik'}"</span>
                 </AlertDescription>
                  <div className="mt-4">
                     <Button variant="outline" size="sm" asChild className="border-current text-current hover:bg-destructive/10">
-                        <Link href={`/registration/document-upload?pathway=${storedPathway}`}>
+                        <Link href={`/registration/document-upload?pathway=${applicant.jalur}`}>
                             <FileUp className="mr-2 h-4 w-4" />
                             Perbaiki Berkas Sekarang
                         </Link>
@@ -341,8 +335,8 @@ export default function StatusPage() {
                     <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-4 text-sm">
                         <div>
                             <p className="font-medium text-muted-foreground mb-1">Status</p>
-                            <Badge variant={getVerificationBadgeVariant(applicationVerificationStatus)} className="font-semibold text-base px-3 py-1">
-                                {applicationVerificationStatus}
+                            <Badge variant={getVerificationBadgeVariant(applicant.statusVerifikasi)} className="font-semibold text-base px-3 py-1">
+                                {applicant.statusVerifikasi}
                             </Badge>
                         </div>
                         <div>
@@ -367,7 +361,7 @@ export default function StatusPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
-                  <ActivityHistoryTimeline status={applicationVerificationStatus} />
+                  <ActivityHistoryTimeline applicant={applicant} />
                 </div>
                 <DialogFooter>
                   <Button asChild>
@@ -380,7 +374,7 @@ export default function StatusPage() {
             <div className="space-y-4">
                 <div className="flex justify-between items-center rounded-md border p-4 bg-muted/30">
                     <span className="font-medium text-muted-foreground">Jalur Pendaftaran:</span>
-                    <span className="font-semibold text-lg text-primary">{storedPathway || "Tidak Diketahui"}</span>
+                    <span className="font-semibold text-lg text-primary">{applicant.jalur || "Tidak Diketahui"}</span>
                 </div>
                 {displaySelections.map(({ school, major }, index) => {
                     let rankStatus: string;
@@ -388,7 +382,7 @@ export default function StatusPage() {
                     let rankText: string;
                     let quotaInfo: string;
 
-                    switch (applicationVerificationStatus) {
+                    switch (applicant.statusVerifikasi) {
                         case "Berkas tidak sesuai":
                             rankStatus = 'Pendaftaran Ditolak';
                             rankStatusVariant = 'destructive';
@@ -403,13 +397,19 @@ export default function StatusPage() {
                             break;
                         case "Terverifikasi":
                         default:
-                            const pathwayKey = (storedPathway?.toLowerCase() || '') as keyof typeof school.jalurKuota;
+                            const pathwayKey = (applicant.jalur.toLowerCase() || '') as keyof NonNullable<typeof school.jalurKuota>;
                             const quota = school.jalurKuota ? (school.jalurKuota[pathwayKey] || 0) : 0;
-                            const rank = quota > 0 ? Math.floor(Math.random() * (quota + 20)) + 1 : Math.floor(Math.random() * 20) + 1;
-                            const isWithinQuota = rank <= quota && quota > 0;
-                            rankStatus = isWithinQuota ? "Memenuhi Peringkat" : "Di Luar Peringkat";
-                            rankStatusVariant = isWithinQuota ? "default" : "destructive";
-                            rankText = quota > 0 ? `${rank} / ${quota}` : '-';
+                            const rank = applicant.peringkat;
+                            const isWithinQuota = rank && quota > 0 ? rank <= quota : false;
+                            
+                            if (!rank) {
+                                rankStatus = 'Peringkat Belum Tersedia';
+                                rankStatusVariant = 'secondary';
+                            } else {
+                                rankStatus = isWithinQuota ? "Memenuhi Peringkat" : "Di Luar Peringkat";
+                                rankStatusVariant = isWithinQuota ? "default" : "destructive";
+                            }
+                            rankText = quota > 0 && rank ? `${rank} / ${quota}` : '-';
                             quotaInfo = `Kuota Jalur: ${quota}`;
                             break;
                     }
@@ -453,12 +453,17 @@ export default function StatusPage() {
               {documentsToShow.length > 0 ? (
                 documentsToShow.map(doc => {
                   const isUploaded = uploadedDocIds.includes(doc.id);
+                  const isInvalid = applicant.documentStatuses?.[doc.id] === 'invalid';
                   
                   let icon;
                   let badgeVariant: "default" | "destructive" | "secondary" = "secondary";
                   let statusText = "";
 
-                  if (isUploaded) {
+                  if (isInvalid) {
+                     icon = <AlertCircle className="h-5 w-5 mr-2 text-destructive" />;
+                     badgeVariant = "destructive";
+                     statusText = "Ditolak";
+                  } else if (isUploaded) {
                     icon = <FileCheck2 className="h-5 w-5 mr-2 text-green-600" />;
                     badgeVariant = "default";
                     statusText = "Terunggah";
