@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import * as xlsx from "xlsx";
-import { Users, MoreHorizontal, Edit, Trash2, PlusCircle, Upload } from 'lucide-react';
+import { Users, MoreHorizontal, Edit, Trash2, PlusCircle, Upload, CheckCircle } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { getSchoolByNPSN, type School } from "@/lib/schoolService";
-import { getUsers } from "@/lib/userService";
+import { getUsers, addUser } from "@/lib/userService";
 import { getManagedApplicants, addManagedApplicant, updateManagedApplicant, deleteManagedApplicant } from "@/lib/managedApplicantService";
 import type { ManagedApplicant, ExcelRow } from "@/lib/types";
 import { addressData, getDistricts, getSubdistricts, getVillages } from "@/lib/addressData";
@@ -88,6 +88,9 @@ export default function ManagedApplicantPage() {
     const [applicantToDelete, setApplicantToDelete] = React.useState<ManagedApplicant | null>(null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = React.useState<TabValue>('personal');
+    
+    const [isSuccessDialogOpen, setIsSuccessDialogOpen] = React.useState(false);
+    const [newAccountInfo, setNewAccountInfo] = React.useState({ username: '', password: '' });
 
     const form = useForm<ApplicantFormValues>({
         resolver: zodResolver(applicantFormSchema),
@@ -163,14 +166,35 @@ export default function ManagedApplicantPage() {
         try {
             const applicantData = { ...data, asalSekolahId: operatorSchool.id };
             let isNew = false;
+            
             if (editingApplicant) {
                 const updated = updateManagedApplicant({ ...applicantData, id: editingApplicant.id });
                 if (updated) setApplicants(prev => prev.map(a => a.id === updated.id ? updated : a));
             } else {
+                isNew = true;
                 const added = addManagedApplicant(applicantData);
                 setApplicants(prev => [...prev, added]);
-                setEditingApplicant(added); // Transition to edit mode after creation
-                isNew = true;
+                setEditingApplicant(added);
+                
+                // Auto-create user account
+                try {
+                    const password = 'password123'; // Default demo password
+                    addUser({
+                        fullName: data.fullName,
+                        username: data.nisn,
+                        password: password,
+                        role: 'applicant'
+                    });
+                    setNewAccountInfo({ username: data.nisn, password });
+                } catch (userError: any) {
+                    if (userError.message.includes('sudah ada')) {
+                        const existingUser = getUsers().find(u => u.username === data.nisn);
+                        setNewAccountInfo({ username: data.nisn, password: existingUser?.password || 'N/A' });
+                        toast({ title: "Info Akun", description: "Akun untuk pendaftar ini sudah ada." });
+                    } else {
+                        throw userError;
+                    }
+                }
             }
             
             const tabsOrder: TabValue[] = ['personal', 'parent', 'grades'];
@@ -180,6 +204,9 @@ export default function ManagedApplicantPage() {
             if (isLastTab) {
                 toast({ title: "Data Disimpan", description: "Semua data pendaftar telah berhasil disimpan." });
                 setIsDialogOpen(false);
+                if (isNew) {
+                    setIsSuccessDialogOpen(true);
+                }
             } else {
                 toast({ title: "Data Disimpan", description: `Data pada tab ini disimpan. Melanjutkan...` });
                 setActiveTab(tabsOrder[currentTabIndex + 1]);
@@ -446,6 +473,32 @@ export default function ManagedApplicantPage() {
                     <AlertDialogFooter>
                         <AlertDialogCancel>Batal</AlertDialogCancel>
                         <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive hover:bg-destructive/90">Ya, Hapus</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            
+            <AlertDialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                           <CheckCircle className="h-6 w-6 text-green-600" /> Akun Pendaftar Berhasil Dibuat
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Akun untuk pendaftar telah berhasil dibuat. Harap berikan informasi login berikut kepada siswa yang bersangkutan.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="py-4 space-y-2">
+                        <div className="flex justify-between items-center bg-muted p-3 rounded-md">
+                            <span className="font-medium text-muted-foreground">Username (NISN)</span>
+                            <span className="font-mono font-bold">{newAccountInfo.username}</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-muted p-3 rounded-md">
+                            <span className="font-medium text-muted-foreground">Password</span>
+                            <span className="font-mono font-bold">{newAccountInfo.password}</span>
+                        </div>
+                    </div>
+                    <AlertDialogFooter>
+                        <AlertDialogAction onClick={() => setIsSuccessDialogOpen(false)}>Tutup</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

@@ -14,6 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { useToast } from "@/hooks/use-toast";
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
 import { addressData, getDistricts, getSubdistricts, getVillages } from "@/lib/addressData";
+import { getManagedApplicants } from "@/lib/managedApplicantService";
+import { getSchoolById } from "@/lib/schoolService";
+
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
@@ -252,39 +255,28 @@ function ApplicantDashboard() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(true);
   const [isConfirmed, setIsConfirmed] = React.useState(false);
-  const [biodata, setBiodata] = React.useState<BiodataDetails>(initialBiodataDetails);
+  const [biodata, setBiodata] = React.useState<BiodataDetails | null>(null);
   
   const [editingPersonalField, setEditingPersonalField] = React.useState<BiodataKeys | null>(null);
   const [currentPersonalFieldValue, setCurrentPersonalFieldValue] = React.useState<string>("");
 
   const [isEditingParentInfo, setIsEditingParentInfo] = React.useState(false);
   const [editableParentInfo, setEditableParentInfo] = React.useState({
-    fatherName: initialBiodataDetails.fatherName,
-    fatherDateOfBirth: initialBiodataDetails.fatherDateOfBirth,
-    fatherOccupation: initialBiodataDetails.fatherOccupation,
-    fatherIncome: initialBiodataDetails.fatherIncome,
-    motherName: initialBiodataDetails.motherName,
-    motherDateOfBirth: initialBiodataDetails.motherDateOfBirth,
-    motherOccupation: initialBiodataDetails.motherOccupation,
-    motherIncome: initialBiodataDetails.motherIncome,
-    guardianName: initialBiodataDetails.guardianName,
+    fatherName: "", fatherDateOfBirth: "", fatherOccupation: "", fatherIncome: "",
+    motherName: "", motherDateOfBirth: "", motherOccupation: "", motherIncome: "",
+    guardianName: "",
   });
 
   const [isEditingAddress, setIsEditingAddress] = React.useState(false);
   const [editableAddress, setEditableAddress] = React.useState({
-    streetName: biodata.streetName,
-    rtRw: biodata.rtRw,
-    province: biodata.province,
-    district: biodata.district,
-    subdistrict: biodata.subdistrict,
-    village: biodata.village,
+    streetName: "", rtRw: "", province: "", district: "", subdistrict: "", village: "",
   });
 
   const [profilePhoto, setProfilePhoto] = React.useState<string | null>(null);
   const [persistedPhotoUploaded, setPersistedPhotoUploaded] = React.useState<boolean>(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const semesterKeys: (keyof typeof initialBiodataDetails.semesterGrades)[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
+  const semesterKeys: (keyof BiodataDetails['semesterGrades'])[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
   const semesterLabels = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5"];
   
   const provinceOptions = Object.keys(addressData);
@@ -294,31 +286,65 @@ function ApplicantDashboard() {
 
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
-    if (savedProgress) {
-        if (savedProgress.hasProfilePhoto) {
-            setPersistedPhotoUploaded(true);
-        }
-        if (savedProgress.profilePhotoDataUri) {
-            setProfilePhoto(savedProgress.profilePhotoDataUri);
-        }
-        if (savedProgress.biodata) {
-            setBiodata(savedProgress.biodata);
-        } else {
-             saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
-                ...savedProgress,
-                biodata: initialBiodataDetails,
-            });
-        }
-    } else {
-         saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
-            biodata: initialBiodataDetails,
-        });
+
+    if (savedProgress?.biodata) {
+      setBiodata(savedProgress.biodata);
+      if (savedProgress.profilePhotoDataUri) setProfilePhoto(savedProgress.profilePhotoDataUri);
+      if (savedProgress.hasProfilePhoto) setPersistedPhotoUploaded(true);
+      setIsLoading(false);
+      return;
     }
+
+    const loggedInUser = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
+    if (loggedInUser?.username) {
+      const managedApplicants = getManagedApplicants();
+      const studentData = managedApplicants.find(app => app.nisn === loggedInUser.username);
+
+      if (studentData) {
+        const school = getSchoolById(studentData.asalSekolahId);
+        const initialData: BiodataDetails = {
+          fullName: studentData.fullName,
+          nisn: studentData.nisn,
+          nik: studentData.nik || '',
+          placeOfBirth: studentData.placeOfBirth || '',
+          dateOfBirth: studentData.dateOfBirth || '',
+          gender: studentData.gender,
+          religion: studentData.religion || '',
+          streetName: studentData.streetName || '',
+          rtRw: studentData.rtRw || '',
+          village: studentData.village || '',
+          subdistrict: studentData.subdistrict || '',
+          district: studentData.district || 'Kabupaten Berau',
+          province: studentData.province || 'Kalimantan Timur',
+          previousSchool: school?.namaSekolah || 'Sekolah tidak terdaftar',
+          fatherName: studentData.fatherName || '',
+          fatherDateOfBirth: '',
+          fatherOccupation: studentData.fatherOccupation || '',
+          fatherIncome: studentData.fatherIncome || '',
+          motherName: studentData.motherName || '',
+          motherDateOfBirth: '',
+          motherOccupation: studentData.motherOccupation || '',
+          motherIncome: studentData.motherIncome || '',
+          guardianName: studentData.guardianName || '',
+          contactNumber: studentData.contactNumber || '',
+          semesterGrades: studentData.semesterGrades,
+        };
+        setBiodata(initialData);
+        saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, { ...savedProgress, biodata: initialData });
+      } else {
+        setBiodata(initialBiodataDetails);
+        saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, { ...savedProgress, biodata: initialBiodataDetails });
+      }
+    } else {
+      setBiodata(initialBiodataDetails);
+      saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, { ...savedProgress, biodata: initialBiodataDetails });
+    }
+
     setIsLoading(false);
   }, []);
   
   React.useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || !biodata) return;
 
     const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
     saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
@@ -328,9 +354,9 @@ function ApplicantDashboard() {
   }, [biodata, isLoading]);
 
   const overallTableValue = React.useMemo(() => {
-    if (!biodata.semesterGrades) return "0.00";
+    if (!biodata?.semesterGrades) return "0.00";
     return Object.values(biodata.semesterGrades).reduce((sum, avg) => sum + avg, 0).toFixed(2);
-  }, [biodata.semesterGrades]);
+  }, [biodata?.semesterGrades]);
 
 
   const handleStartEditPersonalField = (fieldKey: BiodataKeys, currentValue: string) => {
@@ -347,7 +373,7 @@ function ApplicantDashboard() {
   };
 
   const handleSavePersonalField = (fieldKey: BiodataKeys) => {
-    setBiodata(prev => ({ ...prev, [fieldKey]: currentPersonalFieldValue }));
+    setBiodata(prev => (prev ? { ...prev, [fieldKey]: currentPersonalFieldValue } : null));
     setEditingPersonalField(null);
     setCurrentPersonalFieldValue("");
     const fieldLabel = personalInfoEditableFields.find(f => f.key === fieldKey)?.label || fieldKey;
@@ -387,7 +413,7 @@ function ApplicantDashboard() {
   };
 
   const handleEditParentInfo = () => {
-    if (editingPersonalField || isEditingAddress) {
+    if (editingPersonalField || isEditingAddress || !biodata) {
       toast({ variant: "destructive", title: "Selesaikan Edit Dahulu", description: "Harap simpan atau batalkan perubahan lain sebelum menyunting info orang tua." });
       return;
     }
@@ -406,7 +432,7 @@ function ApplicantDashboard() {
   };
   
   const handleEditAddress = () => {
-    if (editingPersonalField || isEditingParentInfo) {
+    if (editingPersonalField || isEditingParentInfo || !biodata) {
       toast({ variant: "destructive", title: "Selesaikan Edit Dahulu", description: "Harap simpan atau batalkan perubahan lain sebelum menyunting alamat." });
       return;
     }
@@ -426,10 +452,7 @@ function ApplicantDashboard() {
   };
 
   const handleSaveParentInfo = () => {
-    setBiodata(prev => ({
-      ...prev,
-      ...editableParentInfo,
-    }));
+    setBiodata(prev => (prev ? { ...prev, ...editableParentInfo } : null));
     setIsEditingParentInfo(false);
     toast({
       title: "Informasi Orang Tua Disimpan",
@@ -459,7 +482,7 @@ function ApplicantDashboard() {
   };
   
   const handleSaveAddress = () => {
-    setBiodata(prev => ({...prev, ...editableAddress}));
+    setBiodata(prev => (prev ? {...prev, ...editableAddress} : null));
     setIsEditingAddress(false);
     toast({ title: "Alamat Diperbarui", description: "Informasi alamat Anda telah berhasil disimpan." });
   };
@@ -513,7 +536,7 @@ function ApplicantDashboard() {
 
   const isAnyFieldBeingEdited = isEditingParentInfo || editingPersonalField !== null || isEditingAddress;
   
-  if (isLoading) {
+  if (isLoading || !biodata) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-4">
         <p>Memuat data Anda...</p>
@@ -735,7 +758,7 @@ function ApplicantDashboard() {
                   {semesterKeys.map((key, index) => (
                     <TableRow key={key}>
                       <TableCell className="font-medium">{semesterLabels[index]}</TableCell>
-                      <TableCell className="text-right font-medium">{biodata.semesterGrades[key].toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-medium">{biodata.semesterGrades[key as keyof typeof biodata.semesterGrades].toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

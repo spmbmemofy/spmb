@@ -21,6 +21,9 @@ export function getUsers(): User[] {
 
 export function addUser(newUser: Omit<User, 'id'>): User {
   const users = getUsers();
+  if (users.some(u => u.username.toLowerCase() === newUser.username.toLowerCase())) {
+    throw new Error('Pengguna dengan username yang sama sudah ada.');
+  }
   const userWithId: User = { ...newUser, id: `user-${Date.now()}` };
   const updatedUsers = [...users, userWithId];
   saveToLocalStorage(USERS_STORAGE_KEY, updatedUsers);
