@@ -44,12 +44,17 @@ export default function HomePage() {
       return {
         totalPendaftar: 0,
         kuotaTerisi: 0,
+        totalKuota: 0,
         persentaseKuota: "0.0",
         sekolahTujuanTeratas: '-',
         sekolahAsalTeratas: '-',
         menungguVerifikasi: 0,
         jalurFavorit: '-',
         jalurDistribution: [],
+        terverifikasi: 0,
+        jumlahSiswa: 0,
+        belumAktivasi: 0,
+        belumMendaftar: 0,
       };
     }
 
@@ -77,7 +82,27 @@ export default function HomePage() {
 
     const jalurDistribution = Object.entries(jalurCounts).map(([name, value]) => ({ name, value, fill: `var(--color-${name.toLowerCase()})` }));
 
-    return { totalPendaftar, kuotaTerisi, totalKuota, persentaseKuota, sekolahTujuanTeratas, sekolahAsalTeratas, menungguVerifikasi, jalurFavorit, jalurDistribution };
+    // New calculations for the new table
+    const terverifikasi = allApplicants.filter(app => app.statusVerifikasi === 'Terverifikasi').length;
+    const jumlahSiswa = totalPendaftar;
+    const belumAktivasi = 0; // Placeholder as data is not available
+    const belumMendaftar = 0; // Placeholder as data is not available
+
+    return { 
+        totalPendaftar, 
+        kuotaTerisi, 
+        totalKuota, 
+        persentaseKuota, 
+        sekolahTujuanTeratas, 
+        sekolahAsalTeratas, 
+        menungguVerifikasi, 
+        jalurFavorit, 
+        jalurDistribution,
+        terverifikasi,
+        jumlahSiswa,
+        belumAktivasi,
+        belumMendaftar,
+    };
   }, [allApplicants]);
   
   const pieChartConfig = {
@@ -107,6 +132,41 @@ export default function HomePage() {
   return (
     <div className="flex flex-1 flex-col p-4 sm:p-6 md:p-8 space-y-6">
       <h1 className="text-2xl sm:text-3xl font-bold font-headline">Beranda Dasbor</h1>
+
+      <section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Ringkasan Status Pendaftar</CardTitle>
+            <CardDescription>
+              Ringkasan keseluruhan status pendaftar dalam sistem.
+              <br />
+              <span className="text-xs text-muted-foreground">*Data 'Belum Aktivasi' dan 'Belum Mendaftar' adalah placeholder karena tidak tersedia di sistem saat ini.</span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-center">Jumlah Siswa</TableHead>
+                  <TableHead className="text-center">Belum Aktivasi</TableHead>
+                  <TableHead className="text-center">Belum Mendaftar</TableHead>
+                  <TableHead className="text-center">Menunggu Verifikasi</TableHead>
+                  <TableHead className="text-center">Terverifikasi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="text-center text-lg font-bold">{stats.jumlahSiswa}</TableCell>
+                  <TableCell className="text-center text-lg font-bold">{stats.belumAktivasi}</TableCell>
+                  <TableCell className="text-center text-lg font-bold">{stats.belumMendaftar}</TableCell>
+                  <TableCell className="text-center text-lg font-bold">{stats.menungguVerifikasi}</TableCell>
+                  <TableCell className="text-center text-lg font-bold">{stats.terverifikasi}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </section>
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Card className="xl:col-span-1">
