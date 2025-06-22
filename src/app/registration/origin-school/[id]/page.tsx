@@ -4,7 +4,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, BookOpen as OriginSchoolIcon, Users, Filter as FilterIcon, Search as SearchIcon, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Building } from "lucide-react";
+import { ArrowLeft, BookOpen as OriginSchoolIcon, Users, Filter as FilterIcon, Search as SearchIcon, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Building, PieChart } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -61,6 +61,44 @@ export default function OriginSchoolDetailPage() {
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedSekolahTujuan, selectedJalur, selectedStatus, pageSize]);
+
+  const schoolSummary = React.useMemo(() => {
+    if (!applicants.length) return [];
+
+    const summaryMap = new Map<string, {
+        sekolahTujuanId: string;
+        sekolahTujuanNama: string;
+        total: number;
+        terverifikasi: number;
+        menunggu: number;
+        tidakSesuai: number;
+    }>();
+
+    for (const applicant of applicants) {
+        if (!summaryMap.has(applicant.sekolahTujuanNama)) {
+            summaryMap.set(applicant.sekolahTujuanNama, {
+                sekolahTujuanId: applicant.sekolahTujuanId,
+                sekolahTujuanNama: applicant.sekolahTujuanNama,
+                total: 0,
+                terverifikasi: 0,
+                menunggu: 0,
+                tidakSesuai: 0,
+            });
+        }
+
+        const stats = summaryMap.get(applicant.sekolahTujuanNama)!;
+        stats.total++;
+        if (applicant.statusVerifikasi === 'Terverifikasi') {
+            stats.terverifikasi++;
+        } else if (applicant.statusVerifikasi === 'Menunggu Verifikasi') {
+            stats.menunggu++;
+        } else if (applicant.statusVerifikasi === 'Berkas tidak sesuai') {
+            stats.tidakSesuai++;
+        }
+    }
+
+    return Array.from(summaryMap.values()).sort((a, b) => b.total - a.total);
+  }, [applicants]);
 
   const filteredApplicants = React.useMemo(() => {
     return applicants.filter(applicant => {
@@ -175,6 +213,49 @@ export default function OriginSchoolDetailPage() {
               <div><span className="font-medium text-muted-foreground">Status Sekolah:</span> {originSchool.status}</div>
               <div><span className="font-medium text-muted-foreground">Akreditasi:</span> {originSchool.akreditasi}</div>
               <div><span className="font-medium text-muted-foreground">Jumlah Pendaftar dari Sekolah Ini:</span> {originSchool.jumlahPendaftar}</div>
+            </div>
+          </section>
+
+          <section className="border rounded-lg p-4 space-y-4">
+            <div className="flex items-center space-x-2">
+                <PieChart className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold text-primary">Ringkasan Pilihan Sekolah Tujuan</h3>
+            </div>
+            <div className="overflow-x-auto rounded-md border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Sekolah Tujuan</TableHead>
+                            <TableHead className="text-center">Total Pendaftar</TableHead>
+                            <TableHead className="text-center">Terverifikasi</TableHead>
+                            <TableHead className="text-center">Menunggu</TableHead>
+                            <TableHead className="text-center">Ditolak</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {schoolSummary.length > 0 ? (
+                            schoolSummary.map((summary) => (
+                                <TableRow key={summary.sekolahTujuanId}>
+                                    <TableCell className="font-medium">
+                                        <Link href={`/registration/school/${summary.sekolahTujuanId}`} className="hover:underline text-primary">
+                                            {summary.sekolahTujuanNama}
+                                        </Link>
+                                    </TableCell>
+                                    <TableCell className="text-center font-bold">{summary.total}</TableCell>
+                                    <TableCell className="text-center">{summary.terverifikasi}</TableCell>
+                                    <TableCell className="text-center">{summary.menunggu}</TableCell>
+                                    <TableCell className="text-center">{summary.tidakSesuai}</TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
+                                    Belum ada pendaftar dari sekolah ini.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
             </div>
           </section>
 
