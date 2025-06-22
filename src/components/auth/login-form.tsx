@@ -38,7 +38,7 @@ import type { UserRole } from "@/lib/userData";
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 
 const formSchema = z.object({
-  role: z.enum(["applicant", "admin", "verifikator", "smp_operator", "superadmin", "headmaster"], {
+  role: z.enum(["applicant", "admin"], {
     required_error: "Anda harus memilih peran.",
   }),
   username: z.string().min(1, { message: "Nama pengguna atau NISN wajib diisi." }),
@@ -49,18 +49,14 @@ const formSchema = z.object({
 });
 
 type RoleInfo = {
-    value: UserRole;
+    value: "applicant" | "admin";
     label: string;
     icon: React.ElementType;
 }
 
 const roles: RoleInfo[] = [
     { value: "applicant", label: "Pendaftar", icon: User },
-    { value: "verifikator", label: "Verifikator", icon: UserCheck },
-    { value: "smp_operator", label: "Operator SMP", icon: Building },
-    { value: "headmaster", label: "Kepala Sekolah", icon: GraduationCap },
-    { value: "admin", label: "Admin", icon: UserCog },
-    { value: "superadmin", label: "Superadmin", icon: Shield },
+    { value: "admin", label: "Admin/Petugas", icon: UserCog },
 ];
 
 export function LoginForm() {
@@ -83,9 +79,10 @@ export function LoginForm() {
   React.useEffect(() => {
     const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
     if (savedCredentials?.rememberMe && savedCredentials.username && savedCredentials.role) {
+      const formRole = savedCredentials.role === 'applicant' ? 'applicant' : 'admin';
       form.reset({
         username: savedCredentials.username,
-        role: savedCredentials.role,
+        role: formRole,
         password: "", // Password is not saved for security
         rememberMe: savedCredentials.rememberMe,
       });
@@ -102,10 +99,20 @@ export function LoginForm() {
       (u) => u.username.toLowerCase() === values.username.toLowerCase()
     );
 
-    if (user && user.role === values.role && user.password === values.password) {
+    let isLoginSuccessful = false;
+    if (user && user.password === values.password) {
+        if (values.role === 'applicant' && user.role === 'applicant') {
+            isLoginSuccessful = true;
+        } else if (values.role === 'admin' && user.role !== 'applicant') {
+            isLoginSuccessful = true;
+        }
+    }
+
+
+    if (isLoginSuccessful && user) {
       saveToLocalStorage<LoginCredentials>(LOCAL_STORAGE_LOGIN_KEY, {
         username: values.username,
-        role: values.role,
+        role: user.role, // Save the actual specific role for the session
         rememberMe: values.rememberMe,
       });
 
@@ -159,7 +166,7 @@ export function LoginForm() {
                     <RadioGroup
                       onValueChange={field.onChange}
                       value={field.value}
-                      className="grid grid-cols-2 sm:grid-cols-3 gap-x-2 gap-y-4"
+                      className="grid grid-cols-2 gap-x-2 gap-y-4"
                     >
                       {roles.map((roleInfo) => (
                         <FormItem key={roleInfo.value} className="flex items-center space-x-2 space-y-0">
