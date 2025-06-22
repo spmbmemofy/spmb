@@ -8,14 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp, Printer, AlertCircle, Trash2 } from 'lucide-react';
+import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp, Printer, AlertCircle } from 'lucide-react';
 import { getSchoolById, type School } from "@/lib/schoolService"; 
-import { getFromLocalStorage, removeFromLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
-import { getApplicants, deleteApplicantByNisn, type Applicant } from "@/lib/applicantService";
+import { getFromLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
+import { getApplicants, type Applicant } from "@/lib/applicantService";
 import { type SchoolSelection, type ApplicantStatus } from "@/lib/types";
-import { useToast } from "@/hooks/use-toast";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
@@ -181,7 +179,6 @@ const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ ap
 
 export default function StatusPage() {
   const router = useRouter();
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(true);
   
   const [applicant, setApplicant] = React.useState<Applicant | null>(null);
@@ -189,7 +186,6 @@ export default function StatusPage() {
   const [displaySelections, setDisplaySelections] = React.useState<DisplaySelection[]>([]);
   const [documentsToShow, setDocumentsToShow] = React.useState<DocumentItem[]>([]);
   const [uploadedDocIds, setUploadedDocIds] = React.useState<string[]>([]);
-  const [isResetAlertOpen, setIsResetAlertOpen] = React.useState(false);
 
   React.useEffect(() => {
     const loginCreds = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
@@ -240,26 +236,6 @@ export default function StatusPage() {
     setIsLoading(false);
   }, [router]);
 
-  const handleResetRegistration = () => {
-    if (applicant?.nisn) {
-        deleteApplicantByNisn(applicant.nisn);
-        removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);
-        
-        toast({
-            title: "Pendaftaran Direset",
-            description: "Proses pendaftaran Anda telah direset. Silakan mulai kembali dari dasbor.",
-        });
-        
-        router.push('/registration/dashboard');
-    } else {
-        toast({
-            variant: "destructive",
-            title: "Gagal Mereset",
-            description: "Tidak dapat menemukan informasi pendaftar untuk direset.",
-        });
-    }
-  };
-  
   if (isLoading) {
     return (
         <div className="flex flex-1 items-center justify-center p-4">
@@ -525,10 +501,6 @@ export default function StatusPage() {
 
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row justify-center pt-6 gap-4">
-            <Button onClick={() => setIsResetAlertOpen(true)} variant="destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Reset Pendaftaran
-            </Button>
             <Button asChild>
                 <Link href="/registration/proof" target="_blank">
                     <Printer className="mr-2 h-4 w-4" />
@@ -538,23 +510,6 @@ export default function StatusPage() {
         </CardFooter>
       </Card>
     </div>
-
-    <AlertDialog open={isResetAlertOpen} onOpenChange={setIsResetAlertOpen}>
-        <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>Apakah Anda yakin ingin mereset pendaftaran?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    Tindakan ini akan menghapus semua data pendaftaran Anda yang ada, termasuk pilihan sekolah dan status verifikasi. Anda harus memulai proses pendaftaran dari awal. Tindakan ini tidak dapat diurungkan.
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel>Batal</AlertDialogCancel>
-                <AlertDialogAction onClick={handleResetRegistration} className="bg-destructive hover:bg-destructive/90">
-                    Ya, Reset Pendaftaran Saya
-                </AlertDialogAction>
-            </AlertDialogFooter>
-        </AlertDialogContent>
-    </AlertDialog>
     </>
   );
 }
