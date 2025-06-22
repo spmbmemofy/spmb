@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import * as xlsx from "xlsx";
-import { Users, MoreHorizontal, Edit, Trash2, PlusCircle, Upload, CheckCircle } from 'lucide-react';
+import { Users, MoreHorizontal, Edit, Trash2, PlusCircle, Upload, KeyRound } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -89,8 +89,10 @@ export default function ManagedApplicantPage() {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = React.useState<TabValue>('personal');
     
-    const [isSuccessDialogOpen, setIsSuccessDialogOpen] = React.useState(false);
-    const [newAccountInfo, setNewAccountInfo] = React.useState({ username: '', password: '' });
+    const [isAccountInfoDialogOpen, setIsAccountInfoDialogOpen] = React.useState(false);
+    const [accountInfo, setAccountInfo] = React.useState({ username: '', password: '' });
+    const [accountInfoDialogTitle, setAccountInfoDialogTitle] = React.useState('');
+    const [isNewApplicantSession, setIsNewApplicantSession] = React.useState(false);
 
     const form = useForm<ApplicantFormValues>({
         resolver: zodResolver(applicantFormSchema),
@@ -130,9 +132,25 @@ export default function ManagedApplicantPage() {
         setIsLoading(false);
     }, [router, toast]);
 
+    const showAccountInfo = (applicant: ManagedApplicant, title: string) => {
+        const user = getUsers().find(u => u.username === applicant.nisn);
+        if (user && user.password) {
+            setAccountInfo({ username: user.username, password: user.password });
+            setAccountInfoDialogTitle(title);
+            setIsAccountInfoDialogOpen(true);
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Akun Tidak Ditemukan",
+                description: `Gagal menemukan akun login untuk NISN ${applicant.nisn}.`,
+            });
+        }
+    };
+    
     const handleOpenDialog = (applicant: ManagedApplicant | null = null) => {
         setActiveTab('personal');
         setEditingApplicant(applicant);
+        setIsNewApplicantSession(!applicant); // Track if this is a new entry
         if (applicant) {
             form.reset({
                 ...defaultFormValues,
@@ -165,36 +183,15 @@ export default function ManagedApplicantPage() {
         if (!operatorSchool) return;
         try {
             const applicantData = { ...data, asalSekolahId: operatorSchool.id };
-            let isNew = false;
+            let savedApplicant: ManagedApplicant | undefined;
             
             if (editingApplicant) {
-                const updated = updateManagedApplicant({ ...applicantData, id: editingApplicant.id });
-                if (updated) setApplicants(prev => prev.map(a => a.id === updated.id ? updated : a));
+                savedApplicant = updateManagedApplicant({ ...applicantData, id: editingApplicant.id });
+                if (savedApplicant) setApplicants(prev => prev.map(a => a.id === savedApplicant!.id ? savedApplicant! : a));
             } else {
-                isNew = true;
-                const added = addManagedApplicant(applicantData);
-                setApplicants(prev => [...prev, added]);
-                setEditingApplicant(added);
-                
-                // Auto-create user account
-                try {
-                    const password = 'password123'; // Default demo password
-                    addUser({
-                        fullName: data.fullName,
-                        username: data.nisn,
-                        password: password,
-                        role: 'applicant'
-                    });
-                    setNewAccountInfo({ username: data.nisn, password });
-                } catch (userError: any) {
-                    if (userError.message.includes('sudah ada')) {
-                        const existingUser = getUsers().find(u => u.username === data.nisn);
-                        setNewAccountInfo({ username: data.nisn, password: existingUser?.password || 'N/A' });
-                        toast({ title: "Info Akun", description: "Akun untuk pendaftar ini sudah ada." });
-                    } else {
-                        throw userError;
-                    }
-                }
+                savedApplicant = addManagedApplicant(applicantData);
+                setApplicants(prev => [...prev, savedApplicant!]);
+                setEditingApplicant(savedApplicant);
             }
             
             const tabsOrder: TabValue[] = ['personal', 'parent', 'grades'];
@@ -202,16 +199,33 @@ export default function ManagedApplicantPage() {
             const isLastTab = currentTabIndex === tabsOrder.length - 1;
 
             if (isLastTab) {
+                if (isNewApplicantSession) {
+                    try {
+                        const password = 'password123';
+                        addUser({
+                            fullName: data.fullName,
+                            username: data.nisn,
+                            password: password,
+                            role: 'applicant'
+                        });
+                    } catch (userError: any) {
+                        if (!userError.message.includes('sudah ada')) {
+                           throw userError;
+                        }
+                    }
+                }
+
                 toast({ title: "Data Disimpan", description: "Semua data pendaftar telah berhasil disimpan." });
                 setIsDialogOpen(false);
-                if (isNew) {
-                    setIsSuccessDialogOpen(true);
+
+                if (savedApplicant) {
+                    const title = isNewApplicantSession ? "Akun Pendaftar Berhasil Dibuat" : "Informasi Akun Pendaftar";
+                    showAccountInfo(savedApplicant, title);
                 }
             } else {
                 toast({ title: "Data Disimpan", description: `Data pada tab ini disimpan. Melanjutkan...` });
                 setActiveTab(tabsOrder[currentTabIndex + 1]);
             }
-
         } catch (error: any) {
             toast({ variant: "destructive", title: "Gagal Menyimpan", description: error.message });
         }
@@ -359,6 +373,7 @@ export default function ManagedApplicantPage() {
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
                                                             <DropdownMenuItem onClick={() => handleOpenDialog(applicant)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => showAccountInfo(applicant, "Informasi Akun Pendaftar")}><KeyRound className="mr-2 h-4 w-4" />Lihat Akun</DropdownMenuItem>
                                                             <DropdownMenuItem onClick={() => handleDeleteClick(applicant)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Hapus</DropdownMenuItem>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
@@ -409,7 +424,7 @@ export default function ManagedApplicantPage() {
                                             <FormField control={form.control} name="district" render={({ field }) => ( <FormItem><FormLabel>Kabupaten/Kota</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue("subdistrict", ""); form.setValue("village", ""); }} value={field.value} disabled={!watchedProvince}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Kabupaten/Kota" /></SelectTrigger></FormControl><SelectContent>{districtOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
                                             <FormField control={form.control} name="subdistrict" render={({ field }) => ( <FormItem><FormLabel>Kecamatan</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue("village", ""); }} value={field.value} disabled={!watchedDistrict}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Kecamatan" /></SelectTrigger></FormControl><SelectContent>{subdistrictOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
                                             <FormField control={form.control} name="village" render={({ field }) => ( <FormItem><FormLabel>Kelurahan/Desa</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!watchedSubdistrict}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Kelurahan/Desa" /></SelectTrigger></FormControl><SelectContent>{villageOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
-                                            <FormField control={form.control} name="streetName" render={({ field }) => ( <FormItem><FormLabel>Nama Jalan & No. Rumah</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                            <FormField control={form.control} name="streetName" render={({ field }) => ( <FormItem><FormLabel>Nama Jalan &amp; No. Rumah</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                                             <FormField control={form.control} name="rtRw" render={({ field }) => ( <FormItem><FormLabel>RT/RW</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                                         </div>
                                     </div>
@@ -477,33 +492,31 @@ export default function ManagedApplicantPage() {
                 </AlertDialogContent>
             </AlertDialog>
             
-            <AlertDialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
+            <AlertDialog open={isAccountInfoDialogOpen} onOpenChange={setIsAccountInfoDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2">
-                           <CheckCircle className="h-6 w-6 text-green-600" /> Akun Pendaftar Berhasil Dibuat
+                           <KeyRound className="h-6 w-6 text-green-600" /> {accountInfoDialogTitle}
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                            Akun untuk pendaftar telah berhasil dibuat. Harap berikan informasi login berikut kepada siswa yang bersangkutan.
+                            Harap berikan informasi login berikut kepada siswa yang bersangkutan untuk melanjutkan proses pendaftaran.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <div className="py-4 space-y-2">
                         <div className="flex justify-between items-center bg-muted p-3 rounded-md">
                             <span className="font-medium text-muted-foreground">Username (NISN)</span>
-                            <span className="font-mono font-bold">{newAccountInfo.username}</span>
+                            <span className="font-mono font-bold">{accountInfo.username}</span>
                         </div>
                         <div className="flex justify-between items-center bg-muted p-3 rounded-md">
                             <span className="font-medium text-muted-foreground">Password</span>
-                            <span className="font-mono font-bold">{newAccountInfo.password}</span>
+                            <span className="font-mono font-bold">{accountInfo.password}</span>
                         </div>
                     </div>
                     <AlertDialogFooter>
-                        <AlertDialogAction onClick={() => setIsSuccessDialogOpen(false)}>Tutup</AlertDialogAction>
+                        <AlertDialogAction onClick={() => setIsAccountInfoDialogOpen(false)}>Tutup</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
         </>
     );
 }
-
-    
