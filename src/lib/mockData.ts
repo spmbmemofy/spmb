@@ -33,7 +33,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
         schoolSelections: testUserSelections,
         jalur: 'Domisili',
         statusVerifikasi: 'Berkas tidak sesuai',
-        rejectionReason: 'Foto Kartu Keluarga (KK) buram dan tidak terbaca. Harap unggah ulang file yang lebih jelas.',
+        rejectionReason: 'Kartu Keluarga tidak valid.',
         documentStatuses: {
             'kk': 'invalid',
             'akta': 'valid',
