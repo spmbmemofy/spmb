@@ -46,7 +46,7 @@ export default function OriginSchoolDetailPage() {
   const [currentPage, setCurrentPage] = React.useState(1);
 
   React.useEffect(() => {
-    const foundSchool = initialOriginSchoolData.find(s => s.id === originSchoolId);
+    const foundSchool = initialOriginSchoolData.find(s => s.npsn === originSchoolId);
     setOriginSchool(foundSchool);
 
     if (foundSchool) {

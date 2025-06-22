@@ -110,7 +110,7 @@ export const initialSchoolData: School[] = [
 ];
 
 export interface OriginSchool {
-  id: string;
+  npsn: string;
   namaSekolah: string;
   alamat: string;
   status: "Negeri" | "Swasta";
@@ -119,10 +119,10 @@ export interface OriginSchool {
 }
 
 export const initialOriginSchoolData: OriginSchool[] = [
-    { id: "smpn1tanjungredeb", namaSekolah: "SMP Negeri 1 Tanjung Redeb", alamat: "Jl. M. I. Swadji, Tanjung Redeb", status: "Negeri", akreditasi: "A", jumlahPendaftar: 25 },
-    { id: "smpn2telukbayur", namaSekolah: "SMP Negeri 2 Teluk Bayur", alamat: "Jl. Poros Labanan, Teluk Bayur", status: "Negeri", akreditasi: "B", jumlahPendaftar: 18 },
-    { id: "smpn3sambaliung", namaSekolah: "SMP Negeri 3 Sambaliung", alamat: "Jl. Raya Sambaliung", status: "Negeri", akreditasi: "B", jumlahPendaftar: 22 },
-    { id: "mtsalkholil", namaSekolah: "MTs Al-Kholil", alamat: "Jl. H. Isa III, Karang Ambun", status: "Swasta", akreditasi: "A", jumlahPendaftar: 15 },
-    { id: "smpitashshohwah", namaSekolah: "SMP IT Ash-Shohwah Berau", alamat: "Jl. Manunggal, Teluk Bayur", status: "Swasta", akreditasi: "A", jumlahPendaftar: 20 },
-    { id: "smpmuhammadiyah", namaSekolah: "SMP Muhammadiyah Tanjung Redeb", alamat: "Jl. SA Maulana, Bugis", status: "Swasta", akreditasi: "B", jumlahPendaftar: 12 },
+    { npsn: "30401918", namaSekolah: "SMP Negeri 1 Tanjung Redeb", alamat: "Jl. M. I. Swadji, Tanjung Redeb", status: "Negeri", akreditasi: "A", jumlahPendaftar: 25 },
+    { npsn: "30401878", namaSekolah: "SMP Negeri 2 Teluk Bayur", alamat: "Jl. Poros Labanan, Teluk Bayur", status: "Negeri", akreditasi: "B", jumlahPendaftar: 18 },
+    { npsn: "30401888", namaSekolah: "SMP Negeri 3 Sambaliung", alamat: "Jl. Raya Sambaliung", status: "Negeri", akreditasi: "B", jumlahPendaftar: 22 },
+    { npsn: "69753308", namaSekolah: "MTs Al-Kholil", alamat: "Jl. H. Isa III, Karang Ambun", status: "Swasta", akreditasi: "A", jumlahPendaftar: 15 },
+    { npsn: "30401820", namaSekolah: "SMP IT Ash-Shohwah Berau", alamat: "Jl. Manunggal, Teluk Bayur", status: "Swasta", akreditasi: "A", jumlahPendaftar: 20 },
+    { npsn: "30401844", namaSekolah: "SMP Muhammadiyah Tanjung Redeb", alamat: "Jl. SA Maulana, Bugis", status: "Swasta", akreditasi: "B", jumlahPendaftar: 12 },
 ];

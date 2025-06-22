@@ -117,7 +117,7 @@ export default function HomePage() {
   const sortedSchoolsByDestination = [...initialSchoolData].sort((a, b) => b.jumlahPendaftar - a.jumlahPendaftar).slice(0, 5);
   const sortedSchoolsByOrigin = React.useMemo(() => {
     const schoolsWithStats = initialOriginSchoolData.map(school => {
-        const applicantsFromSchool = allApplicants.filter(app => app.asalSekolahId === school.id);
+        const applicantsFromSchool = allApplicants.filter(app => app.asalSekolahId === school.npsn);
         const terverifikasi = applicantsFromSchool.filter(app => app.statusVerifikasi === 'Terverifikasi').length;
         const prosesVerifikasi = applicantsFromSchool.filter(app => app.statusVerifikasi !== 'Terverifikasi').length;
         return {
@@ -357,10 +357,10 @@ export default function HomePage() {
               </TableHeader>
               <TableBody>
                 {sortedSchoolsByOrigin.map((school, index) => (
-                  <TableRow key={school.id}>
+                  <TableRow key={school.npsn}>
                     <TableCell className="text-center font-medium">{index + 1}</TableCell>
                     <TableCell>
-                       <Link href={`/registration/origin-school/${school.id}`} className="font-medium hover:underline text-primary">{school.namaSekolah}</Link>
+                       <Link href={`/registration/origin-school/${school.npsn}`} className="font-medium hover:underline text-primary">{school.namaSekolah}</Link>
                     </TableCell>
                     <TableCell>{school.alamat}</TableCell>
                     <TableCell className="text-right">{school.terverifikasi}</TableCell>

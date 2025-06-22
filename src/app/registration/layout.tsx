@@ -85,7 +85,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     ];
      const smpOperatorMenu = [
         { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
-        { href: '/registration/origin-school-data', label: 'Data Sekolah Asal', icon: Building, activePaths: ['/registration/origin-school-data'] },
+        { href: '/registration/origin-school-data', label: 'Data Sekolah', icon: Building, activePaths: ['/registration/origin-school-data'] },
     ];
 
 
