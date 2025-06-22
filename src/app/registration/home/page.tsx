@@ -118,7 +118,7 @@ export default function HomePage() {
         </Card>
       </section>
       
-      <section className="grid gap-6 md:grid-cols-2">
+      <section className="grid gap-6 grid-cols-1">
         <Card>
           <CardHeader>
             <CardTitle>Peringkat Sekolah Tujuan</CardTitle>
