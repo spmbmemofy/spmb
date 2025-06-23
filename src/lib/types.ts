@@ -46,9 +46,11 @@ export interface Applicant {
   district?: string;
   province?: string;
   fatherName?: string;
+  fatherDateOfBirth?: string;
   fatherOccupation?: string;
   fatherIncome?: string;
   motherName?: string;
+  motherDateOfBirth?: string;
   motherOccupation?: string;
   motherIncome?: string;
   guardianName?: string;
