@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -54,14 +53,14 @@ const calculateRankForSchool = (
   
   // 2. Further filter to only those who chose the target school
   const applicantsForThisSchool = competingApplicants.filter(app => 
-    app.schoolSelections.some(sel => sel.schoolId === targetSchoolId)
+    app.schoolSelections && app.schoolSelections.some(sel => sel.schoolId === targetSchoolId)
   );
 
   // 3. Calculate scores for all of them
   const scoredApplicants = applicantsForThisSchool.map((app) => {
     const totalNilaiRapor = Object.values(app.semesterGrades).reduce((a, b) => a + b, 0);
     const nilaiPrestasi = app.jalur === 'Prestasi' ? (app.nilaiPrestasi || 0) : 0;
-    const nilaiTambahan = app.schoolSelections[0]?.schoolId === targetSchoolId ? 25 : 0;
+    const nilaiTambahan = app.schoolSelections?.[0]?.schoolId === targetSchoolId ? 25 : 0;
     const totalNilai = totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
     return { ...app, totalNilai };
   });
@@ -178,7 +177,7 @@ export default function ApplicantDetailPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {applicant.schoolSelections.length > 0 ? (
+                    {applicant.schoolSelections && applicant.schoolSelections.length > 0 ? (
                         applicant.schoolSelections.map((selection, index) => {
                             const school = getSchoolById(selection.schoolId);
                             const ranking = calculateRankForSchool(applicant, selection.schoolId, allApplicants);
