@@ -13,7 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getSchools } from "@/lib/schoolService";
-import { generateAllMockApplicants, jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
+import { jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
+import { getApplicants } from "@/lib/applicantService";
 import type { Applicant, ApplicantStatus, SortConfig, SortDirection, SortKey } from "@/lib/types";
 
 const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
@@ -39,7 +40,7 @@ export default function AllDataPage() {
   const [currentPage, setCurrentPage] = React.useState(1);
 
   React.useEffect(() => {
-    setAllApplicants(generateAllMockApplicants());
+    setAllApplicants(getApplicants());
     setSchools(getSchools());
   }, []);
 

@@ -14,7 +14,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { getSchoolById, type School } from "@/lib/schoolService";
 import { cn } from "@/lib/utils";
-import { generateAllMockApplicants, jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
+import { jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
+import { getApplicants } from "@/lib/applicantService";
 import type { Applicant, ApplicantStatus, SortConfig, SortKey, SortDirection } from "@/lib/types";
 
 interface PathwayStats {
@@ -63,7 +64,7 @@ export default function SchoolDetailPage() {
     if (schoolId) {
         const foundSchool = getSchoolById(schoolId);
         setSchool(foundSchool);
-        const allApplicants = generateAllMockApplicants();
+        const allApplicants = getApplicants();
         const schoolApplicants = allApplicants.filter(app => app.sekolahTujuanId === schoolId);
         setCurrentSchoolApplicants(schoolApplicants);
     }

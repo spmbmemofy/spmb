@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { TrendingUp, Users, School, BookOpen, Star, UserCheck } from 'lucide-react';
 import { getSchools } from '@/lib/schoolService';
-import { generateAllMockApplicants } from '@/lib/mockData';
+import { getApplicants } from '@/lib/applicantService';
 import type { Applicant, Jalur } from '@/lib/types';
 
 
@@ -35,7 +35,7 @@ export default function HomePage() {
   const [schools, setSchools] = React.useState<ReturnType<typeof getSchools>>([]);
 
   React.useEffect(() => {
-    setAllApplicants(generateAllMockApplicants());
+    setAllApplicants(getApplicants());
     setSchools(getSchools());
   }, []);
 
