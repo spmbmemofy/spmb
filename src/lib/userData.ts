@@ -28,5 +28,12 @@ export const initialUsers: User[] = [
     role: 'smp_operator',
     fullName: 'Operator SMPN 1 Sambaliung',
     npsn: '30401888',
+  },
+  {
+    id: 'applicant-lufri-01',
+    username: 'lufri',
+    password: 'lufri123',
+    role: 'applicant',
+    fullName: 'Lufri',
   }
 ];
