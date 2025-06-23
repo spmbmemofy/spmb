@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import * as z from "zod";
 import { Shield, UserPlus, MoreHorizontal, Edit, Trash2, Search as SearchIcon, Eye, EyeOff } from 'lucide-react';
 
@@ -19,27 +19,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { getUsers, addUser, updateUser, deleteUser } from "@/lib/userService";
-import { type User, type UserRole } from "@/lib/userData";
+import { type User, type UserRole, roleDisplayNames, roleBadgeVariants } from "@/lib/userData";
 import { getSchools, type School } from "@/lib/schoolService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-const roleDisplayNames: Record<UserRole, string> = {
-  applicant: "Pendaftar",
-  verifikator: "Verifikator",
-  smp_operator: "Operator SMP",
-  headmaster: "Kepala Sekolah",
-  admin: "Admin",
-  superadmin: "Superadmin",
-};
-
-const roleBadgeVariants: Record<UserRole, "default" | "secondary" | "destructive" | "outline"> = {
-    superadmin: "destructive",
-    admin: "default",
-    verifikator: "secondary",
-    headmaster: "outline",
-    smp_operator: "outline",
-    applicant: "outline",
-};
 
 const userFormSchema = z.object({
   id: z.string().optional(),

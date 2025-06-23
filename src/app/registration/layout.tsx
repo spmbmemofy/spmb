@@ -4,7 +4,7 @@
 import { ReactNode, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, School, UserCheck, User, FileUp, Shield, GraduationCap, Building, Users } from 'lucide-react';
+import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, School, UserCheck, User as UserIcon, FileUp, Shield, GraduationCap, Building, Users } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -16,12 +16,17 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarTrigger,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { getFromLocalStorage, removeFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { useToast } from "@/hooks/use-toast";
 import { initializeAllData } from '@/lib/initializeDatabase';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { getUsers, type User } from '@/lib/userService';
+import { roleDisplayNames } from '@/lib/userData';
+
 
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
@@ -35,6 +40,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   const router = useRouter();
   const { toast } = useToast();
   const [userRole, setUserRole] = useState<LoginCredentials['role'] | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     initializeAllData();
@@ -43,8 +49,10 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   useEffect(() => {
     const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
     
-    if (savedCredentials?.role) {
+    if (savedCredentials?.role && savedCredentials.username) {
       setUserRole(savedCredentials.role);
+      const user = getUsers().find(u => u.username === savedCredentials.username);
+      setCurrentUser(user || null);
     } else {
       toast({
         variant: "destructive",
@@ -53,12 +61,12 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       });
       router.replace('/');
     }
-  }, [router, toast]);
+  }, [router, toast, pathname]);
 
   const menuItems = useMemo(() => {
     const applicantMenu = [
       { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
-      { href: '/registration/dashboard', label: 'Data Pendaftar', icon: User, activePaths: ['/registration/dashboard'] },
+      { href: '/registration/dashboard', label: 'Data Pendaftar', icon: UserIcon, activePaths: ['/registration/dashboard'] },
       { href: '/registration/documents', label: 'Pilihan Sekolah', icon: School, activePaths: ['/registration/documents', '/registration/document-upload'] },
       { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'] },
       { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
@@ -131,7 +139,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     }
   }, [userRole]);
 
-  if (!userRole) {
+  if (!userRole || !currentUser) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background">
         <p>Memverifikasi akses...</p>
@@ -178,6 +186,20 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
           </SidebarContent>
           <SidebarFooter>
             <SidebarMenu>
+               <div className="group-data-[state=expanded]:px-2 group-data-[state=expanded]:pb-2">
+                 <SidebarSeparator className="mb-2" />
+                 <div className="flex items-center gap-3">
+                     <Avatar className="size-8">
+                        <AvatarFallback>
+                           <UserIcon />
+                        </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col group-data-[state=collapsed]:hidden">
+                        <span className="text-sm font-semibold text-sidebar-foreground truncate">{currentUser.fullName}</span>
+                        <span className="text-xs text-sidebar-foreground/70">{roleDisplayNames[currentUser.role]}</span>
+                    </div>
+                 </div>
+              </div>
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={handleLogout} tooltip={{ children: 'Keluar', side: 'right' }}>
                     <LogOut />

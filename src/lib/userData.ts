@@ -30,13 +30,6 @@ export const initialUsers: User[] = [
     npsn: '30401888',
   },
   {
-    id: 'applicant-lufri-01',
-    username: 'lufri',
-    password: 'lufri123',
-    role: 'applicant',
-    fullName: 'Lufri',
-  },
-  {
     id: 'applicant-kusnadi-01',
     username: '0078901234',
     password: 'password123',
@@ -44,3 +37,21 @@ export const initialUsers: User[] = [
     fullName: 'Muhammad Kusnadi',
   },
 ];
+
+export const roleDisplayNames: Record<UserRole, string> = {
+  applicant: "Pendaftar",
+  verifikator: "Verifikator",
+  smp_operator: "Operator SMP",
+  headmaster: "Kepala Sekolah",
+  admin: "Admin",
+  superadmin: "Superadmin",
+};
+
+export const roleBadgeVariants: Record<UserRole, "default" | "secondary" | "destructive" | "outline"> = {
+    superadmin: "destructive",
+    admin: "default",
+    verifikator: "secondary",
+    headmaster: "outline",
+    smp_operator: "outline",
+    applicant: "outline",
+};
