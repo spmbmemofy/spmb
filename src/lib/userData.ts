@@ -12,12 +12,8 @@ export interface User {
 
 // In a real application, this data would come from a secure database.
 // Passwords should NEVER be stored in plaintext. This is for demonstration only.
+// Applicant users have been removed to allow for a clean simulation start.
 export const initialUsers: User[] = [
-  // Pendaftar
-  { id: 'user-1', username: '0056789123', password: 'password123', role: 'applicant', fullName: 'Muhammad Rizky Pratama' },
-  { id: 'user-2', username: '0012345678', password: 'password123', role: 'applicant', fullName: 'Budi Santoso' },
-  { id: 'user-11', username: '1234567890', password: 'password123', role: 'applicant', fullName: 'Wahyu Shofian' },
-
   // Verifikator
   { id: 'user-3', username: 'verifikator_sman4', password: 'password123', role: 'verifikator', fullName: 'Ahmad Syahputra, S.Kom', npsn: '30404228' },
   { id: 'user-4', username: 'verifikator_smkn1', password: 'password123', role: 'verifikator', fullName: 'Siti Aminah, S.Pd', npsn: '30401828' },

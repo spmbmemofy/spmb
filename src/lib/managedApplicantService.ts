@@ -4,45 +4,8 @@
 import { getFromLocalStorage, saveToLocalStorage } from './localStorage';
 import type { ManagedApplicant } from './types';
 
-const initialManagedApplicants: ManagedApplicant[] = [
-    {
-        id: 'managed-1',
-        fullName: 'Calon Siswa Contoh 1',
-        nisn: '9988776655',
-        nik: '6403011234560001',
-        placeOfBirth: 'Tanjung Redeb',
-        dateOfBirth: '2008-05-10',
-        gender: 'Laki-laki',
-        religion: 'Islam',
-        contactNumber: '081234567890',
-        streetName: 'Jl. Contoh Alamat No. 1',
-        rtRw: '01/01',
-        village: 'Kel. Tanjung Redeb',
-        subdistrict: 'Kec. Tanjung Redeb',
-        district: 'Kabupaten Berau',
-        province: 'Kalimantan Timur',
-        asalSekolahId: 'smpn1tanjungredeb',
-        fatherName: 'Ayah Siswa 1',
-        motherName: 'Ibu Siswa 1',
-        semesterGrades: { semester1: 85, semester2: 88, semester3: 90, semester4: 87, semester5: 91 }
-    },
-    {
-        id: 'managed-2',
-        fullName: 'Calon Siswa Contoh 2',
-        nisn: '9988776644',
-        gender: 'Perempuan',
-        asalSekolahId: 'smpn1tanjungredeb',
-        semesterGrades: { semester1: 90, semester2: 92, semester3: 88, semester4: 91, semester5: 93 }
-    },
-    {
-        id: 'managed-wahyu',
-        fullName: 'Wahyu Shofian',
-        nisn: '1234567890',
-        gender: 'Laki-laki',
-        asalSekolahId: 'smpn2telukbayur',
-        semesterGrades: { semester1: 87, semester2: 89, semester3: 88, semester4: 92, semester5: 90 }
-    }
-];
+// The user requested to start the simulation from scratch, so we are clearing all initial dummy data.
+const initialManagedApplicants: ManagedApplicant[] = [];
 
 const MANAGED_APPLICANTS_STORAGE_KEY = 'managedApplicantsData';
 
