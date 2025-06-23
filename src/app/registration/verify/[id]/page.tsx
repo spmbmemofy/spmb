@@ -101,7 +101,7 @@ export default function VerifyApplicantPage() {
 
         const initialStatuses: Record<string, DocumentStatus> = {};
         allDocs.forEach(doc => { 
-            initialStatuses[doc.id] = foundApplicant.documentStatuses?.[doc.id] || null;
+            initialStatuses[doc.id] = foundApplicant.documentStatuses?.[doc.id] === 'invalid' ? 'invalid' : null;
         });
         setDocumentStatuses(initialStatuses);
         setEditableNilaiPrestasi(foundApplicant.nilaiPrestasi || 0);
@@ -110,8 +110,16 @@ export default function VerifyApplicantPage() {
     setIsLoading(false);
   }, [applicantId]);
 
-  const handleDocumentStatusChange = (docId: string, status: 'valid' | 'invalid') => {
-    setDocumentStatuses(prev => ({ ...prev, [docId]: prev[docId] === status ? null : status }));
+  const toggleInvalidStatus = (docId: string) => {
+    setDocumentStatuses(prev => {
+        const newStatuses = {...prev};
+        if (newStatuses[docId] === 'invalid') {
+            newStatuses[docId] = null; // Un-mark as invalid, making it implicitly valid
+        } else {
+            newStatuses[docId] = 'invalid'; // Mark as invalid
+        }
+        return newStatuses;
+    });
   };
   
   const handleSaveClick = () => {
@@ -161,8 +169,6 @@ export default function VerifyApplicantPage() {
   const nilaiTambahan = (applicant && verifierSchoolId && applicant.schoolSelections?.[0]?.schoolId === verifierSchoolId) ? 25 : 0;
   const nilaiPrestasi = applicant?.jalur === 'Prestasi' ? editableNilaiPrestasi : 0;
   const nilaiTotal = totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
-
-  const allDocumentsReviewed = documentsToVerify.length > 0 && documentsToVerify.every(doc => documentStatuses[doc.id] !== null);
 
   if (isLoading) {
     return <div className="flex flex-1 items-center justify-center p-4">Memuat data pendaftar...</div>;
@@ -364,7 +370,7 @@ export default function VerifyApplicantPage() {
             <Card className="h-full">
               <CardHeader>
                 <CardTitle className="flex items-center text-lg"><FileText className="mr-2"/>Berkas Pendaftaran</CardTitle>
-                <CardDescription>Klik nama berkas untuk membuka di tab baru. Berikan status validasi untuk setiap berkas.</CardDescription>
+                <CardDescription>Klik nama berkas untuk membuka di tab baru. Tandai berkas jika tidak valid.</CardDescription>
               </CardHeader>
               <CardContent>
                  <div className="space-y-2">
@@ -379,12 +385,16 @@ export default function VerifyApplicantPage() {
                             {doc.label}
                           </a>
                         <div className="flex-shrink-0 flex gap-2 w-full sm:w-auto">
-                          <Button size="sm" variant={documentStatuses[doc.id] === 'invalid' ? 'destructive' : 'outline'} onClick={() => handleDocumentStatusChange(doc.id, 'invalid')} className="flex-1" disabled={!isVerifierAuthorized}>
-                            <ThumbsDown className="mr-2 h-4 w-4" />Tidak Valid
-                          </Button>
-                          <Button size="sm" variant={documentStatuses[doc.id] === 'valid' ? 'default' : 'outline'} className={cn(documentStatuses[doc.id] === 'valid' && "bg-green-600 hover:bg-green-700", "flex-1")} onClick={() => handleDocumentStatusChange(doc.id, 'valid')} disabled={!isVerifierAuthorized}>
-                            <ThumbsUp className="mr-2 h-4 w-4" />Valid
-                          </Button>
+                           <Button 
+                              size="sm" 
+                              variant={documentStatuses[doc.id] === 'invalid' ? 'destructive' : 'outline'} 
+                              onClick={() => toggleInvalidStatus(doc.id)} 
+                              className="w-full"
+                              disabled={!isVerifierAuthorized}
+                            >
+                              <ThumbsDown className="mr-2 h-4 w-4" />
+                              Tandai Tidak Valid
+                            </Button>
                         </div>
                       </div>
                     ))}
@@ -399,7 +409,7 @@ export default function VerifyApplicantPage() {
                 <ScrollText className="mr-2 h-5 w-5" />
                 Lihat Riwayat
             </Button>
-            <Button size="lg" onClick={handleSaveClick} disabled={!allDocumentsReviewed || !isVerifierAuthorized}>
+            <Button size="lg" onClick={handleSaveClick} disabled={!isVerifierAuthorized}>
                 <Save className="mr-2 h-5 w-5" />
                 Simpan Status Verifikasi
             </Button>
@@ -464,8 +474,8 @@ export default function VerifyApplicantPage() {
                   </div>
                   <div className="flex-1">
                       <p className="font-semibold">Berkas Ditolak</p>
-                      <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> menolak berkas dengan alasan: "Foto Kartu Keluarga (KK) buram dan tidak terbaca."</p>
-                      <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 14:00 WIB</p>
+                      <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">{applicant.verifiedBy || 'Petugas Verifikator'}</span> menolak berkas dengan alasan: "Foto Kartu Keluarga (KK) buram dan tidak terbaca."</p>
+                      <p className="text-xs text-muted-foreground mt-1">{applicant.verificationTimestamp ? new Date(applicant.verificationTimestamp).toLocaleString('id-ID') : '15 Juli 2024, 14:00 WIB'}</p>
                   </div>
               </li>
                 <li className="flex gap-4">
@@ -484,8 +494,8 @@ export default function VerifyApplicantPage() {
                   </div>
                   <div className="flex-1">
                       <p className="font-semibold">Berkas Diverifikasi</p>
-                      <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> memverifikasi berkas pendaftaran.</p>
-                      <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 11:00 WIB</p>
+                      <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">{applicant.verifiedBy || 'Petugas Verifikator'}</span> memverifikasi berkas pendaftaran.</p>
+                      <p className="text-xs text-muted-foreground mt-1">{applicant.verificationTimestamp ? new Date(applicant.verificationTimestamp).toLocaleString('id-ID') : '16 Juli 2024, 11:00 WIB'}</p>
                   </div>
               </li>
             </ul>
@@ -499,3 +509,4 @@ export default function VerifyApplicantPage() {
     </div>
   );
 }
+
