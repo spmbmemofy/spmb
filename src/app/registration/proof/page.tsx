@@ -4,59 +4,64 @@
 import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { getFromLocalStorage, type RegistrationProgress, type BiodataDetails } from "@/lib/localStorage";
+import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
+import { getApplicants, type Applicant } from "@/lib/applicantService";
 import { getSchoolById, type School } from "@/lib/schoolService";
-import { type SchoolSelection } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
-import { Printer, Calendar, MapPin, Edit, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { Printer, AlertCircle, FileText, Edit, CheckCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
+const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 
-const semesterKeys: (keyof BiodataDetails['semesterGrades'])[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
+const semesterKeys: (keyof Applicant['semesterGrades'])[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
 const semesterLabels = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5"];
+
+interface PopulatedSelection {
+  school: School;
+  major: string | null;
+}
 
 export default function RegistrationProofPage() {
   const router = useRouter();
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
-  
-  const [biodata, setBiodata] = React.useState<BiodataDetails | null>(null);
-  const [profilePhoto, setProfilePhoto] = React.useState<string | null>(null);
-  const [pathway, setPathway] = React.useState<string | undefined>();
-  const [selections, setSelections] = React.useState<{ school: School, major: string | null }[]>([]);
+  const [applicant, setApplicant] = React.useState<Applicant | null>(null);
+  const [selections, setSelections] = React.useState<PopulatedSelection[]>([]);
 
   React.useEffect(() => {
-    const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
-    if (!savedProgress?.registrationCompleted || !savedProgress.biodata) {
-        console.warn("Registration not completed or biodata missing. Redirecting...");
-        router.replace('/registration/dashboard');
+    const loginCreds = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
+    if (!loginCreds?.username) {
+        router.replace('/registration/status');
+        return;
+    }
+
+    const currentApplicant = getApplicants().find(app => app.nisn === loginCreds.username);
+
+    if (!currentApplicant || !currentApplicant.statusVerifikasi || currentApplicant.statusVerifikasi === "Menunggu Verifikasi") {
+        router.replace('/registration/status');
         return;
     }
     
-    if (savedProgress) {
-        setBiodata(savedProgress.biodata);
-        setProfilePhoto(savedProgress.profilePhotoDataUri || null);
-        setPathway(savedProgress.pathway);
-        const populatedSelections = (savedProgress.schoolSelections || [])
-            .map(sel => ({
-                school: getSchoolById(sel.schoolId)!,
-                major: sel.major
-            }))
-            .filter(item => item.school);
-        setSelections(populatedSelections);
-    }
-
+    setApplicant(currentApplicant);
+    
+    const populatedSelections = (currentApplicant.schoolSelections || [])
+        .map(sel => ({
+            school: getSchoolById(sel.schoolId)!,
+            major: sel.major
+        }))
+        .filter(item => item.school);
+    setSelections(populatedSelections);
+    
     setIsLoading(false);
   }, [router]);
 
   const handleDownloadPdf = () => {
     setIsDownloading(true);
     const input = document.getElementById('pdf-content');
-    if (!input || !biodata) {
-      console.error("Content element or biodata not found for PDF generation.");
+    if (!input || !applicant) {
+      console.error("Content element or applicant data not found for PDF generation.");
       setIsDownloading(false);
       return;
     }
@@ -66,7 +71,6 @@ export default function RegistrationProofPage() {
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
         const ratio = canvasWidth / canvasHeight;
@@ -85,7 +89,7 @@ export default function RegistrationProofPage() {
             heightLeft -= pdfHeight;
         }
 
-        pdf.save(`bukti-pendaftaran-${biodata.nisn}.pdf`);
+        pdf.save(`bukti-pendaftaran-${applicant.nisn}.pdf`);
         setIsDownloading(false);
       })
       .catch(err => {
@@ -95,11 +99,11 @@ export default function RegistrationProofPage() {
   };
 
   const totalNilai = React.useMemo(() => {
-    if (!biodata) return "0.00";
-    return Object.values(biodata.semesterGrades).reduce((acc, val) => acc + val, 0).toFixed(2);
-  }, [biodata]);
+    if (!applicant) return "0.00";
+    return Object.values(applicant.semesterGrades).reduce((acc, val) => acc + val, 0).toFixed(2);
+  }, [applicant]);
 
-  if (isLoading || !biodata) {
+  if (isLoading || !applicant) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p>Memuat data bukti pendaftaran...</p>
@@ -140,8 +144,8 @@ export default function RegistrationProofPage() {
              <h3 className="text-lg font-semibold mb-4 border-b pb-2 text-primary flex items-center"><FileText className="mr-2"/> Data Diri Pendaftar</h3>
              <div className="flex flex-col sm:flex-row gap-8">
                 <div className="w-32 h-40 flex-shrink-0">
-                    {profilePhoto ? (
-                        <Image src={profilePhoto} alt="Foto Profil" width={128} height={160} className="object-cover border-2 border-gray-300 rounded-md" />
+                    {applicant.profilePhotoDataUri ? (
+                        <Image src={applicant.profilePhotoDataUri} alt="Foto Profil" width={128} height={160} className="object-cover border-2 border-gray-300 rounded-md" />
                     ) : (
                         <div className="w-32 h-40 bg-gray-200 flex items-center justify-center rounded-md">
                             <span className="text-xs text-gray-500">Foto 3x4</span>
@@ -151,11 +155,11 @@ export default function RegistrationProofPage() {
                 <div className="flex-grow">
                     <Table>
                         <TableBody>
-                            <TableRow><TableCell className="font-semibold w-1/3">Nama Lengkap</TableCell><TableCell>{biodata.fullName}</TableCell></TableRow>
-                            <TableRow><TableCell className="font-semibold">NISN</TableCell><TableCell>{biodata.nisn}</TableCell></TableRow>
-                            <TableRow><TableCell className="font-semibold">NIK</TableCell><TableCell>{biodata.nik}</TableCell></TableRow>
-                            <TableRow><TableCell className="font-semibold">Tempat, Tanggal Lahir</TableCell><TableCell>{biodata.placeOfBirth}, {new Date(biodata.dateOfBirth).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</TableCell></TableRow>
-                             <TableRow><TableCell className="font-semibold">Sekolah Asal</TableCell><TableCell>{biodata.previousSchool}</TableCell></TableRow>
+                            <TableRow><TableCell className="font-semibold w-1/3">Nama Lengkap</TableCell><TableCell>{applicant.fullName}</TableCell></TableRow>
+                            <TableRow><TableCell className="font-semibold">NISN</TableCell><TableCell>{applicant.nisn}</TableCell></TableRow>
+                            <TableRow><TableCell className="font-semibold">NIK</TableCell><TableCell>{applicant.nik}</TableCell></TableRow>
+                            <TableRow><TableCell className="font-semibold">Tempat, Tanggal Lahir</TableCell><TableCell>{applicant.placeOfBirth}, {new Date(applicant.dateOfBirth!).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</TableCell></TableRow>
+                             <TableRow><TableCell className="font-semibold">Sekolah Asal</TableCell><TableCell>{applicant.asalSekolahNama}</TableCell></TableRow>
                         </TableBody>
                     </Table>
                 </div>
@@ -176,7 +180,7 @@ export default function RegistrationProofPage() {
                   {semesterKeys.map((key, index) => (
                     <TableRow key={key}>
                       <TableCell className="font-medium">{semesterLabels[index]}</TableCell>
-                      <TableCell className="text-right">{biodata.semesterGrades[key].toFixed(2)}</TableCell>
+                      <TableCell className="text-right">{applicant.semesterGrades[key].toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -196,7 +200,7 @@ export default function RegistrationProofPage() {
               <TableBody>
                 <TableRow>
                   <TableCell className="font-semibold w-1/3">Jalur Pendaftaran</TableCell>
-                  <TableCell className="font-bold text-primary">{pathway || "Tidak ada"}</TableCell>
+                  <TableCell className="font-bold text-primary">{applicant.jalur || "Tidak ada"}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -233,15 +237,15 @@ export default function RegistrationProofPage() {
                     <p>Verifikator</p>
                     <p className="font-semibold">{selections[0]?.school?.namaSekolah || "Sekolah Pilihan Pertama"}</p>
                     <div className="h-24"></div>
-                    <p className="font-semibold underline">( Ahmad Syahputra, S.Kom )</p>
-                    <p>NIP. 198501012010011001</p>
+                    <p className="font-semibold underline">( {applicant.verifiedBy || 'Petugas Verifikator'} )</p>
+                    <p>Petugas Sekolah</p>
                 </div>
                  <div className="w-1/2 sm:w-1/3">
                     <p>Berau, {new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
                     <p>Pendaftar,</p>
                     <div className="h-24"></div>
-                    <p className="font-semibold underline">( {biodata.fullName} )</p>
-                    <p>NISN. {biodata.nisn}</p>
+                    <p className="font-semibold underline">( {applicant.fullName} )</p>
+                    <p>NISN. {applicant.nisn}</p>
                 </div>
             </div>
              <p className="text-xs text-gray-500 dark:text-gray-400 mt-12 text-center italic">

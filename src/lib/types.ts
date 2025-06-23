@@ -56,6 +56,10 @@ export interface Applicant {
   guardianName?: string;
   contactNumber?: string;
   profilePhotoDataUri?: string;
+
+  // Verification details
+  verifiedBy?: string;
+  verificationTimestamp?: string;
 }
 
 export type SortKey = keyof Applicant | 'no';

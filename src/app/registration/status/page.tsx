@@ -83,6 +83,11 @@ const getVerificationBadgeVariant = (status: VerificationStatus): "default" | "d
 const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ applicant }) => {
   if (!applicant) return null;
 
+  const verifierDisplayName = applicant.verifiedBy || "Petugas Verifikator";
+  const verificationTimestamp = applicant.verificationTimestamp 
+    ? new Date(applicant.verificationTimestamp).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' }) + ' WIB'
+    : '15 Juli 2024, 14:00 WIB'; // Fallback date
+
   const pendaftaranSelesai = (
     <li key="pendaftaran-selesai" className="flex gap-4">
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 flex-shrink-0 mt-1">
@@ -116,8 +121,8 @@ const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ ap
       </div>
       <div className="flex-1">
         <p className="font-semibold">Berkas Ditolak</p>
-        <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> menolak berkas dengan alasan: <span className="italic">"{applicant.rejectionReason || 'Tidak ada alasan spesifik yang diberikan.'}"</span></p>
-        <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 14:00 WIB</p>
+        <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">{verifierDisplayName}</span> menolak berkas dengan alasan: <span className="italic">"{applicant.rejectionReason || 'Tidak ada alasan spesifik yang diberikan.'}"</span></p>
+        <p className="text-xs text-muted-foreground mt-1">{verificationTimestamp}</p>
       </div>
     </li>
   );
@@ -142,7 +147,7 @@ const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ ap
         </div>
         <div className="flex-1">
             <p className="font-semibold">Berkas Diverifikasi Ulang</p>
-            <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">Ahmad Syahputra, S.Kom</span> telah memverifikasi ulang berkas perbaikan Anda.</p>
+            <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">{verifierDisplayName}</span> telah memverifikasi ulang berkas perbaikan Anda.</p>
             <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 11:00 WIB</p>
         </div>
     </li>
@@ -352,7 +357,7 @@ export default function StatusPage() {
                                 </div>
                                 <div>
                                     <p className="font-medium text-muted-foreground mb-1">Nama Verifikator</p>
-                                    <p className="font-semibold">Ahmad Syahputra, S.Kom</p>
+                                    <p className="font-semibold">{applicant.verifiedBy || 'Petugas Verifikator'}</p>
                                 </div>
                             </>
                         )}

@@ -130,6 +130,9 @@ export default function VerifyApplicantPage() {
     }
 
     const newStatus: ApplicantStatus = selectedAction === 'verify' ? "Terverifikasi" : "Berkas tidak sesuai";
+    const creds = getFromLocalStorage<LoginCredentials | null>('loginCredentials', null);
+    const user = creds ? getUsers().find(u => u.username === creds.username) : null;
+    const verifierName = user ? user.fullName : 'Sistem';
     
     const updatedApplicant: Applicant = {
         ...applicant,
@@ -137,6 +140,8 @@ export default function VerifyApplicantPage() {
         nilaiPrestasi: applicant.jalur === 'Prestasi' ? editableNilaiPrestasi : applicant.nilaiPrestasi,
         documentStatuses: documentStatuses,
         rejectionReason: selectedAction === 'reject' ? rejectionReason : undefined,
+        verifiedBy: verifierName,
+        verificationTimestamp: new Date().toISOString(),
     };
 
     updateApplicant(updatedApplicant);
