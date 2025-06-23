@@ -353,7 +353,11 @@ export default function SchoolDetailPage() {
                     paginatedApplicants.map((applicant, index) => (
                       <TableRow key={applicant.id}>
                         <TableCell className="text-center">{(currentPage - 1) * pageSize + index + 1}</TableCell>
-                        <TableCell className="font-medium">{applicant.fullName}</TableCell>
+                        <TableCell className="font-medium">
+                          <Link href={`/registration/applicant-detail/${applicant.id}`} className="hover:underline text-primary">
+                            {applicant.fullName}
+                          </Link>
+                        </TableCell>
                         <TableCell>{applicant.nisn}</TableCell>
                         <TableCell>{applicant.asalSekolahNama}</TableCell>
                         <TableCell className="text-center">
