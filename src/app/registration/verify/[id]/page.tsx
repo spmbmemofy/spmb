@@ -23,7 +23,7 @@ import { Table, TableBody, TableCell, TableRow, TableFooter as ShadcnTableFooter
 
 import { useToast } from "@/hooks/use-toast";
 import { getApplicantById, updateApplicant } from "@/lib/applicantService";
-import type { Applicant, ApplicantStatus, DocumentStatus } from "@/lib/types";
+import type { Applicant, ApplicantStatus, DocumentStatus, ActivityEvent } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { getSchoolById, getSchoolByNPSN } from "@/lib/schoolService";
 import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
@@ -145,6 +145,10 @@ export default function VerifyApplicantPage() {
     const user = creds ? getUsers().find(u => u.username === creds.username) : null;
     const verifierName = user ? user.fullName : 'Sistem';
     
+    const newEvent: ActivityEvent = selectedAction === 'verify'
+        ? { type: 'VERIFICATION_APPROVED', timestamp: new Date().toISOString(), actor: verifierName }
+        : { type: 'VERIFICATION_REJECTED', timestamp: new Date().toISOString(), actor: verifierName, details: rejectionReason };
+
     const updatedApplicant: Applicant = {
         ...applicant,
         statusVerifikasi: newStatus,
@@ -153,6 +157,7 @@ export default function VerifyApplicantPage() {
         rejectionReason: selectedAction === 'reject' ? rejectionReason : undefined,
         verifiedBy: verifierName,
         verificationTimestamp: new Date().toISOString(),
+        activityHistory: [...(applicant.activityHistory || []), newEvent]
     };
 
     updateApplicant(updatedApplicant);
@@ -239,8 +244,9 @@ export default function VerifyApplicantPage() {
                     variant={documentStatuses['biodata'] === 'invalid' ? 'destructive' : 'outline'} 
                     onClick={() => toggleInvalidStatus('biodata')} 
                     disabled={!isVerifierAuthorized}
+                    className="h-8 w-auto px-2"
                 >
-                    <XCircle className="mr-2 h-4 w-4" />
+                    <XCircle className="mr-1.5 h-4 w-4" />
                     Tolak
                 </Button>
               </CardHeader>
@@ -325,8 +331,9 @@ export default function VerifyApplicantPage() {
                     variant={documentStatuses['nilai_rapor'] === 'invalid' ? 'destructive' : 'outline'} 
                     onClick={() => toggleInvalidStatus('nilai_rapor')} 
                     disabled={!isVerifierAuthorized}
+                    className="h-8 w-auto px-2"
                 >
-                    <XCircle className="mr-2 h-4 w-4" />
+                    <XCircle className="mr-1.5 h-4 w-4" />
                     Tolak
                 </Button>
               </CardHeader>
@@ -415,8 +422,9 @@ export default function VerifyApplicantPage() {
                               variant={documentStatuses[doc.id] === 'invalid' ? 'destructive' : 'outline'} 
                               onClick={() => toggleInvalidStatus(doc.id)} 
                               disabled={!isVerifierAuthorized}
+                              className="h-8 w-auto px-2"
                             >
-                              <XCircle className="mr-2 h-4 w-4" />
+                              <XCircle className="mr-1.5 h-4 w-4" />
                               Tolak
                             </Button>
                         </div>

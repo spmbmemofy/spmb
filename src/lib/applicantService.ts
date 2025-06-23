@@ -112,13 +112,18 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
   };
 
   if (existingApplicant) {
-    const updatedApplicant = { ...existingApplicant, ...applicantDataFromProgress };
+    const updatedApplicant = { ...existingApplicant, ...applicantDataFromProgress, activityHistory: [
+      { type: 'REGISTRATION_COMPLETED', timestamp: new Date().toISOString(), actor: progress.biodata.fullName },
+    ]};
     updateApplicant(updatedApplicant);
     return updatedApplicant;
   } else {
     const newApplicant: Applicant = {
       ...applicantDataFromProgress,
       id: `app-${creds.username}`,
+      activityHistory: [
+        { type: 'REGISTRATION_COMPLETED', timestamp: new Date().toISOString(), actor: progress.biodata.fullName },
+      ]
     };
     const updatedApplicants = [...applicants, newApplicant];
     saveToLocalStorage(APPLICANTS_STORAGE_KEY, updatedApplicants);

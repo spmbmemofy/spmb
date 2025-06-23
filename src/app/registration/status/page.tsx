@@ -13,7 +13,7 @@ import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, 
 import { getSchoolById, type School } from "@/lib/schoolService"; 
 import { getFromLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
 import { getApplicants, type Applicant } from "@/lib/applicantService";
-import { type SchoolSelection, type ApplicantStatus } from "@/lib/types";
+import { type ActivityEvent, type SchoolSelection, type ApplicantStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
@@ -81,106 +81,79 @@ const getVerificationBadgeVariant = (status: VerificationStatus): "default" | "d
 };
 
 const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ applicant }) => {
-  if (!applicant) return null;
-
-  const verifierDisplayName = applicant.verifiedBy || "Petugas Verifikator";
-  const verificationTimestamp = applicant.verificationTimestamp 
-    ? new Date(applicant.verificationTimestamp).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' }) + ' WIB'
-    : '15 Juli 2024, 14:00 WIB'; // Fallback date
-
-  const pendaftaranSelesai = (
-    <li key="pendaftaran-selesai" className="flex gap-4">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 flex-shrink-0 mt-1">
-        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-      </div>
-      <div className="flex-1">
-        <p className="font-semibold">Pendaftaran Selesai</p>
-        <p className="text-sm text-muted-foreground">Anda berhasil menyelesaikan semua langkah pendaftaran dan mengirimkan berkas.</p>
-        <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 10:30 WIB</p>
-      </div>
-    </li>
-  );
-
-  const sedangDitinjau = (
-    <li key="sedang-ditinjau" className="flex gap-4">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900 flex-shrink-0 mt-1">
-        <FileQuestion className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-      </div>
-      <div className="flex-1">
-        <p className="font-semibold">Berkas Sedang Ditinjau</p>
-        <p className="text-sm text-muted-foreground">Berkas Anda telah kami terima dan sedang dalam proses peninjauan oleh verifikator.</p>
-        <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 10:35 WIB</p>
-      </div>
-    </li>
-  );
-
-  const berkasDitolak = (
-    <li key="berkas-ditolak" className="flex gap-4">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900 flex-shrink-0 mt-1">
-        <XSquare className="h-5 w-5 text-red-600 dark:text-red-400" />
-      </div>
-      <div className="flex-1">
-        <p className="font-semibold">Berkas Ditolak</p>
-        <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">{verifierDisplayName}</span> menolak berkas dengan alasan: <span className="italic">"{applicant.rejectionReason || 'Tidak ada alasan spesifik yang diberikan.'}"</span></p>
-        <p className="text-xs text-muted-foreground mt-1">{verificationTimestamp}</p>
-      </div>
-    </li>
-  );
-  
-  const perbaikanBerkas = (
-     <li key="perbaikan-berkas" className="flex gap-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900 flex-shrink-0 mt-1">
-            <FileUp className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-        </div>
-        <div className="flex-1">
-            <p className="font-semibold">Perbaikan Berkas Selesai</p>
-            <p className="text-sm text-muted-foreground">Anda berhasil mengunggah ulang berkas yang diperlukan.</p>
-            <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 09:15 WIB</p>
-        </div>
-    </li>
-  );
-  
-  const verifikasiUlang = (
-      <li key="verifikasi-ulang" className="flex gap-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 flex-shrink-0 mt-1">
-            <UserCheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-        </div>
-        <div className="flex-1">
-            <p className="font-semibold">Berkas Diverifikasi Ulang</p>
-            <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">{verifierDisplayName}</span> telah memverifikasi ulang berkas perbaikan Anda.</p>
-            <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 11:00 WIB</p>
-        </div>
-    </li>
-  );
-  
-  const peringkatDiperbarui = (
-    <li key="peringkat-diperbarui" className="flex gap-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900 flex-shrink-0 mt-1">
-            <BarChart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-        </div>
-        <div className="flex-1">
-            <p className="font-semibold">Peringkat Diperbarui</p>
-            <p className="text-sm text-muted-foreground">Sistem telah memperbarui peringkat sementara Anda setelah verifikasi berhasil.</p>
-            <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 11:05 WIB</p>
-        </div>
-    </li>
-  );
-
-  let historyItems: React.ReactNode[] = [];
-  switch (applicant.statusVerifikasi) {
-    case 'Terverifikasi':
-      // This is a more realistic timeline for a re-verified user
-      historyItems = [pendaftaranSelesai, sedangDitinjau, berkasDitolak, perbaikanBerkas, verifikasiUlang, peringkatDiperbarui];
-      break;
-    case 'Berkas tidak sesuai':
-      historyItems = [pendaftaranSelesai, sedangDitinjau, berkasDitolak];
-      break;
-    case 'Menunggu Verifikasi':
-      historyItems = [pendaftaranSelesai, sedangDitinjau];
-      break;
+  if (!applicant || !applicant.activityHistory || applicant.activityHistory.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground text-center py-4">
+        Riwayat aktivitas belum tersedia.
+      </p>
+    );
   }
-  
-  return <ul className="space-y-6">{historyItems.reverse()}</ul>;
+
+  const eventUIMap = (event: ActivityEvent) => {
+    const timestamp = new Date(event.timestamp).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' }) + ' WIB';
+    
+    switch(event.type) {
+      case 'REGISTRATION_COMPLETED':
+        return {
+          icon: <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />,
+          bgColor: "bg-green-100 dark:bg-green-900",
+          title: "Pendaftaran Selesai",
+          description: `Anda berhasil menyelesaikan pendaftaran. Berkas dikirimkan untuk verifikasi.`,
+          actor: event.actor,
+          timestamp,
+        };
+      case 'FILES_RESUBMITTED':
+         return {
+          icon: <FileUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />,
+          bgColor: "bg-blue-100 dark:bg-blue-900",
+          title: "Perbaikan Berkas Terkirim",
+          description: "Anda berhasil mengunggah ulang berkas yang diperlukan untuk ditinjau kembali.",
+          actor: event.actor,
+          timestamp,
+        };
+      case 'VERIFICATION_REJECTED':
+         return {
+          icon: <XSquare className="h-5 w-5 text-red-600 dark:text-red-400" />,
+          bgColor: "bg-red-100 dark:bg-red-900",
+          title: "Verifikasi Ditolak",
+          description: `Verifikator menolak berkas dengan alasan: "${event.details || 'Tidak ada alasan spesifik.'}"`,
+          actor: event.actor,
+          timestamp,
+        };
+      case 'VERIFICATION_APPROVED':
+        return {
+          icon: <ShieldCheck className="h-5 w-5 text-green-600 dark:text-green-400" />,
+          bgColor: "bg-green-100 dark:bg-green-900",
+          title: "Verifikasi Berhasil",
+          description: "Selamat! Berkas Anda telah diverifikasi dan pendaftaran Anda diterima untuk tahap selanjutnya.",
+          actor: event.actor,
+          timestamp,
+        };
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <ul className="space-y-6">
+      {[...applicant.activityHistory].reverse().map((event, index) => {
+        const eventUI = eventUIMap(event);
+        if (!eventUI) return null;
+        return (
+          <li key={index} className="flex gap-4">
+            <div className={`flex h-8 w-8 items-center justify-center rounded-full ${eventUI.bgColor} flex-shrink-0 mt-1`}>
+              {eventUI.icon}
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold">{eventUI.title}</p>
+              <p className="text-sm text-muted-foreground">{eventUI.description}</p>
+              <p className="text-xs text-muted-foreground mt-1">Oleh: {eventUI.actor} &bull; {eventUI.timestamp}</p>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
 };
 
 export default function StatusPage() {

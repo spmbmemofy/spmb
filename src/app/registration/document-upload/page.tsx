@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
 import { getApplicants, updateApplicant, createOrUpdateApplicantFromRegistration } from "@/lib/applicantService";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import type { ActivityEvent } from "@/lib/types";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
@@ -237,6 +238,14 @@ export default function DocumentUploadPage() {
             applicantData.statusVerifikasi = "Menunggu Verifikasi";
             applicantData.rejectionReason = undefined;
             applicantData.documentStatuses = {};
+
+            const historyEvent: ActivityEvent = {
+                type: 'FILES_RESUBMITTED',
+                timestamp: new Date().toISOString(),
+                actor: applicantData.fullName
+            };
+            applicantData.activityHistory = [...(applicantData.activityHistory || []), historyEvent];
+            
             updateApplicant(applicantData);
 
             setTimeout(() => {

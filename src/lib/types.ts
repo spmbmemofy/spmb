@@ -8,6 +8,13 @@ export type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas 
 export type Jalur = "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
 export type DocumentStatus = "valid" | "invalid" | null;
 
+export interface ActivityEvent {
+  type: 'REGISTRATION_COMPLETED' | 'VERIFICATION_REJECTED' | 'FILES_RESUBMITTED' | 'VERIFICATION_APPROVED';
+  timestamp: string; // ISO string
+  actor: string; // e.g., 'Pendaftar' or verifier's name
+  details?: string; // e.g., rejection reason
+}
+
 export interface Applicant {
   id: string;
   noRegistrasi: string;
@@ -60,6 +67,7 @@ export interface Applicant {
   // Verification details
   verifiedBy?: string;
   verificationTimestamp?: string;
+  activityHistory: ActivityEvent[];
 }
 
 export type SortKey = keyof Applicant | 'no';
