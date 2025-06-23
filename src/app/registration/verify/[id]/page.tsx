@@ -25,11 +25,11 @@ import { useToast } from "@/hooks/use-toast";
 import { getApplicantById, updateApplicant } from "@/lib/applicantService";
 import type { Applicant, ApplicantStatus, DocumentStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { getSchoolById } from "@/lib/schoolService";
-import { getFromLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
+import { getSchoolById, getSchoolByNPSN } from "@/lib/schoolService";
+import { getFromLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
+import { getUsers } from "@/lib/userService";
 
 
-const VERIFIER_SCHOOL_ID = "sman4berau";
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 
 
@@ -79,14 +79,26 @@ export default function VerifyApplicantPage() {
   const [selectedAction, setSelectedAction] = React.useState<ActionType | null>(null);
   const [rejectionReason, setRejectionReason] = React.useState("");
   const [editableNilaiPrestasi, setEditableNilaiPrestasi] = React.useState(0);
+  const [verifierSchoolId, setVerifierSchoolId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    const creds = getFromLocalStorage<LoginCredentials | null>('loginCredentials', null);
+    const user = creds ? getUsers().find(u => u.username === creds.username) : null;
+    const school = user?.npsn ? getSchoolByNPSN(user.npsn) : null;
+
+    if (school) {
+        setVerifierSchoolId(school.id);
+    }
+
     if (applicantId) {
       const foundApplicant = getApplicantById(applicantId);
       setApplicant(foundApplicant || null);
 
-      if (foundApplicant) {
-        setIsVerifierAuthorized(foundApplicant.sekolahTujuanId === VERIFIER_SCHOOL_ID);
+      if (foundApplicant && school) {
+        // A verifier can only verify an applicant if the applicant's FIRST choice is the verifier's school.
+        const isAuthorized = foundApplicant.schoolSelections?.[0]?.schoolId === school.id;
+        setIsVerifierAuthorized(isAuthorized);
+
         const specificDocs = pathwaySpecificDocuments[foundApplicant.jalur] || [];
         const allDocs = [...generalDocuments, ...specificDocs];
         setDocumentsToVerify(allDocs);
@@ -150,7 +162,8 @@ export default function VerifyApplicantPage() {
   };
   
   const totalNilaiRapor = applicant ? Object.values(applicant.semesterGrades).reduce((sum, grade) => sum + grade, 0) : 0;
-  const nilaiTambahan = isVerifierAuthorized ? 25 : 0;
+  // Nilai tambahan only given if the verifier's school is the applicant's first choice.
+  const nilaiTambahan = (applicant && verifierSchoolId && applicant.schoolSelections?.[0]?.schoolId === verifierSchoolId) ? 25 : 0;
   const nilaiPrestasi = applicant?.jalur === 'Prestasi' ? editableNilaiPrestasi : 0;
   const nilaiTotal = totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
 
@@ -207,7 +220,7 @@ export default function VerifyApplicantPage() {
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Akses Ditolak</AlertTitle>
               <AlertDescription>
-                  Verifikasi hanya dapat dilakukan oleh sekolah pilihan pertama pendaftar.
+                  Verifikasi hanya dapat dilakukan oleh sekolah yang menjadi pilihan pertama pendaftar.
               </AlertDescription>
           </Alert>
         )}

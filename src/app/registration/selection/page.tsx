@@ -14,10 +14,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import { getApplicants } from "@/lib/applicantService";
 import { jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
-import { getSchoolById } from "@/lib/schoolService";
+import { getSchoolById, getSchoolByNPSN } from "@/lib/schoolService";
 import type { Applicant, ApplicantStatus } from "@/lib/types";
+import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
+import { getUsers } from "@/lib/userService";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
-const VERIFIER_SCHOOL_ID = "sman4berau";
 
 const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
   switch (status) {
@@ -31,6 +34,9 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
 export default function VerificationPage() {
   const [allApplicants, setAllApplicants] = React.useState<Applicant[]>([]);
   const [schoolName, setSchoolName] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(true);
+  const { toast } = useToast();
+  const router = useRouter();
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedJalur, setSelectedJalur] = React.useState("Semua Jalur");
@@ -39,13 +45,36 @@ export default function VerificationPage() {
   const [currentPage, setCurrentPage] = React.useState(1);
 
   React.useEffect(() => {
-    const applicantsData = getApplicants();
-    const verifierSchoolApplicants = applicantsData.filter(app => app.sekolahTujuanId === VERIFIER_SCHOOL_ID);
-    setAllApplicants(verifierSchoolApplicants);
+    const creds = getFromLocalStorage<LoginCredentials | null>('loginCredentials', null);
+    if (!creds?.username) {
+        toast({ variant: 'destructive', title: 'Sesi tidak ditemukan', description: 'Silakan login kembali.' });
+        router.replace('/');
+        return;
+    }
 
-    const school = getSchoolById(VERIFIER_SCHOOL_ID);
-    setSchoolName(school?.namaSekolah || "Sekolah Tidak Ditemukan");
-  }, []);
+    const user = getUsers().find(u => u.username === creds.username);
+    if (!user || !user.npsn) {
+        toast({ variant: 'destructive', title: 'Akun tidak terhubung', description: 'Akun verifikator Anda tidak terhubung ke sekolah manapun.' });
+        setIsLoading(false);
+        return;
+    }
+
+    const verifierSchool = getSchoolByNPSN(user.npsn);
+    if (!verifierSchool) {
+        toast({ variant: 'destructive', title: 'Sekolah tidak ditemukan', description: `Sekolah dengan NPSN ${user.npsn} tidak ditemukan.` });
+        setIsLoading(false);
+        return;
+    }
+    
+    setSchoolName(verifierSchool.namaSekolah);
+    const applicantsData = getApplicants();
+    const verifierSchoolApplicants = applicantsData.filter(app => {
+        return app.schoolSelections?.some(sel => sel.schoolId === verifierSchool.id) && app.schoolSelections[0].schoolId === verifierSchool.id;
+    });
+
+    setAllApplicants(verifierSchoolApplicants);
+    setIsLoading(false);
+  }, [router, toast]);
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -73,6 +102,10 @@ export default function VerificationPage() {
 
   const jalurOptions = ["Semua Jalur", ...jalurOptionsPlain];
   const statusOptions = ["Semua Status", ...statusVerifikasiOptionsPlain];
+  
+  if (isLoading) {
+    return <div className="p-4 text-center">Memuat data verifikasi...</div>;
+  }
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
@@ -85,7 +118,7 @@ export default function VerificationPage() {
             <div>
               <CardTitle className="text-2xl sm:text-3xl font-headline">Daftar Tunggu Verifikasi</CardTitle>
               <CardDescription className="text-md mt-1">
-                Kelola, cari, dan filter pendaftar untuk sekolah: <span className="font-semibold">{schoolName}</span>
+                Kelola, cari, dan filter pendaftar untuk sekolah: <span className="font-semibold">{schoolName || "Tidak ada sekolah"}</span>
               </CardDescription>
             </div>
           </div>
