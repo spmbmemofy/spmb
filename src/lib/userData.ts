@@ -16,6 +16,7 @@ export const initialUsers: User[] = [
   // Pendaftar
   { id: 'user-1', username: '0056789123', password: 'password123', role: 'applicant', fullName: 'Muhammad Rizky Pratama' },
   { id: 'user-2', username: '0012345678', password: 'password123', role: 'applicant', fullName: 'Budi Santoso' },
+  { id: 'user-11', username: '1234567890', password: 'password123', role: 'applicant', fullName: 'Wahyu Shofian' },
 
   // Verifikator
   { id: 'user-3', username: 'verifikator_sman4', password: 'password123', role: 'verifikator', fullName: 'Ahmad Syahputra, S.Kom', npsn: '30404228' },

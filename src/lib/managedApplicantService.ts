@@ -33,6 +33,14 @@ const initialManagedApplicants: ManagedApplicant[] = [
         gender: 'Perempuan',
         asalSekolahId: 'smpn1tanjungredeb',
         semesterGrades: { semester1: 90, semester2: 92, semester3: 88, semester4: 91, semester5: 93 }
+    },
+    {
+        id: 'managed-wahyu',
+        fullName: 'Wahyu Shofian',
+        nisn: '1234567890',
+        gender: 'Laki-laki',
+        asalSekolahId: 'smpn2telukbayur',
+        semesterGrades: { semester1: 87, semester2: 89, semester3: 88, semester4: 92, semester5: 90 }
     }
 ];
 
