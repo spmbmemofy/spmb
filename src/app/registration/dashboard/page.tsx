@@ -3,19 +3,21 @@
 
 import * as React from "react";
 import Image from "next/image";
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserCircle, CheckCircle2, Edit3, Save, XCircle, Upload, Check } from 'lucide-react';
+import { UserCircle, CheckCircle2, Edit3, Save, XCircle, Upload, Check, AlertTriangle, ClipboardCheck } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadcnTableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
 import { addressData, getDistricts, getSubdistricts, getVillages } from "@/lib/addressData";
 import { getManagedApplicants } from "@/lib/managedApplicantService";
 import { getSchoolById } from "@/lib/schoolService";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
@@ -249,6 +251,7 @@ function ApplicantDashboard() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isConfirmed, setIsConfirmed] = React.useState(false);
   const [biodata, setBiodata] = React.useState<BiodataDetails | null>(null);
+  const [isLocked, setIsLocked] = React.useState(false);
   
   const [editingPersonalField, setEditingPersonalField] = React.useState<BiodataKeys | null>(null);
   const [currentPersonalFieldValue, setCurrentPersonalFieldValue] = React.useState<string>("");
@@ -279,6 +282,10 @@ function ApplicantDashboard() {
 
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+    
+    if (savedProgress?.registrationCompleted) {
+        setIsLocked(true);
+    }
 
     if (savedProgress?.biodata) {
       setBiodata(savedProgress.biodata);
@@ -337,14 +344,14 @@ function ApplicantDashboard() {
   }, []);
   
   React.useEffect(() => {
-    if (isLoading || !biodata) return;
+    if (isLoading || !biodata || isLocked) return;
 
     const currentProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
     saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, {
         ...currentProgress,
         biodata,
     });
-  }, [biodata, isLoading]);
+  }, [biodata, isLoading, isLocked]);
 
   const overallTableValue = React.useMemo(() => {
     if (!biodata?.semesterGrades) return "0.00";
@@ -550,6 +557,16 @@ function ApplicantDashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
+          {isLocked && (
+             <Alert variant="default" className="bg-yellow-100 border-yellow-300 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700/50 dark:text-yellow-300 [&>svg]:text-yellow-600 dark:[&>svg]:text-yellow-400">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Biodata Terkunci</AlertTitle>
+                <AlertDescription>
+                    Anda telah menyelesaikan pendaftaran dan data Anda sedang dalam proses verifikasi. Biodata tidak dapat diubah lagi.
+                </AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex flex-col items-center mb-8 pt-4 border-t">
             <div className="relative w-32 h-32 sm:w-36 sm:h-36 mb-4">
               <Image
@@ -573,6 +590,7 @@ function ApplicantDashboard() {
               size="sm"
               onClick={() => fileInputRef.current?.click()}
               aria-label="Unggah atau ganti foto profil"
+              disabled={isLocked}
             >
               <Upload className="mr-2 h-4 w-4" />
               {profilePhoto || persistedPhotoUploaded ? "Ganti Foto" : "Unggah Foto Profil"}
@@ -585,8 +603,12 @@ function ApplicantDashboard() {
             <div className="rounded-md border">
               <Table>
                 <TableBody>
-                  <BiodataItem label="NISN (Nomor Induk Siswa Nasional)" value={biodata.nisn} />
-                  <BiodataItem label="NIK (Nomor Induk Kependudukan)" value={biodata.nik} />
+                  <TableRow>
+                    <TableCell className="font-medium text-muted-foreground w-1/3">NISN</TableCell><TableCell>{biodata.nisn}</TableCell><TableCell></TableCell>
+                  </TableRow>
+                   <TableRow>
+                    <TableCell className="font-medium text-muted-foreground w-1/3">NIK</TableCell><TableCell>{biodata.nik}</TableCell><TableCell></TableCell>
+                  </TableRow>
 
                   {personalInfoEditableFields.map((field) => (
                     <BiodataItem
@@ -599,8 +621,8 @@ function ApplicantDashboard() {
                       onEditClick={handleStartEditPersonalField}
                       onSaveClick={handleSavePersonalField}
                       onCancelClick={handleCancelEditPersonalField}
-                      onInputChange={setCurrentPersonalFieldValue}
-                      disableEditButton={isAnyFieldBeingEdited && editingPersonalField !== field.key}
+      onInputChange={setCurrentPersonalFieldValue}
+                      disableEditButton={isAnyFieldBeingEdited || isLocked}
                       inputType={field.type}
                       selectOptions={field.selectOptions}
                     />
@@ -616,7 +638,7 @@ function ApplicantDashboard() {
                     <div className="flex justify-between items-center">
                         <CardTitle className="text-lg">Alamat Lengkap</CardTitle>
                         {!isEditingAddress && (
-                            <Button variant="outline" size="sm" onClick={handleEditAddress} disabled={isAnyFieldBeingEdited}>
+                            <Button variant="outline" size="sm" onClick={handleEditAddress} disabled={isAnyFieldBeingEdited || isLocked}>
                                 <Edit3 className="mr-2 h-4 w-4" /> Edit Alamat
                             </Button>
                         )}
@@ -706,7 +728,7 @@ function ApplicantDashboard() {
                   onClick={handleEditParentInfo} 
                   variant="outline" 
                   size="sm"
-                  disabled={isAnyFieldBeingEdited}
+                  disabled={isAnyFieldBeingEdited || isLocked}
                 >
                   <Edit3 className="mr-2 h-4 w-4" /> Edit Info Orang Tua
                 </Button>
@@ -790,15 +812,24 @@ function ApplicantDashboard() {
           </section>
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row justify-end items-center pt-6 gap-4">
-            <Button
-              size="lg"
-              onClick={handleConfirm}
-              disabled={isConfirmed || isAnyFieldBeingEdited}
-              className="w-full sm:w-auto"
-            >
-              <CheckCircle2 className="mr-2 h-5 w-5" />
-              {isConfirmed ? "Terkonfirmasi" : "Konfirmasi dan Lanjutkan"}
-            </Button>
+            {isLocked ? (
+                 <Button size="lg" asChild className="w-full sm:w-auto">
+                    <Link href="/registration/status">
+                        <ClipboardCheck className="mr-2 h-5 w-5" />
+                        Lihat Status Pendaftaran
+                    </Link>
+                </Button>
+            ) : (
+                <Button
+                  size="lg"
+                  onClick={handleConfirm}
+                  disabled={isConfirmed || isAnyFieldBeingEdited}
+                  className="w-full sm:w-auto"
+                >
+                  <CheckCircle2 className="mr-2 h-5 w-5" />
+                  {isConfirmed ? "Terkonfirmasi" : "Konfirmasi dan Lanjutkan"}
+                </Button>
+            )}
         </CardFooter>
       </Card>
     </div>
