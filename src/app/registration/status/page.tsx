@@ -14,6 +14,7 @@ import { getSchoolById, type School } from "@/lib/schoolService";
 import { getFromLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
 import { getApplicants, type Applicant } from "@/lib/applicantService";
 import { type SchoolSelection, type ApplicantStatus } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
@@ -333,21 +334,28 @@ export default function StatusPage() {
                             Ringkasan Verifikasi Berkas
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-4 text-sm">
+                    <CardContent className={cn(
+                        "grid gap-x-6 gap-y-4 text-sm",
+                        applicant.statusVerifikasi !== 'Menunggu Verifikasi' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1'
+                    )}>
                         <div>
                             <p className="font-medium text-muted-foreground mb-1">Status</p>
                             <Badge variant={getVerificationBadgeVariant(applicant.statusVerifikasi)} className="font-semibold text-base px-3 py-1">
                                 {applicant.statusVerifikasi}
                             </Badge>
                         </div>
-                        <div>
-                            <p className="font-medium text-muted-foreground mb-1">Diverifikasi oleh Sekolah</p>
-                            <p className="font-semibold">{displaySelections[0]?.school.namaSekolah || '-'}</p>
-                        </div>
-                        <div>
-                            <p className="font-medium text-muted-foreground mb-1">Nama Verifikator</p>
-                            <p className="font-semibold">Ahmad Syahputra, S.Kom</p>
-                        </div>
+                        {applicant.statusVerifikasi !== 'Menunggu Verifikasi' && (
+                            <>
+                                <div>
+                                    <p className="font-medium text-muted-foreground mb-1">Diverifikasi oleh Sekolah</p>
+                                    <p className="font-semibold">{displaySelections[0]?.school.namaSekolah || '-'}</p>
+                                </div>
+                                <div>
+                                    <p className="font-medium text-muted-foreground mb-1">Nama Verifikator</p>
+                                    <p className="font-semibold">Ahmad Syahputra, S.Kom</p>
+                                </div>
+                            </>
+                        )}
                     </CardContent>
                     <CardFooter className="text-xs text-muted-foreground pt-4 pb-3 px-6">
                         <p>Klik di mana saja pada kartu ini untuk melihat detail riwayat aktivitas.</p>
