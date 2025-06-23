@@ -86,6 +86,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     const headmasterMenu = [
         { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
         { href: '/registration/all-data', label: 'Lihat Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
+        { href: '/registration/school-settings', label: 'Kelola Sekolah', icon: Building, activePaths: ['/registration/school-settings'] },
         { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
     ];
      const smpOperatorMenu = [
