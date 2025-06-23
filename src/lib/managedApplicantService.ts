@@ -5,16 +5,7 @@ import { getFromLocalStorage, saveToLocalStorage } from './localStorage';
 import type { ManagedApplicant } from './types';
 
 // Adding initial data for demonstration purposes.
-const initialManagedApplicants: ManagedApplicant[] = [
-    {
-        id: 'managed-kusnadi-01',
-        fullName: 'Muhammad Kusnadi',
-        nisn: '0078901234',
-        gender: 'Laki-laki',
-        asalSekolahId: 'smpn1sambaliung30401888', // Make sure this ID exists in schoolService
-        semesterGrades: { semester1: 85, semester2: 86, semester3: 87, semester4: 88, semester5: 89 },
-    }
-];
+const initialManagedApplicants: ManagedApplicant[] = [];
 
 const MANAGED_APPLICANTS_STORAGE_KEY = 'managedApplicantsData';
 
