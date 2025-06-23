@@ -237,6 +237,7 @@ export default function VerifyApplicantPage() {
               <CardContent className="space-y-3 text-sm">
                    <div className="flex justify-between"><span className="text-muted-foreground">No. Registrasi</span><span className="font-medium">{applicant.noRegistrasi}</span></div>
                    <div className="flex justify-between"><span className="text-muted-foreground">Asal Sekolah</span><span className="font-medium">{applicant.asalSekolahNama}</span></div>
+                   <div className="flex justify-between"><span className="text-muted-foreground">No. Telepon</span><span className="font-medium">{applicant?.contactNumber || '-'}</span></div>
               </CardContent>
             </Card>
             <Card>
