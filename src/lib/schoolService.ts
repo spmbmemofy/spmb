@@ -28,34 +28,8 @@ export interface School {
   jumlahPendaftar?: number; 
 }
 
-// Initial Data
-const initialSchools: School[] = [
-  // SMPs (Origin Schools)
-  { id: "smpn1tanjungredeb", npsn: '30401918', namaSekolah: 'SMP Negeri 1 Tanjung Redeb', jenjang: 'SMP', jenis: 'Negeri', alamat: 'Jl. M. I. Swadji, Tanjung Redeb', kecamatan: 'Kec. Tanjung Redeb', telepon: '0554-21111', akreditasi: 'A' },
-  { id: "smpn2telukbayur", npsn: '30401878', namaSekolah: 'SMP Negeri 2 Teluk Bayur', jenjang: 'SMP', jenis: 'Negeri', alamat: 'Jl. Poros Labanan, Teluk Bayur', kecamatan: 'Kec. Teluk Bayur', telepon: '0554-21112', akreditasi: 'B' },
-  { id: "mtsalkholil", npsn: '69753308', namaSekolah: 'MTs Al-Kholil', jenjang: 'SMP', jenis: 'Swasta', alamat: 'Jl. H. Isa III, Karang Ambun', kecamatan: 'Kec. Tanjung Redeb', telepon: '0554-21113', akreditasi: 'A' },
-
-  // SMAs / SMKs (Destination Schools)
-  {
-    id: "sman1tanjungredeb", npsn: '30401827', namaSekolah: "SMA Negeri 1 Tanjung Redeb", jenjang: 'SMA', jenis: 'Negeri',
-    alamat: "Jl. Jenderal Sudirman No.50, Tanjung Redeb, Berau", kecamatan: "Kec. Tanjung Redeb", telepon: "0554-21045", akreditasi: "A",
-    wilayah: '1', kuota: 266, jalurKuota: { afirmasi: 56, mutasi: 14, prestasi: 84, domisili: 112 }, majors: [],
-    statusPendaftaran: "Buka", tahapPendaftaran: 1,
-  },
-  {
-    id: "smkn1berau", npsn: '30401828', namaSekolah: "SMK Negeri 1 Berau", jenjang: 'SMK', jenis: 'Negeri',
-    alamat: "Jl. Murjani II, Gayam, Tanjung Redeb, Berau", kecamatan: "Kec. Tanjung Redeb", telepon: "0554-21098", akreditasi: "A",
-    wilayah: '1', kuota: 304, jalurKuota: { afirmasi: 61, mutasi: 15, prestasi: 91, domisili: 137 },
-    majors: ["Teknik Komputer dan Jaringan", "Akuntansi dan Keuangan Lembaga", "Otomatisasi dan Tata Kelola Perkantoran", "Bisnis Daring dan Pemasaran"],
-    statusPendaftaran: "Buka", tahapPendaftaran: 1,
-  },
-  {
-    id: "sman4berau", npsn: '30404228', namaSekolah: "SMA Negeri 4 Berau", jenjang: 'SMA', jenis: 'Negeri',
-    alamat: "Jl. Poros Labanan, Labanan Makmur, Teluk Bayur, Berau", kecamatan: "Kec. Teluk Bayur", telepon: "0554-25001", akreditasi: "B",
-    wilayah: '2', kuota: 200, jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 90 }, majors: [],
-    statusPendaftaran: "Buka", tahapPendaftaran: 1,
-  },
-];
+// Initial Data has been cleared to allow for a fresh simulation start.
+const initialSchools: School[] = [];
 
 const SCHOOLS_STORAGE_KEY = 'allSchoolsData_v2';
 
