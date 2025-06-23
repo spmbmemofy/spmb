@@ -29,7 +29,19 @@ export interface School {
 }
 
 // Initial Data has been cleared to allow for a fresh simulation start.
-const initialSchools: School[] = [];
+const initialSchools: School[] = [
+  {
+    id: 'smpn1sambaliung30401888',
+    npsn: '30401888',
+    namaSekolah: 'SMPN 1 Sambaliung',
+    jenjang: 'SMP',
+    jenis: 'Negeri',
+    alamat: 'Jl. Raya Sambaliung, Sambaliung, Berau',
+    kecamatan: 'Kec. Sambaliung',
+    telepon: '0554-2021888',
+    akreditasi: 'B',
+  }
+];
 
 const SCHOOLS_STORAGE_KEY = 'allSchoolsData_v2';
 
