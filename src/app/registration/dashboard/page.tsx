@@ -798,19 +798,21 @@ export default function DashboardPage() {
         const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
         if (savedCredentials?.role) {
             setUserRole(savedCredentials.role);
+        } else {
+            router.replace('/');
         }
         setIsLoading(false);
-    }, []);
+    }, [router]);
 
     React.useEffect(() => {
         if (!isLoading && userRole) {
-            if (userRole === 'admin' || userRole === 'verifikator') {
+            if (userRole !== 'applicant') {
                 router.replace('/registration/home');
             }
         }
     }, [isLoading, userRole, router]);
 
-    if (isLoading || userRole !== 'applicant') {
+    if (isLoading || !userRole || userRole !== 'applicant') {
         return (
             <div className="flex flex-1 items-center justify-center p-4">
                 <p>Mengarahkan...</p>
@@ -820,5 +822,3 @@ export default function DashboardPage() {
     
     return <ApplicantDashboard />;
 }
-
-    

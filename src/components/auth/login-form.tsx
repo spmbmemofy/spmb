@@ -120,8 +120,14 @@ export function LoginForm() {
           title: "Login Berhasil",
           description: `Selamat datang, ${user.fullName}!`,
       });
+      
+      // Redirect based on role
+      if (user.role === 'applicant') {
+        router.push('/registration/dashboard');
+      } else {
+        router.push('/registration/home');
+      }
 
-      router.push('/registration/dashboard');
     } else {
       toast({
           variant: "destructive",
