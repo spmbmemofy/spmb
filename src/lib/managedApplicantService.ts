@@ -4,13 +4,22 @@
 import { getFromLocalStorage, saveToLocalStorage } from './localStorage';
 import type { ManagedApplicant } from './types';
 
-// The user requested to start the simulation from scratch, so we are clearing all initial dummy data.
-const initialManagedApplicants: ManagedApplicant[] = [];
+// Adding initial data for demonstration purposes.
+const initialManagedApplicants: ManagedApplicant[] = [
+    {
+        id: 'managed-kusnadi-01',
+        fullName: 'Muhammad Kusnadi',
+        nisn: '0078901234',
+        gender: 'Laki-laki',
+        asalSekolahId: 'smpn1sambaliung30401888', // Make sure this ID exists in schoolService
+        semesterGrades: { semester1: 85, semester2: 86, semester3: 87, semester4: 88, semester5: 89 },
+    }
+];
 
 const MANAGED_APPLICANTS_STORAGE_KEY = 'managedApplicantsData';
 
 export const initializeManagedApplicantsData = (): void => {
-  // Check if data already exists. If not, initialize with an empty array.
+  // Check if data already exists. If not, initialize with the new initial data.
   const storedData = getFromLocalStorage<ManagedApplicant[] | null>(MANAGED_APPLICANTS_STORAGE_KEY, null);
   if (storedData === null) {
     saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, initialManagedApplicants);

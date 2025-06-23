@@ -35,5 +35,12 @@ export const initialUsers: User[] = [
     password: 'lufri123',
     role: 'applicant',
     fullName: 'Lufri',
-  }
+  },
+  {
+    id: 'applicant-kusnadi-01',
+    username: '0078901234',
+    password: 'password123',
+    role: 'applicant',
+    fullName: 'Muhammad Kusnadi',
+  },
 ];
