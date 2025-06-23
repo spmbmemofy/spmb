@@ -34,14 +34,16 @@ const initialSchools: School[] = [];
 const SCHOOLS_STORAGE_KEY = 'allSchoolsData_v2';
 
 // Service Functions
-export const initializeSchoolsData = (): School[] => {
-  // Always save the initial (empty) school list to localStorage on initialization to ensure a clean state.
-  saveToLocalStorage(SCHOOLS_STORAGE_KEY, initialSchools);
-  return initialSchools;
+export const initializeSchoolsData = (): void => {
+  // Check if schools already exist in localStorage. If not, initialize.
+  const storedSchools = getFromLocalStorage<School[] | null>(SCHOOLS_STORAGE_KEY, null);
+  if (storedSchools === null) {
+    saveToLocalStorage(SCHOOLS_STORAGE_KEY, initialSchools);
+  }
 };
 
 export function getSchools(): School[] {
-  return getFromLocalStorage<School[]>(SCHOOLS_STORAGE_KEY, initialSchools);
+  return getFromLocalStorage<School[]>(SCHOOLS_STORAGE_KEY, []);
 }
 
 export function getSchoolById(id: string): School | undefined {

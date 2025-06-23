@@ -9,10 +9,12 @@ const initialManagedApplicants: ManagedApplicant[] = [];
 
 const MANAGED_APPLICANTS_STORAGE_KEY = 'managedApplicantsData';
 
-export const initializeManagedApplicantsData = (): ManagedApplicant[] => {
-  // Always save the initial (empty) list to localStorage on initialization to ensure a clean state.
-  saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, initialManagedApplicants);
-  return initialManagedApplicants;
+export const initializeManagedApplicantsData = (): void => {
+  // Check if data already exists. If not, initialize with an empty array.
+  const storedData = getFromLocalStorage<ManagedApplicant[] | null>(MANAGED_APPLICANTS_STORAGE_KEY, null);
+  if (storedData === null) {
+    saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, initialManagedApplicants);
+  }
 };
 
 export function getManagedApplicants(): ManagedApplicant[] {
