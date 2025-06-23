@@ -3,6 +3,8 @@
 
 import { getFromLocalStorage, saveToLocalStorage } from './localStorage';
 import { initialUsers, type User } from './userData';
+import { deleteApplicantByNisn } from './applicantService';
+import { deleteManagedApplicantByNisn } from './managedApplicantService';
 
 const USERS_STORAGE_KEY = 'allUsersData_v2';
 
@@ -46,10 +48,23 @@ export function updateUser(updatedUser: User): User | undefined {
 
 export function deleteUser(userId: string): boolean {
   let users = getUsers();
+  const userToDelete = users.find(u => u.id === userId);
+
+  if (!userToDelete) {
+      return false;
+  }
+
+  // If the user is an applicant, also delete their associated data.
+  if (userToDelete.role === 'applicant') {
+      deleteApplicantByNisn(userToDelete.username);
+      deleteManagedApplicantByNisn(userToDelete.username);
+  }
+
   const newUsers = users.filter(u => u.id !== userId);
   if (newUsers.length < users.length) {
     saveToLocalStorage(USERS_STORAGE_KEY, newUsers);
     return true;
   }
+
   return false;
 }

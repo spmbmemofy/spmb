@@ -58,3 +58,14 @@ export function deleteManagedApplicant(applicantId: string): boolean {
   }
   return false;
 }
+
+export function deleteManagedApplicantByNisn(nisn: string): boolean {
+  let applicants = getManagedApplicants();
+  const initialLength = applicants.length;
+  const newApplicants = applicants.filter(a => a.nisn !== nisn);
+  if (newApplicants.length < applicants.length) {
+    saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, newApplicants);
+    return true;
+  }
+  return false;
+}
