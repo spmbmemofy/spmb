@@ -64,6 +64,7 @@ export default function SuperadminPage() {
     const [userToDeleteId, setUserToDeleteId] = React.useState<string | null>(null);
     const { toast } = useToast();
     const [visiblePasswordId, setVisiblePasswordId] = React.useState<string | null>(null);
+    const [showDialogPassword, setShowDialogPassword] = React.useState(false);
 
     const form = useForm<UserFormValues>({
         resolver: zodResolver(userFormSchema),
@@ -96,6 +97,7 @@ export default function SuperadminPage() {
     }, [users, applicantSearchTerm]);
 
     const handleOpenDialog = (user: User | null = null) => {
+        setShowDialogPassword(false);
         setEditingUser(user);
         if (user) {
             form.reset({ ...user, password: '' });
@@ -336,7 +338,25 @@ export default function SuperadminPage() {
                             <FormField control={form.control} name="password" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Kata Sandi</FormLabel>
-                                    <FormControl><Input type="password" {...field} /></FormControl>
+                                     <div className="relative">
+                                        <FormControl>
+                                            <Input 
+                                                type={showDialogPassword ? "text" : "password"} 
+                                                className="pr-10"
+                                                {...field} 
+                                            />
+                                        </FormControl>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                                            onClick={() => setShowDialogPassword((prev) => !prev)}
+                                        >
+                                            <span className="sr-only">Toggle password visibility</span>
+                                            {showDialogPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </Button>
+                                    </div>
                                     {editingUser && <p className="text-xs text-muted-foreground">Kosongkan jika tidak ingin mengubah kata sandi.</p>}
                                     <FormMessage />
                                 </FormItem>
