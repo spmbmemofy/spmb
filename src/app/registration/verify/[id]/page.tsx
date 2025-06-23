@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -102,6 +103,9 @@ export default function VerifyApplicantPage() {
         allDocs.forEach(doc => { 
             initialStatuses[doc.id] = foundApplicant.documentStatuses?.[doc.id] === 'invalid' ? 'invalid' : null;
         });
+        initialStatuses['biodata'] = foundApplicant.documentStatuses?.['biodata'] === 'invalid' ? 'invalid' : null;
+        initialStatuses['nilai_rapor'] = foundApplicant.documentStatuses?.['nilai_rapor'] === 'invalid' ? 'invalid' : null;
+
         setDocumentStatuses(initialStatuses);
         setEditableNilaiPrestasi(foundApplicant.nilaiPrestasi || 0);
       }
@@ -228,7 +232,18 @@ export default function VerifyApplicantPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
             <Card>
-              <CardHeader><CardTitle className="flex items-center text-lg"><UserCircle className="mr-2"/>Biodata</CardTitle></CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center text-lg"><UserCircle className="mr-2"/>Biodata</CardTitle>
+                 <Button 
+                    size="sm" 
+                    variant={documentStatuses['biodata'] === 'invalid' ? 'destructive' : 'outline'} 
+                    onClick={() => toggleInvalidStatus('biodata')} 
+                    disabled={!isVerifierAuthorized}
+                >
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Tolak
+                </Button>
+              </CardHeader>
               <CardContent className="space-y-3 text-sm">
                   <div className="flex justify-center mb-4">
                     <Image src={applicant?.profilePhotoDataUri || "https://placehold.co/128x160.png"} alt="Foto Profil" width={100} height={125} className="rounded-md border" data-ai-hint="profile picture" />
@@ -303,7 +318,18 @@ export default function VerifyApplicantPage() {
               </CardContent>
             </Card>
             <Card>
-               <CardHeader><CardTitle className="flex items-center text-lg"><BookOpen className="mr-2"/>Rincian Nilai Rapor</CardTitle></CardHeader>
+               <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center text-lg"><BookOpen className="mr-2"/>Rincian Nilai Rapor</CardTitle>
+                 <Button 
+                    size="sm" 
+                    variant={documentStatuses['nilai_rapor'] === 'invalid' ? 'destructive' : 'outline'} 
+                    onClick={() => toggleInvalidStatus('nilai_rapor')} 
+                    disabled={!isVerifierAuthorized}
+                >
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Tolak
+                </Button>
+              </CardHeader>
                <CardContent>
                 <Table>
                     <TableHeader>
@@ -391,7 +417,7 @@ export default function VerifyApplicantPage() {
                               disabled={!isVerifierAuthorized}
                             >
                               <XCircle className="mr-2 h-4 w-4" />
-                              Tolak Berkas
+                              Tolak
                             </Button>
                         </div>
                       </div>
@@ -458,7 +484,7 @@ export default function VerifyApplicantPage() {
             <ul className="space-y-6">
               <li className="flex gap-4">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 flex-shrink-0 mt-1">
-                      <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <CheckCircle className="h-5 w-5 text-green-600 dark:bg-green-400" />
                   </div>
                   <div className="flex-1">
                       <p className="font-semibold">Pendaftaran Selesai</p>
