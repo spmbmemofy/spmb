@@ -12,8 +12,8 @@ import { getSchools } from '@/lib/schoolService';
 import { getApplicants } from '@/lib/applicantService';
 import type { Applicant, Jalur } from '@/lib/types';
 
-
-const barChartData = [
+// This is example data. The chart will be empty if there are no real applicants.
+const barChartExampleData = [
   { date: '1 Jul', pendaftar: 25 },
   { date: '2 Jul', pendaftar: 32 },
   { date: '3 Jul', pendaftar: 45 },
@@ -41,14 +41,19 @@ export default function HomePage() {
 
   const schoolStats = React.useMemo(() => {
      const schoolsWithPendaftar = schools.map(school => {
-        const pendaftarCount = allApplicants.filter(app => 
-            school.jenjang === 'SMP' 
-                ? app.asalSekolahId === school.id 
-                : app.sekolahTujuanId === school.id
-        ).length;
+        const pendaftarCount = allApplicants.filter(app => {
+            const hasChosenSchool = app.schoolSelections?.some(sel => sel.schoolId === school.id);
+            return school.jenjang !== 'SMP' && hasChosenSchool;
+        }).length;
+
+        const asalSekolahCount = allApplicants.filter(app => app.asalSekolahId === school.id).length;
+        
+        const finalPendaftarCount = school.jenjang === 'SMP' ? asalSekolahCount : pendaftarCount;
+
         const terverifikasi = allApplicants.filter(app => app.asalSekolahId === school.id && app.statusVerifikasi === 'Terverifikasi').length;
-        const prosesVerifikasi = pendaftarCount - terverifikasi;
-        return { ...school, jumlahPendaftar: pendaftarCount, terverifikasi, prosesVerifikasi };
+        const prosesVerifikasi = asalSekolahCount - terverifikasi;
+
+        return { ...school, jumlahPendaftar: finalPendaftarCount, terverifikasi, prosesVerifikasi };
     });
 
     const destinationSchools = schoolsWithPendaftar
@@ -81,8 +86,9 @@ export default function HomePage() {
         belumMendaftar: 0,
       };
     }
-
-    const totalPendaftar = allApplicants.length;
+    
+    // Total pendaftar is the unique set of applicants
+    const totalPendaftar = new Set(allApplicants.map(app => app.id)).size;
     const totalKuota = schoolStats.destinationSchools.reduce((acc, school) => acc + (school.kuota || 0), 0);
     const kuotaTerisi = Math.min(totalPendaftar, totalKuota);
     const persentaseKuota = totalKuota > 0 ? ((kuotaTerisi / totalKuota) * 100).toFixed(1) : "0.0";
@@ -101,7 +107,7 @@ export default function HomePage() {
         ? Object.entries(jalurCounts).sort((a, b) => b[1] - a[1])[0][0]
         : '-';
 
-    const jalurDistribution = Object.entries(jalurCounts).map(([name, value]) => ({ name, value, fill: `var(--color-${name.toLowerCase()})` }));
+    const jalurDistribution = Object.entries(jalurCounts).map(([name, value]) => ({ name: name.toLowerCase(), value, fill: `var(--color-${name.toLowerCase()})` }));
 
     const terverifikasi = allApplicants.filter(app => app.statusVerifikasi === 'Terverifikasi').length;
     const jumlahSiswa = totalPendaftar;
@@ -127,10 +133,10 @@ export default function HomePage() {
   
   const pieChartConfig = {
     pendaftar: { label: "Pendaftar" },
-    Afirmasi: { label: "Afirmasi", color: "hsl(var(--chart-1))" },
-    Mutasi: { label: "Mutasi", color: "hsl(var(--chart-2))" },
-    Prestasi: { label: "Prestasi", color: "hsl(var(--chart-3))" },
-    Domisili: { label: "Domisili", color: "hsl(var(--chart-4))" },
+    afirmasi: { label: "Afirmasi", color: "hsl(var(--chart-1))" },
+    mutasi: { label: "Mutasi", color: "hsl(var(--chart-2))" },
+    prestasi: { label: "Prestasi", color: "hsl(var(--chart-3))" },
+    domisili: { label: "Domisili", color: "hsl(var(--chart-4))" },
   } satisfies ChartConfig;
 
   return (
@@ -180,7 +186,7 @@ export default function HomePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{globalStats.totalPendaftar}</div>
-            <p className="text-xs text-muted-foreground">+5% dari kemarin</p>
+            <p className="text-xs text-muted-foreground">{allApplicants.length > 0 ? "+5% dari kemarin" : "Belum ada data"}</p>
           </CardContent>
         </Card>
         <Card className="xl:col-span-1">
@@ -239,29 +245,38 @@ export default function HomePage() {
         <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Statistik Pendaftar Harian</CardTitle>
+             <CardDescription>
+                Data pendaftar harian akan ditampilkan di sini saat pendaftaran dimulai.
+            </CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
-            <ChartContainer config={barChartConfig} className="h-[250px] w-full">
-              <BarChart data={barChartData} margin={{ top: 20, right: 20, bottom: 5, left: -10 }}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  />
-                    <YAxis 
-                      tickLine={false}
-                      axisLine={false}
-                      tickMargin={8}
-                  />
-                  <ChartTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent indicator="dot" />}
-                  />
-                  <Bar dataKey="pendaftar" fill="var(--color-pendaftar)" radius={4} />
-              </BarChart>
-            </ChartContainer>
+            {allApplicants.length > 0 ? (
+                <ChartContainer config={barChartConfig} className="h-[250px] w-full">
+                <BarChart data={barChartExampleData} margin={{ top: 20, right: 20, bottom: 5, left: -10 }}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    />
+                        <YAxis 
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                    />
+                    <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent indicator="dot" />}
+                    />
+                    <Bar dataKey="pendaftar" fill="var(--color-pendaftar)" radius={4} />
+                </BarChart>
+                </ChartContainer>
+            ) : (
+                <div className="h-[250px] w-full flex items-center justify-center text-muted-foreground">
+                    Belum ada data pendaftar.
+                </div>
+            )}
           </CardContent>
         </Card>
         <Card className="lg:col-span-2 flex flex-col">
@@ -269,25 +284,29 @@ export default function HomePage() {
             <CardTitle>Distribusi Pendaftar per Jalur</CardTitle>
             <CardDescription>Visualisasi pembagian pendaftar berdasarkan jalur yang dipilih.</CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 pb-0">
-             <ChartContainer
-              config={pieChartConfig}
-              className="mx-auto aspect-square h-[200px]"
-            >
-              <PieChart>
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideLabel nameKey="value" />}
-                />
-                <Pie
-                  data={globalStats.jalurDistribution}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={60}
-                  strokeWidth={5}
-                />
-              </PieChart>
-            </ChartContainer>
+          <CardContent className="flex-1 flex items-center justify-center pb-0">
+            {allApplicants.length > 0 ? (
+                <ChartContainer
+                config={pieChartConfig}
+                className="mx-auto aspect-square h-full max-h-[250px]"
+                >
+                <PieChart>
+                    <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent hideLabel nameKey="value" />}
+                    />
+                    <Pie
+                    data={globalStats.jalurDistribution}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={60}
+                    strokeWidth={5}
+                    />
+                </PieChart>
+                </ChartContainer>
+            ) : (
+                <div className="text-muted-foreground">Belum ada data.</div>
+            )}
           </CardContent>
            <CardFooter className="flex-col gap-2 text-sm pt-4">
             <div className="flex w-full items-center justify-center gap-2 text-xs text-muted-foreground">
@@ -329,17 +348,25 @@ export default function HomePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {schoolStats.destinationSchools.slice(0, 5).map((school, index) => (
-                  <TableRow key={school.id}>
-                    <TableCell className="text-center font-medium">{index + 1}</TableCell>
-                    <TableCell>
-                      <Link href={`/registration/school/${school.id}`} className="font-medium hover:underline text-primary">{school.namaSekolah}</Link>
-                    </TableCell>
-                    <TableCell>{school.alamat}</TableCell>
-                    <TableCell className="text-right">{school.kuota}</TableCell>
-                    <TableCell className="text-right font-bold">{school.jumlahPendaftar}</TableCell>
-                  </TableRow>
-                ))}
+                {schoolStats.destinationSchools.length > 0 ? (
+                    schoolStats.destinationSchools.slice(0, 5).map((school, index) => (
+                    <TableRow key={school.id}>
+                        <TableCell className="text-center font-medium">{index + 1}</TableCell>
+                        <TableCell>
+                        <Link href={`/registration/school/${school.id}`} className="font-medium hover:underline text-primary">{school.namaSekolah}</Link>
+                        </TableCell>
+                        <TableCell>{school.alamat}</TableCell>
+                        <TableCell className="text-right">{school.kuota || '-'}</TableCell>
+                        <TableCell className="text-right font-bold">{school.jumlahPendaftar}</TableCell>
+                    </TableRow>
+                    ))
+                ) : (
+                    <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                            Belum ada data sekolah tujuan.
+                        </TableCell>
+                    </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -360,17 +387,25 @@ export default function HomePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {schoolStats.originSchools.slice(0, 5).map((school, index) => (
-                  <TableRow key={school.npsn}>
-                    <TableCell className="text-center font-medium">{index + 1}</TableCell>
-                    <TableCell>
-                       <Link href={`/registration/origin-school/${school.id}`} className="font-medium hover:underline text-primary">{school.namaSekolah}</Link>
-                    </TableCell>
-                    <TableCell>{school.alamat}</TableCell>
-                    <TableCell className="text-right">{school.terverifikasi}</TableCell>
-                    <TableCell className="text-right">{school.prosesVerifikasi}</TableCell>
-                  </TableRow>
-                ))}
+                 {schoolStats.originSchools.length > 0 ? (
+                    schoolStats.originSchools.slice(0, 5).map((school, index) => (
+                    <TableRow key={school.npsn}>
+                        <TableCell className="text-center font-medium">{index + 1}</TableCell>
+                        <TableCell>
+                        <Link href={`/registration/origin-school/${school.id}`} className="font-medium hover:underline text-primary">{school.namaSekolah}</Link>
+                        </TableCell>
+                        <TableCell>{school.alamat}</TableCell>
+                        <TableCell className="text-right">{school.terverifikasi}</TableCell>
+                        <TableCell className="text-right">{school.prosesVerifikasi}</TableCell>
+                    </TableRow>
+                    ))
+                ) : (
+                    <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                            Belum ada data sekolah asal.
+                        </TableCell>
+                    </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
