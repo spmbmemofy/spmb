@@ -60,7 +60,7 @@ const calculateRankForSchool = (
   const scoredApplicants = applicantsForThisSchool.map((app) => {
     const totalNilaiRapor = Object.values(app.semesterGrades).reduce((a, b) => a + b, 0);
     const nilaiPrestasi = app.jalur === 'Prestasi' ? (app.nilaiPrestasi || 0) : 0;
-    const nilaiTambahan = app.schoolSelections?.[0]?.schoolId === targetSchoolId ? 25 : 0;
+    const nilaiTambahan = app.sekolahTujuanId === targetSchoolId ? 25 : 0;
     const totalNilai = totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
     return { ...app, totalNilai };
   });

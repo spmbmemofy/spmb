@@ -72,7 +72,7 @@ export const generateAllMockApplicants = (): Applicant[] => {
             
             const nilaiPrestasi = jalur === 'Prestasi' ? getRandomPrestasiScore() : undefined;
 
-            const numSelections = Math.floor(Math.random() * 3) + 1;
+            const numSelections = Math.floor(Math.random() * 5) + 1;
             const schoolSelections: SchoolSelection[] = [];
             const availableSchools = [...destinationSchools];
 
@@ -135,6 +135,21 @@ export const generateAllMockApplicants = (): Applicant[] => {
             }
         });
     }
+
+    // Final pass to ensure data consistency for verified applicants
+    applicants.forEach(app => {
+        if (app.statusVerifikasi === 'Terverifikasi') {
+            if (!app.schoolSelections || app.schoolSelections.length === 0) {
+                const firstChoice = destinationSchools.find(s => s.id === app.sekolahTujuanId) || destinationSchools[0];
+                let major: string | null = null;
+                if (firstChoice.jenjang === 'SMK' && firstChoice.majors && firstChoice.majors.length > 0) {
+                    major = firstChoice.majors[Math.floor(Math.random() * firstChoice.majors.length)];
+                }
+                app.schoolSelections = [{ schoolId: firstChoice.id, major }];
+            }
+        }
+    });
+
 
     destinationSchools.forEach(school => {
         jalurOptionsPlain.forEach(jalurName => {
