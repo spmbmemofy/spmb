@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import * as xlsx from "xlsx";
-import { Users, MoreHorizontal, Edit, Trash2, PlusCircle, Upload, KeyRound } from 'lucide-react';
+import { Users, MoreHorizontal, Edit, Trash2, PlusCircle, Upload, KeyRound, Eye, EyeOff } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,6 +93,7 @@ export default function ManagedApplicantPage() {
     const [accountInfo, setAccountInfo] = React.useState({ username: '', password: '' });
     const [accountInfoDialogTitle, setAccountInfoDialogTitle] = React.useState('');
     const [isNewApplicantSession, setIsNewApplicantSession] = React.useState(false);
+    const [visiblePasswordId, setVisiblePasswordId] = React.useState<string | null>(null);
 
     const form = useForm<ApplicantFormValues>({
         resolver: zodResolver(applicantFormSchema),
@@ -351,12 +352,15 @@ export default function ManagedApplicantPage() {
                                         <TableHead>NISN</TableHead>
                                         <TableHead>Jenis Kelamin</TableHead>
                                         <TableHead>Rata-rata Nilai</TableHead>
+                                        <TableHead>Kata Sandi</TableHead>
                                         <TableHead className="text-right">Aksi</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {applicants.length > 0 ? (
-                                        applicants.map(applicant => (
+                                        applicants.map(applicant => {
+                                            const user = getUsers().find(u => u.username === applicant.nisn);
+                                            return (
                                             <TableRow key={applicant.id}>
                                                 <TableCell className="font-medium">
                                                     <button onClick={() => handleOpenDialog(applicant)} className="text-primary hover:underline text-left">
@@ -366,6 +370,30 @@ export default function ManagedApplicantPage() {
                                                 <TableCell>{applicant.nisn}</TableCell>
                                                 <TableCell>{applicant.gender}</TableCell>
                                                 <TableCell>{calculateAverage(applicant.semesterGrades)}</TableCell>
+                                                <TableCell>
+                                                    {user ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-mono">
+                                                                {visiblePasswordId === applicant.id ? user.password : '********'}
+                                                            </span>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-7 w-7"
+                                                                onClick={() => setVisiblePasswordId(visiblePasswordId === applicant.id ? null : applicant.id)}
+                                                                aria-label="Toggle password visibility"
+                                                            >
+                                                                {visiblePasswordId === applicant.id ? (
+                                                                    <EyeOff className="h-4 w-4" />
+                                                                ) : (
+                                                                    <Eye className="h-4 w-4" />
+                                                                )}
+                                                            </Button>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-muted-foreground text-xs italic">Akun belum dibuat</span>
+                                                    )}
+                                                </TableCell>
                                                 <TableCell className="text-right">
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
@@ -379,10 +407,10 @@ export default function ManagedApplicantPage() {
                                                     </DropdownMenu>
                                                 </TableCell>
                                             </TableRow>
-                                        ))
+                                        )})
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="h-24 text-center">Belum ada data pendaftar.</TableCell>
+                                            <TableCell colSpan={6} className="h-24 text-center">Belum ada data pendaftar.</TableCell>
                                         </TableRow>
                                     )}
                                 </TableBody>
