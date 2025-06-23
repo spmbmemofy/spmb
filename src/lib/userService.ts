@@ -7,12 +7,9 @@ import { initialUsers, type User } from './userData';
 const USERS_STORAGE_KEY = 'allUsersData_v2';
 
 export const initializeUsers = (): User[] => {
-  const storedUsers = getFromLocalStorage<User[] | null>(USERS_STORAGE_KEY, null);
-  if (!storedUsers || storedUsers.length === 0) {
-    saveToLocalStorage(USERS_STORAGE_KEY, initialUsers);
-    return initialUsers;
-  }
-  return storedUsers;
+  // Always save the initial user list to localStorage on initialization to ensure a clean state.
+  saveToLocalStorage(USERS_STORAGE_KEY, initialUsers);
+  return initialUsers;
 };
 
 export function getUsers(): User[] {

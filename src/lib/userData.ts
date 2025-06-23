@@ -12,5 +12,13 @@ export interface User {
 
 // In a real application, this data would come from a secure database.
 // Passwords should NEVER be stored in plaintext. This is for demonstration only.
-// All initial user data has been cleared to allow for a fresh simulation start.
-export const initialUsers: User[] = [];
+// Only a single superadmin is created by default for system access.
+export const initialUsers: User[] = [
+  {
+    id: 'superadmin-01',
+    username: 'superadmin',
+    password: 'password123',
+    role: 'superadmin',
+    fullName: 'Super Administrator',
+  }
+];
