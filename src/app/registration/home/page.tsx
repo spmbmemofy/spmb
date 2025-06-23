@@ -12,17 +12,6 @@ import { getSchools } from '@/lib/schoolService';
 import { getApplicants } from '@/lib/applicantService';
 import type { Applicant, Jalur } from '@/lib/types';
 
-// This is example data. The chart will be empty if there are no real applicants.
-const barChartExampleData = [
-  { date: '1 Jul', pendaftar: 25 },
-  { date: '2 Jul', pendaftar: 32 },
-  { date: '3 Jul', pendaftar: 45 },
-  { date: '4 Jul', pendaftar: 60 },
-  { date: '5 Jul', pendaftar: 55 },
-  { date: '6 Jul', pendaftar: 72 },
-  { date: '7 Jul', pendaftar: 81 },
-];
-
 const barChartConfig = {
   pendaftar: {
     label: 'Pendaftar',
@@ -186,7 +175,7 @@ export default function HomePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{globalStats.totalPendaftar}</div>
-            <p className="text-xs text-muted-foreground">{allApplicants.length > 0 ? "+5% dari kemarin" : "Belum ada data"}</p>
+            <p className="text-xs text-muted-foreground">{allApplicants.length > 0 ? "Data terbaru" : "Belum ada data"}</p>
           </CardContent>
         </Card>
         <Card className="xl:col-span-1">
@@ -252,7 +241,7 @@ export default function HomePage() {
           <CardContent className="pl-2">
             {allApplicants.length > 0 ? (
                 <ChartContainer config={barChartConfig} className="h-[250px] w-full">
-                <BarChart data={barChartExampleData} margin={{ top: 20, right: 20, bottom: 5, left: -10 }}>
+                <BarChart data={[]} margin={{ top: 20, right: 20, bottom: 5, left: -10 }}>
                     <CartesianGrid vertical={false} />
                     <XAxis
                     dataKey="date"

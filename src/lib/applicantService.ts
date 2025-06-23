@@ -9,18 +9,19 @@ import { getSchoolById, getSchools } from './schoolService';
 const APPLICANTS_STORAGE_KEY = 'allApplicantsData';
 
 /**
- * Gets all applicants.
- * If data exists in localStorage, it returns that. Otherwise, it generates
- * new mock data, saves it to localStorage, and then returns it.
+ * Initializes the applicants data by clearing it, ensuring a fresh start.
+ */
+export function initializeApplicantsData(): void {
+  const initialData = generateAllMockApplicants(); // This will be an empty array
+  saveToLocalStorage(APPLICANTS_STORAGE_KEY, initialData);
+}
+
+/**
+ * Gets all applicants from localStorage.
  * @returns An array of all applicants.
  */
 export function getApplicants(): Applicant[] {
-  let applicants = getFromLocalStorage<Applicant[] | null>(APPLICANTS_STORAGE_KEY, null);
-  if (!applicants) {
-    applicants = generateAllMockApplicants();
-    saveToLocalStorage(APPLICANTS_STORAGE_KEY, applicants);
-  }
-  return applicants;
+  return getFromLocalStorage<Applicant[]>(APPLICANTS_STORAGE_KEY, []);
 }
 
 /**
@@ -42,7 +43,7 @@ export function updateApplicant(updatedApplicant: Applicant): void {
   const index = applicants.findIndex(app => app.id === updatedApplicant.id);
   if (index !== -1) {
     applicants[index] = updatedApplicant;
-    saveToLocalStorage(APPLICIPANTS_STORAGE_KEY, applicants);
+    saveToLocalStorage(APPLICANTS_STORAGE_KEY, applicants);
   } else {
     console.error("Applicant not found for update");
   }

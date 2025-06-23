@@ -3,7 +3,7 @@
 import { initializeUsers } from './userService';
 import { initializeSchoolsData } from './schoolService';
 import { initializeManagedApplicantsData } from './managedApplicantService';
-import { getApplicants } from './applicantService';
+import { initializeApplicantsData } from './applicantService';
 
 let initialized = false;
 
@@ -12,8 +12,8 @@ export function initializeAllData() {
     initializeUsers();
     initializeSchoolsData();
     initializeManagedApplicantsData();
-    // This function also initializes the applicants data on its first call
-    getApplicants(); 
+    // This function now explicitly initializes/resets the applicants data
+    initializeApplicantsData(); 
     initialized = true;
   }
 }
