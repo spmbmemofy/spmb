@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserCircle, CheckCircle2, Edit3, Save, XCircle, Upload, Check, User } from 'lucide-react';
+import { UserCircle, CheckCircle2, Edit3, Save, XCircle, Upload, Check } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadcnTableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
@@ -113,77 +113,70 @@ interface BiodataItemProps {
 }
 
 const BiodataItem: React.FC<BiodataItemProps> = ({
-  label,
-  value,
-  fieldKey,
-  isEditing,
-  currentInputValue,
-  onEditClick,
-  onSaveClick,
-  onCancelClick,
-  onInputChange,
-  disableEditButton,
-  inputType = "text",
-  selectOptions,
+  label, value, fieldKey, isEditing, currentInputValue, onEditClick, onSaveClick, onCancelClick, onInputChange, disableEditButton, inputType = "text", selectOptions,
 }) => {
   if (isEditing && fieldKey && onSaveClick && onCancelClick && onInputChange) {
     return (
-      <div className="space-y-1 py-2 border-b last:border-b-0">
-        <Label htmlFor={fieldKey} className="text-sm font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md inline-block mb-1">{label}</Label>
-        <div className="flex items-center space-x-2">
-          {selectOptions && selectOptions.length > 0 ? (
-            <Select
-              value={currentInputValue}
-              onValueChange={onInputChange}
-            >
-              <SelectTrigger id={fieldKey} className="text-sm flex-grow">
-                <SelectValue placeholder={`Pilih ${label.toLowerCase()}`} />
-              </SelectTrigger>
-              <SelectContent>
-                {selectOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Input
-              id={fieldKey}
-              type={inputType}
-              value={currentInputValue}
-              onChange={(e) => onInputChange(e.target.value)}
-              className="text-sm flex-grow"
-            />
-          )}
-          <Button onClick={() => onSaveClick(fieldKey)} size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" aria-label={`Simpan ${label}`}>
-            <Check className="h-4 w-4 text-green-600" />
-          </Button>
-          <Button onClick={onCancelClick} size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" aria-label={`Batal edit ${label}`}>
-            <XCircle className="h-4 w-4 text-red-600" />
-          </Button>
-        </div>
-      </div>
+      <TableRow>
+        <TableCell colSpan={3} className="py-2 px-3">
+          <div className="space-y-2">
+            <Label htmlFor={fieldKey} className="text-sm font-medium">{label}</Label>
+            <div className="flex items-center space-x-2">
+              {selectOptions && selectOptions.length > 0 ? (
+                <Select
+                  value={currentInputValue}
+                  onValueChange={onInputChange}
+                >
+                  <SelectTrigger id={fieldKey} className="text-sm flex-grow h-9">
+                    <SelectValue placeholder={`Pilih ${label.toLowerCase()}`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id={fieldKey}
+                  type={inputType}
+                  value={currentInputValue}
+                  onChange={(e) => onInputChange(e.target.value)}
+                  className="text-sm flex-grow h-9"
+                />
+              )}
+              <Button onClick={() => onSaveClick(fieldKey)} size="icon" variant="ghost" className="h-8 w-8 flex-shrink-0" aria-label={`Simpan ${label}`}>
+                <Check className="h-4 w-4 text-green-600" />
+              </Button>
+              <Button onClick={onCancelClick} size="icon" variant="ghost" className="h-8 w-8 flex-shrink-0" aria-label={`Batal edit ${label}`}>
+                <XCircle className="h-4 w-4 text-red-600" />
+              </Button>
+            </div>
+          </div>
+        </TableCell>
+      </TableRow>
     );
   }
 
   return (
-    <div className="flex items-center justify-between py-2 border-b last:border-b-0">
-      <div>
-        <p className="text-sm font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md inline-block mb-1">{label}</p>
-        <p className="text-sm">{value || "-"}</p>
-      </div>
-      {onEditClick && fieldKey && (
-        <Button
-          onClick={() => onEditClick(fieldKey, String(value || ""))}
-          size="icon"
-          variant="ghost"
-          className="h-7 w-7"
-          disabled={disableEditButton}
-          aria-label={`Edit ${label}`}
-        >
-          <Edit3 className="h-4 w-4" />
-        </Button>
-      )}
-    </div>
+    <TableRow>
+      <TableCell className="font-medium text-muted-foreground w-[40%]">{label}</TableCell>
+      <TableCell>{value || "-"}</TableCell>
+      <TableCell className="text-right">
+        {onEditClick && fieldKey && (
+          <Button
+            onClick={() => onEditClick(fieldKey, String(value || ""))}
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8"
+            disabled={disableEditButton}
+            aria-label={`Edit ${label}`}
+          >
+            <Edit3 className="h-4 w-4" />
+          </Button>
+        )}
+      </TableCell>
+    </TableRow>
   );
 };
 
@@ -589,27 +582,31 @@ function ApplicantDashboard() {
 
           <section>
             <h2 className="text-xl font-semibold mb-4 text-primary">Informasi Pribadi</h2>
-            <div className="space-y-0"> 
-              <BiodataItem label="NISN (Nomor Induk Siswa Nasional)" value={biodata.nisn} />
-              <BiodataItem label="NIK (Nomor Induk Kependudukan)" value={biodata.nik} />
+            <div className="rounded-md border">
+              <Table>
+                <TableBody>
+                  <BiodataItem label="NISN (Nomor Induk Siswa Nasional)" value={biodata.nisn} />
+                  <BiodataItem label="NIK (Nomor Induk Kependudukan)" value={biodata.nik} />
 
-              {personalInfoEditableFields.map((field) => (
-                <BiodataItem
-                  key={field.key}
-                  label={field.label}
-                  value={biodata[field.key as keyof typeof biodata]}
-                  fieldKey={field.key as BiodataKeys}
-                  isEditing={editingPersonalField === field.key}
-                  currentInputValue={editingPersonalField === field.key ? currentPersonalFieldValue : String(biodata[field.key as keyof typeof biodata] || "")}
-                  onEditClick={handleStartEditPersonalField}
-                  onSaveClick={handleSavePersonalField}
-                  onCancelClick={handleCancelEditPersonalField}
-                  onInputChange={setCurrentPersonalFieldValue}
-                  disableEditButton={isAnyFieldBeingEdited && editingPersonalField !== field.key}
-                  inputType={field.type}
-                  selectOptions={field.selectOptions}
-                />
-              ))}
+                  {personalInfoEditableFields.map((field) => (
+                    <BiodataItem
+                      key={field.key}
+                      label={field.label}
+                      value={biodata[field.key as keyof typeof biodata]}
+                      fieldKey={field.key as BiodataKeys}
+                      isEditing={editingPersonalField === field.key}
+                      currentInputValue={editingPersonalField === field.key ? currentPersonalFieldValue : String(biodata[field.key as keyof typeof biodata] || "")}
+                      onEditClick={handleStartEditPersonalField}
+                      onSaveClick={handleSavePersonalField}
+                      onCancelClick={handleCancelEditPersonalField}
+                      onInputChange={setCurrentPersonalFieldValue}
+                      disableEditButton={isAnyFieldBeingEdited && editingPersonalField !== field.key}
+                      inputType={field.type}
+                      selectOptions={field.selectOptions}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </section>
 
@@ -672,13 +669,30 @@ function ApplicantDashboard() {
                             </div>
                         </div>
                     ) : (
-                       <div className="text-sm space-y-2">
-                           <p><strong className="font-medium text-muted-foreground">Alamat:</strong> {biodata.streetName}, {biodata.rtRw}</p>
-                           <p><strong className="font-medium text-muted-foreground">Kel/Desa:</strong> {biodata.village}</p>
-                           <p><strong className="font-medium text-muted-foreground">Kecamatan:</strong> {biodata.subdistrict}</p>
-                           <p><strong className="font-medium text-muted-foreground">Kab/Kota:</strong> {biodata.district}</p>
-                           <p><strong className="font-medium text-muted-foreground">Provinsi:</strong> {biodata.province}</p>
-                       </div>
+                       <Table>
+                          <TableBody>
+                            <TableRow>
+                              <TableCell className="font-medium text-muted-foreground w-1/3">Alamat</TableCell>
+                              <TableCell>{`${biodata.streetName || ''}, ${biodata.rtRw || ''}`.replace(/^,|,$/g, '').trim() || '-'}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="font-medium text-muted-foreground">Kelurahan/Desa</TableCell>
+                              <TableCell>{biodata.village || '-'}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="font-medium text-muted-foreground">Kecamatan</TableCell>
+                              <TableCell>{biodata.subdistrict || '-'}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="font-medium text-muted-foreground">Kabupaten/Kota</TableCell>
+                              <TableCell>{biodata.district || '-'}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="font-medium text-muted-foreground">Provinsi</TableCell>
+                              <TableCell>{biodata.province || '-'}</TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
                     )}
                 </CardContent>
             </Card>
@@ -728,18 +742,20 @@ function ApplicantDashboard() {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-left">
-                <BiodataItem label="Nama Ayah" value={biodata.fatherName} />
-                <BiodataItem label="Tanggal Lahir Ayah" value={biodata.fatherDateOfBirth} />
-                <BiodataItem label="Pekerjaan Ayah" value={biodata.fatherOccupation} />
-                <BiodataItem label="Penghasilan Ayah per Bulan" value={biodata.fatherIncome} />
-                
-                <BiodataItem label="Nama Ibu" value={biodata.motherName} />
-                <BiodataItem label="Tanggal Lahir Ibu" value={biodata.motherDateOfBirth} />
-                <BiodataItem label="Pekerjaan Ibu" value={biodata.motherOccupation} />
-                <BiodataItem label="Penghasilan Ibu per Bulan" value={biodata.motherIncome} />
-
-                <BiodataItem label="Nama Wali (jika ada)" value={biodata.guardianName} />
+              <div className="rounded-md border">
+                <Table>
+                  <TableBody>
+                    <TableRow><TableCell className="font-medium text-muted-foreground w-1/3">Nama Ayah</TableCell><TableCell>{biodata.fatherName}</TableCell></TableRow>
+                    <TableRow><TableCell className="font-medium text-muted-foreground">Tanggal Lahir Ayah</TableCell><TableCell>{biodata.fatherDateOfBirth}</TableCell></TableRow>
+                    <TableRow><TableCell className="font-medium text-muted-foreground">Pekerjaan Ayah</TableCell><TableCell>{biodata.fatherOccupation}</TableCell></TableRow>
+                    <TableRow><TableCell className="font-medium text-muted-foreground">Penghasilan Ayah</TableCell><TableCell>{biodata.fatherIncome}</TableCell></TableRow>
+                    <TableRow><TableCell className="font-medium text-muted-foreground">Nama Ibu</TableCell><TableCell>{biodata.motherName}</TableCell></TableRow>
+                    <TableRow><TableCell className="font-medium text-muted-foreground">Tanggal Lahir Ibu</TableCell><TableCell>{biodata.motherDateOfBirth}</TableCell></TableRow>
+                    <TableRow><TableCell className="font-medium text-muted-foreground">Pekerjaan Ibu</TableCell><TableCell>{biodata.motherOccupation}</TableCell></TableRow>
+                    <TableRow><TableCell className="font-medium text-muted-foreground">Penghasilan Ibu</TableCell><TableCell>{biodata.motherIncome}</TableCell></TableRow>
+                    <TableRow><TableCell className="font-medium text-muted-foreground">Nama Wali</TableCell><TableCell>{biodata.guardianName}</TableCell></TableRow>
+                  </TableBody>
+                </Table>
               </div>
             )}
           </section>
