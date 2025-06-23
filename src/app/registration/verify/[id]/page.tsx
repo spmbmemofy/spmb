@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -384,16 +383,15 @@ export default function VerifyApplicantPage() {
                           >
                             {doc.label}
                           </a>
-                        <div className="flex-shrink-0 flex gap-2 w-full sm:w-auto">
+                        <div className="flex-shrink-0 flex gap-2">
                            <Button 
                               size="sm" 
                               variant={documentStatuses[doc.id] === 'invalid' ? 'destructive' : 'outline'} 
                               onClick={() => toggleInvalidStatus(doc.id)} 
-                              className="w-full"
                               disabled={!isVerifierAuthorized}
                             >
-                              <ThumbsDown className="mr-2 h-4 w-4" />
-                              Tandai Tidak Valid
+                              <XCircle className="mr-2 h-4 w-4" />
+                              Tolak Berkas
                             </Button>
                         </div>
                       </div>
@@ -509,4 +507,3 @@ export default function VerifyApplicantPage() {
     </div>
   );
 }
-
