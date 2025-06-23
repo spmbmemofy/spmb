@@ -34,14 +34,29 @@ const getStatusIcon = (status: ApplicantStatus) => {
     }
 };
 
+
+const calculateScoreForSchool = (
+  applicant: Applicant,
+  schoolId: string,
+): number => {
+    const totalNilaiRapor = Object.values(applicant.semesterGrades).reduce((a, b) => a + b, 0);
+    const nilaiPrestasi = applicant.jalur === 'Prestasi' ? (applicant.nilaiPrestasi || 0) : 0;
+    const isFirstChoice = applicant.schoolSelections && applicant.schoolSelections[0]?.schoolId === schoolId;
+    const nilaiTambahan = isFirstChoice ? 25 : 0;
+    return totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
+}
+
+
 // Calculate rank for a specific school choice
 const calculateRankForSchool = (
   targetApplicant: Applicant,
   targetSchoolId: string,
   allApplicants: Applicant[]
-): { rank: number | null, total: number } => {
+): { rank: number | null, total: number, score: number } => {
+  const applicantScore = calculateScoreForSchool(targetApplicant, targetSchoolId);
+  
   if (targetApplicant.statusVerifikasi !== 'Terverifikasi') {
-    return { rank: null, total: 0 };
+    return { rank: null, total: 0, score: applicantScore };
   }
 
   // 1. Get all other verified applicants for the same pathway
@@ -58,10 +73,7 @@ const calculateRankForSchool = (
 
   // 3. Calculate scores for all of them
   const scoredApplicants = applicantsForThisSchool.map((app) => {
-    const totalNilaiRapor = Object.values(app.semesterGrades).reduce((a, b) => a + b, 0);
-    const nilaiPrestasi = app.jalur === 'Prestasi' ? (app.nilaiPrestasi || 0) : 0;
-    const nilaiTambahan = app.sekolahTujuanId === targetSchoolId ? 25 : 0;
-    const totalNilai = totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
+    const totalNilai = calculateScoreForSchool(app, targetSchoolId);
     return { ...app, totalNilai };
   });
 
@@ -71,7 +83,7 @@ const calculateRankForSchool = (
   // 5. Find the rank of the target applicant
   const rank = scoredApplicants.findIndex((app) => app.id === targetApplicant.id) + 1;
 
-  return { rank: rank > 0 ? rank : null, total: scoredApplicants.length };
+  return { rank: rank > 0 ? rank : null, total: scoredApplicants.length, score: applicantScore };
 };
 
 
@@ -173,6 +185,7 @@ export default function ApplicantDetailPage() {
                     <TableHead className="text-center w-[10%]">Prioritas</TableHead>
                     <TableHead>Nama Sekolah</TableHead>
                     <TableHead>Jurusan</TableHead>
+                    <TableHead className="text-right">Nilai Akhir</TableHead>
                     <TableHead className="text-right">Peringkat Sementara</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -212,6 +225,7 @@ export default function ApplicantDetailPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell>{selection.major || "-"}</TableCell>
+                                    <TableCell className="text-right font-mono">{ranking.score.toFixed(2)}</TableCell>
                                     <TableCell className={`text-right ${rankClass}`}>
                                         {rankDisplay}
                                     </TableCell>
@@ -220,7 +234,7 @@ export default function ApplicantDetailPage() {
                         })
                     ) : (
                          <TableRow>
-                            <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                            <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                                 Pendaftar ini belum memiliki pilihan sekolah.
                             </TableCell>
                         </TableRow>
@@ -229,7 +243,7 @@ export default function ApplicantDetailPage() {
               </Table>
             </div>
              <p className="text-xs text-muted-foreground mt-2">
-                Peringkat hanya ditampilkan untuk pendaftar yang sudah terverifikasi dan dapat berubah sewaktu-waktu.
+                Peringkat hanya ditampilkan untuk pendaftar yang sudah terverifikasi dan dapat berubah sewaktu-waktu. Nilai Akhir adalah hasil kalkulasi dari nilai rapor dan bobot lainnya.
             </p>
           </section>
         </CardContent>
