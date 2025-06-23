@@ -26,11 +26,8 @@ import { getApplicantById, updateApplicant } from "@/lib/applicantService";
 import type { Applicant, ApplicantStatus, DocumentStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { getSchoolById, getSchoolByNPSN } from "@/lib/schoolService";
-import { getFromLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
+import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { getUsers } from "@/lib/userService";
-
-
-const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 
 
 const DUMMY_PDF_URL = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
@@ -68,7 +65,6 @@ export default function VerifyApplicantPage() {
   const applicantId = params.id as string;
 
   const [applicant, setApplicant] = React.useState<Applicant | null>(null);
-  const [applicantBiodata, setApplicantBiodata] = React.useState<any>(null); // To hold biodata from localStorage
   const [isLoading, setIsLoading] = React.useState(true);
   const [isVerifierAuthorized, setIsVerifierAuthorized] = React.useState(false);
   
@@ -109,12 +105,6 @@ export default function VerifyApplicantPage() {
         });
         setDocumentStatuses(initialStatuses);
         setEditableNilaiPrestasi(foundApplicant.nilaiPrestasi || 0);
-
-        // Fetch biodata from localStorage for display purposes
-        const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
-        if(savedProgress?.biodata?.nisn === foundApplicant.nisn) {
-          setApplicantBiodata(savedProgress.biodata);
-        }
       }
     }
     setIsLoading(false);
@@ -189,14 +179,14 @@ export default function VerifyApplicantPage() {
     );
   }
   
-  const fullAddress = applicantBiodata 
+  const fullAddress = applicant 
     ? [
-        applicantBiodata.streetName, 
-        applicantBiodata.rtRw, 
-        applicantBiodata.village, 
-        applicantBiodata.subdistrict, 
-        applicantBiodata.district, 
-        applicantBiodata.province
+        applicant.streetName, 
+        applicant.rtRw, 
+        applicant.village, 
+        applicant.subdistrict, 
+        applicant.district, 
+        applicant.province
       ].filter(Boolean).join(', ')
     : "Alamat tidak tersedia";
 
@@ -231,14 +221,14 @@ export default function VerifyApplicantPage() {
               <CardHeader><CardTitle className="flex items-center text-lg"><UserCircle className="mr-2"/>Biodata</CardTitle></CardHeader>
               <CardContent className="space-y-3 text-sm">
                   <div className="flex justify-center mb-4">
-                    <Image src={applicantBiodata?.profilePhotoDataUri || "https://placehold.co/128x160.png"} alt="Foto Profil" width={100} height={125} className="rounded-md border" data-ai-hint="profile picture" />
+                    <Image src={applicant?.profilePhotoDataUri || "https://placehold.co/128x160.png"} alt="Foto Profil" width={100} height={125} className="rounded-md border" data-ai-hint="profile picture" />
                   </div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Status Saat Ini</span><Badge variant={getStatusBadgeVariant(applicant.statusVerifikasi)}>{applicant.statusVerifikasi}</Badge></div>
                   <Separator/>
-                  <div className="flex justify-between"><span className="text-muted-foreground">NIK</span><span className="font-medium">{applicantBiodata?.nik || '-'}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">TTL</span><span className="font-medium">{applicantBiodata?.placeOfBirth || '-'}, {applicantBiodata?.dateOfBirth || '-'}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Jenis Kelamin</span><span className="font-medium">{applicantBiodata?.gender || '-'}</span></div>
-                   <div className="flex justify-between"><span className="text-muted-foreground">Agama</span><span className="font-medium">{applicantBiodata?.religion || '-'}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">NIK</span><span className="font-medium">{applicant?.nik || '-'}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">TTL</span><span className="font-medium">{applicant?.placeOfBirth || '-'}, {applicant?.dateOfBirth || '-'}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Jenis Kelamin</span><span className="font-medium">{applicant?.gender || '-'}</span></div>
+                   <div className="flex justify-between"><span className="text-muted-foreground">Agama</span><span className="font-medium">{applicant?.religion || '-'}</span></div>
                   <div><p className="text-muted-foreground">Alamat</p><p className="font-medium">{fullAddress}</p></div>
               </CardContent>
             </Card>

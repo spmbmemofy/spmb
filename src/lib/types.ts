@@ -32,6 +32,28 @@ export interface Applicant {
   };
   nilaiPrestasi?: number;
   nilaiTambahanPilihan?: number;
+
+  // Added biodata fields
+  nik?: string;
+  placeOfBirth?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  religion?: string;
+  streetName?: string;
+  rtRw?: string;
+  village?: string;
+  subdistrict?: string;
+  district?: string;
+  province?: string;
+  fatherName?: string;
+  fatherOccupation?: string;
+  fatherIncome?: string;
+  motherName?: string;
+  motherOccupation?: string;
+  motherIncome?: string;
+  guardianName?: string;
+  contactNumber?: string;
+  profilePhotoDataUri?: string;
 }
 
 export type SortKey = keyof Applicant | 'no';

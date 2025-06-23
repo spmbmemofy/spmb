@@ -68,7 +68,7 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
   const allSchools = getSchools();
   const originSchool = allSchools.find(s => s.namaSekolah === progress.biodata!.previousSchool);
 
-  const applicantCoreData = {
+  const applicantDataFromProgress = {
     noRegistrasi: creds.username!,
     fullName: progress.biodata.fullName,
     nisn: progress.biodata.nisn,
@@ -85,15 +85,37 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
     peringkat: null,
     nilaiPrestasi: undefined,
     nilaiTambahanPilihan: 0,
+    
+    // Detailed biodata
+    nik: progress.biodata.nik,
+    placeOfBirth: progress.biodata.placeOfBirth,
+    dateOfBirth: progress.biodata.dateOfBirth,
+    gender: progress.biodata.gender,
+    religion: progress.biodata.religion,
+    streetName: progress.biodata.streetName,
+    rtRw: progress.biodata.rtRw,
+    village: progress.biodata.village,
+    subdistrict: progress.biodata.subdistrict,
+    district: progress.biodata.district,
+    province: progress.biodata.province,
+    fatherName: progress.biodata.fatherName,
+    fatherOccupation: progress.biodata.fatherOccupation,
+    fatherIncome: progress.biodata.fatherIncome,
+    motherName: progress.biodata.motherName,
+    motherOccupation: progress.biodata.motherOccupation,
+    motherIncome: progress.biodata.motherIncome,
+    guardianName: progress.biodata.guardianName,
+    contactNumber: progress.biodata.contactNumber,
+    profilePhotoDataUri: progress.profilePhotoDataUri,
   };
 
   if (existingApplicant) {
-    const updatedApplicant = { ...existingApplicant, ...applicantCoreData };
+    const updatedApplicant = { ...existingApplicant, ...applicantDataFromProgress };
     updateApplicant(updatedApplicant);
     return updatedApplicant;
   } else {
     const newApplicant: Applicant = {
-      ...applicantCoreData,
+      ...applicantDataFromProgress,
       id: `app-${creds.username}`,
     };
     const updatedApplicants = [...applicants, newApplicant];
