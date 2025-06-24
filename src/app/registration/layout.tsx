@@ -66,7 +66,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   const menuItems = useMemo(() => {
     const applicantMenu = [
       { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
-      { href: '/registration/dashboard', label: 'Pendaftaran', icon: FileUp, activePaths: ['/registration/dashboard', '/registration/documents', '/registration/document-upload'] },
+      { href: '/registration/dashboard', label: 'Pendaftaran', icon: FileUp, activePaths: ['/registration/dashboard', '/registration/documents', '/registration/document-upload', '/registration/correction'] },
       { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'] },
       { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
     ];

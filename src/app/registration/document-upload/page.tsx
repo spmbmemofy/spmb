@@ -7,13 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { UploadCloud, FileUp, Paperclip, CheckCircle2, AlertCircle, ArrowLeft, FileQuestion } from 'lucide-react';
+import { UploadCloud, FileUp, Paperclip, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
-import { getApplicants, updateApplicant, createOrUpdateApplicantFromRegistration } from "@/lib/applicantService";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import type { ActivityEvent } from "@/lib/types";
+import { createOrUpdateApplicantFromRegistration } from "@/lib/applicantService";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
@@ -114,11 +112,6 @@ export default function DocumentUploadPage() {
   const [uploadedFiles, setUploadedFiles] = React.useState<Record<string, File | null>>({});
   const [fileMetadataStore, setFileMetadataStore] = React.useState<RegistrationProgress['documentMetadata']>({});
   
-  const [isCorrectionMode, setIsCorrectionMode] = React.useState(false);
-  const [rejectionReason, setRejectionReason] = React.useState("");
-  const [isBiodataInvalid, setIsBiodataInvalid] = React.useState(false);
-  const [isGradesInvalid, setIsGradesInvalid] = React.useState(false);
-  
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
     if (!savedProgress?.hasProfilePhoto) {
@@ -131,48 +124,15 @@ export default function DocumentUploadPage() {
       return; 
     }
     
-    const loggedInUser = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
-    if (!loggedInUser?.username) {
-        toast({ variant: "destructive", title: "Sesi tidak valid", description: "Silakan login kembali."});
-        router.replace('/');
-        return;
-    }
-
-    const allApplicants = getApplicants();
-    const applicantData = allApplicants.find(app => app.nisn === loggedInUser.username);
-    
-    let currentSelectedPathway = selectedPathwayParam || savedProgress?.pathway || applicantData?.jalur || "";
-
-    if (!currentSelectedPathway) {
+    if (!selectedPathwayParam) {
         toast({ variant: "destructive", title: "Informasi Tidak Lengkap", description: "Jalur pendaftaran belum dipilih. Mengalihkan..." });
         router.replace('/registration/documents');
         return;
     }
     
-    if (selectedPathwayParam !== currentSelectedPathway) {
-        router.replace(`/registration/document-upload?pathway=${currentSelectedPathway}`);
-        return;
-    }
-
-    if (applicantData?.statusVerifikasi === 'Berkas tidak sesuai') {
-        setIsCorrectionMode(true);
-        setRejectionReason(applicantData.rejectionReason || "Tidak ada alasan spesifik yang diberikan.");
-
-        const invalidDocIds = Object.entries(applicantData.documentStatuses || {})
-            .filter(([, status]) => status === 'invalid')
-            .map(([id]) => id);
-        
-        const allPossibleDocs = [...generalDocuments, ...(pathwaySpecificDocumentsMap[currentSelectedPathway] || [])];
-        const invalidDocs = allPossibleDocs.filter(doc => invalidDocIds.includes(doc.id));
-        setDocumentsToUpload(invalidDocs);
-        
-        setIsBiodataInvalid(invalidDocIds.includes('biodata'));
-        setIsGradesInvalid(invalidDocIds.includes('nilai_rapor'));
-    } else {
-        const currentPathwayDocs = pathwaySpecificDocumentsMap[currentSelectedPathway] || [];
-        const allDocs = [...generalDocuments, ...currentPathwayDocs];
-        setDocumentsToUpload(allDocs);
-    }
+    const currentPathwayDocs = pathwaySpecificDocumentsMap[selectedPathwayParam] || [];
+    const allDocs = [...generalDocuments, ...currentPathwayDocs];
+    setDocumentsToUpload(allDocs);
     
     if (savedProgress?.documentMetadata) {
       setFileMetadataStore(savedProgress.documentMetadata);
@@ -215,8 +175,7 @@ export default function DocumentUploadPage() {
   };
 
   const allRequiredFilesUploaded = () => {
-    if (documentsToUpload.length === 0 && !isCorrectionMode) return false;
-    if (isCorrectionMode && Object.keys(uploadedFiles).length === 0) return false;
+    if (documentsToUpload.length === 0) return false;
     
     return documentsToUpload
       .filter(doc => doc.required)
@@ -227,7 +186,7 @@ export default function DocumentUploadPage() {
     if (!allRequiredFilesUploaded()) {
       toast({
         variant: "destructive",
-        title: isCorrectionMode ? "Berkas Perbaikan Belum Lengkap" : "Berkas Belum Lengkap",
+        title: "Berkas Belum Lengkap",
         description: "Harap unggah semua berkas yang wajib diisi untuk melanjutkan.",
       });
       return;
@@ -240,122 +199,32 @@ export default function DocumentUploadPage() {
         return;
     }
 
-    if (isCorrectionMode) {
-        const allApplicants = getApplicants();
-        const applicantData = allApplicants.find(app => app.nisn === loggedInUser.username);
-        if (applicantData) {
-            const newStatuses = { ...applicantData.documentStatuses };
-            Object.keys(uploadedFiles).forEach(docId => {
-                if (uploadedFiles[docId]) {
-                    newStatuses[docId] = null; // Mark as pending re-verification
-                }
-            });
-
-            applicantData.statusVerifikasi = "Menunggu Verifikasi";
-            applicantData.rejectionReason = undefined;
-            applicantData.documentStatuses = newStatuses;
-
-            const historyEvent: ActivityEvent = {
-                type: 'FILES_RESUBMITTED',
-                timestamp: new Date().toISOString(),
-                actor: applicantData.fullName
-            };
-            applicantData.activityHistory = [...(applicantData.activityHistory || []), historyEvent];
-            
-            updateApplicant(applicantData);
-
-            setTimeout(() => {
-                toast({ title: "Perbaikan Berkas Terkirim", description: "Berkas Anda akan segera ditinjau kembali oleh verifikator." });
-                setIsSubmitting(false);
-                router.push('/registration/status');
-            }, 1500);
-        } else {
-            setIsSubmitting(false);
-        }
-    } else {
-        const progress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
-        if (!progress || !progress.biodata || !progress.pathway || !progress.schoolSelections) {
-             toast({ variant: "destructive", title: "Data Pendaftaran Tidak Lengkap", description: "Harap kembali dan lengkapi data Anda." });
-             setIsSubmitting(false);
-             return;
-        }
-
-        setTimeout(() => {
-          try {
-            createOrUpdateApplicantFromRegistration(progress, loggedInUser);
-            toast({ title: "Pendaftaran Berhasil Dikirim", description: "Berkas dan data Anda akan segera diverifikasi oleh panitia." });
-            saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, { ...progress, registrationCompleted: true });
-            setIsSubmitting(false);
-            router.push(`/registration/status`);
-          } catch (error: any) {
-             toast({ variant: "destructive", title: "Gagal Mengirim Pendaftaran", description: error.message });
-             setIsSubmitting(false);
-          }
-        }, 1500);
+    const progress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
+    if (!progress || !progress.biodata || !progress.pathway || !progress.schoolSelections) {
+          toast({ variant: "destructive", title: "Data Pendaftaran Tidak Lengkap", description: "Harap kembali dan lengkapi data Anda." });
+          setIsSubmitting(false);
+          return;
     }
+
+    setTimeout(() => {
+      try {
+        createOrUpdateApplicantFromRegistration(progress, loggedInUser);
+        toast({ title: "Pendaftaran Berhasil Dikirim", description: "Berkas dan data Anda akan segera diverifikasi oleh panitia." });
+        saveToLocalStorage<RegistrationProgress>(LOCAL_STORAGE_REGISTRATION_KEY, { ...progress, registrationCompleted: true });
+        setIsSubmitting(false);
+        router.push(`/registration/status`);
+      } catch (error: any) {
+          toast({ variant: "destructive", title: "Gagal Mengirim Pendaftaran", description: error.message });
+          setIsSubmitting(false);
+      }
+    }, 1500);
   };
   
   if (isLoading) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-4">
-        <p>Memeriksa sesi Anda...</p>
+        <p>Memuat halaman unggah berkas...</p>
       </div>
-    );
-  }
-
-  if (isCorrectionMode && (isBiodataInvalid || isGradesInvalid)) {
-    return (
-        <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
-            <Card className="w-full max-w-2xl shadow-2xl">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-3 text-xl sm:text-2xl text-destructive">
-                        <AlertCircle className="h-8 w-8" />
-                        Tindakan Diperlukan
-                    </CardTitle>
-                    <CardDescription>
-                        Satu atau lebih bagian penting dari pendaftaran Anda ditandai tidak valid oleh verifikator. Harap perbaiki data tersebut sebelum melanjutkan.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {isBiodataInvalid && (
-                        <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Perbaikan Biodata</AlertTitle>
-                            <AlertDescription>
-                                Data diri Anda tidak sesuai. Klik tombol di bawah untuk membuka halaman biodata dan memperbaikinya.
-                                <Button asChild variant="secondary" className="mt-3 w-full sm:w-auto">
-                                    <Link href="/registration/dashboard">Buka Halaman Biodata</Link>
-                                </Button>
-                            </AlertDescription>
-                        </Alert>
-                    )}
-                    {isGradesInvalid && (
-                        <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Perbaikan Nilai Rapor</AlertTitle>
-                            <AlertDescription>
-                                Nilai rapor Anda ditandai tidak sesuai. Karena nilai rapor tidak dapat diubah oleh siswa, silakan hubungi operator sekolah asal Anda untuk melakukan perbaikan data.
-                            </AlertDescription>
-                        </Alert>
-                    )}
-                     <Alert>
-                        <FileQuestion className="h-4 w-4" />
-                        <AlertTitle>Perbaikan Berkas Lainnya</AlertTitle>
-                        <AlertDescription>
-                           Setelah memperbaiki data di atas, Anda dapat mengunggah ulang berkas lain yang ditolak pada halaman ini. Halaman akan tersedia setelah data Anda valid.
-                        </AlertDescription>
-                    </Alert>
-                </CardContent>
-                <CardFooter>
-                     <Button variant="outline" asChild>
-                        <Link href="/registration/status">
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Kembali ke Halaman Status
-                        </Link>
-                    </Button>
-                </CardFooter>
-            </Card>
-        </div>
     );
   }
 
@@ -367,32 +236,16 @@ export default function DocumentUploadPage() {
             <UploadCloud size={40} />
           </div>
           <CardTitle className="text-2xl sm:text-3xl font-headline">
-            {isCorrectionMode ? "Perbaikan Berkas Pendaftaran" : "Unggah Berkas Pendaftaran"}
+            Unggah Berkas Pendaftaran
           </CardTitle>
           <CardDescription className="text-md">
-            {isCorrectionMode 
-                ? "Harap unggah ulang berkas yang ditandai tidak valid oleh verifikator."
-                : "Harap unggah dokumen yang diperlukan. Format file yang diterima: PDF, JPG, PNG. Ukuran maks: 2MB."
-            }
+            Harap unggah dokumen yang diperlukan. Format file yang diterima: PDF, JPG, PNG. Ukuran maks: 2MB.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
-          {isCorrectionMode && (
-            <Alert variant="destructive" className="mb-6">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Perbaikan Berkas Diperlukan</AlertTitle>
-                <AlertDescription>
-                    Verifikator menemukan masalah dengan berkas Anda. Alasan: 
-                    <span className="font-semibold italic block mt-1">"{rejectionReason}"</span>
-                    <br />
-                    Harap unggah ulang berkas yang valid untuk dokumen yang tercantum di bawah ini.
-                </AlertDescription>
-            </Alert>
-          )}
-
           <section>
              <h3 className="text-xl font-semibold mb-4 text-primary">
-                {isCorrectionMode ? "Berkas yang Perlu Diperbaiki" : "Daftar Berkas"}
+                Daftar Berkas
              </h3>
             {documentsToUpload.map(doc => (
               <DocumentUploadItem
@@ -405,20 +258,21 @@ export default function DocumentUploadPage() {
                 onFileChange={handleFileChange}
               />
             ))}
-            {isCorrectionMode && documentsToUpload.length === 0 && !isBiodataInvalid && !isGradesInvalid && (
-                <p className="text-center text-muted-foreground py-4">Tidak ada berkas yang ditandai untuk diperbaiki. Hubungi panitia jika Anda merasa ini adalah sebuah kesalahan.</p>
-            )}
           </section>
         </CardContent>
-        <CardFooter className="flex justify-end pt-6">
+        <CardFooter className="flex flex-col sm:flex-row justify-between items-center pt-6 gap-4">
+          <Button variant="outline" asChild>
+            <Link href="/registration/documents">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Kembali ke Pemilihan Sekolah
+            </Link>
+          </Button>
           <Button 
             onClick={handleSubmit} 
             disabled={isSubmitting || !allRequiredFilesUploaded()}
           >
             <Paperclip className="mr-2 h-4 w-4" />
-            {isSubmitting 
-                ? (isCorrectionMode ? "Mengirim Ulang..." : "Mengunggah...") 
-                : (isCorrectionMode ? "Kirim Ulang Berkas Perbaikan" : "Unggah & Selesaikan Pendaftaran")}
+            {isSubmitting ? "Mengirim Pendaftaran..." : "Kirim & Selesaikan Pendaftaran"}
           </Button>
         </CardFooter>
       </Card>

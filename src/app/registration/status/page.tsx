@@ -289,7 +289,7 @@ export default function StatusPage() {
                 </AlertDescription>
                  <div className="mt-4">
                     <Button variant="outline" size="sm" asChild className="border-current text-current hover:bg-destructive/10">
-                        <Link href={`/registration/document-upload?pathway=${applicant.jalur}`}>
+                        <Link href="/registration/correction">
                             <FileUp className="mr-2 h-4 w-4" />
                             Perbaiki Data & Berkas
                         </Link>
