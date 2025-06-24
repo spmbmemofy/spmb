@@ -113,28 +113,29 @@ export default function CorrectionPage() {
     
     setApplicant(currentApplicant);
     
+    // Always populate the form with the latest applicant data.
+    // This ensures the form is valid according to its schema even when biodata fields are hidden,
+    // which prevents the submit button from being incorrectly disabled.
+    form.reset({
+        fullName: currentApplicant.fullName,
+        nik: currentApplicant.nik || '',
+        placeOfBirth: currentApplicant.placeOfBirth || '',
+        dateOfBirth: currentApplicant.dateOfBirth || '',
+        gender: currentApplicant.gender || 'Laki-laki',
+        religion: currentApplicant.religion || '',
+        streetName: currentApplicant.streetName || '',
+        rtRw: currentApplicant.rtRw || '',
+        village: currentApplicant.village || '',
+        subdistrict: currentApplicant.subdistrict || '',
+        district: currentApplicant.district || '',
+        province: currentApplicant.province || '',
+        contactNumber: currentApplicant.contactNumber || '',
+        fatherName: currentApplicant.fatherName || '',
+        motherName: currentApplicant.motherName || '',
+    });
+
     const docStatuses = currentApplicant.documentStatuses || {};
     const biodataIsInvalid = docStatuses['biodata'] === 'invalid';
-
-    if (biodataIsInvalid) {
-        form.reset({
-            fullName: currentApplicant.fullName,
-            nik: currentApplicant.nik,
-            placeOfBirth: currentApplicant.placeOfBirth,
-            dateOfBirth: currentApplicant.dateOfBirth,
-            gender: currentApplicant.gender,
-            religion: currentApplicant.religion,
-            streetName: currentApplicant.streetName,
-            rtRw: currentApplicant.rtRw,
-            village: currentApplicant.village,
-            subdistrict: currentApplicant.subdistrict,
-            district: currentApplicant.district,
-            province: currentApplicant.province,
-            contactNumber: currentApplicant.contactNumber,
-            fatherName: currentApplicant.fatherName,
-            motherName: currentApplicant.motherName,
-        });
-    }
 
     const allPossibleDocs = [...generalDocuments, ...(pathwaySpecificDocumentsMap[currentApplicant.jalur] || [])];
     const invalidDocs = allPossibleDocs.filter(doc => docStatuses[doc.id] === 'invalid');
