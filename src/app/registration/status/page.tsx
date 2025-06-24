@@ -283,15 +283,15 @@ export default function StatusPage() {
             {applicant.statusVerifikasi === 'Berkas tidak sesuai' && (
               <Alert variant="destructive" className="mb-6">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Verifikasi Gagal: Berkas Tidak Sesuai</AlertTitle>
+                <AlertTitle>Verifikasi Gagal: Perbaikan Diperlukan</AlertTitle>
                 <AlertDescription>
-                  Pendaftaran Anda tidak dapat diproses lebih lanjut karena ada berkas yang ditolak oleh verifikator. Alasan: <span className="italic">"{applicant.rejectionReason || 'Tidak ada alasan spesifik'}"</span>
+                  Pendaftaran Anda tidak dapat diproses lebih lanjut karena ada data atau berkas yang ditolak oleh verifikator. Alasan: <span className="italic">"{applicant.rejectionReason || 'Tidak ada alasan spesifik'}"</span>
                 </AlertDescription>
                  <div className="mt-4">
                     <Button variant="outline" size="sm" asChild className="border-current text-current hover:bg-destructive/10">
                         <Link href={`/registration/document-upload?pathway=${applicant.jalur}`}>
                             <FileUp className="mr-2 h-4 w-4" />
-                            Perbaiki Berkas Sekarang
+                            Perbaiki Data & Berkas
                         </Link>
                     </Button>
                 </div>

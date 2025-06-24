@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { UploadCloud, FileUp, Paperclip, CheckCircle2, AlertCircle } from 'lucide-react';
+import { UploadCloud, FileUp, Paperclip, CheckCircle2, AlertCircle, ArrowLeft, FileQuestion } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
@@ -303,6 +303,62 @@ export default function DocumentUploadPage() {
     );
   }
 
+  if (isCorrectionMode && (isBiodataInvalid || isGradesInvalid)) {
+    return (
+        <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
+            <Card className="w-full max-w-2xl shadow-2xl">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-3 text-xl sm:text-2xl text-destructive">
+                        <AlertCircle className="h-8 w-8" />
+                        Tindakan Diperlukan
+                    </CardTitle>
+                    <CardDescription>
+                        Satu atau lebih bagian penting dari pendaftaran Anda ditandai tidak valid oleh verifikator. Harap perbaiki data tersebut sebelum melanjutkan.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {isBiodataInvalid && (
+                        <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Perbaikan Biodata</AlertTitle>
+                            <AlertDescription>
+                                Data diri Anda tidak sesuai. Klik tombol di bawah untuk membuka halaman biodata dan memperbaikinya.
+                                <Button asChild variant="secondary" className="mt-3 w-full sm:w-auto">
+                                    <Link href="/registration/dashboard">Buka Halaman Biodata</Link>
+                                </Button>
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    {isGradesInvalid && (
+                        <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Perbaikan Nilai Rapor</AlertTitle>
+                            <AlertDescription>
+                                Nilai rapor Anda ditandai tidak sesuai. Karena nilai rapor tidak dapat diubah oleh siswa, silakan hubungi operator sekolah asal Anda untuk melakukan perbaikan data.
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                     <Alert>
+                        <FileQuestion className="h-4 w-4" />
+                        <AlertTitle>Perbaikan Berkas Lainnya</AlertTitle>
+                        <AlertDescription>
+                           Setelah memperbaiki data di atas, Anda dapat mengunggah ulang berkas lain yang ditolak pada halaman ini. Halaman akan tersedia setelah data Anda valid.
+                        </AlertDescription>
+                    </Alert>
+                </CardContent>
+                <CardFooter>
+                     <Button variant="outline" asChild>
+                        <Link href="/registration/status">
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Kembali ke Halaman Status
+                        </Link>
+                    </Button>
+                </CardFooter>
+            </Card>
+        </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
       <Card className="w-full max-w-3xl shadow-2xl">
@@ -332,26 +388,6 @@ export default function DocumentUploadPage() {
                     Harap unggah ulang berkas yang valid untuk dokumen yang tercantum di bawah ini.
                 </AlertDescription>
             </Alert>
-          )}
-
-          {isBiodataInvalid && (
-              <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Perbaikan Biodata Diperlukan</AlertTitle>
-                  <AlertDescription>
-                      Verifikator menandai bahwa data diri Anda tidak sesuai. Harap periksa dan perbaiki di halaman Pendaftaran.
-                      <Button asChild variant="link" className="p-0 h-auto ml-2"><Link href="/registration/dashboard">Buka Halaman Pendaftaran</Link></Button>
-                  </AlertDescription>
-              </Alert>
-          )}
-          {isGradesInvalid && (
-               <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Perbaikan Nilai Rapor Diperlukan</AlertTitle>
-                  <AlertDescription>
-                      Verifikator menandai bahwa nilai rapor Anda tidak sesuai. Karena nilai rapor tidak dapat diubah oleh siswa, silakan hubungi operator sekolah asal Anda untuk perbaikan.
-                  </AlertDescription>
-              </Alert>
           )}
 
           <section>
