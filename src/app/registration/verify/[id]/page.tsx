@@ -58,6 +58,82 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
 type ActionType = "verify" | "reject";
 type DocumentItem = { id: string; label: string; url: string };
 
+const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ applicant }) => {
+  if (!applicant || !applicant.activityHistory || applicant.activityHistory.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground text-center py-4">
+        Riwayat aktivitas belum tersedia.
+      </p>
+    );
+  }
+
+  const eventUIMap = (event: ActivityEvent) => {
+    const timestamp = new Date(event.timestamp).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' }) + ' WIB';
+    
+    switch(event.type) {
+      case 'REGISTRATION_COMPLETED':
+        return {
+          icon: <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />,
+          bgColor: "bg-green-100 dark:bg-green-900",
+          title: "Pendaftaran Selesai",
+          description: `Pendaftar berhasil menyelesaikan pendaftaran. Berkas dikirimkan untuk verifikasi.`,
+          actor: event.actor,
+          timestamp,
+        };
+      case 'FILES_RESUBMITTED':
+         return {
+          icon: <FileUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />,
+          bgColor: "bg-blue-100 dark:bg-blue-900",
+          title: "Perbaikan Berkas Terkirim",
+          description: "Pendaftar berhasil mengunggah ulang berkas yang diperlukan untuk ditinjau kembali.",
+          actor: event.actor,
+          timestamp,
+        };
+      case 'VERIFICATION_REJECTED':
+         return {
+          icon: <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />,
+          bgColor: "bg-red-100 dark:bg-red-900",
+          title: "Verifikasi Ditolak",
+          description: `Verifikator menolak berkas dengan alasan: "${event.details || 'Tidak ada alasan spesifik.'}"`,
+          actor: event.actor,
+          timestamp,
+        };
+      case 'VERIFICATION_APPROVED':
+        return {
+          icon: <ThumbsUp className="h-5 w-5 text-green-600 dark:text-green-400" />,
+          bgColor: "bg-green-100 dark:bg-green-900",
+          title: "Verifikasi Berhasil",
+          description: "Selamat! Berkas telah diverifikasi dan pendaftaran diterima untuk tahap selanjutnya.",
+          actor: event.actor,
+          timestamp,
+        };
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <ul className="space-y-6">
+      {[...(applicant.activityHistory || [])].reverse().map((event, index) => {
+        const eventUI = eventUIMap(event);
+        if (!eventUI) return null;
+        return (
+          <li key={index} className="flex gap-4">
+            <div className={`flex h-8 w-8 items-center justify-center rounded-full ${eventUI.bgColor} flex-shrink-0 mt-1`}>
+              {eventUI.icon}
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold">{eventUI.title}</p>
+              <p className="text-sm text-muted-foreground">{eventUI.description}</p>
+              <p className="text-xs text-muted-foreground mt-1">Oleh: {eventUI.actor} &bull; {eventUI.timestamp}</p>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+};
+
 export default function VerifyApplicantPage() {
   const params = useParams();
   const router = useRouter();
@@ -502,48 +578,7 @@ export default function VerifyApplicantPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4 max-h-[60vh] overflow-y-auto px-1">
-            <ul className="space-y-6">
-              <li className="flex gap-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 flex-shrink-0 mt-1">
-                      <CheckCircle className="h-5 w-5 text-green-600 dark:bg-green-400" />
-                  </div>
-                  <div className="flex-1">
-                      <p className="font-semibold">Pendaftaran Selesai</p>
-                      <p className="text-sm text-muted-foreground">Siswa berhasil menyelesaikan semua langkah pendaftaran dan mengirimkan berkas.</p>
-                      <p className="text-xs text-muted-foreground mt-1">15 Juli 2024, 10:30 WIB</p>
-                  </div>
-              </li>
-                <li className="flex gap-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900 flex-shrink-0 mt-1">
-                      <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-                  </div>
-                  <div className="flex-1">
-                      <p className="font-semibold">Berkas Ditolak</p>
-                      <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">{applicant.verifiedBy || 'Petugas Verifikator'}</span> menolak berkas dengan alasan: "Foto Kartu Keluarga (KK) buram dan tidak terbaca."</p>
-                      <p className="text-xs text-muted-foreground mt-1">{applicant.verificationTimestamp ? new Date(applicant.verificationTimestamp).toLocaleString('id-ID') : '15 Juli 2024, 14:00 WIB'}</p>
-                  </div>
-              </li>
-                <li className="flex gap-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 flex-shrink-0 mt-1">
-                      <FileUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="flex-1">
-                      <p className="font-semibold">Perbaikan Berkas Selesai</p>
-                      <p className="text-sm text-muted-foreground">Siswa berhasil mengunggah ulang berkas Kartu Keluarga (KK) yang telah diperbaiki.</p>
-                      <p className="text-xs text-muted-foreground mt-1">16 Juli 2024, 09:15 WIB</p>
-                  </div>
-              </li>
-                <li className="flex gap-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 flex-shrink-0 mt-1">
-                      <ThumbsUp className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  </div>
-                  <div className="flex-1">
-                      <p className="font-semibold">Berkas Diverifikasi</p>
-                      <p className="text-sm text-muted-foreground">Verifikator <span className="font-medium">{applicant.verifiedBy || 'Petugas Verifikator'}</span> memverifikasi berkas pendaftaran.</p>
-                      <p className="text-xs text-muted-foreground mt-1">{applicant.verificationTimestamp ? new Date(applicant.verificationTimestamp).toLocaleString('id-ID') : '16 Juli 2024, 11:00 WIB'}</p>
-                  </div>
-              </li>
-            </ul>
+             <ActivityHistoryTimeline applicant={applicant} />
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setIsHistoryAlertOpen(false)}>Tutup</AlertDialogCancel>
