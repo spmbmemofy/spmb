@@ -72,7 +72,7 @@ const DocumentUploadItem: React.FC<DocumentUploadItemProps> = ({ id, label, file
     <div className="space-y-2 border rounded-md p-3">
       <Label htmlFor={id} className="text-md font-medium text-destructive">{label}</Label>
       <div className="flex items-center space-x-3">
-        <Button variant="outline" onClick={() => inputRef.current?.click()}>
+        <Button type="button" variant="outline" onClick={() => inputRef.current?.click()}>
           <FileUp className="mr-2 h-4 w-4" /> Pilih File Baru
         </Button>
         <Input id={id} type="file" ref={inputRef} onChange={(e) => onFileChange(e, id)} className="hidden" accept=".pdf,.jpg,.jpeg,.png" />
