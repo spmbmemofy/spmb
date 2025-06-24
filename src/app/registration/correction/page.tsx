@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { FileUp, Save, UserCircle, FileText, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { getFromLocalStorage, saveToLocalStorage, type LoginCredentials, type RegistrationProgress } from "@/lib/localStorage";
-import { getApplicantById, updateApplicant, type Applicant } from "@/lib/applicantService";
+import { getApplicants, updateApplicant, type Applicant } from "@/lib/applicantService";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { ActivityEvent, DocumentStatus } from "@/lib/types";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -105,7 +105,7 @@ export default function CorrectionPage() {
       return;
     }
 
-    const currentApplicant = getApplicantById(loginCreds.username);
+    const currentApplicant = getApplicants().find(app => app.nisn === loginCreds.username);
     if (!currentApplicant || currentApplicant.statusVerifikasi !== 'Berkas tidak sesuai') {
       toast({ variant: 'destructive', title: "Akses tidak diizinkan", description: "Halaman ini hanya untuk pendaftar yang perlu melakukan perbaikan." });
       router.replace('/registration/status');
