@@ -4,7 +4,7 @@
 import { ReactNode, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, School, UserCheck, User as UserIcon, FileUp, Shield, GraduationCap, Building, Users } from 'lucide-react';
+import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, School, UserCheck, User as UserIcon, FileUp, Shield, GraduationCap, Building, Users, Lock, Edit } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -26,6 +26,7 @@ import { initializeAllData } from '@/lib/initializeDatabase';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { getUsers, type User } from '@/lib/userService';
 import { roleDisplayNames } from '@/lib/userData';
+import { getApplicants, type Applicant } from '@/lib/applicantService';
 
 
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
@@ -41,6 +42,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   const { toast } = useToast();
   const [userRole, setUserRole] = useState<LoginCredentials['role'] | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [applicant, setApplicant] = useState<Applicant | null>(null);
 
   useEffect(() => {
     initializeAllData();
@@ -53,6 +55,12 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       setUserRole(savedCredentials.role);
       const user = getUsers().find(u => u.username === savedCredentials.username);
       setCurrentUser(user || null);
+
+      if (user?.role === 'applicant') {
+        const foundApplicant = getApplicants().find(app => app.nisn === user.username);
+        setApplicant(foundApplicant || null);
+      }
+
     } else {
       toast({
         variant: "destructive",
@@ -64,13 +72,6 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   }, [router, toast, pathname]);
 
   const menuItems = useMemo(() => {
-    const applicantMenu = [
-      { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
-      { href: '/registration/dashboard', label: 'Pendaftaran', icon: FileUp, activePaths: ['/registration/dashboard', '/registration/documents', '/registration/document-upload', '/registration/correction'] },
-      { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'] },
-      { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
-    ];
-
     const verifierMenu = [
       { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
       { href: '/registration/all-data', label: 'Semua Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
@@ -86,10 +87,8 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       { href: '/registration/superadmin', label: 'Manajemen Pengguna', icon: Shield, activePaths: ['/registration/superadmin'] }
     ];
     
-    // Placeholder menus for new roles
-    const superAdminMenu = [
-        ...adminMenu,
-    ];
+    const superAdminMenu = [ ...adminMenu ];
+    
     const headmasterMenu = [
         { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
         { href: '/registration/all-data', label: 'Lihat Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
@@ -102,9 +101,48 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
         { href: '/registration/applicant-data', label: 'Data Pendaftar', icon: Users, activePaths: ['/registration/applicant-data'] },
     ];
 
+    if (userRole === 'applicant') {
+        const applicantMenu = [
+            { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
+        ];
+
+        if (applicant && (applicant.statusVerifikasi === 'Menunggu Verifikasi' || applicant.statusVerifikasi === 'Terverifikasi')) {
+            applicantMenu.push({
+                href: '#',
+                label: 'Pendaftaran (Terkunci)',
+                icon: Lock,
+                activePaths: ['/registration/dashboard', '/registration/documents', '/registration/document-upload'],
+                disabled: true,
+                tooltip: { children: 'Pendaftaran sudah dikirim dan tidak bisa diubah.' },
+            });
+        } else if (applicant && applicant.statusVerifikasi === 'Berkas tidak sesuai') {
+            applicantMenu.push({
+                href: '/registration/correction',
+                label: 'Perbaikan Data',
+                icon: Edit,
+                activePaths: ['/registration/correction'],
+                disabled: false
+            });
+        } else {
+            applicantMenu.push({
+                href: '/registration/dashboard',
+                label: 'Pendaftaran',
+                icon: FileUp,
+                activePaths: ['/registration/dashboard', '/registration/documents', '/registration/document-upload'],
+                disabled: false
+            });
+        }
+
+        applicantMenu.push(
+            { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'], disabled: false },
+            { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'], disabled: false },
+        );
+        
+        return applicantMenu;
+    }
+
 
     switch (userRole) {
-        case 'applicant': return applicantMenu;
         case 'verifikator': return verifierMenu;
         case 'admin': return adminMenu;
         case 'superadmin': return superAdminMenu;
@@ -113,7 +151,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
         default: return [];
     }
     
-  }, [userRole]);
+  }, [userRole, applicant]);
 
   const handleLogout = () => {
     removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);
@@ -167,17 +205,25 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {menuItems.map((item: any) => (
                 <SidebarMenuItem key={item.href + item.label}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={item.activePaths.some(path => pathname.startsWith(path))}
-                    tooltip={{ children: item.label, side: 'right' }}
+                   <SidebarMenuButton
+                    asChild={!item.disabled}
+                    isActive={item.activePaths.some((path: string) => pathname.startsWith(path))}
+                    tooltip={item.tooltip ? { ...item.tooltip, side: 'right' } : { children: item.label, side: 'right' }}
+                    disabled={item.disabled}
                   >
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span className="group-data-[state=collapsed]:hidden">{item.label}</span>
-                    </Link>
+                    {item.disabled ? (
+                      <>
+                        <item.icon />
+                        <span className="group-data-[state=collapsed]:hidden">{item.label}</span>
+                      </>
+                    ) : (
+                      <Link href={item.href}>
+                        <item.icon />
+                        <span className="group-data-[state=collapsed]:hidden">{item.label}</span>
+                      </Link>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
