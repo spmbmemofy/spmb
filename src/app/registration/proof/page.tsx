@@ -71,6 +71,7 @@ export default function RegistrationProofPage() {
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
         const ratio = canvasWidth / canvasHeight;
@@ -131,8 +132,8 @@ export default function RegistrationProofPage() {
                 data-ai-hint="logo icon"
               />
             <div className="ml-4">
-              <h1 className="text-xl sm:text-2xl font-bold uppercase text-gray-800 dark:text-gray-100">SPMB 2026</h1>
-              <p className="text-sm sm:text-md text-gray-600 dark:text-gray-300">Seleksi Penerimaan Mahasiswa Baru - Tahun 2026</p>
+              <h1 className="text-xl sm:text-2xl font-bold uppercase text-gray-800 dark:text-gray-100">PMB 2026</h1>
+              <p className="text-sm sm:text-md text-gray-600 dark:text-gray-300">Sistem Penerimaan Murid Baru - Tahun 2026</p>
             </div>
           </div>
         </header>

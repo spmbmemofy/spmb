@@ -154,9 +154,9 @@ export function LoginForm() {
         <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
           <Lock size={32} />
         </div>
-        <CardTitle className="text-xl sm:text-2xl font-headline">SPMB 2026</CardTitle>
+        <CardTitle className="text-xl sm:text-2xl font-headline">PMB 2026</CardTitle>
         <CardDescription>
-          Seleksi Penerimaan Mahasiswa Baru - Tahun 2026
+          Sistem Penerimaan Murid Baru - Tahun 2026
         </CardDescription>
       </CardHeader>
       <CardContent>

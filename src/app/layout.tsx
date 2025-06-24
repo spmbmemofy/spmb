@@ -4,8 +4,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'SPMB 2026',
-  description: 'Portal SPMB 2026',
+  title: 'PMB 2026',
+  description: 'Portal Penerimaan Murid Baru 2026',
 };
 
 export default function RootLayout({
