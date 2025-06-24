@@ -105,12 +105,18 @@ export default function CorrectionPage() {
     }
 
     const currentApplicant = getApplicants().find(app => app.nisn === loginCreds.username);
-    if (!currentApplicant || currentApplicant.statusVerifikasi !== 'Berkas tidak sesuai') {
-      toast({ variant: 'destructive', title: "Akses tidak diizinkan", description: "Halaman ini hanya untuk pendaftar yang perlu melakukan perbaikan." });
+    if (!currentApplicant) {
+      toast({ variant: 'destructive', title: "Akses tidak diizinkan", description: "Data pendaftar tidak ditemukan." });
       router.replace('/registration/status');
       return;
     }
     
+    if (currentApplicant.statusVerifikasi !== 'Berkas tidak sesuai') {
+       toast({ variant: 'destructive', title: "Akses tidak diizinkan", description: "Halaman ini hanya untuk pendaftar yang perlu melakukan perbaikan." });
+       router.replace('/registration/status');
+       return;
+    }
+
     setApplicant(currentApplicant);
     
     // Always populate the form with the latest applicant data.
@@ -135,7 +141,7 @@ export default function CorrectionPage() {
     });
 
     const docStatuses = currentApplicant.documentStatuses || {};
-    const biodataIsInvalid = docStatuses['biodata'] === 'invalid';
+    const biodataIsInvalid = docStatuses['biodata'] === 'invalid' || docStatuses['nilai_rapor'] === 'invalid';
 
     const allPossibleDocs = [...generalDocuments, ...(pathwaySpecificDocumentsMap[currentApplicant.jalur] || [])];
     const invalidDocs = allPossibleDocs.filter(doc => docStatuses[doc.id] === 'invalid');
@@ -171,16 +177,21 @@ export default function CorrectionPage() {
       Object.assign(updatedApplicantData, biodataValues);
     }
 
-    // 2. Reset document statuses for fixed items
+    // 2. Reset status for ALL previously rejected items to pending.
+    // Items that were not rejected (and thus are 'valid') will remain 'valid'.
     const newDocStatuses = { ...(updatedApplicantData.documentStatuses || {}) };
+    
+    // Reset rejected biodata to pending
     if (rejectedItems.biodata) {
-        newDocStatuses['biodata'] = null; // Reset to pending
+        newDocStatuses['biodata'] = null; 
+        newDocStatuses['nilai_rapor'] = null; 
     }
+    
+    // Reset all rejected documents to pending
     rejectedItems.documents.forEach(doc => {
-        if(uploadedFiles[doc.id]) {
-            newDocStatuses[doc.id] = null; // Reset to pending
-        }
+        newDocStatuses[doc.id] = null;
     });
+
     updatedApplicantData.documentStatuses = newDocStatuses;
     
     // 3. Update overall status and history
