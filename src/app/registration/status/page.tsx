@@ -260,19 +260,6 @@ export default function StatusPage() {
         </CardHeader>
         <CardContent className="space-y-8">
           <section>
-            <h3 className="text-xl font-semibold mb-4 text-primary flex items-center">
-              <UserCircle className="mr-2 h-6 w-6" />
-              Detail Biodata Pendaftar
-            </h3>
-            <div className="space-y-1 rounded-md border p-4">
-              <BiodataDisplayItem label="Nama Lengkap" value={biodata?.fullName || applicant.fullName} />
-              <BiodataDisplayItem label="NISN" value={biodata?.nisn || applicant.nisn} />
-              <BiodataDisplayItem label="NIK" value={biodata?.nik} />
-              <BiodataDisplayItem label="Sekolah Asal" value={biodata?.previousSchool || applicant.asalSekolahNama} />
-            </div>
-          </section>
-
-          <section>
             <h3 className="text-xl font-semibold mb-2 text-primary flex items-center">
                 <Star className="mr-2 h-6 w-6" />
                 Status & Peringkat Pilihan
@@ -428,6 +415,18 @@ export default function StatusPage() {
             </p>
           </section>
 
+          <section>
+            <h3 className="text-xl font-semibold mb-4 text-primary flex items-center">
+              <UserCircle className="mr-2 h-6 w-6" />
+              Detail Biodata Pendaftar
+            </h3>
+            <div className="space-y-1 rounded-md border p-4">
+              <BiodataDisplayItem label="Nama Lengkap" value={biodata?.fullName || applicant.fullName} />
+              <BiodataDisplayItem label="NISN" value={biodata?.nisn || applicant.nisn} />
+              <BiodataDisplayItem label="NIK" value={biodata?.nik} />
+              <BiodataDisplayItem label="Sekolah Asal" value={biodata?.previousSchool || applicant.asalSekolahNama} />
+            </div>
+          </section>
 
           <section>
             <h3 className="text-xl font-semibold mb-4 text-primary">Kelengkapan Berkas</h3>
@@ -494,5 +493,3 @@ export default function StatusPage() {
     </>
   );
 }
-
-    
