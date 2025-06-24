@@ -161,12 +161,6 @@ export default function CorrectionPage() {
 
   const handleSubmit = async (biodataValues: BiodataFormValues) => {
     if (!applicant) return;
-
-    // Validation: ensure all rejected items are addressed
-    if (rejectedItems.documents.some(doc => !uploadedFiles[doc.id])) {
-      toast({ variant: 'destructive', title: 'Berkas Belum Lengkap', description: 'Harap unggah ulang semua berkas yang ditolak.' });
-      return;
-    }
     
     setIsSubmitting(true);
     const updatedApplicantData = { ...applicant };
