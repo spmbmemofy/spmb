@@ -202,7 +202,7 @@ export default function ManagedApplicantPage() {
             if (isLastTab) {
                 if (isNewApplicantSession) {
                     try {
-                        const password = 'password123';
+                        const password = Math.random().toString(36).substring(2, 10); // Generate 8-char random password
                         addUser({
                             fullName: data.fullName,
                             username: data.nisn,
