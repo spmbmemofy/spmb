@@ -154,7 +154,7 @@ export default function SchoolSelectionPage() {
     }, 1000);
   };
   
-  const isSubmitDisabled = isSubmitting || !selectedPathway || selectedSelections.length < 1 || selectedSelections.length > MAX_SCHOOL_SELECTION;
+  const isSubmitDisabled = isSubmitting || !selectedPathway || selectedSelections.length < 1 || selectedSelections.length > MAX_SCHOOL_SELECTION || isLocked;
 
   if (isLoading) {
     return (

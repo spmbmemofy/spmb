@@ -103,19 +103,10 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
 
     if (userRole === 'applicant') {
         const applicantMenu = [
-            { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
+            { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'], disabled: false },
         ];
 
-        if (applicant && (applicant.statusVerifikasi === 'Menunggu Verifikasi' || applicant.statusVerifikasi === 'Terverifikasi')) {
-            applicantMenu.push({
-                href: '#',
-                label: 'Pendaftaran (Terkunci)',
-                icon: Lock,
-                activePaths: ['/registration/dashboard', '/registration/documents', '/registration/document-upload'],
-                disabled: true,
-                tooltip: { children: 'Pendaftaran sudah dikirim dan tidak bisa diubah.' },
-            });
-        } else if (applicant && applicant.statusVerifikasi === 'Berkas tidak sesuai') {
+        if (applicant && applicant.statusVerifikasi === 'Berkas tidak sesuai') {
             applicantMenu.push({
                 href: '/registration/correction',
                 label: 'Perbaikan Data',
@@ -124,7 +115,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
                 disabled: false
             });
         } else {
-            applicantMenu.push({
+             applicantMenu.push({
                 href: '/registration/dashboard',
                 label: 'Pendaftaran',
                 icon: FileUp,

@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { UploadCloud, FileUp, Paperclip, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { UploadCloud, FileUp, Paperclip, CheckCircle2, AlertCircle, ArrowLeft, ClipboardCheck, AlertTriangle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
 import { createOrUpdateApplicantFromRegistration } from "@/lib/applicantService";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
@@ -30,9 +32,10 @@ interface DocumentUploadItemProps {
   file: File | null;
   fileMetadata?: { name: string; size: number; type: string } | null;
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>, id: string) => void;
+  disabled?: boolean;
 }
 
-const DocumentUploadItem: React.FC<DocumentUploadItemProps> = ({ id, label, required = true, file, fileMetadata, onFileChange }) => {
+const DocumentUploadItem: React.FC<DocumentUploadItemProps> = ({ id, label, required = true, file, fileMetadata, onFileChange, disabled = false }) => {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const displayFileName = file?.name || fileMetadata?.name;
   const displayFileSize = file?.size || fileMetadata?.size;
@@ -52,6 +55,7 @@ const DocumentUploadItem: React.FC<DocumentUploadItemProps> = ({ id, label, requ
           variant="outline"
           onClick={() => inputRef.current?.click()}
           className="w-full sm:w-auto"
+          disabled={disabled}
         >
           <FileUp className="mr-2 h-4 w-4" />
           Pilih File
@@ -63,6 +67,7 @@ const DocumentUploadItem: React.FC<DocumentUploadItemProps> = ({ id, label, requ
           onChange={(e) => onFileChange(e, id)}
           className="hidden"
           accept=".pdf,.jpg,.jpeg,.png"
+          disabled={disabled}
         />
         <span className="text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-xs">
           {displayFileName ? displayFileName : "Belum ada file dipilih"}
@@ -107,6 +112,7 @@ export default function DocumentUploadPage() {
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isLocked, setIsLocked] = React.useState(false);
   
   const [documentsToUpload, setDocumentsToUpload] = React.useState<DocumentItem[]>([]);
   const [uploadedFiles, setUploadedFiles] = React.useState<Record<string, File | null>>({});
@@ -122,6 +128,10 @@ export default function DocumentUploadPage() {
       });
       router.replace('/registration/dashboard');
       return; 
+    }
+    
+    if (savedProgress?.registrationCompleted) {
+        setIsLocked(true);
     }
     
     if (!selectedPathwayParam) {
@@ -243,6 +253,15 @@ export default function DocumentUploadPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
+         {isLocked && (
+            <Alert variant="default" className="bg-yellow-100 border-yellow-300 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700/50 dark:text-yellow-300 [&>svg]:text-yellow-600 dark:[&>svg]:text-yellow-400">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Tahap Ini Terkunci</AlertTitle>
+                <AlertDescription>
+                    Anda telah menyelesaikan pendaftaran. Unggah berkas tidak dapat diubah lagi.
+                </AlertDescription>
+            </Alert>
+          )}
           <section>
              <h3 className="text-xl font-semibold mb-4 text-primary">
                 Daftar Berkas
@@ -256,6 +275,7 @@ export default function DocumentUploadPage() {
                 file={uploadedFiles[doc.id] || null}
                 fileMetadata={fileMetadataStore?.[doc.id]}
                 onFileChange={handleFileChange}
+                disabled={isLocked}
               />
             ))}
           </section>
@@ -267,13 +287,22 @@ export default function DocumentUploadPage() {
               Kembali ke Pemilihan Sekolah
             </Link>
           </Button>
-          <Button 
-            onClick={handleSubmit} 
-            disabled={isSubmitting || !allRequiredFilesUploaded()}
-          >
-            <Paperclip className="mr-2 h-4 w-4" />
-            {isSubmitting ? "Mengirim Pendaftaran..." : "Kirim & Selesaikan Pendaftaran"}
-          </Button>
+          {isLocked ? (
+              <Button asChild>
+                <Link href="/registration/status">
+                  <ClipboardCheck className="mr-2 h-4 w-4" />
+                  Lihat Status Pendaftaran
+                </Link>
+              </Button>
+            ) : (
+             <Button 
+                onClick={handleSubmit} 
+                disabled={isSubmitting || !allRequiredFilesUploaded()}
+             >
+                <Paperclip className="mr-2 h-4 w-4" />
+                {isSubmitting ? "Mengirim Pendaftaran..." : "Kirim & Selesaikan Pendaftaran"}
+             </Button>
+            )}
         </CardFooter>
       </Card>
     </div>
