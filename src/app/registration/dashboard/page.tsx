@@ -247,9 +247,9 @@ const personalInfoEditableFields: Array<{ key: BiodataKeys; label: string; type?
 
 
 function ApplicantDashboard() {
+  const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(true);
-  const [isConfirmed, setIsConfirmed] = React.useState(false);
   const [biodata, setBiodata] = React.useState<BiodataDetails | null>(null);
   const [isLocked, setIsLocked] = React.useState(false);
   
@@ -404,12 +404,12 @@ function ApplicantDashboard() {
         });
         return;
     }
-    setIsConfirmed(true);
+
     toast({
       title: "Biodata Terkonfirmasi",
-      description: "Biodata dan nilai rapor Anda telah dikonfirmasi. Melanjutkan ke tahap berikutnya.",
+      description: "Biodata Anda telah dikonfirmasi. Melanjutkan ke pemilihan sekolah.",
     });
-    console.log("Biodata dikonfirmasi, siap untuk tahap berikutnya.");
+    router.push('/registration/documents');
   };
 
   const handleEditParentInfo = () => {
@@ -823,11 +823,11 @@ function ApplicantDashboard() {
                 <Button
                   size="lg"
                   onClick={handleConfirm}
-                  disabled={isConfirmed || isAnyFieldBeingEdited}
+                  disabled={isAnyFieldBeingEdited}
                   className="w-full sm:w-auto"
                 >
                   <CheckCircle2 className="mr-2 h-5 w-5" />
-                  {isConfirmed ? "Terkonfirmasi" : "Konfirmasi dan Lanjutkan"}
+                  Konfirmasi dan Lanjutkan
                 </Button>
             )}
         </CardFooter>
