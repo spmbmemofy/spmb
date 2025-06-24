@@ -12,10 +12,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { FileUp, Save, UserCircle, FileText, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { getFromLocalStorage, saveToLocalStorage, type LoginCredentials, type RegistrationProgress } from "@/lib/localStorage";
+import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { getApplicants, updateApplicant, type Applicant } from "@/lib/applicantService";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import type { ActivityEvent, DocumentStatus } from "@/lib/types";
+import type { ActivityEvent } from "@/lib/types";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -116,7 +115,6 @@ export default function CorrectionPage() {
     
     const docStatuses = currentApplicant.documentStatuses || {};
     const biodataIsInvalid = docStatuses['biodata'] === 'invalid';
-    const gradesIsInvalid = docStatuses['nilai_rapor'] === 'invalid';
 
     if (biodataIsInvalid) {
         form.reset({
@@ -171,23 +169,23 @@ export default function CorrectionPage() {
     }
     
     setIsSubmitting(true);
-    let updatedApplicantData = { ...applicant };
+    const updatedApplicantData = { ...applicant };
 
     // 1. Update biodata if it was rejected
     if (rejectedItems.biodata) {
-      updatedApplicantData = { ...updatedApplicantData, ...biodataValues };
+      Object.assign(updatedApplicantData, biodataValues);
     }
 
-    // 2. Update document statuses
-    const newDocStatuses = { ...updatedApplicantData.documentStatuses };
-    for (const key in newDocStatuses) {
-        if (newDocStatuses[key] === 'invalid') {
-            // If biodata was invalid and is being submitted, it becomes pending
-            if (key === 'biodata' && rejectedItems.biodata) newDocStatuses[key] = null;
-            // If a document was invalid and a new file is uploaded, it becomes pending
-            if (uploadedFiles[key]) newDocStatuses[key] = null;
-        }
+    // 2. Reset document statuses for fixed items
+    const newDocStatuses = { ...(updatedApplicantData.documentStatuses || {}) };
+    if (rejectedItems.biodata) {
+        newDocStatuses['biodata'] = null; // Reset to pending
     }
+    rejectedItems.documents.forEach(doc => {
+        if(uploadedFiles[doc.id]) {
+            newDocStatuses[doc.id] = null; // Reset to pending
+        }
+    });
     updatedApplicantData.documentStatuses = newDocStatuses;
     
     // 3. Update overall status and history
