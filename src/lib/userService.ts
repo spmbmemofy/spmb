@@ -8,12 +8,12 @@ import { deleteManagedApplicantByNisn } from './managedApplicantService';
 
 const USERS_STORAGE_KEY = 'allUsersData_v2';
 
+/**
+ * Initializes the users data.
+ * This now overwrites existing data to ensure consistency with the current codebase's initial state upon starting a session.
+ */
 export const initializeUsers = (): void => {
-  // Check if users already exist in localStorage. If not, initialize with default.
-  const storedUsers = getFromLocalStorage<User[] | null>(USERS_STORAGE_KEY, null);
-  if (storedUsers === null) {
-    saveToLocalStorage(USERS_STORAGE_KEY, initialUsers);
-  }
+  saveToLocalStorage(USERS_STORAGE_KEY, initialUsers);
 };
 
 export function getUsers(): User[] {

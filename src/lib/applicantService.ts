@@ -9,14 +9,12 @@ import { getSchoolById, getSchools } from './schoolService';
 const APPLICANTS_STORAGE_KEY = 'allApplicantsData';
 
 /**
- * Initializes the applicants data by creating an empty array if one doesn't exist.
+ * Initializes the applicants data.
+ * This now overwrites existing data to ensure consistency with the current codebase's initial state upon starting a session.
  */
 export function initializeApplicantsData(): void {
-  const storedApplicants = getFromLocalStorage<Applicant[] | null>(APPLICANTS_STORAGE_KEY, null);
-  if (storedApplicants === null) {
-    const initialData = generateAllMockApplicants(); // This will be an empty array
-    saveToLocalStorage(APPLICANTS_STORAGE_KEY, initialData);
-  }
+  const initialData = generateAllMockApplicants();
+  saveToLocalStorage(APPLICANTS_STORAGE_KEY, initialData);
 }
 
 /**

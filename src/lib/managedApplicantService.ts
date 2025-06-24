@@ -9,12 +9,12 @@ const initialManagedApplicants: ManagedApplicant[] = [];
 
 const MANAGED_APPLICANTS_STORAGE_KEY = 'managedApplicantsData';
 
+/**
+ * Initializes the managed applicants data.
+ * This now overwrites existing data to ensure consistency with the current codebase's initial state upon starting a session.
+ */
 export const initializeManagedApplicantsData = (): void => {
-  // Check if data already exists. If not, initialize with the new initial data.
-  const storedData = getFromLocalStorage<ManagedApplicant[] | null>(MANAGED_APPLICANTS_STORAGE_KEY, null);
-  if (storedData === null) {
-    saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, initialManagedApplicants);
-  }
+  saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, initialManagedApplicants);
 };
 
 export function getManagedApplicants(): ManagedApplicant[] {
