@@ -65,7 +65,9 @@ export default function SchoolDetailPage() {
         const foundSchool = getSchoolById(schoolId);
         setSchool(foundSchool);
         const allApplicants = getApplicants();
-        const schoolApplicants = allApplicants.filter(app => app.sekolahTujuanId === schoolId);
+        const schoolApplicants = allApplicants.filter(app => 
+          app.schoolSelections?.some(selection => selection.schoolId === schoolId)
+        );
         setCurrentSchoolApplicants(schoolApplicants);
     }
   }, [schoolId]);
