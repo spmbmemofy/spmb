@@ -164,7 +164,6 @@ export default function StatusPage() {
   const [biodata, setBiodata] = React.useState<BiodataDetails | null>(null);
   const [displaySelections, setDisplaySelections] = React.useState<DisplaySelection[]>([]);
   const [documentsToShow, setDocumentsToShow] = React.useState<DocumentItem[]>([]);
-  const [uploadedDocIds, setUploadedDocIds] = React.useState<string[]>([]);
 
   React.useEffect(() => {
     const loginCreds = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
@@ -207,10 +206,6 @@ export default function StatusPage() {
       docsForPathway = [...generalDocumentsConst];
     }
     setDocumentsToShow(docsForPathway);
-    
-    if (savedProgress?.documentMetadata) {
-        setUploadedDocIds(Object.keys(savedProgress.documentMetadata).filter(k => savedProgress.documentMetadata![k] !== null));
-    }
 
     setIsLoading(false);
   }, [router]);
@@ -439,29 +434,29 @@ export default function StatusPage() {
             <div className="space-y-2 rounded-md border p-4">
               {documentsToShow.length > 0 ? (
                 documentsToShow.map(doc => {
-                  const isUploaded = uploadedDocIds.includes(doc.id);
-                  const isInvalid = applicant.documentStatuses?.[doc.id] === 'invalid';
+                  const docStatus = applicant.documentStatuses?.[doc.id];
+                  const overallStatus = applicant.statusVerifikasi;
                   
                   let icon;
                   let badgeVariant: "default" | "destructive" | "secondary" = "secondary";
                   let statusText = "";
 
-                  if (isInvalid) {
-                     icon = <AlertCircle className="h-5 w-5 mr-2 text-destructive" />;
-                     badgeVariant = "destructive";
-                     statusText = "Ditolak";
-                  } else if (isUploaded) {
-                    icon = <FileCheck2 className="h-5 w-5 mr-2 text-green-600" />;
-                    badgeVariant = "default";
-                    statusText = "Terunggah";
-                  } else if (doc.required) {
-                    icon = <XSquare className="h-5 w-5 mr-2 text-destructive" />;
-                    badgeVariant = "destructive";
-                    statusText = "Belum Diunggah";
+                  if (overallStatus === "Menunggu Verifikasi") {
+                      icon = <FileQuestion className="h-5 w-5 mr-2 text-muted-foreground" />;
+                      statusText = "Menunggu";
+                      badgeVariant = "secondary";
+                  } else if (docStatus === 'invalid') {
+                      icon = <AlertCircle className="h-5 w-5 mr-2 text-destructive" />;
+                      statusText = "Ditolak";
+                      badgeVariant = "destructive";
+                  } else if (docStatus === 'valid' || overallStatus === 'Terverifikasi') {
+                      icon = <FileCheck2 className="h-5 w-5 mr-2 text-green-600" />;
+                      statusText = "Diterima";
+                      badgeVariant = "default";
                   } else {
-                    icon = <FileQuestion className="h-5 w-5 mr-2 text-muted-foreground" />;
-                    badgeVariant = "secondary";
-                    statusText = "Tidak Diunggah";
+                      icon = <FileQuestion className="h-5 w-5 mr-2 text-muted-foreground" />;
+                      badgeVariant = "secondary";
+                      statusText = doc.required ? "Belum Diunggah" : "Tidak Wajib";
                   }
 
                   return (
@@ -481,7 +476,7 @@ export default function StatusPage() {
               )}
             </div>
              <p className="text-xs text-muted-foreground mt-2">
-                Status "Terunggah" menunjukkan berkas telah dipilih pada sesi unggah terakhir. Verifikasi akhir dilakukan oleh panitia.
+                Status "Diterima" menunjukkan berkas telah dianggap valid oleh verifikator.
             </p>
           </section>
 

@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -115,6 +116,8 @@ export default function DocumentUploadPage() {
   
   const [isCorrectionMode, setIsCorrectionMode] = React.useState(false);
   const [rejectionReason, setRejectionReason] = React.useState("");
+  const [isBiodataInvalid, setIsBiodataInvalid] = React.useState(false);
+  const [isGradesInvalid, setIsGradesInvalid] = React.useState(false);
   
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
@@ -154,13 +157,17 @@ export default function DocumentUploadPage() {
     if (applicantData?.statusVerifikasi === 'Berkas tidak sesuai') {
         setIsCorrectionMode(true);
         setRejectionReason(applicantData.rejectionReason || "Tidak ada alasan spesifik yang diberikan.");
+
         const invalidDocIds = Object.entries(applicantData.documentStatuses || {})
             .filter(([, status]) => status === 'invalid')
             .map(([id]) => id);
         
         const allPossibleDocs = [...generalDocuments, ...(pathwaySpecificDocumentsMap[currentSelectedPathway] || [])];
         const invalidDocs = allPossibleDocs.filter(doc => invalidDocIds.includes(doc.id));
-        setDocumentsToUpload(invalidDocs.length > 0 ? invalidDocs : allPossibleDocs);
+        setDocumentsToUpload(invalidDocs);
+        
+        setIsBiodataInvalid(invalidDocIds.includes('biodata'));
+        setIsGradesInvalid(invalidDocIds.includes('nilai_rapor'));
     } else {
         const currentPathwayDocs = pathwaySpecificDocumentsMap[currentSelectedPathway] || [];
         const allDocs = [...generalDocuments, ...currentPathwayDocs];
@@ -208,7 +215,9 @@ export default function DocumentUploadPage() {
   };
 
   const allRequiredFilesUploaded = () => {
-    if (documentsToUpload.length === 0) return false;
+    if (documentsToUpload.length === 0 && !isCorrectionMode) return false;
+    if (isCorrectionMode && Object.keys(uploadedFiles).length === 0) return false;
+    
     return documentsToUpload
       .filter(doc => doc.required)
       .every(doc => uploadedFiles[doc.id] || fileMetadataStore[doc.id]);
@@ -235,9 +244,16 @@ export default function DocumentUploadPage() {
         const allApplicants = getApplicants();
         const applicantData = allApplicants.find(app => app.nisn === loggedInUser.username);
         if (applicantData) {
+            const newStatuses = { ...applicantData.documentStatuses };
+            Object.keys(uploadedFiles).forEach(docId => {
+                if (uploadedFiles[docId]) {
+                    newStatuses[docId] = null; // Mark as pending re-verification
+                }
+            });
+
             applicantData.statusVerifikasi = "Menunggu Verifikasi";
             applicantData.rejectionReason = undefined;
-            applicantData.documentStatuses = {};
+            applicantData.documentStatuses = newStatuses;
 
             const historyEvent: ActivityEvent = {
                 type: 'FILES_RESUBMITTED',
@@ -318,6 +334,26 @@ export default function DocumentUploadPage() {
             </Alert>
           )}
 
+          {isBiodataInvalid && (
+              <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Perbaikan Biodata Diperlukan</AlertTitle>
+                  <AlertDescription>
+                      Verifikator menandai bahwa data diri Anda tidak sesuai. Harap periksa dan perbaiki di halaman Pendaftaran.
+                      <Button asChild variant="link" className="p-0 h-auto ml-2"><Link href="/registration/dashboard">Buka Halaman Pendaftaran</Link></Button>
+                  </AlertDescription>
+              </Alert>
+          )}
+          {isGradesInvalid && (
+               <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Perbaikan Nilai Rapor Diperlukan</AlertTitle>
+                  <AlertDescription>
+                      Verifikator menandai bahwa nilai rapor Anda tidak sesuai. Karena nilai rapor tidak dapat diubah oleh siswa, silakan hubungi operator sekolah asal Anda untuk perbaikan.
+                  </AlertDescription>
+              </Alert>
+          )}
+
           <section>
              <h3 className="text-xl font-semibold mb-4 text-primary">
                 {isCorrectionMode ? "Berkas yang Perlu Diperbaiki" : "Daftar Berkas"}
@@ -333,6 +369,9 @@ export default function DocumentUploadPage() {
                 onFileChange={handleFileChange}
               />
             ))}
+            {isCorrectionMode && documentsToUpload.length === 0 && !isBiodataInvalid && !isGradesInvalid && (
+                <p className="text-center text-muted-foreground py-4">Tidak ada berkas yang ditandai untuk diperbaiki. Hubungi panitia jika Anda merasa ini adalah sebuah kesalahan.</p>
+            )}
           </section>
         </CardContent>
         <CardFooter className="flex justify-end pt-6">

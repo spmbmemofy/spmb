@@ -144,6 +144,19 @@ export default function VerifyApplicantPage() {
     const creds = getFromLocalStorage<LoginCredentials | null>('loginCredentials', null);
     const user = creds ? getUsers().find(u => u.username === creds.username) : null;
     const verifierName = user ? user.fullName : 'Sistem';
+
+    const finalDocumentStatuses: Record<string, DocumentStatus> = {};
+    const allPossibleDocKeys = ['biodata', 'nilai_rapor', ...documentsToVerify.map(d => d.id)];
+
+    if (selectedAction === 'verify') {
+        allPossibleDocKeys.forEach(key => {
+            finalDocumentStatuses[key] = 'valid';
+        });
+    } else { // 'reject'
+        allPossibleDocKeys.forEach(key => {
+            finalDocumentStatuses[key] = documentStatuses[key] === 'invalid' ? 'invalid' : 'valid';
+        });
+    }
     
     const newEvent: ActivityEvent = selectedAction === 'verify'
         ? { type: 'VERIFICATION_APPROVED', timestamp: new Date().toISOString(), actor: verifierName }
@@ -153,7 +166,7 @@ export default function VerifyApplicantPage() {
         ...applicant,
         statusVerifikasi: newStatus,
         nilaiPrestasi: applicant.jalur === 'Prestasi' ? editableNilaiPrestasi : applicant.nilaiPrestasi,
-        documentStatuses: documentStatuses,
+        documentStatuses: finalDocumentStatuses,
         rejectionReason: selectedAction === 'reject' ? rejectionReason : undefined,
         verifiedBy: verifierName,
         verificationTimestamp: new Date().toISOString(),
