@@ -2,11 +2,72 @@
 'use client';
 
 import { getFromLocalStorage, saveToLocalStorage, type LoginCredentials, type RegistrationProgress } from './localStorage';
-import { generateAllMockApplicants } from './mockData';
+import { generateAllMockApplicants, jalurOptionsPlain } from './mockData';
 import type { Applicant, Jalur } from './types';
 import { getSchoolById, getSchools } from './schoolService';
 
 const APPLICANTS_STORAGE_KEY = 'allApplicantsData';
+
+/**
+ * Recalculates and assigns ranks to all verified applicants based on their first-choice school and pathway.
+ */
+function recalculateAllRanks(): void {
+    const allApplicants = getApplicants();
+    
+    const applicantMap = new Map(allApplicants.map(app => [app.id, {...app}]));
+
+    const calculateScoreForSchool = (applicant: Applicant, schoolId: string): number => {
+        const totalNilaiRapor = Object.values(applicant.semesterGrades).reduce((a, b) => a + b, 0);
+        const nilaiPrestasi = applicant.jalur === 'Prestasi' ? (applicant.nilaiPrestasi || 0) : 0;
+        const isFirstChoice = applicant.schoolSelections && applicant.schoolSelections[0]?.schoolId === schoolId;
+        const nilaiTambahan = isFirstChoice ? 25 : 0;
+        return totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
+    }
+
+    const groups: Record<string, Applicant[]> = {};
+
+    allApplicants.forEach(app => {
+        if (app.statusVerifikasi === 'Terverifikasi' && app.schoolSelections && app.schoolSelections.length > 0) {
+            const firstChoiceSchoolId = app.schoolSelections[0].schoolId;
+            const pathway = app.jalur;
+            const groupId = `${firstChoiceSchoolId}-${pathway}`;
+
+            if (!groups[groupId]) {
+                groups[groupId] = [];
+            }
+            groups[groupId].push(app);
+        }
+    });
+
+    Object.values(groups).forEach(group => {
+        if (group.length === 0) return;
+        const firstChoiceSchoolId = group[0].schoolSelections[0].schoolId;
+
+        const scoredApplicants = group
+            .map(app => ({
+                ...app,
+                score: calculateScoreForSchool(app, firstChoiceSchoolId)
+            }))
+            .sort((a, b) => b.score - a.score);
+
+        scoredApplicants.forEach((scoredApp, index) => {
+            const rank = index + 1;
+            const originalApp = applicantMap.get(scoredApp.id);
+            if (originalApp) {
+                originalApp.peringkat = rank;
+            }
+        });
+    });
+
+    for (const app of applicantMap.values()) {
+        if (app.statusVerifikasi !== 'Terverifikasi' || !app.schoolSelections || app.schoolSelections.length === 0) {
+            app.peringkat = null;
+        }
+    }
+
+    saveToLocalStorage(APPLICANTS_STORAGE_KEY, Array.from(applicantMap.values()));
+}
+
 
 /**
  * Initializes the applicants data in localStorage if it doesn't already exist.
@@ -45,8 +106,18 @@ export function updateApplicant(updatedApplicant: Applicant): void {
   let applicants = getApplicants();
   const index = applicants.findIndex(app => app.id === updatedApplicant.id);
   if (index !== -1) {
+    const oldStatus = applicants[index].statusVerifikasi;
+    const oldPrestasi = applicants[index].nilaiPrestasi;
+    
     applicants[index] = updatedApplicant;
     saveToLocalStorage(APPLICANTS_STORAGE_KEY, applicants);
+    
+    const statusChanged = oldStatus !== updatedApplicant.statusVerifikasi && (oldStatus === 'Terverifikasi' || updatedApplicant.statusVerifikasi === 'Terverifikasi');
+    const prestasiChanged = updatedApplicant.jalur === 'Prestasi' && oldPrestasi !== updatedApplicant.nilaiPrestasi;
+
+    if(statusChanged || prestasiChanged) {
+        recalculateAllRanks();
+    }
   } else {
     console.error("Applicant not found for update");
   }
@@ -113,6 +184,7 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
 
   if (existingApplicant) {
     const updatedApplicant = { ...existingApplicant, ...applicantDataFromProgress, activityHistory: [
+      ...(existingApplicant.activityHistory || []),
       { type: 'REGISTRATION_COMPLETED', timestamp: new Date().toISOString(), actor: progress.biodata.fullName },
     ]};
     updateApplicant(updatedApplicant);
@@ -143,6 +215,7 @@ export function deleteApplicantByNisn(nisn: string): boolean {
   
   if (updatedApplicants.length < initialLength) {
     saveToLocalStorage(APPLICANTS_STORAGE_KEY, updatedApplicants);
+    recalculateAllRanks();
     return true;
   }
   
