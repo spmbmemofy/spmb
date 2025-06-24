@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -161,6 +160,7 @@ export default function StatusPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   
   const [applicant, setApplicant] = React.useState<Applicant | null>(null);
+  const [allApplicants, setAllApplicants] = React.useState<Applicant[]>([]);
   const [biodata, setBiodata] = React.useState<BiodataDetails | null>(null);
   const [displaySelections, setDisplaySelections] = React.useState<DisplaySelection[]>([]);
   const [documentsToShow, setDocumentsToShow] = React.useState<DocumentItem[]>([]);
@@ -172,8 +172,9 @@ export default function StatusPage() {
         return;
     }
 
-    const allApplicants = getApplicants();
-    const currentApplicant = allApplicants.find(app => app.nisn === loginCreds.username);
+    const allApplicantsData = getApplicants();
+    setAllApplicants(allApplicantsData);
+    const currentApplicant = allApplicantsData.find(app => app.nisn === loginCreds.username);
     
     if (!currentApplicant) {
         setIsLoading(false);
@@ -351,36 +352,51 @@ export default function StatusPage() {
                     let rankText: string;
                     let quotaInfo: string;
 
-                    switch (applicant.statusVerifikasi) {
-                        case "Berkas tidak sesuai":
-                            rankStatus = 'Pendaftaran Ditolak';
-                            rankStatusVariant = 'destructive';
-                            rankText = '-';
-                            quotaInfo = "Verifikasi berkas gagal";
-                            break;
-                        case "Menunggu Verifikasi":
-                            rankStatus = 'Menunggu Peringkat';
-                            rankStatusVariant = 'secondary';
-                            rankText = '-';
-                            quotaInfo = "Menunggu verifikasi";
-                            break;
-                        case "Terverifikasi":
-                        default:
-                            const pathwayKey = (applicant.jalur.toLowerCase() || '') as keyof NonNullable<typeof school.jalurKuota>;
-                            const quota = school.jalurKuota ? (school.jalurKuota[pathwayKey] || 0) : 0;
-                            const rank = applicant.peringkat;
-                            const isWithinQuota = rank && quota > 0 ? rank <= quota : false;
-                            
-                            if (!rank) {
-                                rankStatus = 'Peringkat Belum Tersedia';
+                    if (index > 0) { // Not the first choice
+                        rankStatus = 'Pilihan Cadangan';
+                        rankStatusVariant = 'secondary';
+                        rankText = 'N/A';
+                        quotaInfo = 'Peringkat hanya untuk pilihan pertama';
+                    } else { // This is the first choice
+                        switch (applicant.statusVerifikasi) {
+                            case "Berkas tidak sesuai":
+                                rankStatus = 'Pendaftaran Ditolak';
+                                rankStatusVariant = 'destructive';
+                                rankText = '-';
+                                quotaInfo = "Verifikasi berkas gagal";
+                                break;
+                            case "Menunggu Verifikasi":
+                                rankStatus = 'Menunggu Peringkat';
                                 rankStatusVariant = 'secondary';
-                            } else {
-                                rankStatus = isWithinQuota ? "Memenuhi Peringkat" : "Di Luar Peringkat";
-                                rankStatusVariant = isWithinQuota ? "default" : "destructive";
-                            }
-                            rankText = quota > 0 && rank ? `${rank} / ${quota}` : '-';
-                            quotaInfo = `Kuota Jalur: ${quota}`;
-                            break;
+                                rankText = '-';
+                                quotaInfo = "Menunggu verifikasi";
+                                break;
+                            case "Terverifikasi":
+                            default:
+                                const pathwayKey = (applicant.jalur.toLowerCase() || '') as keyof NonNullable<typeof school.jalurKuota>;
+                                const quota = school.jalurKuota ? (school.jalurKuota[pathwayKey] || 0) : 0;
+                                const rank = applicant.peringkat;
+                                const isWithinQuota = rank && quota > 0 ? rank <= quota : false;
+                                
+                                if (!rank) {
+                                    rankStatus = 'Peringkat Belum Tersedia';
+                                    rankStatusVariant = 'secondary';
+                                } else {
+                                    rankStatus = isWithinQuota ? "Memenuhi Peringkat" : "Di Luar Peringkat";
+                                    rankStatusVariant = isWithinQuota ? "default" : "destructive";
+                                }
+
+                                const competingApplicants = allApplicants.filter(
+                                    (app) =>
+                                      app.statusVerifikasi === 'Terverifikasi' &&
+                                      app.jalur === applicant.jalur &&
+                                      app.schoolSelections?.[0]?.schoolId === school.id
+                                );
+                                
+                                rankText = quota > 0 && rank ? `${rank} dari ${competingApplicants.length}` : '-';
+                                quotaInfo = `Kuota Jalur: ${quota}`;
+                                break;
+                        }
                     }
 
                     return (

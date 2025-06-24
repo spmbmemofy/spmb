@@ -47,46 +47,6 @@ const calculateScoreForSchool = (
 }
 
 
-// Calculate rank for a specific school choice
-const calculateRankForSchool = (
-  targetApplicant: Applicant,
-  targetSchoolId: string,
-  allApplicants: Applicant[]
-): { rank: number | null, total: number, score: number } => {
-  const applicantScore = calculateScoreForSchool(targetApplicant, targetSchoolId);
-  
-  if (targetApplicant.statusVerifikasi !== 'Terverifikasi') {
-    return { rank: null, total: 0, score: applicantScore };
-  }
-
-  // 1. Get all other verified applicants for the same pathway
-  const competingApplicants = allApplicants.filter(
-    (app) =>
-      app.statusVerifikasi === 'Terverifikasi' &&
-      app.jalur === targetApplicant.jalur
-  );
-  
-  // 2. Further filter to only those who chose the target school
-  const applicantsForThisSchool = competingApplicants.filter(app => 
-    app.schoolSelections && app.schoolSelections.some(sel => sel.schoolId === targetSchoolId)
-  );
-
-  // 3. Calculate scores for all of them
-  const scoredApplicants = applicantsForThisSchool.map((app) => {
-    const totalNilai = calculateScoreForSchool(app, targetSchoolId);
-    return { ...app, totalNilai };
-  });
-
-  // 4. Sort them
-  scoredApplicants.sort((a, b) => b.totalNilai - a.totalNilai);
-
-  // 5. Find the rank of the target applicant
-  const rank = scoredApplicants.findIndex((app) => app.id === targetApplicant.id) + 1;
-
-  return { rank: rank > 0 ? rank : null, total: scoredApplicants.length, score: applicantScore };
-};
-
-
 export default function ApplicantDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -193,26 +153,40 @@ export default function ApplicantDetailPage() {
                     {applicant.schoolSelections && applicant.schoolSelections.length > 0 ? (
                         applicant.schoolSelections.map((selection, index) => {
                             const school = getSchoolById(selection.schoolId);
-                            const ranking = calculateRankForSchool(applicant, selection.schoolId, allApplicants);
-                            const schoolQuotaObject = school?.jalurKuota;
-                            const pathwayQuota = schoolQuotaObject ? schoolQuotaObject[applicant.jalur.toLowerCase() as keyof typeof schoolQuotaObject] : 0;
+                            const score = calculateScoreForSchool(applicant, selection.schoolId);
                             
                             let rankDisplay: React.ReactNode;
                             let rankClass = "";
 
-                            if (applicant.statusVerifikasi === 'Terverifikasi') {
-                                if (ranking.rank) {
-                                    rankDisplay = `${ranking.rank} / ${ranking.total}`;
-                                    if (pathwayQuota && ranking.rank <= pathwayQuota) {
-                                        rankClass = "text-green-600 font-bold";
+                            if (index === 0) { // Logic for the first choice
+                                if (applicant.statusVerifikasi === 'Terverifikasi') {
+                                    if (applicant.peringkat) {
+                                        const schoolQuotaObject = school?.jalurKuota;
+                                        const pathwayQuota = schoolQuotaObject ? schoolQuotaObject[applicant.jalur.toLowerCase() as keyof typeof schoolQuotaObject] : 0;
+                                        
+                                        const competingApplicants = allApplicants.filter(
+                                            (app) =>
+                                              app.statusVerifikasi === 'Terverifikasi' &&
+                                              app.jalur === applicant.jalur &&
+                                              app.schoolSelections?.[0]?.schoolId === selection.schoolId
+                                          );
+
+                                        rankDisplay = `${applicant.peringkat} / ${competingApplicants.length}`;
+                                        
+                                        if (pathwayQuota && applicant.peringkat <= pathwayQuota) {
+                                            rankClass = "text-green-600 font-bold";
+                                        } else {
+                                            rankClass = "text-red-600";
+                                        }
                                     } else {
-                                        rankClass = "text-red-600";
+                                        rankDisplay = "-"; // Verified but no rank calculated yet
                                     }
                                 } else {
-                                    rankDisplay = "N/A";
+                                    rankDisplay = applicant.statusVerifikasi;
                                 }
-                            } else {
-                                rankDisplay = applicant.statusVerifikasi;
+                            } else { // Logic for subsequent choices
+                                rankDisplay = "N/A";
+                                rankClass = "text-muted-foreground";
                             }
 
                             return (
@@ -225,7 +199,7 @@ export default function ApplicantDetailPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell>{selection.major || "-"}</TableCell>
-                                    <TableCell className="text-right font-mono">{ranking.score.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-mono">{score.toFixed(2)}</TableCell>
                                     <TableCell className={`text-right ${rankClass}`}>
                                         {rankDisplay}
                                     </TableCell>
@@ -243,7 +217,7 @@ export default function ApplicantDetailPage() {
               </Table>
             </div>
              <p className="text-xs text-muted-foreground mt-2">
-                Peringkat hanya ditampilkan untuk pendaftar yang sudah terverifikasi dan dapat berubah sewaktu-waktu. Nilai Akhir adalah hasil kalkulasi dari nilai rapor dan bobot lainnya.
+                Peringkat hanya ditampilkan untuk pendaftar yang sudah terverifikasi dan hanya berlaku untuk sekolah pilihan pertama. Nilai Akhir adalah hasil kalkulasi dari nilai rapor dan bobot lainnya.
             </p>
           </section>
         </CardContent>
