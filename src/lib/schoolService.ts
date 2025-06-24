@@ -46,9 +46,14 @@ const initialSchools: School[] = [
 const SCHOOLS_STORAGE_KEY = 'allSchoolsData_v2';
 
 // Service Functions
+/**
+ * Initializes the schools data in localStorage if it doesn't already exist.
+ */
 export const initializeSchoolsData = (): void => {
-  // This function now always overwrites existing data to ensure a clean state on session start.
-  saveToLocalStorage(SCHOOLS_STORAGE_KEY, initialSchools);
+  const existingSchools = getFromLocalStorage<School[]>(SCHOOLS_STORAGE_KEY, []);
+  if (existingSchools.length === 0) {
+    saveToLocalStorage(SCHOOLS_STORAGE_KEY, initialSchools);
+  }
 };
 
 export function getSchools(): School[] {

@@ -8,10 +8,9 @@ import { initializeApplicantsData } from './applicantService';
 
 export function initializeAllData() {
   if (typeof window !== 'undefined') {
-    // This function now runs on every layout mount to ensure that
-    // the application's data is a direct reflection of the initial
-    // data in the source code, preventing inconsistencies from
-    // old data in localStorage.
+    // This function runs on layout mount to ensure that
+    // the application's data is initialized in localStorage if it doesn't exist.
+    // Subsequent loads will use the persisted data.
     initializeUsers();
     initializeSchoolsData();
     initializeManagedApplicantsData();
