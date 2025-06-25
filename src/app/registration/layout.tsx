@@ -102,34 +102,16 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     ];
 
     if (userRole === 'applicant') {
-        const applicantMenu = [
-            { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'], disabled: false },
-        ];
+        const registrationProgress = getFromLocalStorage<any>(LOCAL_STORAGE_REGISTRATION_KEY, {});
+        const registrationCompleted = !!(applicant && applicant.statusVerifikasi && applicant.statusVerifikasi !== 'Menunggu Verifikasi');
+        const needsCorrection = applicant?.statusVerifikasi === 'Berkas tidak sesuai';
 
-        if (applicant && applicant.statusVerifikasi === 'Berkas tidak sesuai') {
-            applicantMenu.push({
-                href: '/registration/correction',
-                label: 'Perbaikan Data',
-                icon: Edit,
-                activePaths: ['/registration/correction'],
-                disabled: false
-            });
-        } else {
-             applicantMenu.push({
-                href: '/registration/dashboard',
-                label: 'Pendaftaran',
-                icon: FileUp,
-                activePaths: ['/registration/dashboard', '/registration/documents', '/registration/document-upload'],
-                disabled: false
-            });
-        }
-
-        applicantMenu.push(
-            { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'], disabled: false },
+        return [
+            { href: '/registration/dashboard', label: 'Pendaftaran', icon: FileUp, activePaths: ['/registration/dashboard', '/registration/documents', '/registration/document-upload'], disabled: registrationCompleted && !needsCorrection, tooltip: registrationCompleted && !needsCorrection ? { children: "Pendaftaran sudah dikirim dan tidak dapat diubah lagi." } : undefined },
+            { href: '/registration/correction', label: 'Perbaikan Data', icon: Edit, activePaths: ['/registration/correction'], disabled: !needsCorrection, hidden: !needsCorrection, tooltip: !needsCorrection ? { children: "Hanya tersedia jika pendaftaran Anda perlu perbaikan."} : undefined },
+            { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'], disabled: !registrationProgress.registrationCompleted },
             { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'], disabled: false },
-        );
-        
-        return applicantMenu;
+        ].filter(item => !item.hidden);
     }
 
 
@@ -145,8 +127,11 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   }, [userRole, applicant]);
 
   const handleLogout = () => {
-    removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);
     const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
+    if (userRole === 'applicant') {
+      removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);
+    }
+    
     if (!savedCredentials || !savedCredentials.rememberMe) {
       removeFromLocalStorage(LOCAL_STORAGE_LOGIN_KEY);
     }
@@ -154,17 +139,10 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   };
 
   const homeLink = useMemo(() => {
-    switch (userRole) {
-        case 'admin':
-        case 'verifikator':
-        case 'superadmin':
-        case 'headmaster':
-        case 'smp_operator':
-            return '/registration/home';
-        case 'applicant':
-        default:
-            return '/registration/dashboard';
+    if (userRole && ['admin', 'verifikator', 'superadmin', 'headmaster', 'smp_operator'].includes(userRole)) {
+        return '/registration/home';
     }
+    return '/registration/dashboard';
   }, [userRole]);
 
   if (!userRole || !currentUser) {
@@ -205,10 +183,10 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
                     disabled={item.disabled}
                   >
                     {item.disabled ? (
-                      <>
+                      <div className="flex items-center gap-2 cursor-not-allowed">
                         <item.icon />
                         <span className="group-data-[state=collapsed]:hidden">{item.label}</span>
-                      </>
+                      </div>
                     ) : (
                       <Link href={item.href}>
                         <item.icon />
@@ -236,6 +214,14 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
                     </div>
                  </div>
               </div>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: 'Ubah Kata Sandi', side: 'right' }}>
+                    <Link href="/registration/change-password">
+                        <Lock />
+                        <span className="group-data-[state=collapsed]:hidden">Ubah Kata Sandi</span>
+                    </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={handleLogout} tooltip={{ children: 'Keluar', side: 'right' }}>
                     <LogOut />
