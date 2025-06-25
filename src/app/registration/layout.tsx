@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { getFromLocalStorage, removeFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
+import { getFromLocalStorage, removeFromLocalStorage, type LoginCredentials, type RegistrationProgress } from "@/lib/localStorage";
 import { useToast } from "@/hooks/use-toast";
 import { initializeAllData } from '@/lib/initializeDatabase';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -107,6 +107,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
         const needsCorrection = applicant?.statusVerifikasi === 'Berkas tidak sesuai';
 
         return [
+            { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
             { href: '/registration/dashboard', label: 'Pendaftaran', icon: FileUp, activePaths: ['/registration/dashboard', '/registration/documents', '/registration/document-upload'], disabled: registrationCompleted && !needsCorrection, tooltip: registrationCompleted && !needsCorrection ? { children: "Pendaftaran sudah dikirim dan tidak dapat diubah lagi." } : undefined },
             { href: '/registration/correction', label: 'Perbaikan Data', icon: Edit, activePaths: ['/registration/correction'], disabled: !needsCorrection, hidden: !needsCorrection, tooltip: !needsCorrection ? { children: "Hanya tersedia jika pendaftaran Anda perlu perbaikan."} : undefined },
             { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'], disabled: !registrationProgress.registrationCompleted },
@@ -139,7 +140,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   };
 
   const homeLink = useMemo(() => {
-    if (userRole && ['admin', 'verifikator', 'superadmin', 'headmaster', 'smp_operator'].includes(userRole)) {
+    if (userRole && ['admin', 'verifikator', 'superadmin', 'headmaster', 'smp_operator', 'applicant'].includes(userRole)) {
         return '/registration/home';
     }
     return '/registration/dashboard';
