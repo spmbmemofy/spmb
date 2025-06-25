@@ -6,7 +6,7 @@ import { generateAllMockApplicants, jalurOptionsPlain } from './mockData';
 import type { Applicant, Jalur } from './types';
 import { getSchoolById, getSchools } from './schoolService';
 
-const APPLICANTS_STORAGE_KEY = 'allApplicantsData';
+const APPLICANTS_STORAGE_KEY = 'allApplicantsData_v2';
 
 /**
  * Recalculates and assigns ranks to all verified applicants based on their first-choice school and pathway.
