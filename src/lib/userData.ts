@@ -29,13 +29,6 @@ export const initialUsers: User[] = [
     fullName: 'Operator SMPN 1 Sambaliung',
     npsn: '30401888',
   },
-  {
-    id: 'applicant-01',
-    username: '0987654321',
-    password: 'password123',
-    role: 'applicant',
-    fullName: 'Siti Lestari',
-  }
 ];
 
 export const roleDisplayNames: Record<UserRole, string> = {
