@@ -102,16 +102,16 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     ];
 
     if (userRole === 'applicant') {
-        const registrationProgress = getFromLocalStorage<any>(LOCAL_STORAGE_REGISTRATION_KEY, {});
-        const registrationCompleted = !!(applicant && applicant.statusVerifikasi && applicant.statusVerifikasi !== 'Menunggu Verifikasi');
+        const registrationProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
+        const registrationCompleted = registrationProgress?.registrationCompleted || false;
         const needsCorrection = applicant?.statusVerifikasi === 'Berkas tidak sesuai';
 
         return [
             { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
-            { href: '/registration/dashboard', label: 'Pendaftaran', icon: FileUp, activePaths: ['/registration/dashboard', '/registration/documents', '/registration/document-upload'], disabled: registrationCompleted && !needsCorrection, tooltip: registrationCompleted && !needsCorrection ? { children: "Pendaftaran sudah dikirim dan tidak dapat diubah lagi." } : undefined },
-            { href: '/registration/correction', label: 'Perbaikan Data', icon: Edit, activePaths: ['/registration/correction'], disabled: !needsCorrection, hidden: !needsCorrection, tooltip: !needsCorrection ? { children: "Hanya tersedia jika pendaftaran Anda perlu perbaikan."} : undefined },
-            { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'], disabled: !registrationProgress.registrationCompleted },
-            { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'], disabled: false },
+            { href: '/registration/dashboard', label: 'Pendaftaran', icon: FileUp, activePaths: ['/registration/dashboard', '/registration/documents', '/registration/document-upload'] },
+            { href: '/registration/correction', label: 'Perbaikan Data', icon: Edit, activePaths: ['/registration/correction'], hidden: !needsCorrection },
+            { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'], disabled: !registrationCompleted },
+            { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
         ].filter(item => !item.hidden);
     }
 
@@ -180,7 +180,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
                    <SidebarMenuButton
                     asChild={!item.disabled}
                     isActive={item.activePaths.some((path: string) => pathname.startsWith(path))}
-                    tooltip={item.tooltip ? { ...item.tooltip, side: 'right' } : { children: item.label, side: 'right' }}
+                    tooltip={{ children: item.label, side: 'right' }}
                     disabled={item.disabled}
                   >
                     {item.disabled ? (

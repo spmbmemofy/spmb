@@ -52,6 +52,7 @@ const DocumentUploadItem: React.FC<DocumentUploadItemProps> = ({ id, label, requ
       </div>
       <div className="flex items-center space-x-3">
         <Button
+          type="button"
           variant="outline"
           onClick={() => inputRef.current?.click()}
           className="w-full sm:w-auto"
