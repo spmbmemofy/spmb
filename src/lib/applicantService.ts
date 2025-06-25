@@ -5,6 +5,7 @@ import { getFromLocalStorage, saveToLocalStorage, type LoginCredentials, type Re
 import { generateAllMockApplicants, jalurOptionsPlain } from './mockData';
 import type { Applicant, Jalur } from './types';
 import { getSchoolById, getSchools } from './schoolService';
+import { getUsers } from './userService';
 
 const APPLICANTS_STORAGE_KEY = 'allApplicantsData_v2';
 
@@ -135,6 +136,14 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
   }
 
   const applicants = getApplicants();
+  
+  // Check if this NISN is already used by another system user.
+  const allUsers = getUsers();
+  const conflictingUser = allUsers.find(u => u.username.toLowerCase() === creds.username!.toLowerCase() && u.role !== 'applicant');
+  if (conflictingUser) {
+      throw new Error(`NISN ${creds.username} sudah terdaftar sebagai pengguna sistem (${conflictingUser.role}). Harap hubungi administrator.`);
+  }
+  
   const existingApplicant = applicants.find(a => a.nisn === creds.username);
   const allSchools = getSchools();
   const originSchool = allSchools.find(s => s.namaSekolah === progress.biodata!.previousSchool);

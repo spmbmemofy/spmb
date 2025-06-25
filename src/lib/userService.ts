@@ -37,6 +37,12 @@ export function updateUser(updatedUser: User): User | undefined {
   let users = getUsers();
   const index = users.findIndex(u => u.id === updatedUser.id);
   if (index !== -1) {
+    // Check for username uniqueness if username is being changed
+    if (updatedUser.username && updatedUser.username.toLowerCase() !== users[index].username.toLowerCase()) {
+      if (users.some(u => u.username.toLowerCase() === updatedUser.username.toLowerCase() && u.id !== updatedUser.id)) {
+        throw new Error('Pengguna dengan username yang sama sudah ada.');
+      }
+    }
     // If password is not provided or empty, keep the old one
     if (!updatedUser.password) {
       updatedUser.password = users[index].password;
