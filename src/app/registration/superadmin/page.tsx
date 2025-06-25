@@ -26,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const userFormSchema = z.object({
   id: z.string().optional(),
   fullName: z.string().min(3, { message: "Nama lengkap minimal 3 karakter." }),
-  username: z.string().min(3, { message: "Username minimal 3 karakter." }),
+  username: z.string().min(3, { message: "Username atau NISN minimal 3 karakter." }),
   role: z.enum(["applicant", "admin", "verifikator", "smp_operator", "superadmin", "headmaster"], { required_error: "Peran wajib dipilih."}),
   password: z.string().min(6, { message: "Kata sandi minimal 6 karakter." }).optional().or(z.literal('')),
   npsn: z.string().optional(),
@@ -105,22 +105,26 @@ export default function SuperadminPage() {
     };
 
     const processForm = (data: UserFormValues) => {
-        if (editingUser) { // Update
-            if (!data.password) {
-              delete data.password; // Keep old password if field is empty
+        try {
+            if (editingUser) { // Update
+                if (!data.password) {
+                  delete data.password; // Keep old password if field is empty
+                }
+                updateUser({ ...editingUser, ...data });
+                toast({ title: "Pengguna Diperbarui", description: `Data untuk ${data.fullName} telah diperbarui.` });
+            } else { // Create
+                if (!data.password) {
+                    form.setError("password", { type: "manual", message: "Kata sandi wajib diisi untuk pengguna baru." });
+                    return;
+                }
+                addUser(data);
+                toast({ title: "Pengguna Ditambahkan", description: `${data.fullName} telah ditambahkan ke sistem.` });
             }
-            updateUser({ ...editingUser, ...data });
-            toast({ title: "Pengguna Diperbarui", description: `Data untuk ${data.fullName} telah diperbarui.` });
-        } else { // Create
-            if (!data.password) {
-                form.setError("password", { type: "manual", message: "Kata sandi wajib diisi untuk pengguna baru." });
-                return;
-            }
-            addUser(data);
-            toast({ title: "Pengguna Ditambahkan", description: `${data.fullName} telah ditambahkan ke sistem.` });
+            setUsers(getUsers());
+            setIsDialogOpen(false);
+        } catch (error: any) {
+             toast({ variant: "destructive", title: "Gagal Menyimpan", description: error.message });
         }
-        setUsers(getUsers());
-        setIsDialogOpen(false);
     };
 
     const renderUserTable = (userList: User[]) => (
@@ -312,8 +316,8 @@ export default function SuperadminPage() {
                             )} />
                             <FormField control={form.control} name="username" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Username</FormLabel>
-                                    <FormControl><Input {...field} /></FormControl>
+                                    <FormLabel>{selectedFormRole === 'applicant' ? 'NISN' : 'Username'}</FormLabel>
+                                    <FormControl><Input {...field} placeholder={selectedFormRole === 'applicant' ? 'Masukkan NISN pendaftar...' : 'Masukkan username sistem...'} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )} />
