@@ -191,7 +191,7 @@ export default function ManagedApplicantPage() {
                 if (savedApplicant) setApplicants(prev => prev.map(a => a.id === savedApplicant!.id ? savedApplicant! : a));
             } else {
                 savedApplicant = addManagedApplicant(applicantData);
-                setApplicants(prev => [...prev, savedApplicant!]);
+                if(savedApplicant) setApplicants(prev => [...prev, savedApplicant!]);
                 setEditingApplicant(savedApplicant);
             }
             
@@ -332,11 +332,11 @@ export default function ManagedApplicantPage() {
                             </div>
                             <div className="flex gap-2">
                                 <input type="file" ref={fileInputRef} onChange={handleFileImport} accept=".xlsx, .xls" className="hidden"/>
-                                <Button onClick={() => fileInputRef.current?.click()}>
+                                <Button type="button" onClick={() => fileInputRef.current?.click()}>
                                     <Upload className="mr-2 h-4 w-4" />
                                     Import Excel
                                 </Button>
-                                <Button onClick={() => handleOpenDialog()}>
+                                <Button type="button" onClick={() => handleOpenDialog()}>
                                     <PlusCircle className="mr-2 h-4 w-4" />
                                     Tambah Pendaftar
                                 </Button>
@@ -547,4 +547,5 @@ export default function ManagedApplicantPage() {
             </AlertDialog>
         </>
     );
-}
+
+    
