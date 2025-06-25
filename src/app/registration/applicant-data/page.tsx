@@ -23,7 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { getSchoolByNPSN, type School } from "@/lib/schoolService";
-import { getUsers, addUser } from "@/lib/userService";
+import { getUsers, addUser, updateUser, deleteUser } from "@/lib/userService";
 import { getManagedApplicants, addManagedApplicant, updateManagedApplicant, deleteManagedApplicant } from "@/lib/managedApplicantService";
 import type { ManagedApplicant, ExcelRow } from "@/lib/types";
 import { addressData, getDistricts, getSubdistricts, getVillages } from "@/lib/addressData";
@@ -171,9 +171,20 @@ export default function ManagedApplicantPage() {
     };
 
     const handleConfirmDelete = () => {
-        if (applicantToDelete) {
-            deleteManagedApplicant(applicantToDelete.id);
-            setApplicants(prev => prev.filter(a => a.id !== applicantToDelete.id));
+        if (applicantToDelete && operatorSchool) {
+            // Find the user by NISN (username)
+            const userToDeleteAccount = getUsers().find(u => u.username === applicantToDelete.nisn);
+            
+            if (userToDeleteAccount) {
+                // This will cascade delete from users, applicants, and managedApplicants
+                deleteUser(userToDeleteAccount.id);
+            } else {
+                // If no user account, just delete the managed applicant record
+                deleteManagedApplicant(applicantToDelete.id);
+            }
+            
+            // Refetch the list of applicants for the current school
+            setApplicants(getManagedApplicants().filter(a => a.asalSekolahId === operatorSchool.id));
             toast({ title: "Pendaftar Dihapus", description: `Data untuk ${applicantToDelete.fullName} telah dihapus.` });
         }
         setIsAlertOpen(false);
@@ -188,7 +199,19 @@ export default function ManagedApplicantPage() {
             
             if (editingApplicant) {
                 savedApplicant = updateManagedApplicant({ ...applicantData, id: editingApplicant.id });
-                if (savedApplicant) setApplicants(prev => prev.map(a => a.id === savedApplicant!.id ? savedApplicant! : a));
+                if (savedApplicant) {
+                    setApplicants(prev => prev.map(a => a.id === savedApplicant!.id ? savedApplicant! : a));
+                    
+                    // Also update the associated user account if it exists
+                    const userToUpdate = getUsers().find(u => u.username === editingApplicant.nisn);
+                    if (userToUpdate) {
+                        updateUser({
+                            ...userToUpdate,
+                            username: savedApplicant.nisn, // update username if NISN changed
+                            fullName: savedApplicant.fullName, // update full name
+                        });
+                    }
+                }
             } else {
                 savedApplicant = addManagedApplicant(applicantData);
                 if(savedApplicant) setApplicants(prev => [...prev, savedApplicant!]);
@@ -511,7 +534,7 @@ export default function ManagedApplicantPage() {
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
-                        <AlertDialogDescription>Tindakan ini akan menghapus data pendaftar secara permanen.</AlertDialogDescription>
+                        <AlertDialogDescription>Tindakan ini akan menghapus data pendaftar beserta akun loginnya secara permanen.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Batal</AlertDialogCancel>
@@ -547,5 +570,3 @@ export default function ManagedApplicantPage() {
             </AlertDialog>
         </>
     );
-
-    
