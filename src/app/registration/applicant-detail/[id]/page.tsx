@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -6,7 +7,7 @@ import Link from "next/link";
 import { ArrowLeft, UserCircle, School, Star, TrendingUp, BookOpen, CheckCircle, Clock, XCircle, Building } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
@@ -155,38 +156,37 @@ export default function ApplicantDetailPage() {
                             const school = getSchoolById(selection.schoolId);
                             const score = calculateScoreForSchool(applicant, selection.schoolId);
                             
+                            const isPlacedHere = applicant.diterimaDiSekolahId === selection.schoolId;
+                            const isPlacedElsewhere = applicant.diterimaDiSekolahId && applicant.diterimaDiSekolahId !== selection.schoolId;
+                            const isUnplaced = !applicant.diterimaDiSekolahId;
+                            
                             let rankDisplay: React.ReactNode;
                             let rankClass = "";
 
-                            if (index === 0) { // Logic for the first choice
-                                if (applicant.statusVerifikasi === 'Terverifikasi') {
-                                    if (applicant.peringkat) {
-                                        const schoolQuotaObject = school?.jalurKuota;
-                                        const pathwayQuota = schoolQuotaObject ? schoolQuotaObject[applicant.jalur.toLowerCase() as keyof typeof schoolQuotaObject] : 0;
-                                        
-                                        const competingApplicants = allApplicants.filter(
-                                            (app) =>
-                                              app.statusVerifikasi === 'Terverifikasi' &&
-                                              app.jalur === applicant.jalur &&
-                                              app.schoolSelections?.[0]?.schoolId === selection.schoolId
-                                          );
-
-                                        rankDisplay = `${applicant.peringkat} / ${competingApplicants.length}`;
-                                        
-                                        if (pathwayQuota && applicant.peringkat <= pathwayQuota) {
-                                            rankClass = "text-green-600 font-bold";
-                                        } else {
-                                            rankClass = "text-red-600";
-                                        }
-                                    } else {
-                                        rankDisplay = "-"; // Verified but no rank calculated yet
-                                    }
-                                } else {
-                                    rankDisplay = applicant.statusVerifikasi;
-                                }
-                            } else { // Logic for subsequent choices
-                                rankDisplay = "N/A";
+                            if (applicant.statusVerifikasi !== 'Terverifikasi') {
+                                rankDisplay = applicant.statusVerifikasi;
                                 rankClass = "text-muted-foreground";
+                            } else if (isPlacedHere) {
+                                const schoolQuotaObject = school?.jalurKuota;
+                                const pathwayQuota = schoolQuotaObject ? schoolQuotaObject[applicant.jalur.toLowerCase() as keyof typeof schoolQuotaObject] : 0;
+                                
+                                const competingApplicants = allApplicants.filter(
+                                    (app) => app.diterimaDiSekolahId === selection.schoolId && app.jalur === applicant.jalur
+                                );
+                                
+                                rankDisplay = `${applicant.peringkat} / ${competingApplicants.length}`;
+                                
+                                if (pathwayQuota && applicant.peringkat && applicant.peringkat <= pathwayQuota) {
+                                    rankClass = "text-green-600 font-bold";
+                                } else {
+                                    rankClass = "text-red-600";
+                                }
+                            } else if (isPlacedElsewhere) {
+                                rankDisplay = "Diterima di Pilihan Lain";
+                                rankClass = "text-muted-foreground";
+                            } else {
+                                rankDisplay = "Di Luar Kuota";
+                                rankClass = "text-red-600";
                             }
 
                             return (
@@ -217,7 +217,7 @@ export default function ApplicantDetailPage() {
               </Table>
             </div>
              <p className="text-xs text-muted-foreground mt-2">
-                Peringkat hanya ditampilkan untuk pendaftar yang sudah terverifikasi dan hanya berlaku untuk sekolah pilihan pertama. Nilai Akhir adalah hasil kalkulasi dari nilai rapor dan bobot lainnya.
+                Peringkat hanya ditampilkan untuk pendaftar yang sudah terverifikasi. Nilai Akhir adalah hasil kalkulasi dari nilai rapor dan bobot lainnya.
             </p>
           </section>
         </CardContent>

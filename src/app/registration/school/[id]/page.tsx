@@ -93,6 +93,20 @@ export default function SchoolDetailPage() {
     if (sortConfig.key !== null && sortConfig.key !== 'no') {
       sortableItems.sort((a, b) => {
         const key = sortConfig.key as keyof Applicant;
+        
+        // Handle sorting for 'peringkat' specifically
+        if (key === 'peringkat') {
+          const rankA = a.diterimaDiSekolahId === schoolId ? a.peringkat : null;
+          const rankB = b.diterimaDiSekolahId === schoolId ? b.peringkat : null;
+          
+          if (rankA === null && rankB === null) return 0;
+          if (rankA === null) return 1;
+          if (rankB === null) return -1;
+          
+          const comparison = rankA - rankB;
+          return sortConfig.direction === 'ascending' ? comparison : -comparison;
+        }
+
         const valA = a[key];
         const valB = b[key];
 
@@ -101,9 +115,6 @@ export default function SchoolDetailPage() {
         if ((valA === null || valA === undefined) && (valB === null || valB === undefined)) comparison = 0;
         else if (valA === null || valA === undefined) comparison = 1;
         else if (valB === null || valB === undefined) comparison = -1;
-        else if (key === 'peringkat') {
-          comparison = (valA as number) - (valB as number);
-        }
         else if (typeof valA === 'number' && typeof valB === 'number') {
             comparison = valA - valB;
         } 
@@ -115,7 +126,7 @@ export default function SchoolDetailPage() {
       });
     }
     return sortableItems;
-  }, [filteredApplicants, sortConfig]);
+  }, [filteredApplicants, sortConfig, schoolId]);
 
   const paginatedApplicants = React.useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -135,12 +146,12 @@ export default function SchoolDetailPage() {
       const pathwayKey = jalurName.toLowerCase() as keyof typeof school.jalurKuota;
       const kuota = school.jalurKuota?.[pathwayKey] ?? 0;
 
-      const applicantsInPathway = currentSchoolApplicants.filter(app => app.jalur === jalurName);
+      const applicantsInPathwayForThisSchool = currentSchoolApplicants.filter(app => app.jalur === jalurName);
 
-      const terverifikasi = applicantsInPathway.filter(app => app.statusVerifikasi === "Terverifikasi").length;
-      const menungguVerifikasi = applicantsInPathway.filter(app => app.statusVerifikasi === "Menunggu Verifikasi").length;
-      const berkasTidakSesuai = applicantsInPathway.filter(app => app.statusVerifikasi === "Berkas tidak sesuai").length;
-      const totalPendaftar = applicantsInPathway.length;
+      const terverifikasi = applicantsInPathwayForThisSchool.filter(app => app.diterimaDiSekolahId === school.id).length;
+      const menungguVerifikasi = applicantsInPathwayForThisSchool.filter(app => app.statusVerifikasi === "Menunggu Verifikasi").length;
+      const berkasTidakSesuai = applicantsInPathwayForThisSchool.filter(app => app.statusVerifikasi === "Berkas tidak sesuai").length;
+      const totalPendaftar = applicantsInPathwayForThisSchool.length;
 
       return {
         nama: jalurName,
@@ -251,7 +262,7 @@ export default function SchoolDetailPage() {
                   <TableRow>
                     <TableHead className="font-semibold">Jalur</TableHead>
                     <TableHead className="text-center font-semibold">Kuota</TableHead>
-                    <TableHead className="text-center font-semibold">Terverifikasi</TableHead>
+                    <TableHead className="text-center font-semibold">Diterima</TableHead>
                     <TableHead className="text-center font-semibold">Menunggu Verifikasi</TableHead>
                     <TableHead className="text-center font-semibold whitespace-nowrap">Berkas Tdk. Sesuai</TableHead>
                     <TableHead className="text-center font-semibold">Total Pendaftar</TableHead>
@@ -373,7 +384,7 @@ export default function SchoolDetailPage() {
                             className={cn(
                                 "text-right font-medium",
                                 (() => {
-                                if (applicant.peringkat && school.jalurKuota) {
+                                if (applicant.diterimaDiSekolahId === school.id && applicant.peringkat && school.jalurKuota) {
                                     const pathwayKey = applicant.jalur.toLowerCase() as keyof NonNullable<typeof school.jalurKuota>;
                                     const pathwayQuota = school.jalurKuota[pathwayKey];
                                     if (pathwayQuota !== undefined && applicant.peringkat <= pathwayQuota) {
@@ -385,7 +396,7 @@ export default function SchoolDetailPage() {
                                 })()
                             )}
                             >
-                            {applicant.peringkat ?? '-'}
+                            {applicant.diterimaDiSekolahId === school.id ? (applicant.peringkat ?? '-') : '-'}
                         </TableCell>
                       </TableRow>
                     ))

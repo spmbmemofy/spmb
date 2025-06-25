@@ -29,7 +29,8 @@ export interface Applicant {
   statusVerifikasi: ApplicantStatus;
   documentStatuses?: Record<string, DocumentStatus>;
   rejectionReason?: string;
-  peringkat?: number | null;
+  peringkat: number | null;
+  diterimaDiSekolahId?: string | null;
   semesterGrades: {
     semester1: number;
     semester2: number;

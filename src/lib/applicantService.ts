@@ -4,68 +4,96 @@
 import { getFromLocalStorage, saveToLocalStorage, type LoginCredentials, type RegistrationProgress } from './localStorage';
 import { generateAllMockApplicants, jalurOptionsPlain } from './mockData';
 import type { Applicant, Jalur } from './types';
-import { getSchoolById, getSchools } from './schoolService';
+import { getSchoolById, getSchools, type School } from './schoolService';
 import { getUsers } from './userService';
 
-const APPLICANTS_STORAGE_KEY = 'allApplicantsData_v2';
+const APPLICANTS_STORAGE_KEY = 'allApplicantsData_v3';
 
 /**
- * Recalculates and assigns ranks to all verified applicants based on their first-choice school and pathway.
+ * Implements a cascading placement algorithm (Boston mechanism).
+ * Iterates through each choice priority, attempting to place applicants
+ * in their highest possible choice based on score and available quota.
  */
 function recalculateAllRanks(): void {
-    const allApplicants = getApplicants();
-    
-    const applicantMap = new Map(allApplicants.map(app => [app.id, {...app}]));
+    const allApplicantsData = getApplicants();
+    const allSchoolsData = getSchools();
 
-    const calculateScoreForSchool = (applicant: Applicant, schoolId: string): number => {
+    // 1. Reset ranks and placement for all applicants before starting.
+    const applicantMap = new Map(allApplicantsData.map(app => [app.id, { ...app, peringkat: null, diterimaDiSekolahId: null }]));
+
+    // 2. Initialize quota usage tracker for all schools and pathways.
+    const quotaUsage: Record<string, Record<Jalur, number>> = {};
+    allSchoolsData.forEach(school => {
+        if (school.jalurKuota) {
+            quotaUsage[school.id] = { Afirmasi: 0, Mutasi: 0, Prestasi: 0, Domisili: 0 };
+        }
+    });
+
+    // 3. Get a list of applicants who are eligible for ranking.
+    let applicantsToProcess = Array.from(applicantMap.values()).filter(
+        app => app.statusVerifikasi === 'Terverifikasi' && app.schoolSelections && app.schoolSelections.length > 0
+    );
+
+    const calculateScore = (applicant: Applicant, isFirstChoice: boolean): number => {
         const totalNilaiRapor = Object.values(applicant.semesterGrades).reduce((a, b) => a + b, 0);
         const nilaiPrestasi = applicant.jalur === 'Prestasi' ? (applicant.nilaiPrestasi || 0) : 0;
-        const isFirstChoice = applicant.schoolSelections && applicant.schoolSelections[0]?.schoolId === schoolId;
         const nilaiTambahan = isFirstChoice ? 25 : 0;
         return totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
+    };
+
+    const maxChoices = Math.max(0, ...applicantsToProcess.map(app => app.schoolSelections.length));
+
+    // 4. Iterate through each choice priority level (1st choice, 2nd choice, etc.).
+    for (let choiceIndex = 0; choiceIndex < maxChoices; choiceIndex++) {
+        // Group remaining applicants by the school and pathway they are applying to in this round.
+        const applicationsByGroup: Record<string, Applicant[]> = {}; // Key: "schoolId-jalur"
+
+        for (const applicant of applicantsToProcess) {
+            const selection = applicant.schoolSelections[choiceIndex];
+            if (!selection) continue;
+
+            const groupId = `${selection.schoolId}-${applicant.jalur}`;
+            if (!applicationsByGroup[groupId]) {
+                applicationsByGroup[groupId] = [];
+            }
+            applicationsByGroup[groupId].push(applicant);
+        }
+
+        // 5. For each group, sort by score and attempt to place them.
+        for (const groupId in applicationsByGroup) {
+            const [schoolId, jalur] = groupId.split('-');
+            const school = allSchoolsData.find(s => s.id === schoolId);
+            if (!school || !school.jalurKuota) continue;
+
+            const groupApplicants = applicationsByGroup[groupId];
+
+            // Sort applicants by score. The +25 bonus is only for the first choice round.
+            groupApplicants.sort((a, b) => calculateScore(b, choiceIndex === 0) - calculateScore(a, choiceIndex === 0));
+
+            const pathwayKey = jalur.toLowerCase() as keyof typeof school.jalurKuota;
+            const pathwayQuota = school.jalurKuota[pathwayKey] ?? 0;
+            
+            for (const applicant of groupApplicants) {
+                let currentUsage = quotaUsage[schoolId][jalur as Jalur];
+                if (currentUsage < pathwayQuota) {
+                    currentUsage++;
+                    quotaUsage[schoolId][jalur as Jalur] = currentUsage;
+
+                    const placedApplicant = applicantMap.get(applicant.id);
+                    if (placedApplicant) {
+                        placedApplicant.peringkat = currentUsage;
+                        placedApplicant.diterimaDiSekolahId = schoolId;
+                    }
+                }
+            }
+        }
+        
+        // 6. Prepare for the next round with only the applicants who haven't been placed yet.
+        applicantsToProcess = applicantsToProcess.filter(app => !applicantMap.get(app.id)?.diterimaDiSekolahId);
+        if (applicantsToProcess.length === 0) break; // Exit early if everyone is placed.
     }
 
-    const groups: Record<string, Applicant[]> = {};
-
-    allApplicants.forEach(app => {
-        if (app.statusVerifikasi === 'Terverifikasi' && app.schoolSelections && app.schoolSelections.length > 0) {
-            const firstChoiceSchoolId = app.schoolSelections[0].schoolId;
-            const pathway = app.jalur;
-            const groupId = `${firstChoiceSchoolId}-${pathway}`;
-
-            if (!groups[groupId]) {
-                groups[groupId] = [];
-            }
-            groups[groupId].push(app);
-        }
-    });
-
-    Object.values(groups).forEach(group => {
-        if (group.length === 0) return;
-        const firstChoiceSchoolId = group[0].schoolSelections[0].schoolId;
-
-        const scoredApplicants = group
-            .map(app => ({
-                ...app,
-                score: calculateScoreForSchool(app, firstChoiceSchoolId)
-            }))
-            .sort((a, b) => b.score - a.score);
-
-        scoredApplicants.forEach((scoredApp, index) => {
-            const rank = index + 1;
-            const originalApp = applicantMap.get(scoredApp.id);
-            if (originalApp) {
-                originalApp.peringkat = rank;
-            }
-        });
-    });
-
-    for (const app of applicantMap.values()) {
-        if (app.statusVerifikasi !== 'Terverifikasi' || !app.schoolSelections || app.schoolSelections.length === 0) {
-            app.peringkat = null;
-        }
-    }
-
+    // 7. Save the final results.
     saveToLocalStorage(APPLICANTS_STORAGE_KEY, Array.from(applicantMap.values()));
 }
 
@@ -163,6 +191,7 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
     rejectionReason: undefined,
     documentStatuses: {},
     peringkat: null,
+    diterimaDiSekolahId: null,
     nilaiPrestasi: undefined,
     nilaiTambahanPilihan: 0,
     
