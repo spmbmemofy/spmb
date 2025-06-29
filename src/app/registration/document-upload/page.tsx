@@ -13,6 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
 import { createOrUpdateApplicantFromRegistration } from "@/lib/applicantService";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getSchoolById } from "@/lib/schoolService";
 
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
@@ -141,8 +142,25 @@ export default function DocumentUploadPage() {
         return;
     }
     
+    let allDocs = [...generalDocuments];
     const currentPathwayDocs = pathwaySpecificDocumentsMap[selectedPathwayParam] || [];
-    const allDocs = [...generalDocuments, ...currentPathwayDocs];
+    allDocs.push(...currentPathwayDocs);
+
+    const firstChoice = savedProgress?.schoolSelections?.[0];
+    if (firstChoice) {
+        const school = getSchoolById(firstChoice.schoolId);
+        if (school && school.jenjang === 'SMK' && firstChoice.major) {
+            const major = school.majors?.find(m => m.name === firstChoice.major);
+            if (major && major.berkasPendukung && major.berkasPendukung !== 'Tidak ada') {
+                allDocs.push({
+                    id: 'berkas_pendukung_jurusan',
+                    label: major.berkasPendukung,
+                    required: true,
+                });
+            }
+        }
+    }
+    
     setDocumentsToUpload(allDocs);
     
     if (savedProgress?.documentMetadata) {

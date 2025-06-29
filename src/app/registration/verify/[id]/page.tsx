@@ -167,11 +167,27 @@ export default function VerifyApplicantPage() {
       setApplicant(foundApplicant || null);
 
       if (foundApplicant && school) {
-        const isAuthorized = foundApplicant.schoolSelections?.[0]?.schoolId === school.id;
-        setIsVerifierAuthorized(isAuthorized);
+        setIsVerifierAuthorized(foundApplicant.schoolSelections?.[0]?.schoolId === school.id);
 
+        let allDocs: DocumentItem[] = [...generalDocuments];
         const specificDocs = pathwaySpecificDocuments[foundApplicant.jalur] || [];
-        const allDocs = [...generalDocuments, ...specificDocs];
+        allDocs.push(...specificDocs);
+        
+        const firstChoice = foundApplicant.schoolSelections?.[0];
+        if (firstChoice) {
+            const schoolData = getSchoolById(firstChoice.schoolId);
+            if (schoolData && schoolData.jenjang === 'SMK' && firstChoice.major) {
+                const major = schoolData.majors?.find(m => m.name === firstChoice.major);
+                if (major && major.berkasPendukung && major.berkasPendukung !== 'Tidak ada') {
+                    allDocs.push({
+                        id: 'berkas_pendukung_jurusan',
+                        label: major.berkasPendukung,
+                        url: DUMMY_PDF_URL
+                    });
+                }
+            }
+        }
+
         setDocumentsToVerify(allDocs);
 
         const initialStatuses: Record<string, DocumentStatus> = {};

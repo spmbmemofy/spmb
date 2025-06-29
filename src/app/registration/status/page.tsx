@@ -200,13 +200,27 @@ export default function StatusPage() {
     }
 
     const pathway = currentApplicant.jalur;
-    let docsForPathway: DocumentItem[] = [];
+    let docsForPathway: DocumentItem[] = [...generalDocumentsConst];
     if (pathway) {
       const pathwayDocs = pathwaySpecificDocumentsMapConst[pathway] || [];
-      docsForPathway = [...generalDocumentsConst, ...pathwayDocs];
-    } else {
-      docsForPathway = [...generalDocumentsConst];
+      docsForPathway.push(...pathwayDocs);
     }
+    
+    const firstChoice = currentApplicant.schoolSelections?.[0];
+    if (firstChoice) {
+        const school = getSchoolById(firstChoice.schoolId);
+        if (school && school.jenjang === 'SMK' && firstChoice.major) {
+            const major = school.majors?.find(m => m.name === firstChoice.major);
+            if (major && major.berkasPendukung && major.berkasPendukung !== 'Tidak ada') {
+                docsForPathway.push({
+                    id: 'berkas_pendukung_jurusan',
+                    label: major.berkasPendukung,
+                    required: true,
+                });
+            }
+        }
+    }
+
     setDocumentsToShow(docsForPathway);
 
     setIsLoading(false);
