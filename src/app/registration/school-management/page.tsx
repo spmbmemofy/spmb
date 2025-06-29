@@ -23,7 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
 export const schoolFormSchema = z.object({
-  id: z.string(),
+  id: z.string().optional(),
   npsn: z.string().length(8, { message: "NPSN harus memiliki 8 karakter." }),
   namaSekolah: z.string().min(3, { message: "Nama sekolah minimal 3 karakter." }),
   jenjang: z.enum(["SMP", "SMA", "SMK"]),
@@ -282,7 +282,7 @@ export default function SchoolManagementPage() {
                         <DialogTitle>{editingSchool ? "Edit Sekolah" : "Tambah Sekolah Baru"}</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(processForm)} className="space-y-6 py-4">
+                        <form onSubmit={form.handleSubmit(processForm)} className="space-y-6 py-4 pr-2">
                             <Tabs defaultValue="info_umum" className="w-full">
                                 <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="info_umum">Informasi Umum</TabsTrigger>
@@ -327,7 +327,7 @@ export default function SchoolManagementPage() {
                                     )}
                                 </TabsContent>
                             </Tabs>
-                            <DialogFooter>
+                            <DialogFooter className="pt-4">
                                 <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
                                 <Button type="submit">Simpan</Button>
                             </DialogFooter>

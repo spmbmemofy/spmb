@@ -177,7 +177,7 @@ export default function SchoolSettingsPage() {
                         <DialogTitle>Edit Data {school.namaSekolah}</DialogTitle>
                     </DialogHeader>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(processForm)} className="space-y-6 py-4">
+                        <form onSubmit={form.handleSubmit(processForm)} className="space-y-6 py-4 pr-2">
                             <Tabs defaultValue="info_umum" className="w-full">
                                 <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="info_umum">Informasi Umum</TabsTrigger>
