@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Building, AlertCircle, Edit, PlusCircle, Trash2, MoreHorizontal } from 'lucide-react';
+import { Building, AlertCircle, Edit, PlusCircle, Trash2, Settings } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -22,6 +22,8 @@ import { getUsers } from "@/lib/userService";
 import { Badge } from "@/components/ui/badge";
 import type { Major } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 
 const majorFormSchema = z.object({
   id: z.string().optional(),
@@ -36,6 +38,7 @@ const majorFormSchema = z.object({
 });
 
 type MajorFormValues = z.infer<typeof majorFormSchema>;
+const religionOptions = [ "Islam", "Kristen Protestan", "Katolik", "Hindu", "Buddha", "Konghucu", "Lainnya" ];
 
 export default function SchoolSettingsPage() {
     const router = useRouter();
@@ -50,6 +53,10 @@ export default function SchoolSettingsPage() {
     // State for Delete Alert
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
     const [majorToDelete, setMajorToDelete] = React.useState<Major | null>(null);
+
+    // State for restrictions
+    const [selectedGenders, setSelectedGenders] = React.useState<string[]>([]);
+    const [selectedReligions, setSelectedReligions] = React.useState<string[]>([]);
 
     const form = useForm<MajorFormValues>({
         resolver: zodResolver(majorFormSchema),
@@ -78,6 +85,8 @@ export default function SchoolSettingsPage() {
         const userSchool = getSchoolByNPSN(currentUser.npsn);
         if (userSchool) {
             setSchool(userSchool);
+            setSelectedGenders(userSchool.allowedGenders || []);
+            setSelectedReligions(userSchool.allowedReligions || []);
         }
         setIsLoading(false);
     }, [router, toast]);
@@ -164,6 +173,35 @@ export default function SchoolSettingsPage() {
 
         setIsMajorDialogOpen(false);
     };
+
+    const handleGenderChange = (gender: string, checked: boolean) => {
+        setSelectedGenders(prev => 
+            checked ? [...prev, gender] : prev.filter(g => g !== gender)
+        );
+    };
+
+    const handleReligionChange = (religion: string, checked: boolean) => {
+        setSelectedReligions(prev => 
+            checked ? [...prev, religion] : prev.filter(r => r !== religion)
+        );
+    };
+
+    const handleSaveRestrictions = () => {
+        if (!school) return;
+        const updatedSchoolData = { 
+            ...school, 
+            allowedGenders: selectedGenders.length > 0 ? selectedGenders as ('Laki-laki' | 'Perempuan')[] : undefined,
+            allowedReligions: selectedReligions.length > 0 ? selectedReligions : undefined,
+        };
+        try {
+            updateSchool(updatedSchoolData);
+            setSchool(updatedSchoolData);
+            toast({ title: "Aturan Pendaftaran Disimpan", description: "Filter jenis kelamin dan agama telah diperbarui." });
+        } catch (e: any) {
+            toast({ variant: "destructive", title: "Gagal Menyimpan", description: e.message });
+        }
+    };
+
 
     if (isLoading) {
         return <div className="flex flex-1 items-center justify-center p-4">Memuat data sekolah...</div>;
@@ -265,6 +303,52 @@ export default function SchoolSettingsPage() {
                                 </CardFooter>
                             </section>
                         )}
+                        <section>
+                             <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center"><Settings className="mr-2"/> Aturan Pendaftaran Khusus</CardTitle>
+                                    <CardDescription>
+                                        Atur filter pendaftaran berdasarkan jenis kelamin atau agama. Jika tidak ada yang dipilih pada suatu kategori, semua akan diizinkan.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    <div>
+                                        <h4 className="font-semibold mb-3 text-muted-foreground">Filter Jenis Kelamin</h4>
+                                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
+                                            {['Laki-laki', 'Perempuan'].map(gender => (
+                                                <div key={gender} className="flex items-center space-x-2">
+                                                    <Checkbox 
+                                                        id={`gender-${gender}`} 
+                                                        checked={selectedGenders.includes(gender)}
+                                                        onCheckedChange={(checked) => handleGenderChange(gender, !!checked)}
+                                                    />
+                                                    <label htmlFor={`gender-${gender}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{gender}</label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <Separator />
+                                    <div>
+                                        <h4 className="font-semibold mb-3 text-muted-foreground">Filter Agama</h4>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                            {religionOptions.map(religion => (
+                                                 <div key={religion} className="flex items-center space-x-2">
+                                                    <Checkbox 
+                                                        id={`religion-${religion}`} 
+                                                        checked={selectedReligions.includes(religion)}
+                                                        onCheckedChange={(checked) => handleReligionChange(religion, !!checked)}
+                                                    />
+                                                    <label htmlFor={`religion-${religion}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{religion}</label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button onClick={handleSaveRestrictions}>Simpan Aturan</Button>
+                                </CardFooter>
+                            </Card>
+                        </section>
                     </CardContent>
                 </Card>
             </div>

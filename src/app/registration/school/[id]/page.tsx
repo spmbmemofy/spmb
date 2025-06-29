@@ -248,6 +248,12 @@ export default function SchoolDetailPage() {
               <div><span className="font-medium text-muted-foreground">Status Pendaftaran Umum:</span> <Badge variant={school.statusPendaftaran === "Buka" ? "default" : school.statusPendaftaran === "Segera Penuh" ? "secondary" : "destructive"}>{school.statusPendaftaran}</Badge></div>
               <div className="md:col-span-2"><span className="font-medium text-muted-foreground">Alamat:</span> {school.alamat}</div>
               <div className="md:col-span-2"><span className="font-medium text-muted-foreground">Telepon:</span> {school.telepon}</div>
+              {school.allowedGenders && school.allowedGenders.length > 0 && (
+                <div className="md:col-span-2"><span className="font-medium text-muted-foreground">Khusus Jenis Kelamin:</span> <span className="font-semibold text-primary">{school.allowedGenders.join(', ')}</span></div>
+              )}
+              {school.allowedReligions && school.allowedReligions.length > 0 && (
+                  <div className="md:col-span-2"><span className="font-medium text-muted-foreground">Khusus Agama:</span> <span className="font-semibold text-primary">{school.allowedReligions.join(', ')}</span></div>
+              )}
             </div>
           </section>
 

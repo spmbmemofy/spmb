@@ -86,15 +86,27 @@ export default function SchoolSelectionPage() {
 
   const availableSchools = React.useMemo(() => {
     if (!selectedPathway) return [];
-
-    const destinationSchools = allSchools.filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
     
+    const applicantBiodata = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null)?.biodata;
+
+    let schoolsToDisplay = allSchools.filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
+    
+    // Filter by pathway/district
     const restrictedPathways = ["Afirmasi", "Domisili", "Mutasi"];
     if (restrictedPathways.includes(selectedPathway)) {
-      return destinationSchools.filter(school => school.kecamatan === studentSubdistrict);
+      schoolsToDisplay = schoolsToDisplay.filter(school => school.kecamatan === studentSubdistrict);
     }
     
-    return destinationSchools;
+    // Filter by school-specific restrictions (gender, religion)
+    if (applicantBiodata) {
+        schoolsToDisplay = schoolsToDisplay.filter(school => {
+            const genderOk = !school.allowedGenders || school.allowedGenders.length === 0 || school.allowedGenders.includes(applicantBiodata.gender as 'Laki-laki' | 'Perempuan');
+            const religionOk = !school.allowedReligions || school.allowedReligions.length === 0 || school.allowedReligions.includes(applicantBiodata.religion);
+            return genderOk && religionOk;
+        });
+    }
+
+    return schoolsToDisplay;
   }, [selectedPathway, allSchools]);
 
   React.useEffect(() => {
@@ -272,8 +284,8 @@ export default function SchoolSelectionPage() {
                                 </AccordionItem>
                               ))
                             ) : (
-                              <div className="flex items-center justify-center h-full text-muted-foreground p-4">
-                                <p>Tidak ada sekolah yang tersedia untuk jalur ini di kecamatan Anda.</p>
+                              <div className="flex items-center justify-center h-full text-muted-foreground p-4 text-center">
+                                <p>Tidak ada sekolah yang tersedia untuk jalur ini atau sesuai dengan kriteria pendaftaran Anda (misal: jenis kelamin/agama).</p>
                               </div>
                             )}
                           </Accordion>

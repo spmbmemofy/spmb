@@ -27,6 +27,8 @@ export interface School {
   statusPendaftaran?: SchoolStatusPendaftaran;
   tahapPendaftaran?: number;
   jumlahPendaftar?: number; 
+  allowedGenders?: ('Laki-laki' | 'Perempuan')[];
+  allowedReligions?: string[];
 }
 
 // Restored initial data to match the expected school management list.
