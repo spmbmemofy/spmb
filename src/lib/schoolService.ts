@@ -28,7 +28,7 @@ export interface School {
   jumlahPendaftar?: number; 
 }
 
-// Initial Data has been cleared to allow for a fresh simulation start.
+// Restored initial data to match the expected school management list.
 const initialSchools: School[] = [
   {
     id: "smpn1tanjungredeb30401918",
@@ -53,15 +53,15 @@ const initialSchools: School[] = [
     akreditasi: "B",
   },
   {
-    id: 'smpn1sambaliung30401888',
-    npsn: '30401888',
-    namaSekolah: 'SMPN 1 Sambaliung',
-    jenjang: 'SMP',
-    jenis: 'Negeri',
-    alamat: 'Jl. Raya Sambaliung, Sambaliung, Berau',
-    kecamatan: 'Kec. Sambaliung',
-    telepon: '0554-2021888',
-    akreditasi: 'B',
+    id: "mtsalkholil69753308",
+    npsn: "69753308",
+    namaSekolah: "MTs Al-Kholil",
+    jenjang: "SMP",
+    jenis: "Swasta",
+    alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb",
+    kecamatan: "Kec. Tanjung Redeb",
+    telepon: "0554-12345",
+    akreditasi: "A",
   },
   {
     id: "sman1tanjungredeb",
@@ -100,17 +100,17 @@ const initialSchools: School[] = [
     tahapPendaftaran: 1,
   },
   {
-    id: "sman2berau",
-    npsn: "30401829",
-    namaSekolah: "SMA Negeri 2 Berau",
+    id: "sman4berau30404228",
+    npsn: "30404228",
+    namaSekolah: "SMA Negeri 4 Berau",
     jenjang: "SMA",
     jenis: "Negeri",
-    alamat: "Jl. H. Isa III, Karang Ambun, Tanjung Redeb, Berau",
-    kecamatan: "Kec. Tanjung Redeb",
-    telepon: "0554-22111",
+    alamat: "Jl. Poros Labanan, Labanan Makmur, Teluk Bayur, Berau",
+    kecamatan: "Kec. Teluk Bayur",
+    telepon: "0554-25001",
     akreditasi: "B",
-    kuota: 228,
-    jalurKuota: { afirmasi: 46, mutasi: 11, prestasi: 68, domisili: 103 },
+    kuota: 200,
+    jalurKuota: { afirmasi: 40, mutasi: 10, prestasi: 60, domisili: 90 },
     statusPendaftaran: "Buka",
     tahapPendaftaran: 1,
   },
