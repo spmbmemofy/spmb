@@ -22,10 +22,20 @@ function recalculateAllRanks(): void {
     const applicantMap = new Map(allApplicantsData.map(app => [app.id, { ...app, peringkat: null, diterimaDiSekolahId: null }]));
 
     // 2. Initialize quota usage tracker for all schools and pathways.
-    const quotaUsage: Record<string, Record<Jalur, number>> = {};
+    const quotaUsage: Record<string, Record<string, number>> = {}; // Key: "schoolId-jalur" or "schoolId-majorName-jalur"
     allSchoolsData.forEach(school => {
-        if (school.jalurKuota) {
-            quotaUsage[school.id] = { Afirmasi: 0, Mutasi: 0, Prestasi: 0, Domisili: 0 };
+        if (school.jenjang === 'SMA' && school.jalurKuota) {
+            Object.keys(school.jalurKuota).forEach(jalur => {
+                const key = `${school.id}-${jalur}`;
+                quotaUsage[key] = 0;
+            });
+        } else if (school.jenjang === 'SMK' && school.majors) {
+            school.majors.forEach(major => {
+                Object.keys(major.quota).forEach(jalur => {
+                    const key = `${school.id}-${major.name}-${jalur}`;
+                    quotaUsage[key] = 0;
+                });
+            });
         }
     });
 
@@ -45,14 +55,20 @@ function recalculateAllRanks(): void {
 
     // 4. Iterate through each choice priority level (1st choice, 2nd choice, etc.).
     for (let choiceIndex = 0; choiceIndex < maxChoices; choiceIndex++) {
-        // Group remaining applicants by the school and pathway they are applying to in this round.
-        const applicationsByGroup: Record<string, Applicant[]> = {}; // Key: "schoolId-jalur"
+        // Group remaining applicants by the school, major (if any), and pathway.
+        const applicationsByGroup: Record<string, Applicant[]> = {};
 
         for (const applicant of applicantsToProcess) {
             const selection = applicant.schoolSelections[choiceIndex];
             if (!selection) continue;
 
-            const groupId = `${selection.schoolId}-${applicant.jalur}`;
+            const school = allSchoolsData.find(s => s.id === selection.schoolId);
+            if (!school) continue;
+
+            const groupId = school.jenjang === 'SMK'
+                ? `${selection.schoolId}-${selection.major}-${applicant.jalur}`
+                : `${selection.schoolId}-${applicant.jalur}`;
+            
             if (!applicationsByGroup[groupId]) {
                 applicationsByGroup[groupId] = [];
             }
@@ -61,23 +77,38 @@ function recalculateAllRanks(): void {
 
         // 5. For each group, sort by score and attempt to place them.
         for (const groupId in applicationsByGroup) {
-            const [schoolId, jalur] = groupId.split('-');
-            const school = allSchoolsData.find(s => s.id === schoolId);
-            if (!school || !school.jalurKuota) continue;
-
             const groupApplicants = applicationsByGroup[groupId];
-
-            // Sort applicants by score. The +25 bonus is only for the first choice round.
+            const [schoolId, majorOrJalur, jalurIfSmk] = groupId.split('-');
+            
+            const school = allSchoolsData.find(s => s.id === schoolId);
+            if (!school) continue;
+            
+            const isSmk = school.jenjang === 'SMK';
+            const jalur = isSmk ? jalurIfSmk : majorOrJalur;
+            const majorName = isSmk ? majorOrJalur : null;
+            
+            // Sort applicants by score.
             groupApplicants.sort((a, b) => calculateScore(b, choiceIndex === 0) - calculateScore(a, choiceIndex === 0));
 
-            const pathwayKey = jalur.toLowerCase() as keyof typeof school.jalurKuota;
-            const pathwayQuota = school.jalurKuota[pathwayKey] ?? 0;
+            let pathwayQuota = 0;
+            const pathwayKey = jalur.toLowerCase() as 'afirmasi' | 'mutasi' | 'prestasi' | 'domisili';
             
+            if (isSmk && majorName) {
+                const majorData = school.majors?.find(m => m.name === majorName);
+                if (majorData) {
+                    pathwayQuota = majorData.quota[pathwayKey] ?? 0;
+                }
+            } else if (!isSmk && school.jalurKuota) {
+                pathwayQuota = school.jalurKuota[pathwayKey] ?? 0;
+            }
+
+            const usageKey = isSmk ? `${schoolId}-${majorName}-${jalur}` : `${schoolId}-${jalur}`;
+
             for (const applicant of groupApplicants) {
-                let currentUsage = quotaUsage[schoolId][jalur as Jalur];
+                let currentUsage = quotaUsage[usageKey] || 0;
                 if (currentUsage < pathwayQuota) {
                     currentUsage++;
-                    quotaUsage[schoolId][jalur as Jalur] = currentUsage;
+                    quotaUsage[usageKey] = currentUsage;
 
                     const placedApplicant = applicantMap.get(applicant.id);
                     if (placedApplicant) {
@@ -90,7 +121,7 @@ function recalculateAllRanks(): void {
         
         // 6. Prepare for the next round with only the applicants who haven't been placed yet.
         applicantsToProcess = applicantsToProcess.filter(app => !applicantMap.get(app.id)?.diterimaDiSekolahId);
-        if (applicantsToProcess.length === 0) break; // Exit early if everyone is placed.
+        if (applicantsToProcess.length === 0) break;
     }
 
     // 7. Save the final results.

@@ -253,15 +253,15 @@ export default function SchoolSelectionPage() {
                                         <div className="pl-4 pr-2 pt-2 pb-2 space-y-3">
                                           <p className="text-xs font-semibold text-muted-foreground">Pilih Jurusan:</p>
                                           {(school.majors || []).map(major => (
-                                            <div key={major} className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted/50">
+                                            <div key={major.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted/50">
                                               <Checkbox
-                                                id={`${school.id}-${major}`}
-                                                checked={selectedSelections.some(s => s.schoolId === school.id && s.major === major)}
-                                                onCheckedChange={() => handleSchoolSelectionChange(school.id, major)}
+                                                id={`${school.id}-${major.id}`}
+                                                checked={selectedSelections.some(s => s.schoolId === school.id && s.major === major.name)}
+                                                onCheckedChange={() => handleSchoolSelectionChange(school.id, major.name)}
                                                 disabled={isLocked}
                                               />
-                                              <Label htmlFor={`${school.id}-${major}`} className="flex-grow cursor-pointer font-normal text-sm">
-                                                {major}
+                                              <Label htmlFor={`${school.id}-${major.id}`} className="flex-grow cursor-pointer font-normal text-sm">
+                                                {major.name}
                                               </Label>
                                             </div>
                                           ))}

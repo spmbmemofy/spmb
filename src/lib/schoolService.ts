@@ -2,6 +2,7 @@
 'use client';
 
 import { getFromLocalStorage, saveToLocalStorage } from './localStorage';
+import type { Major } from './types';
 
 // Type Definitions
 export type SchoolJenjang = 'SMP' | 'SMA' | 'SMK';
@@ -22,7 +23,7 @@ export interface School {
   wilayah?: string;
   kuota?: number;
   jalurKuota?: { afirmasi: number; mutasi: number; prestasi: number; domisili: number; };
-  majors?: string[];
+  majors?: Major[];
   statusPendaftaran?: SchoolStatusPendaftaran;
   tahapPendaftaran?: number;
   jumlahPendaftar?: number; 
@@ -90,10 +91,10 @@ const initialSchools: School[] = [
     akreditasi: "A",
     kuota: 304,
     majors: [
-      "Teknik Komputer dan Jaringan",
-      "Akuntansi dan Keuangan Lembaga",
-      "Otomatisasi dan Tata Kelola Perkantoran",
-      "Bisnis Daring dan Pemasaran",
+      { id: 'tkj', name: 'Teknik Komputer dan Jaringan', quota: { afirmasi: 15, mutasi: 4, prestasi: 23, domisili: 34 }, berkasPendukung: 'Tidak ada' },
+      { id: 'akt', name: 'Akuntansi dan Keuangan Lembaga', quota: { afirmasi: 15, mutasi: 4, prestasi: 23, domisili: 34 }, berkasPendukung: 'Tidak ada' },
+      { id: 'otkp', name: 'Otomatisasi dan Tata Kelola Perkantoran', quota: { afirmasi: 15, mutasi: 4, prestasi: 23, domisili: 34 }, berkasPendukung: 'Surat Keterangan Tidak Buta Warna' },
+      { id: 'bdp', name: 'Bisnis Daring dan Pemasaran', quota: { afirmasi: 16, mutasi: 3, prestasi: 22, domisili: 35 }, berkasPendukung: 'Tidak ada' },
     ],
     jalurKuota: { afirmasi: 61, mutasi: 15, prestasi: 91, domisili: 137 },
     statusPendaftaran: "Buka",

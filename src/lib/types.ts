@@ -15,6 +15,18 @@ export interface ActivityEvent {
   details?: string; // e.g., rejection reason
 }
 
+export interface Major {
+  id: string;
+  name: string;
+  quota: {
+    afirmasi: number;
+    mutasi: number;
+    prestasi: number;
+    domisili: number;
+  };
+  berkasPendukung?: string;
+}
+
 export interface Applicant {
   id: string;
   noRegistrasi: string;

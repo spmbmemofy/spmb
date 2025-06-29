@@ -41,21 +41,9 @@ export const schoolFormSchema = z.object({
     prestasi: z.coerce.number().int().min(0).optional(),
     domisili: z.coerce.number().int().min(0).optional(),
   }).optional(),
-  majors: z.string().optional(),
+  majors: z.any().optional(), // Allow any value for majors as it's handled by headmaster
   statusPendaftaran: z.enum(["Buka", "Tutup", "Segera Penuh"]).optional(),
   tahapPendaftaran: z.coerce.number().int().min(1).optional(),
-}).refine(data => {
-    if (data.jenjang === 'SMA' || data.jenjang === 'SMK') {
-        const totalKuota = data.kuota ?? 0;
-        const jalur = data.jalurKuota;
-        if (!jalur) return false;
-        const totalJalur = (jalur.afirmasi ?? 0) + (jalur.mutasi ?? 0) + (jalur.prestasi ?? 0) + (jalur.domisili ?? 0);
-        return totalJalur === totalKuota;
-    }
-    return true;
-}, {
-    message: "Jumlah kuota per jalur harus sama dengan Total Kuota Keseluruhan.",
-    path: ["jalurKuota.afirmasi"],
 });
 
 type SchoolFormValues = z.infer<typeof schoolFormSchema>;
@@ -100,16 +88,13 @@ export default function SchoolManagementPage() {
     const handleOpenDialog = (school: School | null = null) => {
         setEditingSchool(school);
         if (school) {
-            form.reset({
-                ...school,
-                majors: school.majors ? school.majors.join('\n') : '',
-            });
+            form.reset(school);
         } else {
             form.reset({
                 id: '', npsn: '', namaSekolah: '', jenjang: 'SMA', jenis: 'Negeri',
                 alamat: '', kecamatan: '', telepon: '', akreditasi: 'A',
                 wilayah: '', kuota: 0, jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 },
-                majors: '', statusPendaftaran: 'Buka', tahapPendaftaran: 1,
+                majors: [], statusPendaftaran: 'Buka', tahapPendaftaran: 1,
             });
         }
         setIsDialogOpen(true);
@@ -132,10 +117,12 @@ export default function SchoolManagementPage() {
 
     const processForm = (data: SchoolFormValues) => {
         try {
-            const schoolData = {
-                ...data,
-                majors: data.majors ? data.majors.split('\n').filter(m => m.trim() !== '') : [],
-            };
+             // For SMK, kuota and jalurKuota are derived from majors, so we don't save them from this form.
+            const schoolData: Partial<School> = { ...data };
+            if (data.jenjang === 'SMK') {
+                delete schoolData.kuota;
+                delete schoolData.jalurKuota;
+            }
 
             if (editingSchool) {
                 updateSchool(schoolData as School);
@@ -308,22 +295,37 @@ export default function SchoolManagementPage() {
                                         <FormField control={form.control} name="tahapPendaftaran" render={({ field }) => ( <FormItem><FormLabel>Tahap Pendaftaran</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem> )} />
                                         <FormField control={form.control} name="statusPendaftaran" render={({ field }) => ( <FormItem><FormLabel>Status Pendaftaran</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Buka">Buka</SelectItem><SelectItem value="Tutup">Tutup</SelectItem><SelectItem value="Segera Penuh">Segera Penuh</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
                                     </div>
-                                     <div>
-                                        <FormField control={form.control} name="kuota" render={({ field }) => ( <FormItem><FormLabel>Total Kuota Keseluruhan</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                                    </div>
-                                    <Card>
-                                        <CardHeader><CardTitle className="text-base">Pembagian Kuota per Jalur</CardTitle><CardDescription>Total kuota jalur harus sama dengan kuota keseluruhan.</CardDescription></CardHeader>
-                                        <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            <FormField control={form.control} name="jalurKuota.afirmasi" render={({ field }) => ( <FormItem><FormLabel>Afirmasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
-                                            <FormField control={form.control} name="jalurKuota.mutasi" render={({ field }) => ( <FormItem><FormLabel>Mutasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
-                                            <FormField control={form.control} name="jalurKuota.prestasi" render={({ field }) => ( <FormItem><FormLabel>Prestasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
-                                            <FormField control={form.control} name="jalurKuota.domisili" render={({ field }) => ( <FormItem><FormLabel>Domisili</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
-                                        </CardContent>
-                                        <FormMessage className="px-6 pb-4">{form.formState.errors.jalurKuota?.afirmasi?.message}</FormMessage>
-                                    </Card>
+                                     <FormField control={form.control} name="kuota" render={({ field }) => ( <FormItem><FormLabel>Total Kuota (SMA)</FormLabel><CardDescription>Untuk SMK, total kuota dihitung dari jumlah kuota jurusan.</CardDescription><FormControl><Input type="number" {...field} disabled={selectedJenjang === 'SMK'} /></FormControl><FormMessage /></FormItem> )} />
+                                    
+                                     {selectedJenjang === 'SMA' && (
+                                        <Card>
+                                            <CardHeader><CardTitle className="text-base">Pembagian Kuota per Jalur (SMA)</CardTitle></CardHeader>
+                                            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                <FormField control={form.control} name="jalurKuota.afirmasi" render={({ field }) => ( <FormItem><FormLabel>Afirmasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
+                                                <FormField control={form.control} name="jalurKuota.mutasi" render={({ field }) => ( <FormItem><FormLabel>Mutasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
+                                                <FormField control={form.control} name="jalurKuota.prestasi" render={({ field }) => ( <FormItem><FormLabel>Prestasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
+                                                <FormField control={form.control} name="jalurKuota.domisili" render={({ field }) => ( <FormItem><FormLabel>Domisili</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
+                                            </CardContent>
+                                        </Card>
+                                     )}
 
                                     {selectedJenjang === 'SMK' && (
-                                        <FormField control={form.control} name="majors" render={({ field }) => ( <FormItem><FormLabel>Jurusan</FormLabel><CardDescription>Masukkan satu jurusan per baris.</CardDescription><FormControl><Textarea {...field} rows={5} /></FormControl><FormMessage /></FormItem> )} />
+                                        <FormItem>
+                                            <FormLabel>Jurusan (SMK)</FormLabel>
+                                            <CardDescription>Jurusan, kuota, dan berkas pendukung dikelola oleh Kepala Sekolah melalui halaman Kelola Sekolah.</CardDescription>
+                                            <FormControl>
+                                                <Textarea
+                                                    readOnly
+                                                    disabled
+                                                    value={
+                                                        editingSchool?.majors
+                                                            ?.map(m => `- ${m.name}`)
+                                                            .join('\n') || "Belum ada jurusan ditambahkan."
+                                                    }
+                                                    rows={5}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
                                     )}
                                 </TabsContent>
                             </Tabs>
