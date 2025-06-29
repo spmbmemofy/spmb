@@ -246,6 +246,9 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
           <div className="flex flex-1 flex-col">
             {children}
           </div>
+          <footer className="border-t p-4 text-center text-sm text-muted-foreground">
+            dibuat oleh Memofy Studio
+          </footer>
         </SidebarInset>
       </div>
     </SidebarProvider>

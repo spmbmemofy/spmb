@@ -91,3 +91,9 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  .print-hide {
+    display: none;
+  }
+}
