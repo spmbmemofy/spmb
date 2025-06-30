@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ClipboardList, Filter as FilterIcon, Search as SearchIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { ClipboardList, Filter as FilterIcon, Search as SearchIcon, ChevronLeft, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import { getApplicants } from "@/lib/applicantService";
 import { jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
-import { getSchoolById, getSchoolByNPSN } from "@/lib/schoolService";
-import type { Applicant, ApplicantStatus } from "@/lib/types";
+import { getSchoolByNPSN } from "@/lib/schoolService";
+import type { Applicant, ApplicantStatus, SortConfig, SortDirection, SortKey } from "@/lib/types";
 import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { getUsers } from "@/lib/userService";
 import { useToast } from "@/hooks/use-toast";
@@ -43,6 +43,7 @@ export default function VerificationPage() {
   const [selectedStatus, setSelectedStatus] = React.useState("Semua Status");
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [sortConfig, setSortConfig] = React.useState<SortConfig>({ key: 'submissionTimestamp', direction: 'descending' });
 
   React.useEffect(() => {
     const creds = getFromLocalStorage<LoginCredentials | null>('loginCredentials', null);
@@ -78,7 +79,20 @@ export default function VerificationPage() {
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedJalur, selectedStatus, pageSize]);
+  }, [searchTerm, selectedJalur, selectedStatus, pageSize, sortConfig]);
+
+  const requestSort = (key: SortKey) => {
+    let direction: SortDirection = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: SortKey) => {
+    if (sortConfig.key !== key) return null;
+    return sortConfig.direction === 'ascending' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />;
+  };
 
   const filteredApplicants = React.useMemo(() => {
     return allApplicants.filter(applicant => {
@@ -91,14 +105,35 @@ export default function VerificationPage() {
     });
   }, [allApplicants, searchTerm, selectedJalur, selectedStatus]);
 
+  const sortedApplicants = React.useMemo(() => {
+    let sortableItems = [...filteredApplicants];
+    if (sortConfig.key) {
+      sortableItems.sort((a, b) => {
+        const key = sortConfig.key as keyof Applicant;
+        const valA = a[key];
+        const valB = b[key];
+
+        let comparison = 0;
+        if (valA === null || valA === undefined) comparison = 1;
+        else if (valB === null || valB === undefined) comparison = -1;
+        else {
+          comparison = String(valA).localeCompare(String(valB));
+        }
+        
+        return sortConfig.direction === 'ascending' ? comparison : -comparison;
+      });
+    }
+    return sortableItems;
+  }, [filteredApplicants, sortConfig]);
+
   const paginatedApplicants = React.useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
-    return filteredApplicants.slice(startIndex, startIndex + pageSize);
-  }, [filteredApplicants, currentPage, pageSize]);
+    return sortedApplicants.slice(startIndex, startIndex + pageSize);
+  }, [sortedApplicants, currentPage, pageSize]);
 
   const totalPages = React.useMemo(() => {
-    return Math.ceil(filteredApplicants.length / pageSize);
-  }, [filteredApplicants.length, pageSize]);
+    return Math.ceil(sortedApplicants.length / pageSize);
+  }, [sortedApplicants.length, pageSize]);
 
   const jalurOptions = ["Semua Jalur", ...jalurOptionsPlain];
   const statusOptions = ["Semua Status", ...statusVerifikasiOptionsPlain];
@@ -109,7 +144,7 @@ export default function VerificationPage() {
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
-      <Card className="w-full max-w-5xl shadow-2xl">
+      <Card className="w-full max-w-7xl shadow-2xl">
         <CardHeader>
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0 bg-primary text-primary-foreground rounded-full p-3 w-fit">
@@ -160,11 +195,20 @@ export default function VerificationPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[50px] text-center">No.</TableHead>
-                    <TableHead>Nama Lengkap</TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('fullName')}>
+                      <div className="flex items-center">Nama Lengkap{getSortIcon('fullName')}</div>
+                    </TableHead>
                     <TableHead>NISN</TableHead>
                     <TableHead>Asal Sekolah</TableHead>
-                    <TableHead>Jalur</TableHead>
-                    <TableHead className="text-center">Status Verifikasi</TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('jalur')}>
+                      <div className="flex items-center">Jalur{getSortIcon('jalur')}</div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('submissionTimestamp')}>
+                      <div className="flex items-center">Waktu Pendaftaran{getSortIcon('submissionTimestamp')}</div>
+                    </TableHead>
+                    <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => requestSort('statusVerifikasi')}>
+                      <div className="flex items-center justify-center">Status{getSortIcon('statusVerifikasi')}</div>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -180,6 +224,11 @@ export default function VerificationPage() {
                         <TableCell>{applicant.nisn}</TableCell>
                         <TableCell>{applicant.asalSekolahNama}</TableCell>
                         <TableCell>{applicant.jalur}</TableCell>
+                        <TableCell>
+                          {applicant.submissionTimestamp ? new Date(applicant.submissionTimestamp).toLocaleString('id-ID', {
+                            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                          }) : '-'}
+                        </TableCell>
                         <TableCell className="text-center">
                           <Badge variant={getStatusBadgeVariant(applicant.statusVerifikasi)}>
                             {applicant.statusVerifikasi}
@@ -189,7 +238,7 @@ export default function VerificationPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                      <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                         Tidak ada data pendaftar yang cocok dengan kriteria filter.
                       </TableCell>
                     </TableRow>

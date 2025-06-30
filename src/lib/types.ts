@@ -81,6 +81,7 @@ export interface Applicant {
   verifiedBy?: string;
   verificationTimestamp?: string;
   activityHistory: ActivityEvent[];
+  submissionTimestamp?: string;
 }
 
 export type SortKey = keyof Applicant | 'no';

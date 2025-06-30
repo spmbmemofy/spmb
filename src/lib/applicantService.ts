@@ -7,7 +7,7 @@ import type { Applicant, Jalur } from './types';
 import { getSchoolById, getSchools, type School } from './schoolService';
 import { getUsers } from './userService';
 
-const APPLICANTS_STORAGE_KEY = 'allApplicantsData_v3';
+const APPLICANTS_STORAGE_KEY = 'allApplicantsData';
 
 /**
  * Implements a cascading placement algorithm (Boston mechanism).
@@ -22,7 +22,7 @@ function recalculateAllRanks(): void {
     const applicantMap = new Map(allApplicantsData.map(app => [app.id, { ...app, peringkat: null, diterimaDiSekolahId: null }]));
 
     // 2. Initialize quota usage tracker for all schools and pathways.
-    const quotaUsage: Record<string, Record<string, number>> = {}; // Key: "schoolId-jalur" or "schoolId-majorName-jalur"
+    const quotaUsage: Record<string, number> = {}; // Key: "schoolId-jalur" or "schoolId-majorName-jalur"
     allSchoolsData.forEach(school => {
         if (school.jenjang === 'SMA' && school.jalurKuota) {
             Object.keys(school.jalurKuota).forEach(jalur => {
@@ -206,6 +206,7 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
   const existingApplicant = applicants.find(a => a.nisn === creds.username);
   const allSchools = getSchools();
   const originSchool = allSchools.find(s => s.namaSekolah === progress.biodata!.previousSchool);
+  const submissionTime = new Date().toISOString();
 
   const applicantDataFromProgress = {
     noRegistrasi: creds.username!,
@@ -219,6 +220,7 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
     jalur: progress.pathway as Jalur,
     semesterGrades: progress.biodata.semesterGrades,
     statusVerifikasi: 'Menunggu Verifikasi' as const,
+    submissionTimestamp: submissionTime,
     rejectionReason: undefined,
     documentStatuses: {},
     peringkat: null,
@@ -254,7 +256,7 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
   if (existingApplicant) {
     const updatedApplicant = { ...existingApplicant, ...applicantDataFromProgress, activityHistory: [
       ...(existingApplicant.activityHistory || []),
-      { type: 'REGISTRATION_COMPLETED', timestamp: new Date().toISOString(), actor: progress.biodata.fullName },
+      { type: 'REGISTRATION_COMPLETED', timestamp: submissionTime, actor: progress.biodata.fullName },
     ]};
     updateApplicant(updatedApplicant);
     return updatedApplicant;
@@ -263,7 +265,7 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
       ...applicantDataFromProgress,
       id: `app-${creds.username}`,
       activityHistory: [
-        { type: 'REGISTRATION_COMPLETED', timestamp: new Date().toISOString(), actor: progress.biodata.fullName },
+        { type: 'REGISTRATION_COMPLETED', timestamp: submissionTime, actor: progress.biodata.fullName },
       ]
     };
     const updatedApplicants = [...applicants, newApplicant];

@@ -170,7 +170,7 @@ export default function CorrectionPage() {
     if (!applicant) return;
     
     setIsSubmitting(true);
-    const updatedApplicantData = { ...applicant };
+    const updatedApplicantData: Applicant = { ...applicant };
 
     // 1. Update biodata if it was rejected
     if (rejectedItems.biodata) {
@@ -197,12 +197,14 @@ export default function CorrectionPage() {
     // 3. Update overall status and history
     updatedApplicantData.statusVerifikasi = "Menunggu Verifikasi";
     
+    const resubmissionTime = new Date().toISOString();
     const newEvent: ActivityEvent = {
         type: 'FILES_RESUBMITTED',
-        timestamp: new Date().toISOString(),
+        timestamp: resubmissionTime,
         actor: applicant.fullName
     };
     updatedApplicantData.activityHistory = [...(updatedApplicantData.activityHistory || []), newEvent];
+    updatedApplicantData.submissionTimestamp = resubmissionTime;
     
     updateApplicant(updatedApplicantData);
     
