@@ -298,11 +298,8 @@ export default function VerifyApplicantPage() {
     const updatedApplicant: Applicant = {
         ...applicant,
         statusVerifikasi: "Menunggu Verifikasi",
-        documentStatuses: {}, // Reset all doc statuses
-        rejectionReason: undefined,
-        verifiedBy: undefined,
-        verificationTimestamp: undefined,
-        peringkat: null,
+        // Keep 'verifiedBy', 'verificationTimestamp', and 'peringkat' as historical data.
+        // Only reset 'diterimaDiSekolahId' as they are no longer placed in any school.
         diterimaDiSekolahId: null,
         activityHistory: [...(applicant.activityHistory || []), newEvent]
     };
