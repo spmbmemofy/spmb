@@ -18,6 +18,7 @@ import type { ActivityEvent } from "@/lib/types";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { getSchoolById } from "@/lib/schoolService";
 
 const biodataFormSchema = z.object({
   fullName: z.string().min(3, "Nama lengkap diperlukan."),
@@ -143,7 +144,23 @@ export default function CorrectionPage() {
     const docStatuses = currentApplicant.documentStatuses || {};
     const biodataIsInvalid = docStatuses['biodata'] === 'invalid' || docStatuses['nilai_rapor'] === 'invalid';
 
-    const allPossibleDocs = [...generalDocuments, ...(pathwaySpecificDocumentsMap[currentApplicant.jalur] || [])];
+    const allPossibleDocs: DocumentItem[] = [...generalDocuments, ...(pathwaySpecificDocumentsMap[currentApplicant.jalur] || [])];
+    
+    const firstChoice = currentApplicant.schoolSelections?.[0];
+    if (firstChoice) {
+        const school = getSchoolById(firstChoice.schoolId);
+        if (school && school.jenjang === 'SMK' && firstChoice.major) {
+            const major = school.majors?.find(m => m.name === firstChoice.major);
+            if (major && major.berkasPendukung && major.berkasPendukung !== 'Tidak ada') {
+                allPossibleDocs.push({
+                    id: 'berkas_pendukung_jurusan',
+                    label: major.berkasPendukung,
+                    required: true,
+                });
+            }
+        }
+    }
+
     const invalidDocs = allPossibleDocs.filter(doc => docStatuses[doc.id] === 'invalid');
 
     setRejectedItems({
