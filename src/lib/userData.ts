@@ -21,14 +21,6 @@ export const initialUsers: User[] = [
     role: 'superadmin',
     fullName: 'Super Administrator',
   },
-  {
-    id: 'smp-sambaliung-01',
-    username: 'operatorsmpn1sbl',
-    password: 'password123',
-    role: 'smp_operator',
-    fullName: 'Operator SMPN 1 Sambaliung',
-    npsn: '30401888',
-  },
 ];
 
 export const roleDisplayNames: Record<UserRole, string> = {
