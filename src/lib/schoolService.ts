@@ -25,7 +25,7 @@ export interface School {
   jalurKuota?: { afirmasi: number; mutasi: number; prestasi: number; domisili: number; };
   majors?: Major[];
   statusPendaftaran?: SchoolStatusPendaftaran;
-  tahapPendaftaran?: number;
+  tahapId?: string;
   jumlahPendaftar?: number; 
   allowedGenders?: ('Laki-laki' | 'Perempuan')[];
   allowedReligions?: string[];
@@ -35,7 +35,7 @@ export interface School {
 const initialSchools: School[] = [];
 
 
-const SCHOOLS_STORAGE_KEY = 'allSchoolsData_v4';
+const SCHOOLS_STORAGE_KEY = 'allSchoolsData_v6';
 
 // Service Functions
 /**

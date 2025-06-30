@@ -17,8 +17,9 @@ import { useToast } from "@/hooks/use-toast";
 import { getSchools } from "@/lib/schoolService"; 
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
 import { getApplicants } from "@/lib/applicantService";
-import type { SchoolSelection, Jalur } from "@/lib/types";
+import type { SchoolSelection, Jalur, Tahap } from "@/lib/types";
 import { getJalur } from "@/lib/pathwayService";
+import { getStages } from "@/lib/stageService";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const studentSubdistrict = "Kec. Tanjung Redeb"; // Mock data, should come from student's biodata
@@ -33,25 +34,30 @@ export default function SchoolSelectionPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isLocked, setIsLocked] = React.useState(false);
+  
+  const [allPathways, setAllPathways] = React.useState<Jalur[]>([]);
+  const [allStages, setAllStages] = React.useState<Tahap[]>([]);
 
-  const allPathways = React.useMemo(() => getJalur(), []);
-
-  const availablePathways = React.useMemo(() => {
+  const activePathways = React.useMemo(() => {
     const now = new Date();
-    return allPathways.filter(pathway => {
-        try {
-            const startDate = new Date(pathway.startDate);
-            const endDate = new Date(pathway.endDate);
-            return now >= startDate && now <= endDate;
-        } catch (e) {
-            return false; // Invalid date format, exclude it
-        }
-    });
-  }, [allPathways]);
+    const activeStageIds = allStages
+      .filter(stage => {
+          try {
+              const startDate = new Date(stage.startDate);
+              const endDate = new Date(stage.endDate);
+              return now >= startDate && now <= endDate;
+          } catch (e) { return false; }
+      })
+      .map(stage => stage.id);
+      
+    return allPathways.filter(pathway => activeStageIds.includes(pathway.tahapId));
+  }, [allPathways, allStages]);
 
   React.useEffect(() => {
     const schools = getSchools();
     setAllSchools(schools);
+    setAllPathways(getJalur());
+    setAllStages(getStages());
 
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
     const loggedInUser = getFromLocalStorage<LoginCredentials | null>("loginCredentials", null);
@@ -107,12 +113,14 @@ export default function SchoolSelectionPage() {
     return allPathways.find(p => p.name === selectedPathway);
   }, [selectedPathway, allPathways]);
 
-  const availableSchools = React.useMemo(() => {
-    if (!selectedPathwayObject) return [];
-    
-    const pathwayStage = selectedPathwayObject.tahapPendaftaran;
-    if (!pathwayStage) return [];
+  const selectedStageObject = React.useMemo(() => {
+    if (!selectedPathwayObject) return null;
+    return allStages.find(s => s.id === selectedPathwayObject.tahapId);
+  }, [selectedPathwayObject, allStages]);
 
+  const availableSchools = React.useMemo(() => {
+    if (!selectedPathwayObject || !selectedStageObject) return [];
+    
     const applicantBiodata = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null)?.biodata;
 
     let schoolsToDisplay = allSchools.filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
@@ -123,7 +131,7 @@ export default function SchoolSelectionPage() {
     );
 
     // Filter schools by registration stage
-    schoolsToDisplay = schoolsToDisplay.filter(school => school.tahapPendaftaran === pathwayStage);
+    schoolsToDisplay = schoolsToDisplay.filter(school => school.tahapId === selectedStageObject.id);
     
     // Filter by pathway/district
     const restrictedPathways = ["Afirmasi", "Domisili", "Mutasi"];
@@ -141,7 +149,7 @@ export default function SchoolSelectionPage() {
     }
 
     return schoolsToDisplay;
-  }, [selectedPathwayObject, allSchools]);
+  }, [selectedPathwayObject, selectedStageObject, allSchools]);
 
   React.useEffect(() => {
     if (isLoading || isLocked) return; 
@@ -241,10 +249,10 @@ export default function SchoolSelectionPage() {
                 <SelectValue placeholder="Pilih jalur pendaftaran Anda" />
               </SelectTrigger>
               <SelectContent>
-                {availablePathways.length > 0 ? (
-                  availablePathways.map((pathway) => (
+                {activePathways.length > 0 ? (
+                  activePathways.map((pathway) => (
                     <SelectItem key={pathway.id} value={pathway.name}>
-                      {pathway.name} (Tahap {pathway.tahapPendaftaran})
+                      {pathway.name}
                     </SelectItem>
                   ))
                 ) : (
@@ -255,12 +263,12 @@ export default function SchoolSelectionPage() {
                 )}
               </SelectContent>
             </Select>
-            {selectedPathwayObject && (
+            {selectedStageObject && (
                 <Alert variant="default" className="mt-2 text-primary-foreground bg-primary/90 border-primary [&>svg]:text-primary-foreground">
                     <Info className="h-4 w-4" />
                     <AlertTitle>Informasi Jalur Pendaftaran</AlertTitle>
                     <AlertDescription>
-                        Jalur {selectedPathwayObject.name} dibuka pada <strong>Tahap {selectedPathwayObject.tahapPendaftaran}</strong>. Hanya sekolah yang membuka pendaftaran pada tahap ini yang akan ditampilkan.
+                        Jalur {selectedPathwayObject?.name} dibuka pada <strong>{selectedStageObject.name}</strong>. Hanya sekolah yang membuka pendaftaran pada tahap ini yang akan ditampilkan.
                     </AlertDescription>
                 </Alert>
             )}

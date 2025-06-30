@@ -20,38 +20,23 @@ import { getJalur, addJalur, updateJalur, deleteJalur, type Jalur } from "@/lib/
 import type { SchoolJenjang } from "@/lib/schoolService";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { getStages, type Tahap } from "@/lib/stageService";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 const pathwayFormSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(3, { message: "Nama jalur minimal 3 karakter." }),
-  tahapPendaftaran: z.coerce.number().int().min(1, { message: "Tahap pendaftaran harus minimal 1." }),
-  startDate: z.string().min(1, { message: "Tanggal buka wajib diisi." }),
-  endDate: z.string().min(1, { message: "Tanggal tutup wajib diisi." }),
+  tahapId: z.string().min(1, { message: "Tahap pendaftaran harus dipilih." }),
   allowedJenjang: z.array(z.enum(["SMP", "SMA", "SMK"])).min(1, { message: "Pilih setidaknya satu jenjang." }),
-}).refine(data => new Date(data.endDate) > new Date(data.startDate), {
-    message: "Tanggal tutup harus setelah tanggal buka.",
-    path: ["endDate"],
 });
-
 
 type PathwayFormValues = z.infer<typeof pathwayFormSchema>;
 const jenjangOptions: SchoolJenjang[] = ["SMA", "SMK", "SMP"];
 
-const toDateTimeLocal = (isoString: string | undefined): string => {
-    if (!isoString) return '';
-    try {
-        const date = new Date(isoString);
-        // Adjust for timezone offset to display correctly in local time
-        const timezoneOffset = date.getTimezoneOffset() * 60000;
-        const localDate = new Date(date.getTime() - timezoneOffset);
-        return localDate.toISOString().slice(0, 16);
-    } catch {
-        return '';
-    }
-};
-
 export default function PathwayManagementPage() {
     const [pathways, setPathways] = React.useState<Jalur[]>([]);
+    const [stages, setStages] = React.useState<Tahap[]>([]);
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
     const [editingPathway, setEditingPathway] = React.useState<Jalur | null>(null);
     const [isAlertOpen, setIsAlertOpen] = React.useState(false);
@@ -60,29 +45,28 @@ export default function PathwayManagementPage() {
 
     const form = useForm<PathwayFormValues>({
         resolver: zodResolver(pathwayFormSchema),
-        defaultValues: { name: '', tahapPendaftaran: 1, allowedJenjang: ["SMA", "SMK"], startDate: '', endDate: '' },
+        defaultValues: { name: '', tahapId: '', allowedJenjang: ["SMA", "SMK"] },
     });
 
     React.useEffect(() => {
         setPathways(getJalur());
+        setStages(getStages());
     }, []);
+
+    const stageMap = React.useMemo(() => {
+      return new Map(stages.map(s => [s.id, s.name]));
+    }, [stages]);
 
     const handleOpenDialog = (pathway: Jalur | null = null) => {
         setEditingPathway(pathway);
         if (pathway) {
-            form.reset({
-                ...pathway,
-                startDate: toDateTimeLocal(pathway.startDate),
-                endDate: toDateTimeLocal(pathway.endDate),
-            });
+            form.reset(pathway);
         } else {
             form.reset({
                 id: undefined,
                 name: '',
-                tahapPendaftaran: 1,
+                tahapId: '',
                 allowedJenjang: ["SMA", "SMK"],
-                startDate: toDateTimeLocal(new Date().toISOString()),
-                endDate: toDateTimeLocal(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()),
             });
         }
         setIsDialogOpen(true);
@@ -105,17 +89,11 @@ export default function PathwayManagementPage() {
 
     const processForm = (data: PathwayFormValues) => {
         try {
-            const pathwayData = {
-                ...data,
-                startDate: new Date(data.startDate).toISOString(),
-                endDate: new Date(data.endDate).toISOString(),
-            };
-
             if (editingPathway) {
-                updateJalur({ ...pathwayData, id: editingPathway.id });
+                updateJalur({ ...data, id: editingPathway.id });
                 toast({ title: "Jalur Diperbarui", description: `Jalur "${data.name}" telah diperbarui.` });
             } else {
-                addJalur(pathwayData);
+                addJalur(data);
                 toast({ title: "Jalur Ditambahkan", description: `Jalur "${data.name}" telah ditambahkan.` });
             }
             setPathways(getJalur());
@@ -138,7 +116,7 @@ export default function PathwayManagementPage() {
                                 <div>
                                     <CardTitle className="text-2xl sm:text-3xl font-headline">Manajemen Jalur Penerimaan</CardTitle>
                                     <CardDescription className="text-md mt-1">
-                                        Kelola jalur pendaftaran, jadwal, dan tahap pembukaannya.
+                                        Kelola jalur pendaftaran dan tahap pembukaannya.
                                     </CardDescription>
                                 </div>
                             </div>
@@ -154,9 +132,7 @@ export default function PathwayManagementPage() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Nama Jalur</TableHead>
-                                        <TableHead className="text-center">Tahap</TableHead>
-                                        <TableHead>Tanggal Buka</TableHead>
-                                        <TableHead>Tanggal Tutup</TableHead>
+                                        <TableHead>Tahap</TableHead>
                                         <TableHead>Jenjang</TableHead>
                                         <TableHead className="text-right">Aksi</TableHead>
                                     </TableRow>
@@ -166,9 +142,7 @@ export default function PathwayManagementPage() {
                                         pathways.map((pathway) => (
                                             <TableRow key={pathway.id}>
                                                 <TableCell className="font-medium">{pathway.name}</TableCell>
-                                                <TableCell className="text-center">{pathway.tahapPendaftaran}</TableCell>
-                                                <TableCell>{new Date(pathway.startDate).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</TableCell>
-                                                <TableCell>{new Date(pathway.endDate).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</TableCell>
+                                                <TableCell>{stageMap.get(pathway.tahapId) || 'Tidak diketahui'}</TableCell>
                                                 <TableCell className="flex gap-1">
                                                     {pathway.allowedJenjang.map(j => <Badge key={j} variant="outline">{j}</Badge>)}
                                                 </TableCell>
@@ -196,7 +170,7 @@ export default function PathwayManagementPage() {
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                                            <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
                                                 Belum ada jalur pendaftaran yang ditambahkan.
                                             </TableCell>
                                         </TableRow>
@@ -222,27 +196,26 @@ export default function PathwayManagementPage() {
                                     <FormMessage />
                                 </FormItem>
                             )} />
-                            <FormField control={form.control} name="tahapPendaftaran" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Tahap Pendaftaran</FormLabel>
-                                    <FormControl><Input type="number" {...field} placeholder="Contoh: 1" min="1" /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
+
+                            <FormField control={form.control} name="tahapId" render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Tahap Pendaftaran</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Pilih tahap" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {stages.map(stage => (
+                                            <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
                             )} />
-                            <FormField control={form.control} name="startDate" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Tanggal & Waktu Buka</FormLabel>
-                                    <FormControl><Input type="datetime-local" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                            <FormField control={form.control} name="endDate" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Tanggal & Waktu Tutup</FormLabel>
-                                    <FormControl><Input type="datetime-local" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
+
                              <FormField
                                 control={form.control}
                                 name="allowedJenjang"

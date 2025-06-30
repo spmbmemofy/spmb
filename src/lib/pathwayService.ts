@@ -4,23 +4,14 @@
 import { getFromLocalStorage, saveToLocalStorage } from './localStorage';
 import type { Jalur } from './types';
 
-const JALUR_STORAGE_KEY = 'allJalurData_v2';
-
-const now = new Date();
-// Define stage end/start times clearly
-const tahap1EndDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 1 week from now
-const tahap2EndDate = new Date(tahap1EndDate.getTime() + 7 * 24 * 60 * 60 * 1000); // 2 weeks from now
+const JALUR_STORAGE_KEY = 'allJalurData_v3';
 
 const initialJalurData: Jalur[] = [
-  // Tahap 1
-  { id: 'jalur-afirmasi', name: 'Afirmasi', tahapPendaftaran: 1, startDate: now.toISOString(), endDate: tahap1EndDate.toISOString(), allowedJenjang: ['SMA', 'SMK'] },
-  { id: 'jalur-mutasi', name: 'Mutasi', tahapPendaftaran: 1, startDate: now.toISOString(), endDate: tahap1EndDate.toISOString(), allowedJenjang: ['SMA', 'SMK'] },
-  
-  // Tahap 2
-  { id: 'jalur-prestasi', name: 'Prestasi', tahapPendaftaran: 2, startDate: tahap1EndDate.toISOString(), endDate: tahap2EndDate.toISOString(), allowedJenjang: ['SMA', 'SMK'] },
-  { id: 'jalur-domisili', name: 'Domisili', tahapPendaftaran: 2, startDate: tahap1EndDate.toISOString(), endDate: tahap2EndDate.toISOString(), allowedJenjang: ['SMA', 'SMK'] },
+  { id: 'jalur-afirmasi', name: 'Afirmasi', tahapId: 'tahap-1', allowedJenjang: ['SMA', 'SMK'] },
+  { id: 'jalur-mutasi', name: 'Mutasi', tahapId: 'tahap-1', allowedJenjang: ['SMA', 'SMK'] },
+  { id: 'jalur-prestasi', name: 'Prestasi', tahapId: 'tahap-2', allowedJenjang: ['SMA', 'SMK'] },
+  { id: 'jalur-domisili', name: 'Domisili', tahapId: 'tahap-2', allowedJenjang: ['SMA', 'SMK'] },
 ];
-
 
 export const initializeJalurData = (): void => {
   const existingData = getFromLocalStorage<Jalur[]>(JALUR_STORAGE_KEY, []);

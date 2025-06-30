@@ -9,12 +9,17 @@ export type SchoolSelection = {
 export type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
 export type DocumentStatus = "valid" | "invalid" | null;
 
+export interface Tahap {
+  id: string;
+  name: string;
+  startDate: string; // ISO String for datetime
+  endDate: string; // ISO String for datetime
+}
+
 export interface Jalur {
   id: string;
   name: string;
-  tahapPendaftaran: number;
-  startDate: string; // ISO String for datetime
-  endDate: string; // ISO String for datetime
+  tahapId: string;
   allowedJenjang: SchoolJenjang[];
 }
 

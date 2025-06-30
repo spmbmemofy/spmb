@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getSchools, addSchool, updateSchool, deleteSchool, type School, type SchoolJenjang } from "@/lib/schoolService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { getStages, type Tahap } from "@/lib/stageService";
 
 export const schoolFormSchema = z.object({
   id: z.string().optional(),
@@ -41,15 +42,16 @@ export const schoolFormSchema = z.object({
     prestasi: z.coerce.number().int().min(0).optional(),
     domisili: z.coerce.number().int().min(0).optional(),
   }).optional(),
-  majors: z.any().optional(), // Allow any value for majors as it's handled by headmaster
+  majors: z.any().optional(),
   statusPendaftaran: z.enum(["Buka", "Tutup", "Segera Penuh"]).optional(),
-  tahapPendaftaran: z.coerce.number().int().min(1).optional(),
+  tahapId: z.string().optional(),
 });
 
 type SchoolFormValues = z.infer<typeof schoolFormSchema>;
 
 export default function SchoolManagementPage() {
     const [schools, setSchools] = React.useState<School[]>([]);
+    const [stages, setStages] = React.useState<Tahap[]>([]);
     const [smpSearchTerm, setSmpSearchTerm] = React.useState("");
     const [smaSmkSearchTerm, setSmaSmkSearchTerm] = React.useState("");
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -67,6 +69,7 @@ export default function SchoolManagementPage() {
 
     React.useEffect(() => {
         setSchools(getSchools());
+        setStages(getStages());
     }, []);
 
     const filteredSmpSchools = React.useMemo(() => {
@@ -94,7 +97,7 @@ export default function SchoolManagementPage() {
                 id: '', npsn: '', namaSekolah: '', jenjang: 'SMA', jenis: 'Negeri',
                 alamat: '', kecamatan: '', telepon: '', akreditasi: 'A',
                 wilayah: '', kuota: 0, jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 },
-                majors: [], statusPendaftaran: 'Buka', tahapPendaftaran: 1,
+                majors: [], statusPendaftaran: 'Buka', tahapId: '',
             });
         }
         setIsDialogOpen(true);
@@ -292,7 +295,20 @@ export default function SchoolManagementPage() {
                                 <TabsContent value="data_pendaftaran" className="pt-4 space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <FormField control={form.control} name="wilayah" render={({ field }) => ( <FormItem><FormLabel>Wilayah (1-10)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                                        <FormField control={form.control} name="tahapPendaftaran" render={({ field }) => ( <FormItem><FormLabel>Tahap Pendaftaran</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                        <FormField control={form.control} name="tahapId" render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel>Tahap Pendaftaran</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Pilih tahap" /></SelectTrigger></FormControl>
+                                                <SelectContent>
+                                                    {stages.map(stage => (
+                                                        <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )} />
                                         <FormField control={form.control} name="statusPendaftaran" render={({ field }) => ( <FormItem><FormLabel>Status Pendaftaran</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Buka">Buka</SelectItem><SelectItem value="Tutup">Tutup</SelectItem><SelectItem value="Segera Penuh">Segera Penuh</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
                                     </div>
                                      <FormField control={form.control} name="kuota" render={({ field }) => ( <FormItem><FormLabel>Total Kuota (SMA)</FormLabel><CardDescription>Untuk SMK, total kuota dihitung dari jumlah kuota jurusan.</CardDescription><FormControl><Input type="number" {...field} disabled={selectedJenjang === 'SMK'} /></FormControl><FormMessage /></FormItem> )} />
