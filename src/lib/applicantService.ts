@@ -7,7 +7,7 @@ import type { Applicant, Jalur } from './types';
 import { getSchoolById, getSchools, type School } from './schoolService';
 import { getUsers } from './userService';
 
-const APPLICANTS_STORAGE_KEY = 'allApplicantsData';
+const APPLICANTS_STORAGE_KEY = 'allApplicantsData_v1';
 
 /**
  * Implements a cascading placement algorithm (Boston mechanism).

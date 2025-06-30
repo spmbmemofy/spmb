@@ -7,7 +7,7 @@ import type { ManagedApplicant } from './types';
 // Adding initial data for demonstration purposes.
 const initialManagedApplicants: ManagedApplicant[] = [];
 
-const MANAGED_APPLICANTS_STORAGE_KEY = 'managedApplicantsData_v2';
+const MANAGED_APPLICANTS_STORAGE_KEY = 'managedApplicantsData_v3';
 
 /**
  * Initializes the managed applicants data in localStorage if it doesn't already exist.

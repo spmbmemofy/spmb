@@ -6,7 +6,7 @@ import { initialUsers, type User } from './userData';
 import { deleteApplicantByNisn } from './applicantService';
 import { deleteManagedApplicantByNisn } from './managedApplicantService';
 
-const USERS_STORAGE_KEY = 'allUsersData_v2';
+const USERS_STORAGE_KEY = 'allUsersData_v3';
 
 /**
  * Initializes the users data in localStorage if it doesn't already exist.

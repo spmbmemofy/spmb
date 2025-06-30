@@ -35,7 +35,7 @@ export interface School {
 const initialSchools: School[] = [];
 
 
-const SCHOOLS_STORAGE_KEY = 'allSchoolsData_v3';
+const SCHOOLS_STORAGE_KEY = 'allSchoolsData_v4';
 
 // Service Functions
 /**
