@@ -15,3 +15,10 @@ export const generateAllMockApplicants = (): Applicant[] => {
     // This provides a clean slate for testing and development.
     return [];
 };
+
+export const jalurTahapMapping: Record<Jalur, number> = {
+  Afirmasi: 1,
+  Mutasi: 1,
+  Prestasi: 2,
+  Domisili: 2,
+};

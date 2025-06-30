@@ -12,13 +12,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { FileText, Save, School, ArrowUp, ArrowDown, AlertTriangle, ClipboardCheck } from 'lucide-react';
+import { FileText, Save, School, ArrowUp, ArrowDown, AlertTriangle, ClipboardCheck, Info } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { getSchools } from "@/lib/schoolService"; 
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
 import { getApplicants } from "@/lib/applicantService";
 import { type SchoolSelection } from "@/lib/types";
-import { jalurOptionsPlain } from "@/lib/mockData";
+import { jalurOptionsPlain, jalurTahapMapping } from "@/lib/mockData";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const studentSubdistrict = "Kec. Tanjung Redeb"; // Mock data, should come from student's biodata
@@ -91,9 +91,15 @@ export default function SchoolSelectionPage() {
   const availableSchools = React.useMemo(() => {
     if (!selectedPathway) return [];
     
+    const pathwayStage = jalurTahapMapping[selectedPathway as keyof typeof jalurTahapMapping];
+    if (!pathwayStage) return [];
+
     const applicantBiodata = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null)?.biodata;
 
     let schoolsToDisplay = allSchools.filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
+
+    // Filter schools by registration stage
+    schoolsToDisplay = schoolsToDisplay.filter(school => school.tahapPendaftaran === pathwayStage);
     
     // Filter by pathway/district
     const restrictedPathways = ["Afirmasi", "Domisili", "Mutasi"];
@@ -213,11 +219,20 @@ export default function SchoolSelectionPage() {
               <SelectContent>
                 {jalurOptionsPlain.map((pathway) => (
                   <SelectItem key={pathway} value={pathway}>
-                    {pathway}
+                    {pathway} (Tahap {jalurTahapMapping[pathway as keyof typeof jalurTahapMapping]})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {selectedPathway && jalurTahapMapping[selectedPathway as keyof typeof jalurTahapMapping] && (
+                <Alert variant="default" className="mt-2 text-primary-foreground bg-primary/90 border-primary [&>svg]:text-primary-foreground">
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Informasi Jalur Pendaftaran</AlertTitle>
+                    <AlertDescription>
+                        Jalur {selectedPathway} dibuka pada <strong>Tahap {jalurTahapMapping[selectedPathway as keyof typeof jalurTahapMapping]}</strong>. Hanya sekolah yang membuka pendaftaran pada tahap ini yang akan ditampilkan.
+                    </AlertDescription>
+                </Alert>
+            )}
           </div>
 
           {selectedPathway && (
@@ -289,7 +304,7 @@ export default function SchoolSelectionPage() {
                               ))
                             ) : (
                               <div className="flex items-center justify-center h-full text-muted-foreground p-4 text-center">
-                                <p>Tidak ada sekolah yang tersedia untuk jalur ini atau sesuai dengan kriteria pendaftaran Anda (misal: jenis kelamin/agama).</p>
+                                <p>Tidak ada sekolah yang tersedia untuk jalur dan tahap ini, atau tidak ada yang sesuai dengan kriteria pendaftaran Anda (misal: jenis kelamin/agama).</p>
                               </div>
                             )}
                           </Accordion>
