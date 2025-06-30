@@ -5,8 +5,13 @@ export type SchoolSelection = {
 };
 
 export type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
-export type Jalur = "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
 export type DocumentStatus = "valid" | "invalid" | null;
+
+export interface Jalur {
+  id: string;
+  name: string;
+  tahapPendaftaran: number;
+}
 
 export interface ActivityEvent {
   type: 'REGISTRATION_COMPLETED' | 'VERIFICATION_REJECTED' | 'FILES_RESUBMITTED' | 'VERIFICATION_APPROVED' | 'VERIFICATION_CANCELLED';
@@ -36,7 +41,7 @@ export interface Applicant {
   sekolahTujuanId: string;
   sekolahTujuanNama: string;
   schoolSelections: SchoolSelection[];
-  jalur: Jalur;
+  jalur: string;
   statusVerifikasi: ApplicantStatus;
   documentStatuses?: Record<string, DocumentStatus>;
   rejectionReason?: string;

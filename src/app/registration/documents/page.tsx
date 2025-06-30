@@ -17,8 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { getSchools } from "@/lib/schoolService"; 
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
 import { getApplicants } from "@/lib/applicantService";
-import { type SchoolSelection } from "@/lib/types";
-import { jalurOptionsPlain, jalurTahapMapping } from "@/lib/mockData";
+import type { SchoolSelection, Jalur } from "@/lib/types";
+import { getJalur } from "@/lib/pathwayService";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const studentSubdistrict = "Kec. Tanjung Redeb"; // Mock data, should come from student's biodata
@@ -28,6 +28,7 @@ export default function SchoolSelectionPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [allSchools, setAllSchools] = React.useState<ReturnType<typeof getSchools>>([]);
+  const [availablePathways, setAvailablePathways] = React.useState<Jalur[]>([]);
   const [selectedSelections, setSelectedSelections] = React.useState<SchoolSelection[]>([]);
   const [selectedPathway, setSelectedPathway] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -36,7 +37,9 @@ export default function SchoolSelectionPage() {
 
   React.useEffect(() => {
     const schools = getSchools();
+    const pathways = getJalur();
     setAllSchools(schools);
+    setAvailablePathways(pathways);
 
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
     const loggedInUser = getFromLocalStorage<LoginCredentials | null>("loginCredentials", null);
@@ -87,11 +90,15 @@ export default function SchoolSelectionPage() {
       }
     });
   };
+  
+  const selectedPathwayObject = React.useMemo(() => {
+    return availablePathways.find(p => p.name === selectedPathway);
+  }, [selectedPathway, availablePathways]);
 
   const availableSchools = React.useMemo(() => {
-    if (!selectedPathway) return [];
+    if (!selectedPathwayObject) return [];
     
-    const pathwayStage = jalurTahapMapping[selectedPathway as keyof typeof jalurTahapMapping];
+    const pathwayStage = selectedPathwayObject.tahapPendaftaran;
     if (!pathwayStage) return [];
 
     const applicantBiodata = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null)?.biodata;
@@ -103,7 +110,7 @@ export default function SchoolSelectionPage() {
     
     // Filter by pathway/district
     const restrictedPathways = ["Afirmasi", "Domisili", "Mutasi"];
-    if (restrictedPathways.includes(selectedPathway)) {
+    if (restrictedPathways.includes(selectedPathwayObject.name)) {
       schoolsToDisplay = schoolsToDisplay.filter(school => school.kecamatan === studentSubdistrict);
     }
     
@@ -117,7 +124,7 @@ export default function SchoolSelectionPage() {
     }
 
     return schoolsToDisplay;
-  }, [selectedPathway, allSchools]);
+  }, [selectedPathwayObject, allSchools]);
 
   React.useEffect(() => {
     if (isLoading || isLocked) return; 
@@ -217,19 +224,19 @@ export default function SchoolSelectionPage() {
                 <SelectValue placeholder="Pilih jalur pendaftaran Anda" />
               </SelectTrigger>
               <SelectContent>
-                {jalurOptionsPlain.map((pathway) => (
-                  <SelectItem key={pathway} value={pathway}>
-                    {pathway} (Tahap {jalurTahapMapping[pathway as keyof typeof jalurTahapMapping]})
+                {availablePathways.map((pathway) => (
+                  <SelectItem key={pathway.id} value={pathway.name}>
+                    {pathway.name} (Tahap {pathway.tahapPendaftaran})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {selectedPathway && jalurTahapMapping[selectedPathway as keyof typeof jalurTahapMapping] && (
+            {selectedPathwayObject && (
                 <Alert variant="default" className="mt-2 text-primary-foreground bg-primary/90 border-primary [&>svg]:text-primary-foreground">
                     <Info className="h-4 w-4" />
                     <AlertTitle>Informasi Jalur Pendaftaran</AlertTitle>
                     <AlertDescription>
-                        Jalur {selectedPathway} dibuka pada <strong>Tahap {jalurTahapMapping[selectedPathway as keyof typeof jalurTahapMapping]}</strong>. Hanya sekolah yang membuka pendaftaran pada tahap ini yang akan ditampilkan.
+                        Jalur {selectedPathwayObject.name} dibuka pada <strong>Tahap {selectedPathwayObject.tahapPendaftaran}</strong>. Hanya sekolah yang membuka pendaftaran pada tahap ini yang akan ditampilkan.
                     </AlertDescription>
                 </Alert>
             )}

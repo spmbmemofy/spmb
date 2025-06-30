@@ -5,6 +5,7 @@ import { initializeUsers } from './userService';
 import { initializeSchoolsData } from './schoolService';
 import { initializeManagedApplicantsData } from './managedApplicantService';
 import { initializeApplicantsData } from './applicantService';
+import { initializeJalurData } from './pathwayService';
 
 export function initializeAllData() {
   if (typeof window !== 'undefined') {
@@ -15,5 +16,6 @@ export function initializeAllData() {
     initializeSchoolsData();
     initializeManagedApplicantsData();
     initializeApplicantsData(); 
+    initializeJalurData();
   }
 }

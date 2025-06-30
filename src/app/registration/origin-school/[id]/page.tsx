@@ -14,9 +14,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Badge } from "@/components/ui/badge";
 import { getSchools, getSchoolById, type School } from "@/lib/schoolService";
 import { cn } from "@/lib/utils";
-import { jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
+import { statusVerifikasiOptionsPlain } from "@/lib/mockData";
 import { getApplicants } from "@/lib/applicantService";
 import type { Applicant, ApplicantStatus, SortConfig, SortDirection, SortKey } from "@/lib/types";
+import { getJalur } from "@/lib/pathwayService";
 
 
 const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
@@ -36,6 +37,7 @@ export default function OriginSchoolDetailPage() {
   const [originSchool, setOriginSchool] = React.useState<School | undefined>(undefined);
   const [applicants, setApplicants] = React.useState<Applicant[]>([]);
   const [schools, setSchools] = React.useState<School[]>([]);
+  const [jalurOptions, setJalurOptions] = React.useState<string[]>([]);
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedSekolahTujuan, setSelectedSekolahTujuan] = React.useState("Semua Sekolah Tujuan");
@@ -49,8 +51,10 @@ export default function OriginSchoolDetailPage() {
   React.useEffect(() => {
     const foundSchool = getSchoolById(originSchoolId);
     const allSchools = getSchools();
+    const allJalur = getJalur();
     setOriginSchool(foundSchool);
     setSchools(allSchools.filter(s => s.jenjang !== 'SMP'));
+    setJalurOptions(["Semua Jalur", ...allJalur.map(j => j.name)]);
 
     if (foundSchool) {
       const allApplicants = getApplicants();
@@ -201,7 +205,6 @@ export default function OriginSchoolDetailPage() {
   }
   
   const sekolahTujuanOptions = ["Semua Sekolah Tujuan", ...schools.map(s => s.namaSekolah)];
-  const jalurOptions = ["Semua Jalur", ...jalurOptionsPlain];
   const statusOptions = ["Semua Status", ...statusVerifikasiOptionsPlain];
 
   return (

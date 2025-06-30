@@ -84,6 +84,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       { href: '/registration/all-data', label: 'Semua Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
       { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
       { href: '/registration/school-management', label: 'Manajemen Sekolah', icon: Building, activePaths: ['/registration/school-management'] },
+      { href: '/registration/pathway-management', label: 'Manajemen Jalur', icon: GraduationCap, activePaths: ['/registration/pathway-management'] },
       { href: '/registration/superadmin', label: 'Manajemen Pengguna', icon: Shield, activePaths: ['/registration/superadmin'] }
     ];
     

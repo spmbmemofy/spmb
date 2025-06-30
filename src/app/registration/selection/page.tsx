@@ -13,13 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 import { getApplicants } from "@/lib/applicantService";
-import { jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
+import { statusVerifikasiOptionsPlain } from "@/lib/mockData";
 import { getSchoolByNPSN } from "@/lib/schoolService";
 import type { Applicant, ApplicantStatus, SortConfig, SortDirection, SortKey } from "@/lib/types";
 import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { getUsers } from "@/lib/userService";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { getJalur } from "@/lib/pathwayService";
 
 
 const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
@@ -33,6 +34,7 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
 
 export default function VerificationPage() {
   const [allApplicants, setAllApplicants] = React.useState<Applicant[]>([]);
+  const [jalurOptions, setJalurOptions] = React.useState<string[]>([]);
   const [schoolName, setSchoolName] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(true);
   const { toast } = useToast();
@@ -74,6 +76,7 @@ export default function VerificationPage() {
     });
 
     setAllApplicants(verifierSchoolApplicants);
+    setJalurOptions(["Semua Jalur", ...getJalur().map(j => j.name)]);
     setIsLoading(false);
   }, [router, toast]);
 
@@ -134,8 +137,7 @@ export default function VerificationPage() {
   const totalPages = React.useMemo(() => {
     return Math.ceil(sortedApplicants.length / pageSize);
   }, [sortedApplicants.length, pageSize]);
-
-  const jalurOptions = ["Semua Jalur", ...jalurOptionsPlain];
+  
   const statusOptions = ["Semua Status", ...statusVerifikasiOptionsPlain];
   
   if (isLoading) {

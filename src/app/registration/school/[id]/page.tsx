@@ -14,9 +14,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { getSchoolById, type School } from "@/lib/schoolService";
 import { cn } from "@/lib/utils";
-import { jalurOptionsPlain, statusVerifikasiOptionsPlain } from "@/lib/mockData";
+import { statusVerifikasiOptionsPlain } from "@/lib/mockData";
 import { getApplicants } from "@/lib/applicantService";
 import type { Applicant, ApplicantStatus, SortConfig, SortKey, SortDirection } from "@/lib/types";
+import { getJalur } from "@/lib/pathwayService";
 
 interface PathwayStats {
   nama: string;
@@ -26,10 +27,6 @@ interface PathwayStats {
   berkasTidakSesuai: number;
   totalPendaftar: number;
 }
-
-
-const jalurOptions = ["Semua Jalur", ...jalurOptionsPlain];
-const statusOptions = ["Semua Status", ...statusVerifikasiOptionsPlain];
 
 
 const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
@@ -51,7 +48,8 @@ export default function SchoolDetailPage() {
   
   const [school, setSchool] = React.useState<School | undefined>();
   const [currentSchoolApplicants, setCurrentSchoolApplicants] = React.useState<Applicant[]>([]);
-
+  const [jalurOptions, setJalurOptions] = React.useState<string[]>([]);
+  
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedJalur, setSelectedJalur] = React.useState("Semua Jalur");
   const [selectedStatus, setSelectedStatus] = React.useState<string>("Semua Status");
@@ -63,7 +61,9 @@ export default function SchoolDetailPage() {
   React.useEffect(() => {
     if (schoolId) {
         const foundSchool = getSchoolById(schoolId);
+        const allJalur = getJalur();
         setSchool(foundSchool);
+        setJalurOptions(["Semua Jalur", ...allJalur.map(j => j.name)]);
         const allApplicants = getApplicants();
         const schoolApplicants = allApplicants.filter(app => 
           app.schoolSelections?.some(selection => selection.schoolId === schoolId)
@@ -141,8 +141,11 @@ export default function SchoolDetailPage() {
     if (!school || !school.jalurKuota || !currentSchoolApplicants.length) {
       return [];
     }
+    
+    const pathways = getJalur();
 
-    return jalurOptionsPlain.map(jalurName => {
+    return pathways.map(jalur => {
+      const jalurName = jalur.name;
       const pathwayKey = jalurName.toLowerCase() as keyof typeof school.jalurKuota;
       const kuota = school.jalurKuota?.[pathwayKey] ?? 0;
 
@@ -328,7 +331,7 @@ export default function SchoolDetailPage() {
                   <SelectValue placeholder="Filter berdasarkan Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {statusOptions.map(status => (
+                  {statusVerifikasiOptionsPlain.map(status => (
                     <SelectItem key={status} value={status}>{status}</SelectItem>
                   ))}
                 </SelectContent>

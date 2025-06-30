@@ -10,7 +10,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { TrendingUp, Users, School, BookOpen, Star, UserCheck } from 'lucide-react';
 import { getSchools } from '@/lib/schoolService';
 import { getApplicants } from '@/lib/applicantService';
-import type { Applicant, Jalur } from '@/lib/types';
+import type { Applicant } from '@/lib/types';
+import { getJalur } from '@/lib/pathwayService';
 
 const barChartConfig = {
   pendaftar: {
@@ -88,15 +89,21 @@ export default function HomePage() {
     const menungguVerifikasi = allApplicants.filter(app => app.statusVerifikasi === "Menunggu Verifikasi").length;
 
     const jalurCounts = allApplicants.reduce((acc, app) => {
-        acc[app.jalur] = (acc[app.jalur] || 0) + 1;
+        if (app.jalur) {
+          acc[app.jalur] = (acc[app.jalur] || 0) + 1;
+        }
         return acc;
-    }, {} as Record<Jalur, number>);
+    }, {} as Record<string, number>);
     
     const jalurFavorit = Object.keys(jalurCounts).length > 0
         ? Object.entries(jalurCounts).sort((a, b) => b[1] - a[1])[0][0]
         : '-';
 
-    const jalurDistribution = Object.entries(jalurCounts).map(([name, value]) => ({ name: name.toLowerCase(), value, fill: `var(--color-${name.toLowerCase()})` }));
+    const jalurDistribution = Object.entries(jalurCounts).map(([name, value]) => ({ 
+        name: name.toLowerCase().replace(/\s+/g, '-'), 
+        value, 
+        fill: `var(--color-${name.toLowerCase().replace(/\s+/g, '-')})` 
+    }));
 
     const terverifikasi = allApplicants.filter(app => app.statusVerifikasi === 'Terverifikasi').length;
     const jumlahSiswa = totalPendaftar;
@@ -120,13 +127,19 @@ export default function HomePage() {
     };
   }, [allApplicants, schoolStats]);
   
-  const pieChartConfig = {
-    pendaftar: { label: "Pendaftar" },
-    afirmasi: { label: "Afirmasi", color: "hsl(var(--chart-1))" },
-    mutasi: { label: "Mutasi", color: "hsl(var(--chart-2))" },
-    prestasi: { label: "Prestasi", color: "hsl(var(--chart-3))" },
-    domisili: { label: "Domisili", color: "hsl(var(--chart-4))" },
-  } satisfies ChartConfig;
+  const pathways = React.useMemo(() => getJalur(), []);
+
+  const pieChartConfig = React.useMemo(() => {
+      const config: ChartConfig = { pendaftar: { label: "Pendaftar" } };
+      pathways.forEach((pathway, index) => {
+          const key = pathway.name.toLowerCase().replace(/\s+/g, '-');
+          config[key] = {
+              label: pathway.name,
+              color: `hsl(var(--chart-${(index % 5) + 1}))`
+          };
+      });
+      return config;
+  }, [pathways]);
 
   return (
     <div className="flex flex-1 flex-col p-4 sm:p-6 md:p-8 space-y-6">
@@ -274,7 +287,7 @@ export default function HomePage() {
             <CardDescription>Visualisasi pembagian pendaftar berdasarkan jalur yang dipilih.</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 flex items-center justify-center pb-0">
-            {allApplicants.length > 0 ? (
+            {globalStats.jalurDistribution.length > 0 ? (
                 <ChartContainer
                 config={pieChartConfig}
                 className="mx-auto aspect-square h-full max-h-[250px]"
@@ -298,23 +311,13 @@ export default function HomePage() {
             )}
           </CardContent>
            <CardFooter className="flex-col gap-2 text-sm pt-4">
-            <div className="flex w-full items-center justify-center gap-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded-full" style={{ backgroundColor: 'hsl(var(--chart-1))' }} />
-                Afirmasi
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded-full" style={{ backgroundColor: 'hsl(var(--chart-2))' }} />
-                Mutasi
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded-full" style={{ backgroundColor: 'hsl(var(--chart-3))' }} />
-                Prestasi
-              </div>
-               <div className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded-full" style={{ backgroundColor: 'hsl(var(--chart-4))' }} />
-                Domisili
-              </div>
+            <div className="flex w-full flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+              {pathways.map((pathway, index) => (
+                <div key={pathway.id} className="flex items-center gap-1.5">
+                  <span className="size-2.5 rounded-full" style={{ backgroundColor: `hsl(var(--chart-${(index % 5) + 1}))` }} />
+                  {pathway.name}
+                </div>
+              ))}
             </div>
           </CardFooter>
         </Card>
