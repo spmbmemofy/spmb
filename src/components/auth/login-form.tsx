@@ -33,6 +33,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { getFromLocalStorage, saveToLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { getUsers } from "@/lib/userService";
+import { getApplicants } from "@/lib/applicantService";
 import type { UserRole } from "@/lib/userData";
 
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
@@ -123,7 +124,14 @@ export function LoginForm() {
       
       // Redirect based on role
       if (user.role === 'applicant') {
-        router.push('/registration/dashboard');
+        const applicants = getApplicants();
+        const currentApplicant = applicants.find(app => app.nisn === user.username);
+        
+        if (currentApplicant && currentApplicant.statusVerifikasi) {
+            router.push('/registration/status');
+        } else {
+            router.push('/registration/dashboard');
+        }
       } else {
         router.push('/registration/home');
       }
