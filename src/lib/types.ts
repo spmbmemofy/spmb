@@ -9,7 +9,7 @@ export type Jalur = "Afirmasi" | "Mutasi" | "Prestasi" | "Domisili";
 export type DocumentStatus = "valid" | "invalid" | null;
 
 export interface ActivityEvent {
-  type: 'REGISTRATION_COMPLETED' | 'VERIFICATION_REJECTED' | 'FILES_RESUBMITTED' | 'VERIFICATION_APPROVED';
+  type: 'REGISTRATION_COMPLETED' | 'VERIFICATION_REJECTED' | 'FILES_RESUBMITTED' | 'VERIFICATION_APPROVED' | 'VERIFICATION_CANCELLED';
   timestamp: string; // ISO string
   actor: string; // e.g., 'Pendaftar' or verifier's name
   details?: string; // e.g., rejection reason

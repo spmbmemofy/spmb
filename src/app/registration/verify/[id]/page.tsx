@@ -5,7 +5,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle, FileText, Info, UserCircle, XCircle, ThumbsUp, ThumbsDown, Save, TrendingUp, BookOpen, AlertCircle, School, ScrollText, FileUp, Users } from 'lucide-react';
+import { ArrowLeft, CheckCircle, FileText, Info, UserCircle, XCircle, ThumbsUp, ThumbsDown, Save, TrendingUp, BookOpen, AlertCircle, School, ScrollText, FileUp, Users, Undo2 } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -107,6 +107,15 @@ const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ ap
           actor: event.actor,
           timestamp,
         };
+       case 'VERIFICATION_CANCELLED':
+        return {
+          icon: <Undo2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />,
+          bgColor: "bg-orange-100 dark:bg-orange-900",
+          title: "Verifikasi Dibatalkan",
+          description: "Verifikasi pendaftaran dibatalkan. Status kembali menjadi Menunggu Verifikasi.",
+          actor: event.actor,
+          timestamp,
+        };
       default:
         return null;
     }
@@ -148,6 +157,7 @@ export default function VerifyApplicantPage() {
   const [documentStatuses, setDocumentStatuses] = React.useState<Record<string, DocumentStatus>>({});
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
   const [isHistoryAlertOpen, setIsHistoryAlertOpen] = React.useState(false);
+  const [isCancelAlertOpen, setIsCancelAlertOpen] = React.useState(false);
   const [selectedAction, setSelectedAction] = React.useState<ActionType | null>(null);
   const [rejectionReason, setRejectionReason] = React.useState("");
   const [editableNilaiPrestasi, setEditableNilaiPrestasi] = React.useState(0);
@@ -273,6 +283,34 @@ export default function VerifyApplicantPage() {
     toast({ title: "Aksi Berhasil", description: toastMessage });
     setIsAlertOpen(false);
     setRejectionReason("");
+    router.push('/registration/selection');
+  };
+
+  const handleConfirmCancel = () => {
+    if (!applicant) return;
+
+    const creds = getFromLocalStorage<LoginCredentials | null>('loginCredentials', null);
+    const user = creds ? getUsers().find(u => u.username === creds.username) : null;
+    const verifierName = user ? user.fullName : 'Sistem';
+
+    const newEvent: ActivityEvent = { type: 'VERIFICATION_CANCELLED', timestamp: new Date().toISOString(), actor: verifierName };
+
+    const updatedApplicant: Applicant = {
+        ...applicant,
+        statusVerifikasi: "Menunggu Verifikasi",
+        documentStatuses: {}, // Reset all doc statuses
+        rejectionReason: undefined,
+        verifiedBy: undefined,
+        verificationTimestamp: undefined,
+        peringkat: null,
+        diterimaDiSekolahId: null,
+        activityHistory: [...(applicant.activityHistory || []), newEvent]
+    };
+
+    updateApplicant(updatedApplicant);
+
+    toast({ title: "Verifikasi Dibatalkan", description: `Verifikasi untuk ${applicant.fullName} telah dibatalkan.` });
+    setIsCancelAlertOpen(false);
     router.push('/registration/selection');
   };
   
@@ -435,7 +473,7 @@ export default function VerifyApplicantPage() {
                                     type="number"
                                     value={editableNilaiPrestasi}
                                     onChange={(e) => setEditableNilaiPrestasi(Number(e.target.value))}
-                                    disabled={!isVerifierAuthorized}
+                                    disabled={!isVerifierAuthorized || applicant.statusVerifikasi === 'Terverifikasi'}
                                     className="text-right"
                                 />
                             </TableCell>
@@ -471,8 +509,8 @@ export default function VerifyApplicantPage() {
                             <UserCircle className="mr-2 h-4 w-4 text-muted-foreground"/>
                             Kesesuaian Biodata
                         </span>
-                        {documentStatuses['biodata'] === 'valid' ? (
-                            <Badge variant="default" className="w-fit"><ThumbsUp className="mr-1.5 h-3 w-3"/>Diterima</Badge>
+                        {applicant.statusVerifikasi === 'Terverifikasi' ? (
+                             <Badge variant="default" className="w-fit"><ThumbsUp className="mr-1.5 h-3 w-3"/>Diterima</Badge>
                         ) : (
                             <Button
                                 size="sm"
@@ -493,8 +531,8 @@ export default function VerifyApplicantPage() {
                             <BookOpen className="mr-2 h-4 w-4 text-muted-foreground"/>
                             Kesesuaian Nilai Rapor
                         </span>
-                        {documentStatuses['nilai_rapor'] === 'valid' ? (
-                            <Badge variant="default" className="w-fit"><ThumbsUp className="mr-1.5 h-3 w-3"/>Diterima</Badge>
+                         {applicant.statusVerifikasi === 'Terverifikasi' ? (
+                             <Badge variant="default" className="w-fit"><ThumbsUp className="mr-1.5 h-3 w-3"/>Diterima</Badge>
                         ) : (
                             <Button
                                 size="sm"
@@ -522,7 +560,7 @@ export default function VerifyApplicantPage() {
                             {doc.label}
                           </a>
                         <div className="flex-shrink-0 flex gap-2">
-                           {documentStatuses[doc.id] === 'valid' ? (
+                           {applicant.statusVerifikasi === 'Terverifikasi' ? (
                                 <Badge variant="default" className="w-fit"><ThumbsUp className="mr-1.5 h-3 w-3"/>Diterima</Badge>
                             ) : (
                                 <Button 
@@ -550,10 +588,17 @@ export default function VerifyApplicantPage() {
                 <ScrollText className="mr-2 h-5 w-5" />
                 Lihat Riwayat
             </Button>
-            <Button size="lg" onClick={handleSaveClick} disabled={!isVerifierAuthorized}>
-                <Save className="mr-2 h-5 w-5" />
-                Simpan Status Verifikasi
-            </Button>
+            {applicant.statusVerifikasi === 'Terverifikasi' ? (
+                <Button size="lg" variant="destructive" onClick={() => setIsCancelAlertOpen(true)} disabled={!isVerifierAuthorized}>
+                    <XCircle className="mr-2 h-5 w-5" />
+                    Batalkan Verifikasi
+                </Button>
+            ) : (
+                <Button size="lg" onClick={handleSaveClick} disabled={!isVerifierAuthorized}>
+                    <Save className="mr-2 h-5 w-5" />
+                    Simpan Status Verifikasi
+                </Button>
+            )}
         </div>
       </div>
       
@@ -602,6 +647,21 @@ export default function VerifyApplicantPage() {
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setIsHistoryAlertOpen(false)}>Tutup</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isCancelAlertOpen} onOpenChange={setIsCancelAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Pembatalan Verifikasi</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin membatalkan verifikasi untuk pendaftar {applicant.fullName}? Status akan dikembalikan ke "Menunggu Verifikasi" dan peringkat akan dihapus.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Tidak</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCancel} className="bg-destructive hover:bg-destructive/90">Ya, Batalkan</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
