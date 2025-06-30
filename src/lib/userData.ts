@@ -12,16 +12,8 @@ export interface User {
 
 // In a real application, this data would come from a secure database.
 // Passwords should NEVER be stored in plaintext. This is for demonstration only.
-// Only a single superadmin is created by default for system access.
-export const initialUsers: User[] = [
-  {
-    id: 'superadmin-01',
-    username: 'superadmin',
-    password: 'password123',
-    role: 'superadmin',
-    fullName: 'Super Administrator',
-  },
-];
+// The superadmin is now hardcoded in the userService and is no longer part of initial localStorage data.
+export const initialUsers: User[] = [];
 
 export const roleDisplayNames: Record<UserRole, string> = {
   applicant: "Pendaftar",
