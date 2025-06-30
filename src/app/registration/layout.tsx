@@ -103,14 +103,15 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
 
     if (userRole === 'applicant') {
         const registrationProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
-        const registrationCompleted = registrationProgress?.registrationCompleted || false;
+        const registrationSubmitted = registrationProgress?.registrationCompleted || (applicant && applicant.statusVerifikasi);
         const needsCorrection = applicant?.statusVerifikasi === 'Berkas tidak sesuai';
+        const pendaftaranLabel = registrationSubmitted ? 'Lihat Pendaftaran' : 'Pendaftaran';
 
         return [
             { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
-            { href: '/registration/dashboard', label: 'Pendaftaran', icon: FileUp, activePaths: ['/registration/dashboard', '/registration/documents', '/registration/document-upload'] },
+            { href: '/registration/dashboard', label: pendaftaranLabel, icon: FileUp, activePaths: ['/registration/dashboard', '/registration/documents', '/registration/document-upload'] },
             { href: '/registration/correction', label: 'Perbaikan Data', icon: Edit, activePaths: ['/registration/correction'], hidden: !needsCorrection },
-            { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'], disabled: !registrationCompleted },
+            { href: '/registration/status', label: 'Status Pendaftaran', icon: ClipboardCheck, activePaths: ['/registration/status'], disabled: !registrationSubmitted },
             { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
         ].filter(item => !item.hidden);
     }

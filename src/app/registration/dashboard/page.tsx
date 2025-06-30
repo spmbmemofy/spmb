@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
 import { addressData, getDistricts, getSubdistricts, getVillages } from "@/lib/addressData";
 import { getManagedApplicants } from "@/lib/managedApplicantService";
+import { getApplicants } from "@/lib/applicantService";
 import { getSchoolById } from "@/lib/schoolService";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -282,8 +283,10 @@ function ApplicantDashboard() {
 
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+    const loggedInUser = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
+    const applicantData = loggedInUser?.username ? getApplicants().find(a => a.nisn === loggedInUser.username) : null;
     
-    if (savedProgress?.registrationCompleted) {
+    if (savedProgress?.registrationCompleted || (applicantData && applicantData.statusVerifikasi)) {
         setIsLocked(true);
     }
 
@@ -295,7 +298,6 @@ function ApplicantDashboard() {
       return;
     }
 
-    const loggedInUser = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
     if (loggedInUser?.username) {
       const managedApplicants = getManagedApplicants();
       const studentData = managedApplicants.find(app => app.nisn === loggedInUser.username);

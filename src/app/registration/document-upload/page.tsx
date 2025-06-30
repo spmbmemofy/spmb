@@ -11,7 +11,7 @@ import { UploadCloud, FileUp, Paperclip, CheckCircle2, AlertCircle, ArrowLeft, C
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
-import { createOrUpdateApplicantFromRegistration } from "@/lib/applicantService";
+import { createOrUpdateApplicantFromRegistration, getApplicants } from "@/lib/applicantService";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getSchoolById } from "@/lib/schoolService";
 
@@ -122,6 +122,9 @@ export default function DocumentUploadPage() {
   
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+    const loggedInUser = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
+    const applicantData = loggedInUser?.username ? getApplicants().find(a => a.nisn === loggedInUser.username) : null;
+
     if (!savedProgress?.hasProfilePhoto) {
       toast({
         variant: "destructive",
@@ -132,7 +135,7 @@ export default function DocumentUploadPage() {
       return; 
     }
     
-    if (savedProgress?.registrationCompleted) {
+    if (savedProgress?.registrationCompleted || (applicantData && applicantData.statusVerifikasi)) {
         setIsLocked(true);
     }
     

@@ -15,7 +15,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FileText, Save, School, ArrowUp, ArrowDown, AlertTriangle, ClipboardCheck } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { getSchools } from "@/lib/schoolService"; 
-import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress } from "@/lib/localStorage";
+import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
+import { getApplicants } from "@/lib/applicantService";
 import { type SchoolSelection } from "@/lib/types";
 import { jalurOptionsPlain } from "@/lib/mockData";
 
@@ -38,6 +39,9 @@ export default function SchoolSelectionPage() {
     setAllSchools(schools);
 
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
+    const loggedInUser = getFromLocalStorage<LoginCredentials | null>("loginCredentials", null);
+    const applicantData = loggedInUser?.username ? getApplicants().find(a => a.nisn === loggedInUser.username) : null;
+    
     if (!savedProgress?.hasProfilePhoto) {
       toast({
         variant: "destructive",
@@ -51,7 +55,7 @@ export default function SchoolSelectionPage() {
     if (savedProgress) {
       if (savedProgress.schoolSelections) setSelectedSelections(savedProgress.schoolSelections);
       if (savedProgress.pathway) setSelectedPathway(savedProgress.pathway);
-      if (savedProgress.registrationCompleted) {
+      if (savedProgress.registrationCompleted || (applicantData && applicantData.statusVerifikasi)) {
         setIsLocked(true);
       }
     }
