@@ -92,57 +92,66 @@ export function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const allUsers = getUsers();
     const user = allUsers.find(
-      (u) => u.username.toLowerCase() === values.username.toLowerCase()
+      (u) =>
+        u.username.toLowerCase() === values.username.toLowerCase() &&
+        u.password === values.password
     );
 
-    let isLoginSuccessful = false;
-    if (user && user.password === values.password) {
-        if (values.role === 'applicant' && user.role === 'applicant') {
-            isLoginSuccessful = true;
-        } else if (values.role === 'admin' && user.role !== 'applicant') {
-            isLoginSuccessful = true;
-        }
+    // Check if a user with matching credentials was found
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Login Gagal",
+        description: "Kombinasi nama pengguna atau kata sandi tidak valid.",
+      });
+      setIsSubmitting(false);
+      return;
     }
 
+    // Now, check if the role matches
+    const isApplicantRoleInForm = values.role === 'applicant';
+    const isUserAnApplicant = user.role === 'applicant';
 
-    if (isLoginSuccessful && user) {
-      saveToLocalStorage<LoginCredentials>(LOCAL_STORAGE_LOGIN_KEY, {
-        username: values.username,
-        role: user.role, // Save the actual specific role for the session
-        rememberMe: values.rememberMe,
-      });
+    if (isApplicantRoleInForm !== isUserAnApplicant) {
+        toast({
+            variant: "destructive",
+            title: "Login Gagal",
+            description: "Peran yang Anda pilih tidak sesuai untuk pengguna ini.",
+        });
+        setIsSubmitting(false);
+        return;
+    }
 
-      toast({
-          title: "Login Berhasil",
-          description: `Selamat datang, ${user.fullName}!`,
-      });
+    // If all checks pass, proceed with login
+    saveToLocalStorage<LoginCredentials>(LOCAL_STORAGE_LOGIN_KEY, {
+      username: values.username,
+      role: user.role, // Save the actual specific role for the session
+      rememberMe: values.rememberMe,
+    });
+
+    toast({
+        title: "Login Berhasil",
+        description: `Selamat datang, ${user.fullName}!`,
+    });
+    
+    // Redirect based on role
+    if (user.role === 'applicant') {
+      const applicants = getApplicants();
+      const currentApplicant = applicants.find(app => app.nisn === user.username);
       
-      // Redirect based on role
-      if (user.role === 'applicant') {
-        const applicants = getApplicants();
-        const currentApplicant = applicants.find(app => app.nisn === user.username);
-        
-        if (currentApplicant && currentApplicant.statusVerifikasi) {
-            router.push('/registration/status');
-        } else {
-            router.push('/registration/dashboard');
-        }
+      if (currentApplicant && currentApplicant.statusVerifikasi) {
+          router.push('/registration/status');
       } else {
-        router.push('/registration/home');
+          router.push('/registration/dashboard');
       }
-
     } else {
-      toast({
-          variant: "destructive",
-          title: "Login Gagal",
-          description: "Kombinasi peran, nama pengguna, atau kata sandi tidak valid.",
-      });
+      router.push('/registration/home');
     }
+
     setIsSubmitting(false);
   }
 
