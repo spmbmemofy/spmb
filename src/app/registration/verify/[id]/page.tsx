@@ -322,7 +322,6 @@ export default function VerifyApplicantPage() {
             </Button>
             <div>
               <h1 className="text-2xl font-bold">{applicant.fullName}</h1>
-              <p className="text-muted-foreground">NISN: {applicant.nisn}</p>
             </div>
           </div>
         </div>
@@ -359,7 +358,7 @@ export default function VerifyApplicantPage() {
             <Card>
                <CardHeader><CardTitle className="flex items-center text-lg"><Info className="mr-2"/>Info Pendaftaran</CardTitle></CardHeader>
               <CardContent className="space-y-3 text-sm">
-                   <div className="flex justify-between"><span className="text-muted-foreground">No. Registrasi</span><span className="font-medium">{applicant.noRegistrasi}</span></div>
+                   <div className="flex justify-between"><span className="text-muted-foreground">NISN</span><span className="font-medium">{applicant.nisn}</span></div>
                    <div className="flex justify-between"><span className="text-muted-foreground">Asal Sekolah</span><span className="font-medium">{applicant.asalSekolahNama}</span></div>
                    <div className="flex justify-between"><span className="text-muted-foreground">No. Telepon</span><span className="font-medium">{applicant?.contactNumber || '-'}</span></div>
               </CardContent>

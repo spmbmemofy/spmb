@@ -209,7 +209,6 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
   const submissionTime = new Date().toISOString();
 
   const applicantDataFromProgress = {
-    noRegistrasi: creds.username!,
     fullName: progress.biodata.fullName,
     nisn: progress.biodata.nisn,
     asalSekolahId: originSchool?.id || 'unknown-origin',

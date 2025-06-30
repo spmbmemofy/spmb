@@ -29,7 +29,6 @@ export interface Major {
 
 export interface Applicant {
   id: string;
-  noRegistrasi: string;
   fullName: string;
   nisn: string;
   asalSekolahId: string;
