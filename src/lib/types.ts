@@ -1,4 +1,6 @@
 
+import type { SchoolJenjang } from './schoolService';
+
 export type SchoolSelection = {
   schoolId: string;
   major: string | null;
@@ -11,6 +13,9 @@ export interface Jalur {
   id: string;
   name: string;
   tahapPendaftaran: number;
+  startDate: string; // ISO String for datetime
+  endDate: string; // ISO String for datetime
+  allowedJenjang: SchoolJenjang[];
 }
 
 export interface ActivityEvent {

@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { FileText, Save, School, ArrowUp, ArrowDown, AlertTriangle, ClipboardCheck, Info } from 'lucide-react';
+import { FileText, Save, School, ArrowUp, ArrowDown, AlertTriangle, ClipboardCheck, Info, Clock } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { getSchools } from "@/lib/schoolService"; 
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
@@ -28,18 +28,30 @@ export default function SchoolSelectionPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [allSchools, setAllSchools] = React.useState<ReturnType<typeof getSchools>>([]);
-  const [availablePathways, setAvailablePathways] = React.useState<Jalur[]>([]);
   const [selectedSelections, setSelectedSelections] = React.useState<SchoolSelection[]>([]);
   const [selectedPathway, setSelectedPathway] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isLocked, setIsLocked] = React.useState(false);
 
+  const allPathways = React.useMemo(() => getJalur(), []);
+
+  const availablePathways = React.useMemo(() => {
+    const now = new Date();
+    return allPathways.filter(pathway => {
+        try {
+            const startDate = new Date(pathway.startDate);
+            const endDate = new Date(pathway.endDate);
+            return now >= startDate && now <= endDate;
+        } catch (e) {
+            return false; // Invalid date format, exclude it
+        }
+    });
+  }, [allPathways]);
+
   React.useEffect(() => {
     const schools = getSchools();
-    const pathways = getJalur();
     setAllSchools(schools);
-    setAvailablePathways(pathways);
 
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
     const loggedInUser = getFromLocalStorage<LoginCredentials | null>("loginCredentials", null);
@@ -92,8 +104,8 @@ export default function SchoolSelectionPage() {
   };
   
   const selectedPathwayObject = React.useMemo(() => {
-    return availablePathways.find(p => p.name === selectedPathway);
-  }, [selectedPathway, availablePathways]);
+    return allPathways.find(p => p.name === selectedPathway);
+  }, [selectedPathway, allPathways]);
 
   const availableSchools = React.useMemo(() => {
     if (!selectedPathwayObject) return [];
@@ -104,6 +116,11 @@ export default function SchoolSelectionPage() {
     const applicantBiodata = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null)?.biodata;
 
     let schoolsToDisplay = allSchools.filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
+    
+    // Filter by allowed jenjang for the pathway
+    schoolsToDisplay = schoolsToDisplay.filter(school => 
+      selectedPathwayObject.allowedJenjang.includes(school.jenjang)
+    );
 
     // Filter schools by registration stage
     schoolsToDisplay = schoolsToDisplay.filter(school => school.tahapPendaftaran === pathwayStage);
@@ -224,11 +241,18 @@ export default function SchoolSelectionPage() {
                 <SelectValue placeholder="Pilih jalur pendaftaran Anda" />
               </SelectTrigger>
               <SelectContent>
-                {availablePathways.map((pathway) => (
-                  <SelectItem key={pathway.id} value={pathway.name}>
-                    {pathway.name} (Tahap {pathway.tahapPendaftaran})
-                  </SelectItem>
-                ))}
+                {availablePathways.length > 0 ? (
+                  availablePathways.map((pathway) => (
+                    <SelectItem key={pathway.id} value={pathway.name}>
+                      {pathway.name} (Tahap {pathway.tahapPendaftaran})
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-sm text-muted-foreground">
+                    <Clock className="mx-auto h-6 w-6 mb-2" />
+                    Tidak ada jalur pendaftaran yang sedang dibuka saat ini.
+                  </div>
+                )}
               </SelectContent>
             </Select>
             {selectedPathwayObject && (

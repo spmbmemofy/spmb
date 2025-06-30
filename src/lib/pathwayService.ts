@@ -4,13 +4,17 @@
 import { getFromLocalStorage, saveToLocalStorage } from './localStorage';
 import type { Jalur } from './types';
 
-const JALUR_STORAGE_KEY = 'allJalurData_v1';
+const JALUR_STORAGE_KEY = 'allJalurData_v2';
+
+const now = new Date();
+const oneWeek = 7 * 24 * 60 * 60 * 1000;
+const twoWeeks = 14 * 24 * 60 * 60 * 1000;
 
 const initialJalurData: Jalur[] = [
-  { id: 'jalur-afirmasi', name: 'Afirmasi', tahapPendaftaran: 1 },
-  { id: 'jalur-mutasi', name: 'Mutasi', tahapPendaftaran: 1 },
-  { id: 'jalur-prestasi', name: 'Prestasi', tahapPendaftaran: 2 },
-  { id: 'jalur-domisili', name: 'Domisili', tahapPendaftaran: 2 },
+  { id: 'jalur-afirmasi', name: 'Afirmasi', tahapPendaftaran: 1, startDate: now.toISOString(), endDate: new Date(now.getTime() + oneWeek).toISOString(), allowedJenjang: ['SMA', 'SMK'] },
+  { id: 'jalur-mutasi', name: 'Mutasi', tahapPendaftaran: 1, startDate: now.toISOString(), endDate: new Date(now.getTime() + oneWeek).toISOString(), allowedJenjang: ['SMA', 'SMK'] },
+  { id: 'jalur-prestasi', name: 'Prestasi', tahapPendaftaran: 2, startDate: new Date(now.getTime() + oneWeek + 1).toISOString(), endDate: new Date(now.getTime() + twoWeeks).toISOString(), allowedJenjang: ['SMA', 'SMK'] },
+  { id: 'jalur-domisili', name: 'Domisili', tahapPendaftaran: 2, startDate: new Date(now.getTime() + oneWeek + 1).toISOString(), endDate: new Date(now.getTime() + twoWeeks).toISOString(), allowedJenjang: ['SMA', 'SMK'] },
 ];
 
 export const initializeJalurData = (): void => {
