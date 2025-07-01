@@ -9,6 +9,37 @@ import { getUsers } from './userService';
 
 const APPLICANTS_STORAGE_KEY = 'allApplicantsData_v1';
 
+function getApplicantRT(applicant: Applicant): string | null {
+    if (!applicant.rtRw) return null;
+    // handles "RT 01/RW 02", "01/02", "RT 1", "1"
+    return applicant.rtRw.split('/')[0].replace(/rt/i, '').trim();
+}
+
+function isPriority(applicant: Applicant, school: School): boolean {
+    if (!school.priorityDomiciles || school.priorityDomiciles.length === 0 || !applicant.village) {
+        return false;
+    }
+
+    const priorityRule = school.priorityDomiciles.find(p => p.village === applicant.village);
+    if (!priorityRule) {
+        return false;
+    }
+
+    // If rts array is empty, it means the whole village is priority.
+    if (priorityRule.rts.length === 0) {
+        return true;
+    }
+    
+    // Otherwise, check if applicant's RT is in the priority list.
+    const applicantRT = getApplicantRT(applicant);
+    if (!applicantRT) {
+        return false; // Cannot determine RT, so not priority.
+    }
+
+    return priorityRule.rts.includes(applicantRT);
+}
+
+
 /**
  * Implements a cascading placement algorithm (Boston mechanism).
  * Iterates through each choice priority, attempting to place applicants
@@ -87,8 +118,19 @@ function recalculateAllRanks(): void {
             const jalur = isSmk ? jalurIfSmk : majorOrJalur;
             const majorName = isSmk ? majorOrJalur : null;
             
-            // Sort applicants by score.
-            groupApplicants.sort((a, b) => calculateScore(b, choiceIndex === 0) - calculateScore(a, choiceIndex === 0));
+            // Sort applicants by domicile priority, then by score.
+            groupApplicants.sort((a, b) => {
+                // Only apply priority for Domisili pathway
+                if (jalur.toLowerCase() === 'domisili') {
+                    const isAPriority = isPriority(a, school);
+                    const isBPriority = isPriority(b, school);
+                    if (isAPriority && !isBPriority) return -1; // a comes first
+                    if (!isAPriority && isBPriority) return 1;  // b comes first
+                }
+    
+                // If priority is the same (or not Domisili pathway), sort by score
+                return calculateScore(b, choiceIndex === 0) - calculateScore(a, choiceIndex === 0);
+            });
 
             let pathwayQuota = 0;
             const pathwayKey = jalur.toLowerCase() as 'afirmasi' | 'mutasi' | 'prestasi' | 'domisili';
@@ -217,7 +259,6 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
     sekolahTujuanNama: getSchoolById(progress.schoolSelections[0].schoolId)?.namaSekolah || 'Unknown Destination',
     schoolSelections: progress.schoolSelections,
     jalur: progress.pathway as Jalur,
-    semesterGrades: progress.biodata.semesterGrades,
     statusVerifikasi: 'Menunggu Verifikasi' as const,
     submissionTimestamp: submissionTime,
     rejectionReason: undefined,

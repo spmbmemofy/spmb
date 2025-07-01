@@ -492,9 +492,15 @@ function DomicileManagementView() {
     const { toast } = useToast();
     const [schools, setSchools] = React.useState<School[]>([]);
     const [subdistrictMap, setSubdistrictMap] = React.useState<Record<string, string[]>>({});
+    
+    // Dialog state
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
     const [editingSchool, setEditingSchool] = React.useState<School | null>(null);
+    
+    // State for inputs inside the dialog
     const [selectedVillages, setSelectedVillages] = React.useState<Set<string>>(new Set());
+    const [priorityVillages, setPriorityVillages] = React.useState<Set<string>>(new Set());
+    const [priorityRts, setPriorityRts] = React.useState<Record<string, string>>({});
 
     React.useEffect(() => {
         const smaSchools = getSchools().filter(s => s.jenjang === 'SMA');
@@ -507,27 +513,64 @@ function DomicileManagementView() {
     const handleOpenDialog = (school: School) => {
         setEditingSchool(school);
         setSelectedVillages(new Set(school.allowedVillages || []));
+        setPriorityVillages(new Set(school.priorityDomiciles?.map(p => p.village) || []));
+        const initialRts = school.priorityDomiciles?.reduce((acc, domicile) => {
+            if (domicile.rts.length > 0) {
+                acc[domicile.village] = domicile.rts.join(', ');
+            }
+            return acc;
+        }, {} as Record<string, string>) || {};
+        setPriorityRts(initialRts);
         setIsDialogOpen(true);
     };
-    
+
     const handleVillageToggle = (village: string, checked: boolean) => {
         setSelectedVillages(prev => {
             const newSet = new Set(prev);
-            if (checked) {
-                newSet.add(village);
-            } else {
-                newSet.delete(village);
-            }
+            if (checked) newSet.add(village);
+            else newSet.delete(village);
             return newSet;
         });
+
+        // If a village is disallowed, it cannot be a priority
+        if (!checked) {
+            handlePriorityVillageToggle(village, false);
+        }
+    };
+
+    const handlePriorityVillageToggle = (village: string, checked: boolean) => {
+        setPriorityVillages(prev => {
+            const newSet = new Set(prev);
+            if (checked) newSet.add(village);
+            else newSet.delete(village);
+            return newSet;
+        });
+
+        // If a village is no longer priority, clear its RTs
+        if (!checked) {
+            setPriorityRts(prev => {
+                const newRts = { ...prev };
+                delete newRts[village];
+                return newRts;
+            });
+        }
     };
 
     const handleSave = () => {
         if (!editingSchool) return;
         
+        const allowedVillagesArr = Array.from(selectedVillages);
+        const priorityDomicilesArr = Array.from(priorityVillages)
+            .filter(village => selectedVillages.has(village)) // Only save priority if it's also an allowed village
+            .map(village => ({
+                village: village,
+                rts: (priorityRts[village] || '').split(',').map(rt => rt.trim()).filter(Boolean)
+            }));
+
         const updatedSchoolData = {
             ...editingSchool,
-            allowedVillages: Array.from(selectedVillages),
+            allowedVillages: allowedVillagesArr,
+            priorityDomiciles: priorityDomicilesArr,
         };
 
         try {
@@ -545,7 +588,7 @@ function DomicileManagementView() {
             <Card>
                 <CardHeader>
                     <CardTitle>Pengaturan Domisili Jalur Zonasi</CardTitle>
-                    <CardDescription>Atur kelurahan mana saja yang dapat mendaftar ke sekolah tertentu melalui jalur domisili/zonasi. Jika tidak ada kelurahan yang diatur untuk sebuah SMA, maka semua pendaftar dari kecamatan sekolah tersebut akan diizinkan (perilaku default).</CardDescription>
+                    <CardDescription>Atur kelurahan mana saja yang dapat mendaftar ke sekolah tertentu melalui jalur domisili. Anda juga dapat memberikan prioritas pada kelurahan atau RT tertentu.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="rounded-md border">
@@ -553,7 +596,8 @@ function DomicileManagementView() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Nama Sekolah (SMA)</TableHead>
-                                    <TableHead>Kelurahan Terdaftar</TableHead>
+                                    <TableHead>Kelurahan Diizinkan</TableHead>
+                                    <TableHead>Kelurahan Prioritas</TableHead>
                                     <TableHead className="text-right">Aksi</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -565,6 +609,12 @@ function DomicileManagementView() {
                                             {school.allowedVillages && school.allowedVillages.length > 0
                                                 ? <Badge>{school.allowedVillages.length} kelurahan</Badge>
                                                 : <Badge variant="secondary">Semua di kecamatan</Badge>
+                                            }
+                                        </TableCell>
+                                        <TableCell>
+                                            {school.priorityDomiciles && school.priorityDomiciles.length > 0
+                                                ? <Badge variant="default">{school.priorityDomiciles.length} kelurahan</Badge>
+                                                : <Badge variant="secondary">Tidak ada</Badge>
                                             }
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -581,25 +631,50 @@ function DomicileManagementView() {
             </Card>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="sm:max-w-3xl">
+                <DialogContent className="sm:max-w-4xl">
                     <DialogHeader>
                         <DialogTitle>Atur Domisili untuk {editingSchool?.namaSekolah}</DialogTitle>
-                        <DialogDescription>Pilih semua kelurahan yang diizinkan untuk mendaftar ke sekolah ini melalui jalur domisili.</DialogDescription>
+                        <DialogDescription>
+                            Pilih kelurahan yang diizinkan, lalu opsional tetapkan prioritas untuk kelurahan atau RT tertentu.
+                        </DialogDescription>
                     </DialogHeader>
                     <ScrollArea className="h-96 w-full rounded-md border p-4">
                         <div className="space-y-6">
                             {Object.entries(subdistrictMap).map(([kecamatan, villages]) => (
                                 <div key={kecamatan}>
                                     <h4 className="font-semibold text-muted-foreground mb-3 border-b pb-2">{kecamatan}</h4>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                                         {villages.map(village => (
-                                            <div key={village} className="flex items-center space-x-2">
-                                                <Checkbox
-                                                    id={village}
-                                                    checked={selectedVillages.has(village)}
-                                                    onCheckedChange={(checked) => handleVillageToggle(village, !!checked)}
-                                                />
-                                                <Label htmlFor={village} className="font-normal text-sm cursor-pointer">{village}</Label>
+                                            <div key={village} className="p-2 rounded-md border border-transparent hover:bg-muted/50">
+                                                <div className="flex items-center space-x-3">
+                                                    <Checkbox
+                                                        id={`allow-${village}`}
+                                                        checked={selectedVillages.has(village)}
+                                                        onCheckedChange={(checked) => handleVillageToggle(village, !!checked)}
+                                                    />
+                                                    <Label htmlFor={`allow-${village}`} className="font-normal text-sm cursor-pointer flex-1">{village}</Label>
+                                                </div>
+                                                {selectedVillages.has(village) && (
+                                                    <div className="pl-7 mt-2 space-y-2">
+                                                        <div className="flex items-center space-x-3">
+                                                            <Checkbox
+                                                                id={`priority-${village}`}
+                                                                checked={priorityVillages.has(village)}
+                                                                onCheckedChange={(checked) => handlePriorityVillageToggle(village, !!checked)}
+                                                            />
+                                                            <Label htmlFor={`priority-${village}`} className="text-xs font-normal">Jadikan Prioritas</Label>
+                                                        </div>
+                                                        {priorityVillages.has(village) && (
+                                                            <Input
+                                                                id={`rt-${village}`}
+                                                                placeholder="RT Prioritas (e.g., 1, 5, 12). Kosongkan jika seluruh kelurahan prioritas."
+                                                                value={priorityRts[village] || ''}
+                                                                onChange={(e) => setPriorityRts(prev => ({ ...prev, [village]: e.target.value }))}
+                                                                className="h-8 text-xs"
+                                                            />
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>

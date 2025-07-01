@@ -2,7 +2,7 @@
 'use client';
 
 import { getFromLocalStorage, saveToLocalStorage } from './localStorage';
-import type { Major } from './types';
+import type { Major, PriorityDomicile } from './types';
 
 // Type Definitions
 export type SchoolJenjang = 'SMP' | 'SMA' | 'SMK';
@@ -30,6 +30,7 @@ export interface School {
   allowedGenders?: ('Laki-laki' | 'Perempuan')[];
   allowedReligions?: string[];
   allowedVillages?: string[];
+  priorityDomiciles?: PriorityDomicile[];
 }
 
 // All initial data has been removed to provide a clean slate.

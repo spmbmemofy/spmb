@@ -17,7 +17,7 @@ export interface Tahap {
 }
 
 export interface Jalur {
-  id: string;
+  id:string;
   name: string;
   tahapId: string;
   allowedJenjang: SchoolJenjang[];
@@ -40,6 +40,11 @@ export interface Major {
     domisili: number;
   };
   berkasPendukung?: string;
+}
+
+export interface PriorityDomicile {
+  village: string;
+  rts: string[]; // Empty array means the whole village is priority
 }
 
 export interface Applicant {
