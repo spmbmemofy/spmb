@@ -22,6 +22,7 @@ import { getSchools, addSchool, updateSchool, deleteSchool, type School, type Sc
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { Major } from "@/lib/types";
+import { getStages, type Tahap } from "@/lib/stageService";
 
 export const schoolFormSchema = z.object({
   id: z.string().optional(),
@@ -34,6 +35,7 @@ export const schoolFormSchema = z.object({
   telepon: z.string().min(9, { message: "Nomor telepon minimal 9 karakter." }),
   akreditasi: z.enum(["A", "B", "C", "Belum Terakreditasi"]),
   
+  tahapId: z.string().optional(),
   kuota: z.coerce.number().int().min(0).optional(),
   jalurKuota: z.object({
     afirmasi: z.coerce.number().int().min(0).optional(),
@@ -61,6 +63,7 @@ type MajorFormValues = z.infer<typeof majorFormSchema>;
 
 export default function SchoolManagementPage() {
     const [schools, setSchools] = React.useState<School[]>([]);
+    const [stages, setStages] = React.useState<Tahap[]>([]);
     const [smpSearchTerm, setSmpSearchTerm] = React.useState("");
     const [smaSmkSearchTerm, setSmaSmkSearchTerm] = React.useState("");
     
@@ -100,6 +103,7 @@ export default function SchoolManagementPage() {
 
     React.useEffect(() => {
         setSchools(getSchools());
+        setStages(getStages());
     }, []);
 
     React.useEffect(() => {
@@ -137,6 +141,7 @@ export default function SchoolManagementPage() {
             schoolForm.reset({
                 id: '', npsn: '', namaSekolah: '', jenjang: 'SMA', jenis: 'Negeri',
                 alamat: '', kecamatan: '', telepon: '', akreditasi: 'A',
+                tahapId: undefined,
                 kuota: 0, jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }, majors: []
             });
         }
@@ -393,6 +398,36 @@ export default function SchoolManagementPage() {
                                     <FormField control={schoolForm.control} name="kecamatan" render={({ field }) => ( <FormItem><FormLabel>Kecamatan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                                 </TabsContent>
                                 <TabsContent value="data_pendaftaran" className="pt-4 space-y-6">
+                                    {selectedJenjang !== 'SMP' && (
+                                        <FormField
+                                            control={schoolForm.control}
+                                            name="tahapId"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Tahap Pendaftaran</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Pilih tahap pendaftaran untuk sekolah ini" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {stages.map(stage => (
+                                                                <SelectItem key={stage.id} value={stage.id}>
+                                                                    {stage.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormDescription>
+                                                        Tahap di mana sekolah ini akan membuka pendaftaran.
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    )}
+
                                      {selectedJenjang === 'SMA' && (
                                         <>
                                             <FormField control={schoolForm.control} name="kuota" render={({ field }) => ( <FormItem><FormLabel>Total Kuota (SMA)</FormLabel><FormControl><Input type="number" {...field} disabled /></FormControl><FormDescription>Total kuota dihitung otomatis dari jumlah kuota per jalur.</FormDescription><FormMessage /></FormItem> )} />
