@@ -4,7 +4,7 @@
 import { ReactNode, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, School, UserCheck, User as UserIcon, FileUp, Shield, GraduationCap, Building, Users, Lock, Edit, Layers } from 'lucide-react';
+import { LogOut, Menu as MenuIcon, ClipboardCheck, Home, Database, Megaphone, School, UserCheck, User as UserIcon, FileUp, Shield, GraduationCap, Building, Users, Lock, Edit, Layers, Settings } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -93,7 +93,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     const headmasterMenu = [
         { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
         { href: '/registration/all-data', label: 'Lihat Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
-        { href: '/registration/school-settings', label: 'Kelola Sekolah', icon: Building, activePaths: ['/registration/school-settings'] },
+        { href: '/registration/school-settings', label: 'Kelola Sekolah', icon: Settings, activePaths: ['/registration/school-settings'] },
         { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
     ];
      const smpOperatorMenu = [

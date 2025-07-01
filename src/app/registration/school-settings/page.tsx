@@ -370,7 +370,7 @@ export default function SchoolSettingsPage() {
                                     <FormField control={form.control} name="quota.domisili" render={({ field }) => ( <FormItem><FormLabel>Domisili</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 </CardContent>
                             </Card>
-                             <FormField control={form.control} name="berkasPendukung" render={({ field }) => ( <FormItem><FormLabel>Berkas Pendukung (Opsional)</FormLabel><CardDescription>Sebutkan berkas khusus yang diperlukan untuk jurusan ini, jika ada.</CardDescription><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
+                             <FormField control={form.control} name="berkasPendukung" render={({ field }) => ( <FormItem><FormLabel>Berkas Pendukung (Opsional)</FormLabel><CardDescription>Sebutkan berkas khusus yang diperlukan untuk jurusan ini, jika ada. Contoh: Surat Keterangan Tidak Buta Warna.</CardDescription><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
 
                             <DialogFooter className="pt-4">
                                 <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>

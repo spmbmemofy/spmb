@@ -34,7 +34,6 @@ export const schoolFormSchema = z.object({
   telepon: z.string().min(9, { message: "Nomor telepon minimal 9 karakter." }),
   akreditasi: z.enum(["A", "B", "C", "Belum Terakreditasi"]),
   
-  wilayah: z.string().optional(),
   kuota: z.coerce.number().int().min(0).optional(),
   jalurKuota: z.object({
     afirmasi: z.coerce.number().int().min(0).optional(),
@@ -42,16 +41,12 @@ export const schoolFormSchema = z.object({
     prestasi: z.coerce.number().int().min(0).optional(),
     domisili: z.coerce.number().int().min(0).optional(),
   }).optional(),
-  majors: z.any().optional(),
-  statusPendaftaran: z.enum(["Buka", "Tutup", "Segera Penuh"]).optional(),
-  tahapId: z.string().optional(),
 });
 
 type SchoolFormValues = z.infer<typeof schoolFormSchema>;
 
 export default function SchoolManagementPage() {
     const [schools, setSchools] = React.useState<School[]>([]);
-    const [stages, setStages] = React.useState<Tahap[]>([]);
     const [smpSearchTerm, setSmpSearchTerm] = React.useState("");
     const [smaSmkSearchTerm, setSmaSmkSearchTerm] = React.useState("");
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -69,7 +64,6 @@ export default function SchoolManagementPage() {
 
     React.useEffect(() => {
         setSchools(getSchools());
-        setStages(getStages());
     }, []);
 
     const filteredSmpSchools = React.useMemo(() => {
@@ -91,13 +85,15 @@ export default function SchoolManagementPage() {
     const handleOpenDialog = (school: School | null = null) => {
         setEditingSchool(school);
         if (school) {
-            form.reset(school);
+            form.reset({
+                ...school,
+                jalurKuota: school.jalurKuota || { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }
+            });
         } else {
             form.reset({
                 id: '', npsn: '', namaSekolah: '', jenjang: 'SMA', jenis: 'Negeri',
                 alamat: '', kecamatan: '', telepon: '', akreditasi: 'A',
-                wilayah: '', kuota: 0, jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 },
-                majors: [], statusPendaftaran: 'Buka', tahapId: '',
+                kuota: 0, jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 },
             });
         }
         setIsDialogOpen(true);
@@ -121,9 +117,8 @@ export default function SchoolManagementPage() {
     const processForm = (data: SchoolFormValues) => {
         try {
             if (editingSchool) {
-                // Merge existing data with form data to preserve fields not in the form
                 const schoolData = { ...editingSchool, ...data };
-                updateSchool(schoolData as School);
+                updateSchool(schoolData);
                 toast({ title: "Sekolah Diperbarui", description: `Data untuk ${data.namaSekolah} telah diperbarui.` });
             } else {
                 const { id, ...newSchoolData } = data;
@@ -288,7 +283,7 @@ export default function SchoolManagementPage() {
                                     <FormField control={form.control} name="kecamatan" render={({ field }) => ( <FormItem><FormLabel>Kecamatan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                                 </TabsContent>
                                 <TabsContent value="data_pendaftaran" className="pt-4 space-y-6">
-                                     <FormField control={form.control} name="kuota" render={({ field }) => ( <FormItem><FormLabel>Total Kuota (SMA)</FormLabel><CardDescription>Untuk SMK, total kuota dihitung dari jumlah kuota jurusan.</CardDescription><FormControl><Input type="number" {...field} disabled={selectedJenjang === 'SMK'} /></FormControl><FormMessage /></FormItem> )} />
+                                     <FormField control={form.control} name="kuota" render={({ field }) => ( <FormItem><FormLabel>Total Kuota (SMA)</FormLabel><CardDescription>Untuk SMK, total kuota dihitung otomatis dari jumlah kuota semua jurusan.</CardDescription><FormControl><Input type="number" {...field} disabled={selectedJenjang === 'SMK'} /></FormControl><FormMessage /></FormItem> )} />
                                     
                                      {selectedJenjang === 'SMA' && (
                                         <Card>
@@ -312,7 +307,7 @@ export default function SchoolManagementPage() {
                                                     disabled
                                                     value={
                                                         editingSchool?.majors
-                                                            ?.map(m => `- ${m.name}`)
+                                                            ?.map(m => `- ${m.name} (Kuota: ${Object.values(m.quota).reduce((a, b) => a + b, 0)})`)
                                                             .join('\n') || "Belum ada jurusan ditambahkan."
                                                     }
                                                     rows={5}
