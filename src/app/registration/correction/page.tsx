@@ -19,6 +19,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { getSchoolById } from "@/lib/schoolService";
+import { addressData, getDistricts, getSubdistricts, getVillages } from "@/lib/addressData";
 
 const biodataFormSchema = z.object({
   fullName: z.string().min(3, "Nama lengkap diperlukan."),
@@ -29,10 +30,10 @@ const biodataFormSchema = z.object({
   religion: z.string().min(1, "Agama diperlukan."),
   streetName: z.string().min(1, "Alamat diperlukan."),
   rtRw: z.string().optional(),
-  village: z.string().min(1, "Kelurahan/Desa diperlukan."),
-  subdistrict: z.string().min(1, "Kecamatan diperlukan."),
-  district: z.string().min(1, "Kabupaten/Kota diperlukan."),
   province: z.string().min(1, "Provinsi diperlukan."),
+  district: z.string().min(1, "Kabupaten/Kota diperlukan."),
+  subdistrict: z.string().min(1, "Kecamatan diperlukan."),
+  village: z.string().min(1, "Kelurahan/Desa diperlukan."),
   contactNumber: z.string().optional(),
   fatherName: z.string().optional(),
   motherName: z.string().optional(),
@@ -97,6 +98,16 @@ export default function CorrectionPage() {
   const form = useForm<BiodataFormValues>({
     resolver: zodResolver(biodataFormSchema),
   });
+
+  const watchedProvince = form.watch("province");
+  const watchedDistrict = form.watch("district");
+  const watchedSubdistrict = form.watch("subdistrict");
+    
+  const provinceOptions = Object.keys(addressData);
+  const districtOptions = getDistricts(watchedProvince as any);
+  const subdistrictOptions = getSubdistricts(watchedProvince as any, watchedDistrict as any);
+  const villageOptions = getVillages(watchedProvince as any, watchedDistrict as any, watchedSubdistrict);
+
 
   React.useEffect(() => {
     const loginCreds = getFromLocalStorage<LoginCredentials | null>("loginCredentials", null);
@@ -271,13 +282,20 @@ export default function CorrectionPage() {
                             {["Islam", "Kristen Protestan", "Katolik", "Hindu", "Buddha", "Konghucu", "Lainnya"].map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                          </SelectContent></Select><FormMessage /></FormItem> )} />
                      </div>
-                     <FormField control={form.control} name="streetName" render={({ field }) => ( <FormItem><FormLabel>Nama Jalan & No. Rumah</FormLabel><FormControl><Textarea {...field} rows={2} /></FormControl><FormMessage /></FormItem> )} />
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField control={form.control} name="rtRw" render={({ field }) => ( <FormItem><FormLabel>RT/RW</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                        <FormField control={form.control} name="village" render={({ field }) => ( <FormItem><FormLabel>Kelurahan/Desa</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                        <FormField control={form.control} name="subdistrict" render={({ field }) => ( <FormItem><FormLabel>Kecamatan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                        <FormField control={form.control} name="district" render={({ field }) => ( <FormItem><FormLabel>Kabupaten/Kota</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                        <FormField control={form.control} name="province" render={({ field }) => ( <FormItem><FormLabel>Provinsi</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+
+                    <div className="space-y-4 pt-4 mt-4 border-t">
+                        <h4 className="text-sm font-medium text-muted-foreground">Alamat Lengkap</h4>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField control={form.control} name="province" render={({ field }) => ( <FormItem><FormLabel>Provinsi</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue("district", ""); form.setValue("subdistrict", ""); form.setValue("village", ""); }} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Provinsi" /></SelectTrigger></FormControl><SelectContent>{provinceOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                            <FormField control={form.control} name="district" render={({ field }) => ( <FormItem><FormLabel>Kabupaten/Kota</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue("subdistrict", ""); form.setValue("village", ""); }} value={field.value} disabled={!watchedProvince}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Kabupaten/Kota" /></SelectTrigger></FormControl><SelectContent>{districtOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                            <FormField control={form.control} name="subdistrict" render={({ field }) => ( <FormItem><FormLabel>Kecamatan</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue("village", ""); }} value={field.value} disabled={!watchedDistrict}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Kecamatan" /></SelectTrigger></FormControl><SelectContent>{subdistrictOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                            <FormField control={form.control} name="village" render={({ field }) => ( <FormItem><FormLabel>Kelurahan/Desa</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!watchedSubdistrict}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Kelurahan/Desa" /></SelectTrigger></FormControl><SelectContent>{villageOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                            <FormField control={form.control} name="rtRw" render={({ field }) => ( <FormItem><FormLabel>RT/RW</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                        </div>
+                        <FormField control={form.control} name="streetName" render={({ field }) => ( <FormItem><FormLabel>Nama Jalan & No. Rumah</FormLabel><FormControl><Textarea {...field} rows={2} /></FormControl><FormMessage /></FormItem> )} />
+                    </div>
+
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 mt-4 border-t">
                         <FormField control={form.control} name="contactNumber" render={({ field }) => ( <FormItem><FormLabel>No. Kontak</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="fatherName" render={({ field }) => ( <FormItem><FormLabel>Nama Ayah</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="motherName" render={({ field }) => ( <FormItem><FormLabel>Nama Ibu</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
