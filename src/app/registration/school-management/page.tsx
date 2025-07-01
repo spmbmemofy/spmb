@@ -8,7 +8,7 @@ import * as z from "zod";
 import { Building, MoreHorizontal, Edit, Trash2, Search as SearchIcon, PlusCircle } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getSchools, addSchool, updateSchool, deleteSchool, type School, type SchoolJenjang } from "@/lib/schoolService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { getStages, type Tahap } from "@/lib/stageService";
+import type { Major } from "@/lib/types";
 
 export const schoolFormSchema = z.object({
   id: z.string().optional(),
@@ -41,26 +41,60 @@ export const schoolFormSchema = z.object({
     prestasi: z.coerce.number().int().min(0).optional(),
     domisili: z.coerce.number().int().min(0).optional(),
   }).optional(),
+  majors: z.array(z.any()).optional(), // Keep majors flexible for internal state
+});
+
+const majorFormSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(3, "Nama jurusan minimal 3 karakter."),
+  berkasPendukung: z.string().optional(),
+  quota: z.object({
+    afirmasi: z.coerce.number().int().min(0),
+    mutasi: z.coerce.number().int().min(0),
+    prestasi: z.coerce.number().int().min(0),
+    domisili: z.coerce.number().int().min(0),
+  })
 });
 
 type SchoolFormValues = z.infer<typeof schoolFormSchema>;
+type MajorFormValues = z.infer<typeof majorFormSchema>;
 
 export default function SchoolManagementPage() {
     const [schools, setSchools] = React.useState<School[]>([]);
     const [smpSearchTerm, setSmpSearchTerm] = React.useState("");
     const [smaSmkSearchTerm, setSmaSmkSearchTerm] = React.useState("");
-    const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+    
+    // School Dialog State
+    const [isSchoolDialogOpen, setIsSchoolDialogOpen] = React.useState(false);
     const [editingSchool, setEditingSchool] = React.useState<School | null>(null);
-    const [isAlertOpen, setIsAlertOpen] = React.useState(false);
     const [schoolToDeleteId, setSchoolToDeleteId] = React.useState<string | null>(null);
+    
+    // Major Dialog State (within school dialog)
+    const [isMajorDialogOpen, setIsMajorDialogOpen] = React.useState(false);
+    const [editingMajor, setEditingMajor] = React.useState<Major | null>(null);
+    const [majorToDelete, setMajorToDelete] = React.useState<Major | null>(null);
+    
+    const [isAlertOpen, setIsAlertOpen] = React.useState(false);
+    const [isMajorAlertOpen, setIsMajorAlertOpen] = React.useState(false);
+
     const { toast } = useToast();
 
-    const form = useForm<SchoolFormValues>({
+    const schoolForm = useForm<SchoolFormValues>({
         resolver: zodResolver(schoolFormSchema),
         defaultValues: {},
     });
 
-    const selectedJenjang = form.watch("jenjang");
+     const majorForm = useForm<MajorFormValues>({
+        resolver: zodResolver(majorFormSchema),
+        defaultValues: {
+            name: '',
+            berkasPendukung: '',
+            quota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }
+        },
+    });
+
+    const selectedJenjang = schoolForm.watch("jenjang");
+    const currentMajors = schoolForm.watch("majors") as Major[] || [];
 
     React.useEffect(() => {
         setSchools(getSchools());
@@ -82,29 +116,29 @@ export default function SchoolManagementPage() {
         );
     }, [schools, smaSmkSearchTerm]);
 
-    const handleOpenDialog = (school: School | null = null) => {
+    const handleOpenSchoolDialog = (school: School | null = null) => {
         setEditingSchool(school);
         if (school) {
-            form.reset({
+            schoolForm.reset({
                 ...school,
                 jalurKuota: school.jalurKuota || { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }
             });
         } else {
-            form.reset({
+            schoolForm.reset({
                 id: '', npsn: '', namaSekolah: '', jenjang: 'SMA', jenis: 'Negeri',
                 alamat: '', kecamatan: '', telepon: '', akreditasi: 'A',
-                kuota: 0, jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 },
+                kuota: 0, jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }, majors: []
             });
         }
-        setIsDialogOpen(true);
+        setIsSchoolDialogOpen(true);
     };
 
-    const handleDeleteClick = (schoolId: string) => {
+    const handleDeleteSchoolClick = (schoolId: string) => {
         setSchoolToDeleteId(schoolId);
         setIsAlertOpen(true);
     };
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDeleteSchool = () => {
         if (schoolToDeleteId) {
             deleteSchool(schoolToDeleteId);
             setSchools(getSchools());
@@ -114,23 +148,76 @@ export default function SchoolManagementPage() {
         setSchoolToDeleteId(null);
     };
 
-    const processForm = (data: SchoolFormValues) => {
+    const processSchoolForm = (data: SchoolFormValues) => {
         try {
+            const finalData = { ...data };
+            if(data.jenjang === 'SMK') {
+                const majors = data.majors as Major[] || [];
+                finalData.kuota = majors.reduce((sum, major) => sum + Object.values(major.quota).reduce((s, q) => s + q, 0), 0);
+                finalData.jalurKuota = majors.reduce((totals, major) => {
+                    totals.afirmasi = (totals.afirmasi || 0) + major.quota.afirmasi;
+                    totals.mutasi = (totals.mutasi || 0) + major.quota.mutasi;
+                    totals.prestasi = (totals.prestasi || 0) + major.quota.prestasi;
+                    totals.domisili = (totals.domisili || 0) + major.quota.domisili;
+                    return totals;
+                }, { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 });
+            }
+
             if (editingSchool) {
-                const schoolData = { ...editingSchool, ...data };
+                const schoolData = { ...editingSchool, ...finalData } as School;
                 updateSchool(schoolData);
                 toast({ title: "Sekolah Diperbarui", description: `Data untuk ${data.namaSekolah} telah diperbarui.` });
             } else {
-                const { id, ...newSchoolData } = data;
+                const { id, ...newSchoolData } = finalData;
                 addSchool(newSchoolData as Omit<School, 'id'>);
                 toast({ title: "Sekolah Ditambahkan", description: `${data.namaSekolah} telah ditambahkan ke sistem.` });
             }
             setSchools(getSchools());
-            setIsDialogOpen(false);
+            setIsSchoolDialogOpen(false);
         } catch (error: any) {
             toast({ variant: "destructive", title: "Gagal Menyimpan", description: error.message });
         }
     };
+
+    // Major Management Handlers
+    const handleOpenMajorDialog = (major: Major | null = null) => {
+        setEditingMajor(major);
+        if (major) {
+            majorForm.reset(major);
+        } else {
+            majorForm.reset({
+                id: undefined, name: '', berkasPendukung: '',
+                quota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }
+            });
+        }
+        setIsMajorDialogOpen(true);
+    };
+
+    const handleDeleteMajorClick = (major: Major) => {
+        setMajorToDelete(major);
+        setIsMajorAlertOpen(true);
+    };
+    
+    const handleConfirmDeleteMajor = () => {
+        if (!majorToDelete) return;
+        const updatedMajors = currentMajors.filter(m => m.id !== majorToDelete.id);
+        schoolForm.setValue('majors', updatedMajors, { shouldValidate: true });
+        setIsMajorAlertOpen(false);
+        setMajorToDelete(null);
+    };
+
+    const processMajorForm = (data: MajorFormValues) => {
+        let updatedMajors: Major[];
+        if (editingMajor) {
+            updatedMajors = currentMajors.map(m => (m.id === editingMajor.id ? { ...m, ...data } : m));
+        } else {
+            const newMajor: Major = { ...data, id: `major-${Date.now()}` };
+            updatedMajors = [...currentMajors, newMajor];
+        }
+        schoolForm.setValue('majors', updatedMajors, { shouldValidate: true });
+        setIsMajorDialogOpen(false);
+    };
+
 
     const renderSchoolTable = (schoolList: School[], type: 'smp' | 'sma_smk') => (
         <div className="rounded-md border">
@@ -169,11 +256,11 @@ export default function SchoolManagementPage() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => handleOpenDialog(school)}>
+                                            <DropdownMenuItem onClick={() => handleOpenSchoolDialog(school)}>
                                                 <Edit className="mr-2 h-4 w-4" />
                                                 <span>Edit</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleDeleteClick(school.id)} className="text-destructive focus:text-destructive">
+                                            <DropdownMenuItem onClick={() => handleDeleteSchoolClick(school.id)} className="text-destructive focus:text-destructive">
                                                 <Trash2 className="mr-2 h-4 w-4" />
                                                 <span>Hapus</span>
                                             </DropdownMenuItem>
@@ -211,7 +298,7 @@ export default function SchoolManagementPage() {
                                     </CardDescription>
                                 </div>
                             </div>
-                            <Button onClick={() => handleOpenDialog()}>
+                            <Button onClick={() => handleOpenSchoolDialog()}>
                                 <PlusCircle className="mr-2 h-4 w-4" />
                                 Tambah Sekolah
                             </Button>
@@ -256,13 +343,14 @@ export default function SchoolManagementPage() {
                 </Card>
             </div>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            {/* School Dialog */}
+            <Dialog open={isSchoolDialogOpen} onOpenChange={setIsSchoolDialogOpen}>
                 <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>{editingSchool ? "Edit Sekolah" : "Tambah Sekolah Baru"}</DialogTitle>
                     </DialogHeader>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(processForm)} className="space-y-6 py-4 pr-2">
+                    <Form {...schoolForm}>
+                        <form onSubmit={schoolForm.handleSubmit(processSchoolForm)} className="space-y-6 py-4 pr-2">
                             <Tabs defaultValue="info_umum" className="w-full">
                                 <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="info_umum">Informasi Umum</TabsTrigger>
@@ -272,48 +360,79 @@ export default function SchoolManagementPage() {
                                 </TabsList>
                                 <TabsContent value="info_umum" className="pt-4 space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FormField control={form.control} name="npsn" render={({ field }) => ( <FormItem><FormLabel>NPSN</FormLabel><FormControl><Input {...field} disabled={!!editingSchool} /></FormControl><FormMessage /></FormItem> )} />
-                                        <FormField control={form.control} name="namaSekolah" render={({ field }) => ( <FormItem><FormLabel>Nama Sekolah</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                                        <FormField control={form.control} name="jenjang" render={({ field }) => ( <FormItem><FormLabel>Jenjang</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="SMP">SMP</SelectItem><SelectItem value="SMA">SMA</SelectItem><SelectItem value="SMK">SMK</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
-                                        <FormField control={form.control} name="jenis" render={({ field }) => ( <FormItem><FormLabel>Jenis Sekolah</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Negeri">Negeri</SelectItem><SelectItem value="Swasta">Swasta</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
-                                        <FormField control={form.control} name="akreditasi" render={({ field }) => ( <FormItem><FormLabel>Akreditasi</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="A">A</SelectItem><SelectItem value="B">B</SelectItem><SelectItem value="C">C</SelectItem><SelectItem value="Belum Terakreditasi">Belum Terakreditasi</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
-                                        <FormField control={form.control} name="telepon" render={({ field }) => ( <FormItem><FormLabel>Telepon</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                        <FormField control={schoolForm.control} name="npsn" render={({ field }) => ( <FormItem><FormLabel>NPSN</FormLabel><FormControl><Input {...field} disabled={!!editingSchool} /></FormControl><FormMessage /></FormItem> )} />
+                                        <FormField control={schoolForm.control} name="namaSekolah" render={({ field }) => ( <FormItem><FormLabel>Nama Sekolah</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                        <FormField control={schoolForm.control} name="jenjang" render={({ field }) => ( <FormItem><FormLabel>Jenjang</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="SMP">SMP</SelectItem><SelectItem value="SMA">SMA</SelectItem><SelectItem value="SMK">SMK</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
+                                        <FormField control={schoolForm.control} name="jenis" render={({ field }) => ( <FormItem><FormLabel>Jenis Sekolah</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Negeri">Negeri</SelectItem><SelectItem value="Swasta">Swasta</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
+                                        <FormField control={schoolForm.control} name="akreditasi" render={({ field }) => ( <FormItem><FormLabel>Akreditasi</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="A">A</SelectItem><SelectItem value="B">B</SelectItem><SelectItem value="C">C</SelectItem><SelectItem value="Belum Terakreditasi">Belum Terakreditasi</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
+                                        <FormField control={schoolForm.control} name="telepon" render={({ field }) => ( <FormItem><FormLabel>Telepon</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                                     </div>
-                                    <FormField control={form.control} name="alamat" render={({ field }) => ( <FormItem><FormLabel>Alamat</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
-                                    <FormField control={form.control} name="kecamatan" render={({ field }) => ( <FormItem><FormLabel>Kecamatan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                    <FormField control={schoolForm.control} name="alamat" render={({ field }) => ( <FormItem><FormLabel>Alamat</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                    <FormField control={schoolForm.control} name="kecamatan" render={({ field }) => ( <FormItem><FormLabel>Kecamatan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                                 </TabsContent>
                                 <TabsContent value="data_pendaftaran" className="pt-4 space-y-6">
-                                     <FormField control={form.control} name="kuota" render={({ field }) => ( <FormItem><FormLabel>Total Kuota (SMA)</FormLabel><CardDescription>Untuk SMK, total kuota dihitung otomatis dari jumlah kuota semua jurusan.</CardDescription><FormControl><Input type="number" {...field} disabled={selectedJenjang === 'SMK'} /></FormControl><FormMessage /></FormItem> )} />
-                                    
                                      {selectedJenjang === 'SMA' && (
-                                        <Card>
-                                            <CardHeader><CardTitle className="text-base">Pembagian Kuota per Jalur (SMA)</CardTitle></CardHeader>
-                                            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                                <FormField control={form.control} name="jalurKuota.afirmasi" render={({ field }) => ( <FormItem><FormLabel>Afirmasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
-                                                <FormField control={form.control} name="jalurKuota.mutasi" render={({ field }) => ( <FormItem><FormLabel>Mutasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
-                                                <FormField control={form.control} name="jalurKuota.prestasi" render={({ field }) => ( <FormItem><FormLabel>Prestasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
-                                                <FormField control={form.control} name="jalurKuota.domisili" render={({ field }) => ( <FormItem><FormLabel>Domisili</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
-                                            </CardContent>
-                                        </Card>
+                                        <>
+                                            <FormField control={schoolForm.control} name="kuota" render={({ field }) => ( <FormItem><FormLabel>Total Kuota (SMA)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                            <Card>
+                                                <CardHeader><CardTitle className="text-base">Pembagian Kuota per Jalur (SMA)</CardTitle></CardHeader>
+                                                <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                    <FormField control={schoolForm.control} name="jalurKuota.afirmasi" render={({ field }) => ( <FormItem><FormLabel>Afirmasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
+                                                    <FormField control={schoolForm.control} name="jalurKuota.mutasi" render={({ field }) => ( <FormItem><FormLabel>Mutasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
+                                                    <FormField control={schoolForm.control} name="jalurKuota.prestasi" render={({ field }) => ( <FormItem><FormLabel>Prestasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
+                                                    <FormField control={schoolForm.control} name="jalurKuota.domisili" render={({ field }) => ( <FormItem><FormLabel>Domisili</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem> )} />
+                                                </CardContent>
+                                            </Card>
+                                        </>
                                      )}
 
                                     {selectedJenjang === 'SMK' && (
-                                        <FormItem>
-                                            <FormLabel>Jurusan (SMK)</FormLabel>
-                                            <CardDescription>Jurusan, kuota, dan berkas pendukung dikelola oleh Kepala Sekolah melalui halaman Kelola Sekolah.</CardDescription>
-                                            <FormControl>
-                                                <Textarea
-                                                    readOnly
-                                                    disabled
-                                                    value={
-                                                        editingSchool?.majors
-                                                            ?.map(m => `- ${m.name} (Kuota: ${Object.values(m.quota).reduce((a, b) => a + b, 0)})`)
-                                                            .join('\n') || "Belum ada jurusan ditambahkan."
-                                                    }
-                                                    rows={5}
-                                                />
-                                            </FormControl>
-                                        </FormItem>
+                                        <Card>
+                                            <CardHeader className="flex flex-row items-center justify-between">
+                                                <div className="space-y-1.5">
+                                                    <CardTitle className="text-base">Manajemen Jurusan (SMK)</CardTitle>
+                                                    <CardDescription>Tambah, edit, atau hapus jurusan beserta kuotanya.</CardDescription>
+                                                </div>
+                                                <Button type="button" size="sm" onClick={() => handleOpenMajorDialog()}>
+                                                    <PlusCircle className="mr-2 h-4 w-4" /> Tambah
+                                                </Button>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                            <TableHead>Nama Jurusan</TableHead>
+                                                            <TableHead>Total Kuota</TableHead>
+                                                            <TableHead className="text-right">Aksi</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {currentMajors.length > 0 ? (
+                                                            currentMajors.map(major => (
+                                                                <TableRow key={major.id}>
+                                                                    <TableCell>{major.name}</TableCell>
+                                                                    <TableCell>{Object.values(major.quota).reduce((a, b) => a + b, 0)}</TableCell>
+                                                                    <TableCell className="text-right">
+                                                                        <Button type="button" variant="ghost" size="icon" onClick={() => handleOpenMajorDialog(major)}>
+                                                                            <Edit className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <Button type="button" variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteMajorClick(major)}>
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            ))
+                                                        ) : (
+                                                            <TableRow>
+                                                                <TableCell colSpan={3} className="h-20 text-center text-muted-foreground">
+                                                                    Belum ada jurusan ditambahkan.
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        )}
+                                                    </TableBody>
+                                                </Table>
+                                            </CardContent>
+                                        </Card>
                                     )}
                                 </TabsContent>
                             </Tabs>
@@ -326,6 +445,7 @@ export default function SchoolManagementPage() {
                 </DialogContent>
             </Dialog>
 
+            {/* School Delete Alert */}
             <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -336,9 +456,54 @@ export default function SchoolManagementPage() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Batal</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive hover:bg-destructive/90">
+                        <AlertDialogAction onClick={handleConfirmDeleteSchool} className="bg-destructive hover:bg-destructive/90">
                             Ya, Hapus Sekolah
                         </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            
+            {/* Major Dialog */}
+            <Dialog open={isMajorDialogOpen} onOpenChange={setIsMajorDialogOpen}>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>{editingMajor ? "Edit Jurusan" : "Tambah Jurusan Baru"}</DialogTitle>
+                    </DialogHeader>
+                    <Form {...majorForm}>
+                        <form onSubmit={majorForm.handleSubmit(processMajorForm)} className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-4">
+                            <FormField control={majorForm.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Nama Jurusan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                            <Card>
+                                <CardHeader><CardTitle className="text-base">Pembagian Kuota per Jalur</CardTitle></CardHeader>
+                                <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <FormField control={majorForm.control} name="quota.afirmasi" render={({ field }) => ( <FormItem><FormLabel>Afirmasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={majorForm.control} name="quota.mutasi" render={({ field }) => ( <FormItem><FormLabel>Mutasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={majorForm.control} name="quota.prestasi" render={({ field }) => ( <FormItem><FormLabel>Prestasi</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={majorForm.control} name="quota.domisili" render={({ field }) => ( <FormItem><FormLabel>Domisili</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                </CardContent>
+                            </Card>
+                             <FormField control={majorForm.control} name="berkasPendukung" render={({ field }) => ( <FormItem><FormLabel>Berkas Pendukung (Opsional)</FormLabel><CardDescription>Sebutkan berkas khusus yang diperlukan untuk jurusan ini, jika ada. Contoh: Surat Keterangan Tidak Buta Warna.</CardDescription><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
+
+                            <DialogFooter className="pt-4">
+                                <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
+                                <Button type="submit">Simpan Jurusan</Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
+            
+            {/* Major Delete Alert */}
+            <AlertDialog open={isMajorAlertOpen} onOpenChange={setIsMajorAlertOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Hapus Jurusan?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Apakah Anda yakin ingin menghapus jurusan "{majorToDelete?.name}"? Tindakan ini tidak dapat diurungkan.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmDeleteMajor} className="bg-destructive hover:bg-destructive/90">Ya, Hapus</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
