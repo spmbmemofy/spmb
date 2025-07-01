@@ -22,7 +22,6 @@ import { getJalur } from "@/lib/pathwayService";
 import { getStages } from "@/lib/stageService";
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
-const studentSubdistrict = "Kec. Tanjung Redeb"; // Mock data, should come from student's biodata
 const MAX_SCHOOL_SELECTION = 5;
 
 export default function SchoolSelectionPage() {
@@ -122,6 +121,7 @@ export default function SchoolSelectionPage() {
     if (!selectedPathwayObject || !selectedStageObject) return [];
     
     const applicantBiodata = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null)?.biodata;
+    const studentSubdistrict = applicantBiodata?.subdistrict;
 
     let schoolsToDisplay = allSchools.filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
     
@@ -135,7 +135,7 @@ export default function SchoolSelectionPage() {
     
     // Filter by pathway/district for specific pathways
     const subdistrictRestrictedPathways = ["Afirmasi", "Mutasi"];
-    if (subdistrictRestrictedPathways.includes(selectedPathwayObject.name)) {
+    if (subdistrictRestrictedPathways.includes(selectedPathwayObject.name) && studentSubdistrict) {
         schoolsToDisplay = schoolsToDisplay.filter(school => school.kecamatan === studentSubdistrict);
     }
 
@@ -152,7 +152,7 @@ export default function SchoolSelectionPage() {
                 return studentVillage ? school.allowedVillages.includes(studentVillage) : false;
             } else {
                 // If no specific villages are set, fall back to default subdistrict matching
-                return school.kecamatan === studentSubdistrict;
+                return studentSubdistrict ? school.kecamatan === studentSubdistrict : false;
             }
         });
     }
@@ -302,7 +302,7 @@ export default function SchoolSelectionPage() {
                         </p>
                         {["Afirmasi", "Mutasi"].includes(selectedPathway) && (
                         <p className="text-xs text-primary mt-1">
-                            Untuk jalur {selectedPathway}, hanya sekolah di kecamatan Anda ({studentSubdistrict}) yang ditampilkan.
+                            Untuk jalur {selectedPathway}, hanya sekolah di kecamatan Anda yang akan ditampilkan.
                         </p>
                         )}
                          {selectedPathway === 'Domisili' && (
