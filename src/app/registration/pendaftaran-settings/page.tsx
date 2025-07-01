@@ -5,13 +5,13 @@ import * as React from "react";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Layers, MoreHorizontal, Edit, Trash2, PlusCircle, GraduationCap } from 'lucide-react';
+import { Layers, MoreHorizontal, Edit, Trash2, PlusCircle, GraduationCap, Home } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -20,10 +20,14 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
 
 import { getStages, addStage, updateStage, deleteStage, type Tahap } from "@/lib/stageService";
 import { getJalur, addJalur, updateJalur, deleteJalur, type Jalur } from "@/lib/pathwayService";
+import { getSchools, updateSchool, type School } from "@/lib/schoolService";
 import type { SchoolJenjang } from "@/lib/schoolService";
+import { addressData } from "@/lib/addressData";
 
 
 // Stage Management Component
@@ -483,6 +487,130 @@ function PathwayManagementView() {
     );
 }
 
+// Domicile Management Component
+function DomicileManagementView() {
+    const { toast } = useToast();
+    const [schools, setSchools] = React.useState<School[]>([]);
+    const [allVillages, setAllVillages] = React.useState<string[]>([]);
+    const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+    const [editingSchool, setEditingSchool] = React.useState<School | null>(null);
+    const [selectedVillages, setSelectedVillages] = React.useState<Set<string>>(new Set());
+
+    React.useEffect(() => {
+        const smaSchools = getSchools().filter(s => s.jenjang === 'SMA');
+        setSchools(smaSchools);
+
+        const berauDistrict = addressData["Kalimantan Timur"]["Kabupaten Berau"];
+        const villages = Object.values(berauDistrict).flat();
+        setAllVillages(villages.sort());
+    }, []);
+
+    const handleOpenDialog = (school: School) => {
+        setEditingSchool(school);
+        setSelectedVillages(new Set(school.allowedVillages || []));
+        setIsDialogOpen(true);
+    };
+    
+    const handleVillageToggle = (village: string, checked: boolean) => {
+        setSelectedVillages(prev => {
+            const newSet = new Set(prev);
+            if (checked) {
+                newSet.add(village);
+            } else {
+                newSet.delete(village);
+            }
+            return newSet;
+        });
+    };
+
+    const handleSave = () => {
+        if (!editingSchool) return;
+        
+        const updatedSchoolData = {
+            ...editingSchool,
+            allowedVillages: Array.from(selectedVillages),
+        };
+
+        try {
+            updateSchool(updatedSchoolData);
+            setSchools(getSchools().filter(s => s.jenjang === 'SMA')); // refetch and filter
+            toast({ title: "Domisili Diperbarui", description: `Aturan domisili untuk ${editingSchool.namaSekolah} telah disimpan.` });
+            setIsDialogOpen(false);
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Gagal Menyimpan", description: error.message });
+        }
+    };
+    
+    return (
+        <>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Pengaturan Domisili Jalur Zonasi</CardTitle>
+                    <CardDescription>Atur kelurahan mana saja yang dapat mendaftar ke sekolah tertentu melalui jalur domisili/zonasi. Jika tidak ada kelurahan yang diatur untuk sebuah SMA, maka semua pendaftar dari kecamatan sekolah tersebut akan diizinkan (perilaku default).</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="rounded-md border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Nama Sekolah (SMA)</TableHead>
+                                    <TableHead>Kelurahan Terdaftar</TableHead>
+                                    <TableHead className="text-right">Aksi</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {schools.map(school => (
+                                    <TableRow key={school.id}>
+                                        <TableCell className="font-medium">{school.namaSekolah}</TableCell>
+                                        <TableCell>
+                                            {school.allowedVillages && school.allowedVillages.length > 0
+                                                ? <Badge>{school.allowedVillages.length} kelurahan</Badge>
+                                                : <Badge variant="secondary">Semua di kecamatan</Badge>
+                                            }
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="outline" size="sm" onClick={() => handleOpenDialog(school)}>
+                                                <Edit className="mr-2 h-3 w-3" /> Atur
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Atur Domisili untuk {editingSchool?.namaSekolah}</DialogTitle>
+                        <DialogDescription>Pilih semua kelurahan yang diizinkan untuk mendaftar ke sekolah ini melalui jalur domisili.</DialogDescription>
+                    </DialogHeader>
+                    <ScrollArea className="h-96 w-full rounded-md border p-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            {allVillages.map(village => (
+                                <div key={village} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={village}
+                                        checked={selectedVillages.has(village)}
+                                        onCheckedChange={(checked) => handleVillageToggle(village, !!checked)}
+                                    />
+                                    <Label htmlFor={village} className="font-normal text-sm">{village}</Label>
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                    <DialogFooter>
+                        <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
+                        <Button type="button" onClick={handleSave}>Simpan Pengaturan</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
+    );
+}
+
 // Main Page Component
 export default function PendaftaranSettingsPage() {
     return (
@@ -496,14 +624,14 @@ export default function PendaftaranSettingsPage() {
                <div>
                   <CardTitle className="text-2xl sm:text-3xl font-headline">Pengaturan Pendaftaran</CardTitle>
                   <CardDescription className="text-md mt-1">
-                      Kelola tahap dan jalur pendaftaran untuk sistem penerimaan murid baru.
+                      Kelola tahap, jalur, dan aturan pendaftaran untuk sistem penerimaan murid baru.
                   </CardDescription>
                </div>
             </div>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="tahap" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="tahap">
                   <Layers className="mr-2 h-4 w-4" />
                   Manajemen Tahap
@@ -512,12 +640,19 @@ export default function PendaftaranSettingsPage() {
                   <GraduationCap className="mr-2 h-4 w-4" />
                   Manajemen Jalur
                 </TabsTrigger>
+                <TabsTrigger value="domisili">
+                  <Home className="mr-2 h-4 w-4" />
+                  Manajemen Domisili
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="tahap" className="mt-6">
                 <StageManagementView />
               </TabsContent>
               <TabsContent value="jalur" className="mt-6">
                 <PathwayManagementView />
+              </TabsContent>
+              <TabsContent value="domisili" className="mt-6">
+                <DomicileManagementView />
               </TabsContent>
             </Tabs>
           </CardContent>

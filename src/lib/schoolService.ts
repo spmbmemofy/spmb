@@ -29,13 +29,14 @@ export interface School {
   jumlahPendaftar?: number; 
   allowedGenders?: ('Laki-laki' | 'Perempuan')[];
   allowedReligions?: string[];
+  allowedVillages?: string[];
 }
 
 // All initial data has been removed to provide a clean slate.
 const initialSchools: School[] = [];
 
 
-const SCHOOLS_STORAGE_KEY = 'allSchoolsData_v6';
+const SCHOOLS_STORAGE_KEY = 'allSchoolsData_v7';
 
 // Service Functions
 /**

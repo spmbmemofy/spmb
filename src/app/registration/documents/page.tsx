@@ -133,10 +133,28 @@ export default function SchoolSelectionPage() {
     // Filter schools by registration stage
     schoolsToDisplay = schoolsToDisplay.filter(school => school.tahapId === selectedStageObject.id);
     
-    // Filter by pathway/district
-    const restrictedPathways = ["Afirmasi", "Domisili", "Mutasi"];
-    if (restrictedPathways.includes(selectedPathwayObject.name)) {
-      schoolsToDisplay = schoolsToDisplay.filter(school => school.kecamatan === studentSubdistrict);
+    // Filter by pathway/district for specific pathways
+    const subdistrictRestrictedPathways = ["Afirmasi", "Mutasi"];
+    if (subdistrictRestrictedPathways.includes(selectedPathwayObject.name)) {
+        schoolsToDisplay = schoolsToDisplay.filter(school => school.kecamatan === studentSubdistrict);
+    }
+
+    // Special filter for Domisili pathway for SMA
+    if (selectedPathwayObject.name === 'Domisili') {
+        const studentVillage = applicantBiodata?.village;
+        schoolsToDisplay = schoolsToDisplay.filter(school => {
+            if (school.jenjang !== 'SMA') {
+                return true; // Keep non-SMA schools as this rule doesn't apply to them
+            }
+            // For SMA schools:
+            if (school.allowedVillages && school.allowedVillages.length > 0) {
+                // If specific villages are set, student must be in one of them
+                return studentVillage ? school.allowedVillages.includes(studentVillage) : false;
+            } else {
+                // If no specific villages are set, fall back to default subdistrict matching
+                return school.kecamatan === studentSubdistrict;
+            }
+        });
     }
     
     // Filter by school-specific restrictions (gender, religion)
@@ -282,10 +300,15 @@ export default function SchoolSelectionPage() {
                         <p className="text-sm text-muted-foreground">
                             Terpilih: {selectedSelections.length} dari {MAX_SCHOOL_SELECTION} pilihan.
                         </p>
-                        {["Afirmasi", "Domisili", "Mutasi"].includes(selectedPathway) && (
+                        {["Afirmasi", "Mutasi"].includes(selectedPathway) && (
                         <p className="text-xs text-primary mt-1">
                             Untuk jalur {selectedPathway}, hanya sekolah di kecamatan Anda ({studentSubdistrict}) yang ditampilkan.
                         </p>
+                        )}
+                         {selectedPathway === 'Domisili' && (
+                          <p className="text-xs text-primary mt-1">
+                              Jalur Domisili memprioritaskan kelurahan yang diatur oleh sekolah. Jika tidak ada, prioritas berdasarkan kecamatan.
+                          </p>
                         )}
                     </div>
                     <Card>
@@ -343,7 +366,7 @@ export default function SchoolSelectionPage() {
                               ))
                             ) : (
                               <div className="flex items-center justify-center h-full text-muted-foreground p-4 text-center">
-                                <p>Tidak ada sekolah yang tersedia untuk jalur dan tahap ini, atau tidak ada yang sesuai dengan kriteria pendaftaran Anda (misal: jenis kelamin/agama).</p>
+                                <p>Tidak ada sekolah yang tersedia untuk jalur dan tahap ini, atau tidak ada yang sesuai dengan kriteria pendaftaran Anda (misal: jenis kelamin/agama/domisili).</p>
                               </div>
                             )}
                           </Accordion>
