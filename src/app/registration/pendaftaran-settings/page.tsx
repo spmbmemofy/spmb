@@ -491,7 +491,7 @@ function PathwayManagementView() {
 function DomicileManagementView() {
     const { toast } = useToast();
     const [schools, setSchools] = React.useState<School[]>([]);
-    const [allVillages, setAllVillages] = React.useState<string[]>([]);
+    const [subdistrictMap, setSubdistrictMap] = React.useState<Record<string, string[]>>({});
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
     const [editingSchool, setEditingSchool] = React.useState<School | null>(null);
     const [selectedVillages, setSelectedVillages] = React.useState<Set<string>>(new Set());
@@ -501,8 +501,7 @@ function DomicileManagementView() {
         setSchools(smaSchools);
 
         const berauDistrict = addressData["Kalimantan Timur"]["Kabupaten Berau"];
-        const villages = Object.values(berauDistrict).flat();
-        setAllVillages(villages.sort());
+        setSubdistrictMap(berauDistrict);
     }, []);
 
     const handleOpenDialog = (school: School) => {
@@ -582,21 +581,28 @@ function DomicileManagementView() {
             </Card>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="sm:max-w-2xl">
+                <DialogContent className="sm:max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>Atur Domisili untuk {editingSchool?.namaSekolah}</DialogTitle>
                         <DialogDescription>Pilih semua kelurahan yang diizinkan untuk mendaftar ke sekolah ini melalui jalur domisili.</DialogDescription>
                     </DialogHeader>
                     <ScrollArea className="h-96 w-full rounded-md border p-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                            {allVillages.map(village => (
-                                <div key={village} className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id={village}
-                                        checked={selectedVillages.has(village)}
-                                        onCheckedChange={(checked) => handleVillageToggle(village, !!checked)}
-                                    />
-                                    <Label htmlFor={village} className="font-normal text-sm">{village}</Label>
+                        <div className="space-y-6">
+                            {Object.entries(subdistrictMap).map(([kecamatan, villages]) => (
+                                <div key={kecamatan}>
+                                    <h4 className="font-semibold text-muted-foreground mb-3 border-b pb-2">{kecamatan}</h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3">
+                                        {villages.map(village => (
+                                            <div key={village} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id={village}
+                                                    checked={selectedVillages.has(village)}
+                                                    onCheckedChange={(checked) => handleVillageToggle(village, !!checked)}
+                                                />
+                                                <Label htmlFor={village} className="font-normal text-sm cursor-pointer">{village}</Label>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             ))}
                         </div>
