@@ -68,6 +68,7 @@ export default function SchoolManagementPage() {
     const [isSchoolDialogOpen, setIsSchoolDialogOpen] = React.useState(false);
     const [editingSchool, setEditingSchool] = React.useState<School | null>(null);
     const [schoolToDeleteId, setSchoolToDeleteId] = React.useState<string | null>(null);
+    const [activeDialogTab, setActiveDialogTab] = React.useState("info_umum");
     
     // Major Dialog State (within school dialog)
     const [isMajorDialogOpen, setIsMajorDialogOpen] = React.useState(false);
@@ -117,6 +118,7 @@ export default function SchoolManagementPage() {
     }, [schools, smaSmkSearchTerm]);
 
     const handleOpenSchoolDialog = (school: School | null = null) => {
+        setActiveDialogTab('info_umum');
         setEditingSchool(school);
         if (school) {
             schoolForm.reset({
@@ -167,13 +169,18 @@ export default function SchoolManagementPage() {
                 const schoolData = { ...editingSchool, ...finalData } as School;
                 updateSchool(schoolData);
                 toast({ title: "Sekolah Diperbarui", description: `Data untuk ${data.namaSekolah} telah diperbarui.` });
+                setSchools(getSchools());
+                setIsSchoolDialogOpen(false);
             } else {
                 const { id, ...newSchoolData } = finalData;
-                addSchool(newSchoolData as Omit<School, 'id'>);
-                toast({ title: "Sekolah Ditambahkan", description: `${data.namaSekolah} telah ditambahkan ke sistem.` });
+                const newlyAddedSchool = addSchool(newSchoolData as Omit<School, 'id'>);
+                
+                toast({ title: "Informasi Umum Disimpan", description: `Lanjutkan mengisi data pendaftaran untuk ${data.namaSekolah}.` });
+
+                setSchools(getSchools());
+                setEditingSchool(newlyAddedSchool);
+                setActiveDialogTab('data_pendaftaran');
             }
-            setSchools(getSchools());
-            setIsSchoolDialogOpen(false);
         } catch (error: any) {
             toast({ variant: "destructive", title: "Gagal Menyimpan", description: error.message });
         }
@@ -351,7 +358,12 @@ export default function SchoolManagementPage() {
                     </DialogHeader>
                     <Form {...schoolForm}>
                         <form onSubmit={schoolForm.handleSubmit(processSchoolForm)} className="space-y-6 py-4 pr-2">
-                            <Tabs defaultValue="info_umum" className="w-full">
+                            <Tabs 
+                                defaultValue="info_umum" 
+                                className="w-full"
+                                value={activeDialogTab}
+                                onValueChange={(value) => setActiveDialogTab(value as "info_umum" | "data_pendaftaran")}
+                            >
                                 <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="info_umum">Informasi Umum</TabsTrigger>
                                     <TabsTrigger value="data_pendaftaran" disabled={selectedJenjang === 'SMP'}>
@@ -438,7 +450,9 @@ export default function SchoolManagementPage() {
                             </Tabs>
                             <DialogFooter className="pt-4">
                                 <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
-                                <Button type="submit">Simpan</Button>
+                                <Button type="submit">
+                                    {editingSchool ? "Simpan Perubahan" : "Simpan"}
+                                </Button>
                             </DialogFooter>
                         </form>
                     </Form>
