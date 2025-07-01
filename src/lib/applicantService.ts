@@ -15,8 +15,8 @@ function getApplicantRT(applicant: Applicant): string | null {
     return applicant.rtRw.split('/')[0].replace(/rt/i, '').trim();
 }
 
-function isPriority(applicant: Applicant, school: School): boolean {
-    if (!school.priorityDomiciles || school.priorityDomiciles.length === 0 || !applicant.village) {
+export function isPriority(applicant: Applicant, school: School): boolean {
+    if (applicant.jalur !== 'Domisili' || !school.priorityDomiciles || school.priorityDomiciles.length === 0 || !applicant.village) {
         return false;
     }
 

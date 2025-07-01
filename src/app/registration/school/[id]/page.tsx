@@ -4,7 +4,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, School as SchoolIcon, Users, Filter as FilterIcon, Search as SearchIcon, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, PieChart } from "lucide-react";
+import { ArrowLeft, School as SchoolIcon, Users, Filter as FilterIcon, Search as SearchIcon, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, PieChart, Star } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -15,10 +15,12 @@ import { Badge } from "@/components/ui/badge";
 import { getSchoolById, type School } from "@/lib/schoolService";
 import { cn } from "@/lib/utils";
 import { statusVerifikasiOptionsPlain } from "@/lib/mockData";
-import { getApplicants } from "@/lib/applicantService";
+import { getApplicants, isPriority } from "@/lib/applicantService";
 import type { Applicant, ApplicantStatus, SortConfig, SortKey, SortDirection } from "@/lib/types";
 import { getJalur } from "@/lib/pathwayService";
 import { getStages } from "@/lib/stageService";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 interface PathwayStats {
   nama: string;
@@ -391,9 +393,23 @@ export default function SchoolDetailPage() {
                       <TableRow key={applicant.id}>
                         <TableCell className="text-center">{(currentPage - 1) * pageSize + index + 1}</TableCell>
                         <TableCell className="font-medium">
-                          <Link href={`/registration/applicant-detail/${applicant.id}`} className="hover:underline text-primary">
-                            {applicant.fullName}
-                          </Link>
+                           <div className="flex items-center gap-2">
+                                <Link href={`/registration/applicant-detail/${applicant.id}`} className="hover:underline text-primary">
+                                    {applicant.fullName}
+                                </Link>
+                                {isPriority(applicant, school) && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <Star className="h-4 w-4 text-yellow-500 fill-yellow-400" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Pendaftar Prioritas Domisili</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                            </div>
                         </TableCell>
                         <TableCell>{applicant.nisn}</TableCell>
                         <TableCell>{applicant.asalSekolahNama}</TableCell>

@@ -12,8 +12,14 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-import { getApplicantById, getApplicants } from "@/lib/applicantService";
+import { getApplicantById, getApplicants, isPriority } from "@/lib/applicantService";
 import { getSchoolById } from "@/lib/schoolService";
 import type { Applicant, ApplicantStatus, Jalur } from "@/lib/types";
 
@@ -196,6 +202,18 @@ export default function ApplicantDetailPage() {
                                         <div className="flex items-center gap-2">
                                             <Building className="h-4 w-4 text-muted-foreground" />
                                             <span className="font-medium">{school?.namaSekolah || "Sekolah Tidak Ditemukan"}</span>
+                                            {school && isPriority(applicant, school) && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger>
+                                                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-400" />
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Prioritas Domisili untuk sekolah ini</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
                                         </div>
                                     </TableCell>
                                     <TableCell>{selection.major || "-"}</TableCell>
