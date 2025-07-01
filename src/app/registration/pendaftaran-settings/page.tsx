@@ -57,6 +57,7 @@ const toDateTimeLocal = (isoString: string | undefined): string => {
 
 function StageManagementView() {
     const [stages, setStages] = React.useState<Tahap[]>([]);
+    const [pathways, setPathways] = React.useState<Jalur[]>([]);
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
     const [editingStage, setEditingStage] = React.useState<Tahap | null>(null);
     const [isAlertOpen, setIsAlertOpen] = React.useState(false);
@@ -70,6 +71,7 @@ function StageManagementView() {
 
     React.useEffect(() => {
         setStages(getStages());
+        setPathways(getJalur());
     }, []);
 
     const handleOpenDialog = (stage: Tahap | null = null) => {
@@ -145,6 +147,7 @@ function StageManagementView() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Nama Tahap</TableHead>
+                            <TableHead>Jalur Terkait</TableHead>
                             <TableHead>Tanggal Buka</TableHead>
                             <TableHead>Tanggal Tutup</TableHead>
                             <TableHead className="text-right">Aksi</TableHead>
@@ -152,9 +155,20 @@ function StageManagementView() {
                     </TableHeader>
                     <TableBody>
                         {stages.length > 0 ? (
-                            stages.map((stage) => (
+                            stages.map((stage) => {
+                                const associatedPathways = pathways.filter(p => p.tahapId === stage.id);
+                                return (
                                 <TableRow key={stage.id}>
                                     <TableCell className="font-medium">{stage.name}</TableCell>
+                                    <TableCell>
+                                        {associatedPathways.length > 0 ? (
+                                            <div className="flex flex-wrap gap-1">
+                                                {associatedPathways.map(p => <Badge key={p.id} variant="secondary">{p.name}</Badge>)}
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground">Belum ada</span>
+                                        )}
+                                    </TableCell>
                                     <TableCell>{new Date(stage.startDate).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' })}</TableCell>
                                     <TableCell>{new Date(stage.endDate).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' })}</TableCell>
                                     <TableCell className="text-right">
@@ -178,10 +192,10 @@ function StageManagementView() {
                                         </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
-                            ))
+                            )})
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                                     Belum ada tahap pendaftaran yang ditambahkan.
                                 </TableCell>
                             </TableRow>
@@ -741,3 +755,5 @@ export default function PendaftaranSettingsPage() {
       </div>
     );
   }
+
+    
