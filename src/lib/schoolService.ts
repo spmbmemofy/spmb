@@ -25,7 +25,6 @@ export interface School {
   jalurKuota?: { afirmasi: number; mutasi: number; prestasi: number; domisili: number; };
   majors?: Major[];
   statusPendaftaran?: SchoolStatusPendaftaran;
-  tahapId?: string;
   jumlahPendaftar?: number; 
   allowedGenders?: ('Laki-laki' | 'Perempuan')[];
   allowedReligions?: string[];

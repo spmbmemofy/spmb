@@ -20,6 +20,8 @@ import { getApplicants } from "@/lib/applicantService";
 import type { SchoolSelection, Jalur, Tahap } from "@/lib/types";
 import { getJalur } from "@/lib/pathwayService";
 import { getStages } from "@/lib/stageService";
+import type { School as SchoolType } from "@/lib/schoolService";
+
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const MAX_SCHOOL_SELECTION = 5;
@@ -118,7 +120,7 @@ export default function SchoolSelectionPage() {
   }, [selectedPathwayObject, allStages]);
 
   const availableSchools = React.useMemo(() => {
-    if (!selectedPathwayObject || !selectedStageObject) return [];
+    if (!selectedPathwayObject) return [];
     
     const applicantBiodata = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null)?.biodata;
     const studentSubdistrict = applicantBiodata?.subdistrict;
@@ -130,9 +132,18 @@ export default function SchoolSelectionPage() {
       selectedPathwayObject.allowedJenjang.includes(school.jenjang)
     );
 
-    // Filter schools by registration stage
-    schoolsToDisplay = schoolsToDisplay.filter(school => school.tahapId === selectedStageObject.id);
-    
+    // Filter schools that offer the selected pathway (have quota for it)
+    const pathwayKey = selectedPathwayObject.name.toLowerCase() as keyof NonNullable<SchoolType['jalurKuota']>;
+    schoolsToDisplay = schoolsToDisplay.filter(school => {
+        if (school.jenjang === 'SMA') {
+            return school.jalurKuota && (school.jalurKuota[pathwayKey] ?? 0) > 0;
+        }
+        if (school.jenjang === 'SMK') {
+            return school.majors && school.majors.some(major => (major.quota[pathwayKey] ?? 0) > 0);
+        }
+        return false;
+    });
+
     // Filter by pathway/district for specific pathways
     const subdistrictRestrictedPathways = ["Afirmasi", "Mutasi"];
     if (subdistrictRestrictedPathways.includes(selectedPathwayObject.name) && studentSubdistrict) {
@@ -167,7 +178,7 @@ export default function SchoolSelectionPage() {
     }
 
     return schoolsToDisplay;
-  }, [selectedPathwayObject, selectedStageObject, allSchools]);
+  }, [selectedPathwayObject, allSchools]);
 
   React.useEffect(() => {
     if (isLoading || isLocked) return; 

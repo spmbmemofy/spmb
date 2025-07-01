@@ -38,7 +38,6 @@ export const schoolFormSchema = z.object({
   telepon: z.string().min(9, { message: "Nomor telepon minimal 9 karakter." }),
   akreditasi: z.enum(["A", "B", "C", "Belum Terakreditasi"]),
   
-  tahapId: z.string().optional(),
   kuota: z.coerce.number().int().min(0).optional(),
   jalurKuota: z.object({
     afirmasi: z.coerce.number().int().min(0).optional(),
@@ -151,7 +150,6 @@ export default function SchoolManagementPage() {
                 id: '', npsn: '', namaSekolah: '', jenjang: 'SMA', jenis: 'Negeri',
                 alamat: '', kecamatan: '', telepon: '', akreditasi: 'A',
                 province: 'Kalimantan Timur', district: 'Kabupaten Berau',
-                tahapId: undefined,
                 kuota: 0, jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }, majors: []
             });
         }
@@ -415,36 +413,6 @@ export default function SchoolManagementPage() {
                                     </div>
                                 </TabsContent>
                                 <TabsContent value="data_pendaftaran" className="pt-4 space-y-6">
-                                    {selectedJenjang !== 'SMP' && (
-                                        <FormField
-                                            control={schoolForm.control}
-                                            name="tahapId"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Tahap Pendaftaran</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Pilih tahap pendaftaran untuk sekolah ini" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            {stages.map(stage => (
-                                                                <SelectItem key={stage.id} value={stage.id}>
-                                                                    {stage.name}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormDescription>
-                                                        Tahap di mana sekolah ini akan membuka pendaftaran.
-                                                    </FormDescription>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    )}
-
                                      {selectedJenjang === 'SMA' && (
                                         <>
                                             <FormField control={schoolForm.control} name="kuota" render={({ field }) => ( <FormItem><FormLabel>Total Kuota (SMA)</FormLabel><FormControl><Input type="number" {...field} disabled /></FormControl><FormDescription>Total kuota dihitung otomatis dari jumlah kuota per jalur.</FormDescription><FormMessage /></FormItem> )} />
