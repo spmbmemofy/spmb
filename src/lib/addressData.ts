@@ -7,19 +7,19 @@ export type District = 'Kabupaten Berau';
 export const addressData: Record<Province, Record<District, Record<string, string[]>>> = {
   "Kalimantan Timur": {
     "Kabupaten Berau": {
-      "Kec. Tanjung Redeb": ["Kel. Tanjung Redeb", "Kel. Gayam", "Kel. Karang Ambun", "Kel. Bugis", "Kel. Sungai Bedungun"],
-      "Kec. Teluk Bayur": ["Kel. Teluk Bayur", "Kel. Rinding", "Desa Labanan Makmur", "Desa Tumbit Dayak"],
-      "Kec. Sambaliung": ["Kel. Sambaliung", "Desa Bebanir Bangun", "Desa Gurimbang", "Desa Suaran", "Desa Sukan Tengah", "Desa Pegat Bukur"],
-      "Kec. Gunung Tabur": ["Kel. Gunung Tabur", "Desa Maluang", "Desa Samburakat", "Desa Merancang Ulu", "Desa Merancang Ilir"],
-      "Kec. Segah": ["Desa Tepian Buah", "Desa Gunung Sari", "Desa Long Ayan", "Desa Punan Segah", "Desa Harapan Jaya"],
-      "Kec. Pulau Derawan": ["Desa Pulau Derawan", "Desa Tanjung Batu", "Desa Kasai", "Desa Teluk Semanting"],
-      "Kec. Maratua": ["Desa Maratua Payung-Payung", "Desa Maratua Teluk Alulu", "Desa Maratua Bohesilian"],
-      "Kec. Biatan": ["Desa Biatan Lempake", "Desa Biatan Bapinang", "Desa Karangan"],
-      "Kec. Talisayan": ["Desa Talisayan", "Desa Bumi Jaya", "Desa Suka Murya"],
-      "Kec. Tabalar": ["Desa Tabalar Muara", "Desa Tabalar Ulu", "Desa Tubaan"],
-      "Kec. Batu Putih": ["Desa Batu Putih", "Desa Tembudan", "Desa Lobang Kelatak"],
-      "Kec. Biduk-Biduk": ["Desa Biduk-Biduk", "Desa Teluk Sulaiman", "Desa Giring-Giring"],
-      "Kec. Kelay": ["Desa Sido Bangen", "Desa Muara Lesan", "Desa Merasa"],
+      "Kec. Batu Putih": ["Balikukup", "Batu Putih", "Kayu Indah", "Lobang Kelatak", "Sumber Agung", "Tembudan", "Ampen Medang"],
+      "Kec. Biatan": ["Biatan Bapinang", "Biatan Baru", "Biatan Ilir", "Biatan Lempake", "Biatan Ulu", "Bukit Makmur Jaya", "Karangan", "Manunggal Jaya"],
+      "Kec. Biduk-Biduk": ["Biduk-Biduk", "Giring-Giring", "Pantai Harapan", "Teluk Sulaiman", "Teluk Sumbang", "Tanjung Perepat"],
+      "Kec. Gunung Tabur": ["Batu-Batu", "Birang", "Gunung Tabur", "Maluang", "Melati Jaya", "Merancang Ilir", "Merancang Ulu", "Pulau Besing", "Sambakungan", "Samburakat", "Tasuk"],
+      "Kec. Kelay": ["Lesan Dayak", "Long Beliu", "Long Duhung", "Long Keluh", "Long Lamcin", "Long Sului", "Mapulu", "Merabu", "Merasa", "Merapun", "Muara Lesan", "Panaan", "Sido Bangen"],
+      "Kec. Maratua": ["Bohesilian", "Payung-Payung", "Teluk Alulu", "Teluk Harapan"],
+      "Kec. Pulau Derawan": ["Kasai", "Pegat Betumbuk", "Pulau Derawan", "Tanjung Batu", "Teluk Semanting"],
+      "Kec. Sambaliung": ["Bebanir", "Bena Baru", "Gurimbang", "Inaran", "Long Lanuk", "Pegat Bukur", "Pilanjau", "Rantau Panjang", "Sambaliung", "Suaran", "Sukan Tengah", "Sukan Uluh", "Tumbit Dayak"],
+      "Kec. Segah": ["Batu Rajang", "Bukit Makmur", "Gunung Sari", "Harapan Jaya", "Long Ayan", "Long Ayap", "Long Laai", "Pandan Sari", "Punan Mahakam", "Punan Malinau", "Punan Segah", "Siduung Indah", "Tepian Buah"],
+      "Kec. Tabalar": ["Buyung-Buyung", "Harapan Maju", "Semurut", "Tabalar Muara", "Tabalar Ulu", "Tubaan"],
+      "Kec. Talisayan": ["Bumi Jaya", "Campur Sari", "Capuak", "Dumaring", "Eka Sapta", "Purnasari Jaya", "Suka Murya", "Sumber Mulya", "Talisayan", "Tunggal Bumi"],
+      "Kec. Tanjung Redeb": ["Bugis", "Gayam", "Karang Ambun", "Sungai Bedungun", "Tanjung Redeb"],
+      "Kec. Teluk Bayur": ["Labanan Jaya", "Labanan Makarti", "Labanan Makmur", "Rinding", "Tumbit Dayak", "Teluk Bayur"],
     }
   }
 };
