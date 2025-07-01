@@ -120,18 +120,13 @@ export default function SchoolManagementPage() {
 
     const processForm = (data: SchoolFormValues) => {
         try {
-             // For SMK, kuota and jalurKuota are derived from majors, so we don't save them from this form.
-            const schoolData: Partial<School> = { ...data };
-            if (data.jenjang === 'SMK') {
-                delete schoolData.kuota;
-                delete schoolData.jalurKuota;
-            }
-
             if (editingSchool) {
+                // Merge existing data with form data to preserve fields not in the form
+                const schoolData = { ...editingSchool, ...data };
                 updateSchool(schoolData as School);
                 toast({ title: "Sekolah Diperbarui", description: `Data untuk ${data.namaSekolah} telah diperbarui.` });
             } else {
-                const { id, ...newSchoolData } = schoolData;
+                const { id, ...newSchoolData } = data;
                 addSchool(newSchoolData as Omit<School, 'id'>);
                 toast({ title: "Sekolah Ditambahkan", description: `${data.namaSekolah} telah ditambahkan ke sistem.` });
             }
@@ -293,24 +288,6 @@ export default function SchoolManagementPage() {
                                     <FormField control={form.control} name="kecamatan" render={({ field }) => ( <FormItem><FormLabel>Kecamatan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                                 </TabsContent>
                                 <TabsContent value="data_pendaftaran" className="pt-4 space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <FormField control={form.control} name="wilayah" render={({ field }) => ( <FormItem><FormLabel>Wilayah (1-10)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                                        <FormField control={form.control} name="tahapId" render={({ field }) => (
-                                          <FormItem>
-                                            <FormLabel>Tahap Pendaftaran</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl><SelectTrigger><SelectValue placeholder="Pilih tahap" /></SelectTrigger></FormControl>
-                                                <SelectContent>
-                                                    {stages.map(stage => (
-                                                        <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                          </FormItem>
-                                        )} />
-                                        <FormField control={form.control} name="statusPendaftaran" render={({ field }) => ( <FormItem><FormLabel>Status Pendaftaran</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Buka">Buka</SelectItem><SelectItem value="Tutup">Tutup</SelectItem><SelectItem value="Segera Penuh">Segera Penuh</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
-                                    </div>
                                      <FormField control={form.control} name="kuota" render={({ field }) => ( <FormItem><FormLabel>Total Kuota (SMA)</FormLabel><CardDescription>Untuk SMK, total kuota dihitung dari jumlah kuota jurusan.</CardDescription><FormControl><Input type="number" {...field} disabled={selectedJenjang === 'SMK'} /></FormControl><FormMessage /></FormItem> )} />
                                     
                                      {selectedJenjang === 'SMA' && (
