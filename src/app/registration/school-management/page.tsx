@@ -23,6 +23,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { Major } from "@/lib/types";
 import { getDistricts, getSubdistricts } from "@/lib/addressData";
+import { getStages, type Tahap } from "@/lib/stageService";
+
 
 export const schoolFormSchema = z.object({
   id: z.string().optional(),
@@ -36,6 +38,7 @@ export const schoolFormSchema = z.object({
   kecamatan: z.string().min(1, { message: "Kecamatan wajib dipilih." }),
   telepon: z.string().min(9, { message: "Nomor telepon minimal 9 karakter." }),
   akreditasi: z.enum(["A", "B", "C", "Belum Terakreditasi"]),
+  tahapId: z.string().optional(),
   
   kuota: z.coerce.number().int().min(0).optional(),
   jalurKuota: z.object({
@@ -64,6 +67,7 @@ type MajorFormValues = z.infer<typeof majorFormSchema>;
 
 export default function SchoolManagementPage() {
     const [schools, setSchools] = React.useState<School[]>([]);
+    const [allStages, setAllStages] = React.useState<Tahap[]>([]);
     const [smpSearchTerm, setSmpSearchTerm] = React.useState("");
     const [smaSmkSearchTerm, setSmaSmkSearchTerm] = React.useState("");
     
@@ -100,6 +104,7 @@ export default function SchoolManagementPage() {
 
     React.useEffect(() => {
         setSchools(getSchools());
+        setAllStages(getStages());
     }, []);
 
     React.useEffect(() => {
@@ -137,7 +142,8 @@ export default function SchoolManagementPage() {
                 id: '', npsn: '', namaSekolah: '', jenjang: 'SMA', jenis: 'Negeri',
                 alamat: '', kecamatan: '', telepon: '', akreditasi: 'A',
                 province: 'Kalimantan Timur', district: 'Kabupaten Berau',
-                kuota: 0, jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }, majors: []
+                kuota: 0, jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }, majors: [],
+                tahapId: undefined
             });
         }
         setIsSchoolDialogOpen(true);
@@ -160,9 +166,15 @@ export default function SchoolManagementPage() {
 
     const processSchoolForm = (data: SchoolFormValues) => {
         try {
-            const finalData = { ...data };
-            if (data.jenjang === 'SMA' && data.jalurKuota) {
-                finalData.kuota = Object.values(data.jalurKuota).reduce((sum, val) => sum + (Number(val) || 0), 0);
+            const finalData: Partial<SchoolFormValues> & { kuota?: number } = { ...data };
+
+            // Ensure jalurKuota exists if jenjang is SMA
+            if (data.jenjang === 'SMA' && !data.jalurKuota) {
+                finalData.jalurKuota = { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 };
+            }
+
+            if (data.jenjang === 'SMA' && finalData.jalurKuota) {
+                finalData.kuota = Object.values(finalData.jalurKuota).reduce((sum, val) => sum + (Number(val) || 0), 0);
             } else if(data.jenjang === 'SMK') {
                 const majors = data.majors as Major[] || [];
                 finalData.kuota = majors.reduce((sum, major) => sum + Object.values(major.quota).reduce((s, q) => s + q, 0), 0);
@@ -403,7 +415,21 @@ export default function SchoolManagementPage() {
                                 <TabsContent value="data_pendaftaran" className="pt-4 space-y-6">
                                      {selectedJenjang === 'SMA' && (
                                         <>
-                                            <FormField control={schoolForm.control} name="kuota" render={({ field }) => ( <FormItem><FormLabel>Total Kuota (SMA)</FormLabel><FormControl><Input type="number" {...field} disabled /></FormControl><FormDescription>Total kuota dihitung otomatis dari jumlah kuota per jalur.</FormDescription><FormMessage /></FormItem> )} />
+                                            <FormField control={schoolForm.control} name="kuota" render={({ field }) => ( 
+                                                <FormItem>
+                                                    <FormLabel>Total Kuota (SMA)</FormLabel>
+                                                    <FormControl>
+                                                        <Input 
+                                                          type="number" 
+                                                          {...field} 
+                                                          readOnly
+                                                          className="bg-muted/50 focus-visible:ring-0 focus-visible:ring-offset-0 cursor-default"
+                                                        />
+                                                    </FormControl>
+                                                    <FormDescription>Total kuota dihitung otomatis dari jumlah kuota per jalur.</FormDescription>
+                                                    <FormMessage />
+                                                </FormItem> 
+                                            )} />
                                             <Card>
                                                 <CardHeader><CardTitle className="text-base">Pembagian Kuota per Jalur (SMA)</CardTitle></CardHeader>
                                                 <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -542,3 +568,5 @@ export default function SchoolManagementPage() {
         </>
     );
 }
+
+    
