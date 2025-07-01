@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, School as SchoolIcon, Users, Filter as FilterIcon, Search as SearchIcon, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, PieChart } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { statusVerifikasiOptionsPlain } from "@/lib/mockData";
 import { getApplicants } from "@/lib/applicantService";
 import type { Applicant, ApplicantStatus, SortConfig, SortKey, SortDirection } from "@/lib/types";
 import { getJalur } from "@/lib/pathwayService";
+import { getStages } from "@/lib/stageService";
 
 interface PathwayStats {
   nama: string;
@@ -44,11 +45,13 @@ const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "s
 
 export default function SchoolDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const schoolId = params.id as string;
   
   const [school, setSchool] = React.useState<School | undefined>();
   const [currentSchoolApplicants, setCurrentSchoolApplicants] = React.useState<Applicant[]>([]);
   const [jalurOptions, setJalurOptions] = React.useState<string[]>([]);
+  const [stageName, setStageName] = React.useState<string>("");
   
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedJalur, setSelectedJalur] = React.useState("Semua Jalur");
@@ -62,7 +65,15 @@ export default function SchoolDetailPage() {
     if (schoolId) {
         const foundSchool = getSchoolById(schoolId);
         const allJalur = getJalur();
+        const allStages = getStages();
+        
         setSchool(foundSchool);
+        
+        if (foundSchool?.tahapId) {
+            const stage = allStages.find(s => s.id === foundSchool.tahapId);
+            setStageName(stage?.name || 'Tidak ada tahap');
+        }
+
         setJalurOptions(["Semua Jalur", ...allJalur.map(j => j.name)]);
         const allApplicants = getApplicants();
         const schoolApplicants = allApplicants.filter(app => 
@@ -138,33 +149,41 @@ export default function SchoolDetailPage() {
   }, [sortedApplicants.length, pageSize]);
 
   const pathwayStats: PathwayStats[] = React.useMemo(() => {
-    if (!school || !school.jalurKuota || !currentSchoolApplicants.length) {
+    if (!school || !currentSchoolApplicants.length) {
       return [];
     }
     
     const pathways = getJalur();
 
-    return pathways.map(jalur => {
-      const jalurName = jalur.name;
-      const pathwayKey = jalurName.toLowerCase() as keyof typeof school.jalurKuota;
-      const kuota = school.jalurKuota?.[pathwayKey] ?? 0;
+    return pathways
+        .filter(jalur => (school.jenjang === 'SMA' && school.jalurKuota) || (school.jenjang === 'SMK' && school.majors))
+        .map(jalur => {
+        const jalurName = jalur.name;
+        const pathwayKey = jalurName.toLowerCase() as keyof NonNullable<typeof school.jalurKuota>;
+        
+        let kuota = 0;
+        if (school.jenjang === 'SMA' && school.jalurKuota) {
+            kuota = school.jalurKuota[pathwayKey] ?? 0;
+        } else if (school.jenjang === 'SMK' && school.majors) {
+            kuota = school.majors.reduce((total, major) => total + (major.quota[pathwayKey] ?? 0), 0);
+        }
 
-      const applicantsInPathwayForThisSchool = currentSchoolApplicants.filter(app => app.jalur === jalurName);
+        const applicantsInPathwayForThisSchool = currentSchoolApplicants.filter(app => app.jalur === jalurName);
 
-      const terverifikasi = applicantsInPathwayForThisSchool.filter(app => app.diterimaDiSekolahId === school.id).length;
-      const menungguVerifikasi = applicantsInPathwayForThisSchool.filter(app => app.statusVerifikasi === "Menunggu Verifikasi").length;
-      const berkasTidakSesuai = applicantsInPathwayForThisSchool.filter(app => app.statusVerifikasi === "Berkas tidak sesuai").length;
-      const totalPendaftar = applicantsInPathwayForThisSchool.length;
+        const terverifikasi = applicantsInPathwayForThisSchool.filter(app => app.diterimaDiSekolahId === school.id).length;
+        const menungguVerifikasi = applicantsInPathwayForThisSchool.filter(app => app.statusVerifikasi === "Menunggu Verifikasi").length;
+        const berkasTidakSesuai = applicantsInPathwayForThisSchool.filter(app => app.statusVerifikasi === "Berkas tidak sesuai").length;
+        const totalPendaftar = applicantsInPathwayForThisSchool.length;
 
-      return {
-        nama: jalurName,
-        kuota,
-        terverifikasi,
-        menungguVerifikasi,
-        berkasTidakSesuai,
-        totalPendaftar,
-      };
-    });
+        return {
+            nama: jalurName,
+            kuota,
+            terverifikasi,
+            menungguVerifikasi,
+            berkasTidakSesuai,
+            totalPendaftar,
+        };
+    }).filter(stats => stats.totalPendaftar > 0 || stats.kuota > 0);
   }, [currentSchoolApplicants, school]);
 
 
@@ -197,11 +216,9 @@ export default function SchoolDetailPage() {
             <p>Maaf, data untuk sekolah ini tidak dapat ditemukan.</p>
           </CardContent>
           <CardFooter>
-            <Button asChild className="mx-auto">
-              <Link href="/registration/all-data">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Kembali ke Semua Data
-              </Link>
+            <Button onClick={() => router.back()} className="mx-auto">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Kembali
             </Button>
           </CardFooter>
         </Card>
@@ -231,11 +248,9 @@ export default function SchoolDetailPage() {
               <SchoolIcon className="h-8 w-8 text-primary" />
               <CardTitle className="text-xl sm:text-2xl md:text-3xl font-headline">{school.namaSekolah}</CardTitle>
             </div>
-            <Button variant="outline" asChild size="sm" className="w-full sm:w-auto">
-              <Link href="/registration/all-data">
+            <Button variant="outline" onClick={() => router.back()} size="sm" className="w-full sm:w-auto">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Kembali
-              </Link>
             </Button>
           </div>
           <CardDescription>Detail informasi sekolah dan daftar pendaftar di Kabupaten Berau.</CardDescription>
@@ -245,10 +260,9 @@ export default function SchoolDetailPage() {
             <h3 className="text-lg font-semibold mb-3 text-primary">Informasi Umum Sekolah</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
               <div><span className="font-medium text-muted-foreground">Akreditasi:</span> {school.akreditasi}</div>
-              <div><span className="font-medium text-muted-foreground">Tahap Pendaftaran:</span> {school.tahapPendaftaran}</div>
+              <div><span className="font-medium text-muted-foreground">Tahap Pendaftaran:</span> {stageName}</div>
               <div><span className="font-medium text-muted-foreground">Total Kuota Keseluruhan:</span> {school.kuota}</div>
               <div><span className="font-medium text-muted-foreground">Total Pendaftar:</span> {currentSchoolApplicants.length}</div>
-              <div><span className="font-medium text-muted-foreground">Status Pendaftaran Umum:</span> <Badge variant={school.statusPendaftaran === "Buka" ? "default" : school.statusPendaftaran === "Segera Penuh" ? "secondary" : "destructive"}>{school.statusPendaftaran}</Badge></div>
               <div className="md:col-span-2"><span className="font-medium text-muted-foreground">Alamat:</span> {school.alamat}</div>
               <div className="md:col-span-2"><span className="font-medium text-muted-foreground">Telepon:</span> {school.telepon}</div>
               {school.allowedGenders && school.allowedGenders.length > 0 && (
@@ -331,7 +345,7 @@ export default function SchoolDetailPage() {
                   <SelectValue placeholder="Filter berdasarkan Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {statusVerifikasiOptionsPlain.map(status => (
+                  {["Semua Status", ...statusVerifikasiOptionsPlain].map(status => (
                     <SelectItem key={status} value={status}>{status}</SelectItem>
                   ))}
                 </SelectContent>

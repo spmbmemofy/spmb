@@ -253,11 +253,11 @@ const pathwayFormSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(3, { message: "Nama jalur minimal 3 karakter." }),
   tahapId: z.string().min(1, { message: "Tahap pendaftaran harus dipilih." }),
-  allowedJenjang: z.array(z.enum(["SMP", "SMA", "SMK"])).min(1, { message: "Pilih setidaknya satu jenjang." }),
+  allowedJenjang: z.array(z.string()).min(1, { message: "Pilih setidaknya satu jenjang." }),
 });
 
 type PathwayFormValues = z.infer<typeof pathwayFormSchema>;
-const jenjangOptions: SchoolJenjang[] = ["SMA", "SMK", "SMP"];
+const jenjangOptions: SchoolJenjang[] = ["SMA", "SMK"];
 
 function PathwayManagementView() {
     const [pathways, setPathways] = React.useState<Jalur[]>([]);
@@ -315,10 +315,10 @@ function PathwayManagementView() {
     const processForm = (data: PathwayFormValues) => {
         try {
             if (editingPathway) {
-                updateJalur({ ...data, id: editingPathway.id });
+                updateJalur({ ...data, id: editingPathway.id, allowedJenjang: data.allowedJenjang as SchoolJenjang[] });
                 toast({ title: "Jalur Diperbarui", description: `Jalur "${data.name}" telah diperbarui.` });
             } else {
-                addJalur(data);
+                addJalur({ ...data, allowedJenjang: data.allowedJenjang as SchoolJenjang[] });
                 toast({ title: "Jalur Ditambahkan", description: `Jalur "${data.name}" telah ditambahkan.` });
             }
             setPathways(getJalur());

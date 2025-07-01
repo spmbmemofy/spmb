@@ -9,8 +9,9 @@ const JALUR_STORAGE_KEY = 'allJalurData_v3';
 const initialJalurData: Jalur[] = [
   { id: 'jalur-afirmasi', name: 'Afirmasi', tahapId: 'tahap-1', allowedJenjang: ['SMA', 'SMK'] },
   { id: 'jalur-mutasi', name: 'Mutasi', tahapId: 'tahap-1', allowedJenjang: ['SMA', 'SMK'] },
-  { id: 'jalur-prestasi', name: 'Prestasi', tahapId: 'tahap-2', allowedJenjang: ['SMA', 'SMK'] },
-  { id: 'jalur-domisili', name: 'Domisili', tahapId: 'tahap-2', allowedJenjang: ['SMA', 'SMK'] },
+  { id: 'jalur-prestasi', name: 'Prestasi', tahapId: 'tahap-1', allowedJenjang: ['SMA', 'SMK'] },
+  { id: 'jalur-domisili', name: 'Domisili', tahapId: 'tahap-2', allowedJenjang: ['SMA'] },
+  { id: 'jalur-reguler-smk', name: 'Reguler SMK', tahapId: 'tahap-2', allowedJenjang: ['SMK'] },
 ];
 
 export const initializeJalurData = (): void => {
