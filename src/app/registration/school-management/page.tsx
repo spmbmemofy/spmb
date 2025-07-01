@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { Major } from "@/lib/types";
 import { getStages, type Tahap } from "@/lib/stageService";
+import { getDistricts, getSubdistricts } from "@/lib/addressData";
 
 export const schoolFormSchema = z.object({
   id: z.string().optional(),
@@ -31,7 +32,9 @@ export const schoolFormSchema = z.object({
   jenjang: z.enum(["SMP", "SMA", "SMK"]),
   jenis: z.enum(["Negeri", "Swasta"]),
   alamat: z.string().min(10, { message: "Alamat lengkap minimal 10 karakter." }),
-  kecamatan: z.string().min(3, { message: "Kecamatan minimal 3 karakter." }),
+  province: z.string().min(1, "Provinsi harus dipilih."),
+  district: z.string().min(1, "Kabupaten/Kota harus dipilih."),
+  kecamatan: z.string().min(1, { message: "Kecamatan wajib dipilih." }),
   telepon: z.string().min(9, { message: "Nomor telepon minimal 9 karakter." }),
   akreditasi: z.enum(["A", "B", "C", "Belum Terakreditasi"]),
   
@@ -100,6 +103,12 @@ export default function SchoolManagementPage() {
     const selectedJenjang = schoolForm.watch("jenjang");
     const jalurKuotaValues = schoolForm.watch("jalurKuota");
     const currentMajors = schoolForm.watch("majors") as Major[] || [];
+    
+    const selectedProvince = schoolForm.watch("province");
+    const selectedDistrict = schoolForm.watch("district");
+    
+    const districtOptions = getDistricts(selectedProvince as any);
+    const subdistrictOptions = getSubdistricts(selectedProvince as any, selectedDistrict as any);
 
     React.useEffect(() => {
         setSchools(getSchools());
@@ -141,6 +150,7 @@ export default function SchoolManagementPage() {
             schoolForm.reset({
                 id: '', npsn: '', namaSekolah: '', jenjang: 'SMA', jenis: 'Negeri',
                 alamat: '', kecamatan: '', telepon: '', akreditasi: 'A',
+                province: 'Kalimantan Timur', district: 'Kabupaten Berau',
                 tahapId: undefined,
                 kuota: 0, jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }, majors: []
             });
@@ -394,8 +404,15 @@ export default function SchoolManagementPage() {
                                         <FormField control={schoolForm.control} name="akreditasi" render={({ field }) => ( <FormItem><FormLabel>Akreditasi</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="A">A</SelectItem><SelectItem value="B">B</SelectItem><SelectItem value="C">C</SelectItem><SelectItem value="Belum Terakreditasi">Belum Terakreditasi</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
                                         <FormField control={schoolForm.control} name="telepon" render={({ field }) => ( <FormItem><FormLabel>Telepon</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                                     </div>
-                                    <FormField control={schoolForm.control} name="alamat" render={({ field }) => ( <FormItem><FormLabel>Alamat</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
-                                    <FormField control={schoolForm.control} name="kecamatan" render={({ field }) => ( <FormItem><FormLabel>Kecamatan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                    <div className="space-y-4 rounded-md border p-4">
+                                      <h3 className="text-sm font-medium text-muted-foreground">Alamat Sekolah</h3>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <FormField control={schoolForm.control} name="province" render={({ field }) => ( <FormItem><FormLabel>Provinsi</FormLabel><Select onValueChange={(value) => { field.onChange(value); schoolForm.setValue("district", ""); schoolForm.setValue("kecamatan", ""); }} value={field.value} disabled><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Kalimantan Timur">Kalimantan Timur</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
+                                            <FormField control={schoolForm.control} name="district" render={({ field }) => ( <FormItem><FormLabel>Kabupaten/Kota</FormLabel><Select onValueChange={(value) => { field.onChange(value); schoolForm.setValue("kecamatan", ""); }} value={field.value} disabled><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Kabupaten Berau">Kabupaten Berau</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
+                                            <FormField control={schoolForm.control} name="kecamatan" render={({ field }) => ( <FormItem><FormLabel>Kecamatan</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!selectedDistrict}><FormControl><SelectTrigger><SelectValue placeholder="Pilih Kecamatan" /></SelectTrigger></FormControl><SelectContent>{subdistrictOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
+                                      </div>
+                                      <FormField control={schoolForm.control} name="alamat" render={({ field }) => ( <FormItem><FormLabel>Alamat Lengkap (Jalan, No. Rumah, dll)</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                    </div>
                                 </TabsContent>
                                 <TabsContent value="data_pendaftaran" className="pt-4 space-y-6">
                                     {selectedJenjang !== 'SMP' && (

@@ -31,6 +31,8 @@ export interface School {
   allowedReligions?: string[];
   allowedVillages?: string[];
   priorityDomiciles?: PriorityDomicile[];
+  province?: string;
+  district?: string;
 }
 
 // All initial data has been removed to provide a clean slate.
