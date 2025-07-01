@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -95,11 +95,19 @@ export default function SchoolManagementPage() {
     });
 
     const selectedJenjang = schoolForm.watch("jenjang");
+    const jalurKuotaValues = schoolForm.watch("jalurKuota");
     const currentMajors = schoolForm.watch("majors") as Major[] || [];
 
     React.useEffect(() => {
         setSchools(getSchools());
     }, []);
+
+    React.useEffect(() => {
+        if (selectedJenjang === 'SMA' && jalurKuotaValues) {
+            const totalKuota = Object.values(jalurKuotaValues).reduce((sum, val) => sum + (val || 0), 0);
+            schoolForm.setValue('kuota', totalKuota, { shouldValidate: true });
+        }
+    }, [jalurKuotaValues, selectedJenjang, schoolForm]);
 
     const filteredSmpSchools = React.useMemo(() => {
         return schools.filter(school => 
@@ -153,7 +161,9 @@ export default function SchoolManagementPage() {
     const processSchoolForm = (data: SchoolFormValues) => {
         try {
             const finalData = { ...data };
-            if(data.jenjang === 'SMK') {
+            if (data.jenjang === 'SMA' && data.jalurKuota) {
+                finalData.kuota = Object.values(data.jalurKuota).reduce((sum, val) => sum + (val || 0), 0);
+            } else if(data.jenjang === 'SMK') {
                 const majors = data.majors as Major[] || [];
                 finalData.kuota = majors.reduce((sum, major) => sum + Object.values(major.quota).reduce((s, q) => s + q, 0), 0);
                 finalData.jalurKuota = majors.reduce((totals, major) => {
@@ -385,7 +395,7 @@ export default function SchoolManagementPage() {
                                 <TabsContent value="data_pendaftaran" className="pt-4 space-y-6">
                                      {selectedJenjang === 'SMA' && (
                                         <>
-                                            <FormField control={schoolForm.control} name="kuota" render={({ field }) => ( <FormItem><FormLabel>Total Kuota (SMA)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                            <FormField control={schoolForm.control} name="kuota" render={({ field }) => ( <FormItem><FormLabel>Total Kuota (SMA)</FormLabel><FormControl><Input type="number" {...field} disabled /></FormControl><FormDescription>Total kuota dihitung otomatis dari jumlah kuota per jalur.</FormDescription><FormMessage /></FormItem> )} />
                                             <Card>
                                                 <CardHeader><CardTitle className="text-base">Pembagian Kuota per Jalur (SMA)</CardTitle></CardHeader>
                                                 <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
