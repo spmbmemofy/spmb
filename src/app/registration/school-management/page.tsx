@@ -22,7 +22,6 @@ import { getSchools, addSchool, updateSchool, deleteSchool, type School, type Sc
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { Major } from "@/lib/types";
-import { getStages, type Tahap } from "@/lib/stageService";
 import { getDistricts, getSubdistricts } from "@/lib/addressData";
 
 export const schoolFormSchema = z.object({
@@ -65,7 +64,6 @@ type MajorFormValues = z.infer<typeof majorFormSchema>;
 
 export default function SchoolManagementPage() {
     const [schools, setSchools] = React.useState<School[]>([]);
-    const [stages, setStages] = React.useState<Tahap[]>([]);
     const [smpSearchTerm, setSmpSearchTerm] = React.useState("");
     const [smaSmkSearchTerm, setSmaSmkSearchTerm] = React.useState("");
     
@@ -73,7 +71,6 @@ export default function SchoolManagementPage() {
     const [isSchoolDialogOpen, setIsSchoolDialogOpen] = React.useState(false);
     const [editingSchool, setEditingSchool] = React.useState<School | null>(null);
     const [schoolToDeleteId, setSchoolToDeleteId] = React.useState<string | null>(null);
-    const [activeDialogTab, setActiveDialogTab] = React.useState("info_umum");
     
     // Major Dialog State (within school dialog)
     const [isMajorDialogOpen, setIsMajorDialogOpen] = React.useState(false);
@@ -90,36 +87,27 @@ export default function SchoolManagementPage() {
         defaultValues: {},
     });
 
-     const majorForm = useForm<MajorFormValues>({
-        resolver: zodResolver(majorFormSchema),
-        defaultValues: {
-            name: '',
-            berkasPendukung: '',
-            quota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }
-        },
-    });
-
-    const selectedJenjang = schoolForm.watch("jenjang");
-    const jalurKuotaValues = schoolForm.watch("jalurKuota");
-    const currentMajors = schoolForm.watch("majors") as Major[] || [];
+    const { watch, setValue } = schoolForm;
+    const selectedJenjang = watch("jenjang");
+    const jalurKuotaValues = watch("jalurKuota");
+    const currentMajors = watch("majors") as Major[] || [];
     
-    const selectedProvince = schoolForm.watch("province");
-    const selectedDistrict = schoolForm.watch("district");
+    const selectedProvince = watch("province");
+    const selectedDistrict = watch("district");
     
     const districtOptions = getDistricts(selectedProvince as any);
     const subdistrictOptions = getSubdistricts(selectedProvince as any, selectedDistrict as any);
 
     React.useEffect(() => {
         setSchools(getSchools());
-        setStages(getStages());
     }, []);
 
     React.useEffect(() => {
         if (selectedJenjang === 'SMA' && jalurKuotaValues) {
-            const totalKuota = Object.values(jalurKuotaValues).reduce((sum, val) => sum + (val || 0), 0);
-            schoolForm.setValue('kuota', totalKuota, { shouldValidate: true });
+            const totalKuota = Object.values(jalurKuotaValues).reduce((sum, val) => sum + (Number(val) || 0), 0);
+            setValue('kuota', totalKuota, { shouldValidate: true });
         }
-    }, [jalurKuotaValues, selectedJenjang, schoolForm]);
+    }, [jalurKuotaValues, selectedJenjang, setValue]);
 
     const filteredSmpSchools = React.useMemo(() => {
         return schools.filter(school => 
@@ -138,7 +126,6 @@ export default function SchoolManagementPage() {
     }, [schools, smaSmkSearchTerm]);
 
     const handleOpenSchoolDialog = (school: School | null = null) => {
-        setActiveDialogTab('info_umum');
         setEditingSchool(school);
         if (school) {
             schoolForm.reset({
@@ -175,7 +162,7 @@ export default function SchoolManagementPage() {
         try {
             const finalData = { ...data };
             if (data.jenjang === 'SMA' && data.jalurKuota) {
-                finalData.kuota = Object.values(data.jalurKuota).reduce((sum, val) => sum + (val || 0), 0);
+                finalData.kuota = Object.values(data.jalurKuota).reduce((sum, val) => sum + (Number(val) || 0), 0);
             } else if(data.jenjang === 'SMK') {
                 const majors = data.majors as Major[] || [];
                 finalData.kuota = majors.reduce((sum, major) => sum + Object.values(major.quota).reduce((s, q) => s + q, 0), 0);
@@ -192,18 +179,15 @@ export default function SchoolManagementPage() {
                 const schoolData = { ...editingSchool, ...finalData } as School;
                 updateSchool(schoolData);
                 toast({ title: "Sekolah Diperbarui", description: `Data untuk ${data.namaSekolah} telah diperbarui.` });
-                setSchools(getSchools());
-                setIsSchoolDialogOpen(false);
             } else {
                 const { id, ...newSchoolData } = finalData;
-                const newlyAddedSchool = addSchool(newSchoolData as Omit<School, 'id'>);
-                
-                toast({ title: "Informasi Umum Disimpan", description: `Lanjutkan mengisi data pendaftaran untuk ${data.namaSekolah}.` });
-
-                setSchools(getSchools());
-                setEditingSchool(newlyAddedSchool);
-                setActiveDialogTab('data_pendaftaran');
+                addSchool(newSchoolData as Omit<School, 'id'>);
+                toast({ title: "Sekolah Ditambahkan", description: `Sekolah ${data.namaSekolah} berhasil ditambahkan.` });
             }
+            
+            setSchools(getSchools());
+            setIsSchoolDialogOpen(false);
+
         } catch (error: any) {
             toast({ variant: "destructive", title: "Gagal Menyimpan", description: error.message });
         }
@@ -247,6 +231,15 @@ export default function SchoolManagementPage() {
         schoolForm.setValue('majors', updatedMajors, { shouldValidate: true });
         setIsMajorDialogOpen(false);
     };
+
+     const majorForm = useForm<MajorFormValues>({
+        resolver: zodResolver(majorFormSchema),
+        defaultValues: {
+            name: '',
+            berkasPendukung: '',
+            quota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }
+        },
+    });
 
 
     const renderSchoolTable = (schoolList: School[], type: 'smp' | 'sma_smk') => (
@@ -381,12 +374,7 @@ export default function SchoolManagementPage() {
                     </DialogHeader>
                     <Form {...schoolForm}>
                         <form onSubmit={schoolForm.handleSubmit(processSchoolForm)} className="space-y-6 py-4 pr-2">
-                            <Tabs 
-                                defaultValue="info_umum" 
-                                className="w-full"
-                                value={activeDialogTab}
-                                onValueChange={(value) => setActiveDialogTab(value as "info_umum" | "data_pendaftaran")}
-                            >
+                            <Tabs defaultValue="info_umum" className="w-full">
                                 <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="info_umum">Informasi Umum</TabsTrigger>
                                     <TabsTrigger value="data_pendaftaran" disabled={selectedJenjang === 'SMP'}>
@@ -481,7 +469,7 @@ export default function SchoolManagementPage() {
                             <DialogFooter className="pt-4">
                                 <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
                                 <Button type="submit">
-                                    {editingSchool ? "Simpan Perubahan" : "Simpan"}
+                                    {editingSchool ? "Simpan Perubahan" : "Simpan Sekolah"}
                                 </Button>
                             </DialogFooter>
                         </form>
