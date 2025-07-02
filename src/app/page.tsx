@@ -50,12 +50,19 @@ export default function LandingPage() {
             <GraduationCap className="h-6 w-6 text-primary" />
             <span>PMB 2026</span>
           </Link>
-          <Button asChild>
-            <Link href="/login">
-              Masuk
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+                <Link href="/registration/home">
+                    Beranda
+                </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/login">
+                Masuk
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
