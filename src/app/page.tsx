@@ -52,7 +52,7 @@ export default function LandingPage() {
           </Link>
           <div className="flex items-center gap-2">
             <Button variant="outline" asChild>
-                <Link href="/registration/announcement">
+                <Link href="/selection-results">
                     Seleksi
                 </Link>
             </Button>
