@@ -61,12 +61,12 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="container grid lg:grid-cols-2 gap-10 items-center py-20 sm:py-24 lg:py-32 px-4">
+        <section className="container grid md:grid-cols-2 gap-10 items-center py-16 sm:py-20 md:py-24 lg:py-28 px-4">
           <div className="space-y-6">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter">
               Selamat Datang di Portal PMB 2026
             </h1>
-            <p className="max-w-xl text-lg text-muted-foreground">
+            <p className="max-w-xl text-md sm:text-lg text-muted-foreground">
               Mulai langkah pertama menuju masa depan cerah Anda. Sistem Penerimaan Murid Baru (PMB) online yang mudah, transparan, dan terpercaya.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -75,7 +75,7 @@ export default function LandingPage() {
               </Button>
             </div>
           </div>
-          <div className="hidden lg:block">
+          <div className="hidden md:block">
             <Image
               src="https://placehold.co/600x400.png"
               alt="Ilustrasi siswa belajar"
@@ -96,7 +96,7 @@ export default function LandingPage() {
                 Ikuti 5 langkah mudah untuk menyelesaikan proses pendaftaran Anda dari awal hingga akhir.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
               {alurPendaftaran.map((item, index) => (
                 <div key={index} className="flex flex-col items-center text-center">
                   <div className="mb-4 bg-primary text-primary-foreground rounded-full p-4 w-fit">
