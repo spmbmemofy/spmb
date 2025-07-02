@@ -14,7 +14,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FileText, Save, School, ArrowUp, ArrowDown, AlertTriangle, ClipboardCheck, Info, Clock } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { getSchools } from "@/lib/schoolService"; 
+import { getSchools, getSchoolById } from "@/lib/schoolService"; 
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
 import { getApplicants } from "@/lib/applicantService";
 import type { SchoolSelection, Jalur, Tahap } from "@/lib/types";
@@ -90,6 +90,18 @@ export default function SchoolSelectionPage() {
   };
 
   const handleSchoolSelectionChange = (schoolId: string, major: string | null) => {
+    if (selectedPathway === 'Domisili' && selectedSelections.length === 0) {
+        const school = getSchoolById(schoolId);
+        if (school && school.jenjang !== 'SMA') {
+            toast({
+                variant: 'destructive',
+                title: 'Pilihan Tidak Sesuai',
+                description: 'Untuk jalur Domisili, pilihan pertama Anda harus sekolah jenjang SMA.',
+            });
+            return; 
+        }
+    }
+
     setSelectedSelections(prevSelected => {
       const selection = { schoolId, major };
       const isSelected = prevSelected.some(s => s.schoolId === schoolId && s.major === major);
