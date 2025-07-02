@@ -20,7 +20,7 @@ export default function ForgotPasswordPage() {
               Jika Anda lupa kata sandi, silakan ikuti proses pemulihan kata sandi yang akan dijelaskan di halaman ini atau hubungi dukungan.
             </p>
             <Button asChild>
-              <Link href="/">
+              <Link href="/login">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Kembali ke Login
               </Link>
