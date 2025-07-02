@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,7 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center justify-between">
+        <div className="container flex h-14 items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2 font-bold">
             <GraduationCap className="h-6 w-6 text-primary" />
             <span>PMB 2026</span>
@@ -60,7 +61,7 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="container grid lg:grid-cols-2 gap-10 items-center py-20 sm:py-24 lg:py-32">
+        <section className="container grid lg:grid-cols-2 gap-10 items-center py-20 sm:py-24 lg:py-32 px-4">
           <div className="space-y-6">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter">
               Selamat Datang di Portal PMB 2026
@@ -88,7 +89,7 @@ export default function LandingPage() {
 
         {/* Alur Pendaftaran Section */}
         <section id="alur" className="py-20 bg-muted/50">
-          <div className="container">
+          <div className="container px-4">
             <div className="text-center space-y-4 mb-12">
               <h2 className="text-3xl font-bold">Alur Pendaftaran</h2>
               <p className="max-w-2xl mx-auto text-muted-foreground">
@@ -111,7 +112,7 @@ export default function LandingPage() {
 
         {/* Jalur Pendaftaran Section */}
         <section id="jalur" className="py-20">
-          <div className="container">
+          <div className="container px-4">
              <div className="text-center space-y-4 mb-12">
               <h2 className="text-3xl font-bold">Jalur Pendaftaran</h2>
               <p className="max-w-2xl mx-auto text-muted-foreground">
@@ -138,7 +139,7 @@ export default function LandingPage() {
 
         {/* FAQ Section */}
         <section id="faq" className="py-20 bg-muted/50">
-          <div className="container max-w-3xl">
+          <div className="container max-w-3xl px-4">
             <div className="text-center space-y-4 mb-12">
               <h2 className="text-3xl font-bold">Pertanyaan Umum (FAQ)</h2>
               <p className="mx-auto text-muted-foreground">
@@ -161,7 +162,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t">
-        <div className="container py-8 text-center text-sm text-muted-foreground">
+        <div className="container py-8 text-center text-sm text-muted-foreground px-4">
           &copy; {new Date().getFullYear()} PMB 2026. Dibuat oleh Memofy Studio.
         </div>
       </footer>
