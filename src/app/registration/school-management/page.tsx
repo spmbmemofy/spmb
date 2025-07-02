@@ -64,6 +64,7 @@ const majorFormSchema = z.object({
 
 type SchoolFormValues = z.infer<typeof schoolFormSchema>;
 type MajorFormValues = z.infer<typeof majorFormSchema>;
+type SchoolDialogTabs = "info_umum" | "data_pendaftaran";
 
 export default function SchoolManagementPage() {
     const [schools, setSchools] = React.useState<School[]>([]);
@@ -75,6 +76,7 @@ export default function SchoolManagementPage() {
     const [isSchoolDialogOpen, setIsSchoolDialogOpen] = React.useState(false);
     const [editingSchool, setEditingSchool] = React.useState<School | null>(null);
     const [schoolToDeleteId, setSchoolToDeleteId] = React.useState<string | null>(null);
+    const [activeTab, setActiveTab] = React.useState<SchoolDialogTabs>('info_umum');
     
     // Major Dialog State (within school dialog)
     const [isMajorDialogOpen, setIsMajorDialogOpen] = React.useState(false);
@@ -91,7 +93,7 @@ export default function SchoolManagementPage() {
         defaultValues: {},
     });
 
-    const { watch, setValue } = schoolForm;
+    const { watch, setValue, trigger } = schoolForm;
     const selectedJenjang = watch("jenjang");
     const jalurKuotaValues = watch("jalurKuota");
     const currentMajors = watch("majors") as Major[] || [];
@@ -101,6 +103,7 @@ export default function SchoolManagementPage() {
     
     const districtOptions = getDistricts(selectedProvince as any);
     const subdistrictOptions = getSubdistricts(selectedProvince as any, selectedDistrict as any);
+    const isAdding = !editingSchool;
 
     React.useEffect(() => {
         setSchools(getSchools());
@@ -131,6 +134,7 @@ export default function SchoolManagementPage() {
     }, [schools, smaSmkSearchTerm]);
 
     const handleOpenSchoolDialog = (school: School | null = null) => {
+        setActiveTab('info_umum');
         setEditingSchool(school);
         if (school) {
             schoolForm.reset({
@@ -202,6 +206,20 @@ export default function SchoolManagementPage() {
 
         } catch (error: any) {
             toast({ variant: "destructive", title: "Gagal Menyimpan", description: error.message });
+        }
+    };
+    
+    const handleNext = async () => {
+        const fieldsToValidate: (keyof SchoolFormValues)[] = ['npsn', 'namaSekolah', 'jenjang', 'jenis', 'alamat', 'province', 'district', 'kecamatan', 'telepon', 'akreditasi'];
+        const isValid = await trigger(fieldsToValidate, { shouldFocus: true });
+        if (isValid) {
+            setActiveTab('data_pendaftaran');
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Data Tidak Lengkap",
+                description: "Harap isi semua kolom yang wajib diisi pada tab Informasi Umum.",
+            });
         }
     };
 
@@ -386,7 +404,7 @@ export default function SchoolManagementPage() {
                     </DialogHeader>
                     <Form {...schoolForm}>
                         <form onSubmit={schoolForm.handleSubmit(processSchoolForm)} className="space-y-6 py-4 pr-2">
-                            <Tabs defaultValue="info_umum" className="w-full">
+                            <Tabs value={activeTab} onValueChange={(value) => { if (!isAdding) setActiveTab(value as SchoolDialogTabs); }} className="w-full">
                                 <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="info_umum">Informasi Umum</TabsTrigger>
                                     <TabsTrigger value="data_pendaftaran" disabled={selectedJenjang === 'SMP'}>
@@ -515,9 +533,26 @@ export default function SchoolManagementPage() {
                             </Tabs>
                             <DialogFooter className="pt-4">
                                 <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
-                                <Button type="submit">
-                                    {editingSchool ? "Simpan Perubahan" : "Simpan Sekolah"}
-                                </Button>
+                                
+                                {isAdding ? (
+                                    <>
+                                        {activeTab === 'info_umum' && (
+                                            <Button 
+                                                type="button" 
+                                                onClick={selectedJenjang === 'SMP' ? schoolForm.handleSubmit(processSchoolForm) : handleNext}>
+                                                {selectedJenjang === 'SMP' ? 'Simpan Sekolah' : 'Lanjut'}
+                                            </Button>
+                                        )}
+                                        {activeTab === 'data_pendaftaran' && (
+                                            <>
+                                                <Button type="button" variant="outline" onClick={() => setActiveTab('info_umum')}>Kembali</Button>
+                                                <Button type="submit">Simpan Sekolah</Button>
+                                            </>
+                                        )}
+                                    </>
+                                ) : (
+                                    <Button type="submit">Simpan Perubahan</Button>
+                                )}
                             </DialogFooter>
                         </form>
                     </Form>
