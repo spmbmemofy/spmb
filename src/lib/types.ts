@@ -14,6 +14,8 @@ export interface Tahap {
   name: string;
   startDate: string; // ISO String for datetime
   endDate: string; // ISO String for datetime
+  announcementContent?: string;
+  isAnnouncementPublished?: boolean;
 }
 
 export interface Jalur {
@@ -101,6 +103,8 @@ export interface Applicant {
   verificationTimestamp?: string;
   activityHistory: ActivityEvent[];
   submissionTimestamp?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export type SortKey = keyof Applicant | 'no';
