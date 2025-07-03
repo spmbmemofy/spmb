@@ -151,8 +151,8 @@ export default function SchoolManagementPage() {
                 alamat: '', kecamatan: '', telepon: '', akreditasi: 'A',
                 province: 'Kalimantan Timur', district: 'Kabupaten Berau',
                 kuota: 0, jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }, majors: [],
-                allowedGenders: [],
-                allowedReligions: [],
+                allowedGenders: ['Laki-laki', 'Perempuan'],
+                allowedReligions: religionOptions,
             });
         }
         setIsSchoolDialogOpen(true);
