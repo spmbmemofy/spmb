@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ArrowRight, UserPlus, Edit3, School, ClipboardCheck, Megaphone, Heart, GraduationCap, MapPin, Briefcase } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ArrowRight, UserPlus, Edit3, School, ClipboardCheck, Megaphone, Heart, GraduationCap, MapPin, Briefcase, User, Building } from 'lucide-react';
 
 const alurPendaftaran = [
   { icon: UserPlus, title: 'Buat Akun', description: 'Buat akun pendaftaran Anda menggunakan NISN yang valid.' },
@@ -80,6 +81,22 @@ export default function LandingPage() {
               <Button size="lg" asChild>
                 <Link href="/login">Daftar / Masuk Sekarang</Link>
               </Button>
+            </div>
+            <div className="pt-6 space-y-4">
+                <Alert>
+                    <User className="h-4 w-4" />
+                    <AlertTitle>Informasi Akun Pendaftar</AlertTitle>
+                    <AlertDescription>
+                        Akun pendaftar (username & kata sandi) akan diberikan oleh Operator Sekolah Menengah Pertama (SMP) masing-masing.
+                    </AlertDescription>
+                </Alert>
+                <Alert>
+                    <Building className="h-4 w-4" />
+                    <AlertTitle>Pendaftar dari Luar Kabupaten Berau</AlertTitle>
+                    <AlertDescription>
+                        Bagi pendaftar yang berasal dari sekolah di luar Kabupaten Berau, harap melapor ke Kantor Cabang Dinas Pendidikan untuk pembuatan akun.
+                    </AlertDescription>
+                </Alert>
             </div>
           </div>
           <div className="hidden md:block">
