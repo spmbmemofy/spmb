@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ArrowRight, UserPlus, Edit3, School, ClipboardCheck, Megaphone, Heart, GraduationCap, MapPin, Briefcase, User, Building } from 'lucide-react';
+import { ArrowRight, UserPlus, Edit3, School, ClipboardCheck, Megaphone, Heart, GraduationCap, MapPin, Briefcase, User, Building, FileUp } from 'lucide-react';
 
 const alurPendaftaran = [
-  { icon: UserPlus, title: 'Buat Akun', description: 'Buat akun pendaftaran Anda menggunakan NISN yang valid.' },
-  { icon: Edit3, title: 'Isi Biodata', description: 'Lengkapi biodata diri, data orang tua, dan nilai rapor Anda.' },
-  { icon: School, title: 'Pilih Sekolah & Jalur', description: 'Pilih jalur pendaftaran dan sekolah tujuan sesuai prioritas.' },
-  { icon: ClipboardCheck, title: 'Verifikasi Berkas', description: 'Panitia akan memeriksa kesesuaian data dan berkas Anda.' },
-  { icon: Megaphone, title: 'Pengumuman', description: 'Lihat hasil seleksi pendaftaran Anda secara online.' },
+  { icon: User, title: 'Dapatkan Akun', description: 'Dapatkan akun dan kata sandi dari operator sekolah asal Anda (SMP/MTs).' },
+  { icon: Edit3, title: 'Lengkapi Biodata', description: 'Masuk dan lengkapi biodata, data orang tua, nilai rapor, serta unggah foto profil.' },
+  { icon: School, title: 'Pilih Jalur & Sekolah', description: 'Pilih jalur pendaftaran dan urutkan 1-5 sekolah/jurusan tujuan.' },
+  { icon: FileUp, title: 'Unggah Berkas', description: 'Unggah semua dokumen persyaratan yang diperlukan sesuai dengan jalur yang dipilih.' },
+  { icon: Megaphone, title: 'Lihat Pengumuman', description: 'Pantau status pendaftaran Anda dan lihat hasil pengumuman akhir.' },
 ];
 
 const jalurPendaftaran = [
