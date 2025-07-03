@@ -21,6 +21,9 @@ import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { getUsers } from "@/lib/userService";
 import type { Major } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 const majorFormSchema = z.object({
   id: z.string().optional(),
@@ -33,6 +36,8 @@ const majorFormSchema = z.object({
     domisili: z.coerce.number().int().min(0),
   })
 });
+
+const religionOptions = [ "Islam", "Kristen Protestan", "Katolik", "Hindu", "Buddha", "Konghucu", "Lainnya" ];
 
 type MajorFormValues = z.infer<typeof majorFormSchema>;
 
@@ -49,6 +54,11 @@ export default function SchoolSettingsPage() {
     // State for Delete Alert
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
     const [majorToDelete, setMajorToDelete] = React.useState<Major | null>(null);
+
+    // State for special rules
+    const [allowedGenders, setAllowedGenders] = React.useState<('Laki-laki' | 'Perempuan')[]>([]);
+    const [allowedReligions, setAllowedReligions] = React.useState<string[]>([]);
+    const [isSaving, setIsSaving] = React.useState(false);
 
     const form = useForm<MajorFormValues>({
         resolver: zodResolver(majorFormSchema),
@@ -77,6 +87,8 @@ export default function SchoolSettingsPage() {
         const userSchool = getSchoolByNPSN(currentUser.npsn);
         if (userSchool) {
             setSchool(userSchool);
+            setAllowedGenders(userSchool.allowedGenders || []);
+            setAllowedReligions(userSchool.allowedReligions || []);
         }
         setIsLoading(false);
     }, [router, toast]);
@@ -109,10 +121,10 @@ export default function SchoolSettingsPage() {
         // Recalculate total quotas
         const newTotalQuota = updatedMajors.reduce((sum, major) => sum + Object.values(major.quota).reduce((s, q) => s + q, 0), 0);
         const newJalurKuota = updatedMajors.reduce((totals, major) => {
-            totals.afirmasi += major.quota.afirmasi;
-            totals.mutasi += major.quota.mutasi;
-            totals.prestasi += major.quota.prestasi;
-            totals.domisili += major.quota.domisili;
+            totals.afirmasi = (totals.afirmasi || 0) + major.quota.afirmasi;
+            totals.mutasi = (totals.mutasi || 0) + major.quota.mutasi;
+            totals.prestasi = (totals.prestasi || 0) + major.quota.prestasi;
+            totals.domisili = (totals.domisili || 0) + major.quota.domisili;
             return totals;
         }, { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 });
 
@@ -144,10 +156,10 @@ export default function SchoolSettingsPage() {
         // Recalculate total quotas
         const newTotalQuota = updatedMajors.reduce((sum, major) => sum + Object.values(major.quota).reduce((s, q) => s + q, 0), 0);
         const newJalurKuota = updatedMajors.reduce((totals, major) => {
-            totals.afirmasi += major.quota.afirmasi;
-            totals.mutasi += major.quota.mutasi;
-            totals.prestasi += major.quota.prestasi;
-            totals.domisili += major.quota.domisili;
+            totals.afirmasi = (totals.afirmasi || 0) + major.quota.afirmasi;
+            totals.mutasi = (totals.mutasi || 0) + major.quota.mutasi;
+            totals.prestasi = (totals.prestasi || 0) + major.quota.prestasi;
+            totals.domisili = (totals.domisili || 0) + major.quota.domisili;
             return totals;
         }, { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 });
 
@@ -162,6 +174,27 @@ export default function SchoolSettingsPage() {
         }
 
         setIsMajorDialogOpen(false);
+    };
+
+    const handleSaveSpecialRules = () => {
+        if (!school) return;
+        setIsSaving(true);
+        
+        const updatedSchoolData = {
+            ...school,
+            allowedGenders,
+            allowedReligions,
+        };
+
+        try {
+            updateSchool(updatedSchoolData);
+            setSchool(updatedSchoolData); // Update local state
+            toast({ title: "Aturan Khusus Disimpan", description: "Perubahan pada aturan pendaftaran khusus telah disimpan." });
+        } catch (error: any) {
+            toast({ variant: "destructive", title: "Gagal Menyimpan", description: error.message });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     if (isLoading) {
@@ -264,6 +297,62 @@ export default function SchoolSettingsPage() {
                                 </CardFooter>
                             </section>
                         )}
+                         <section>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center"><Settings className="mr-2"/> Aturan Pendaftaran Khusus</CardTitle>
+                                    <CardDescription>
+                                        Atur filter pendaftaran berdasarkan jenis kelamin atau agama. Jika tidak ada yang dipilih pada suatu kategori, semua akan diizinkan.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    <div>
+                                        <h4 className="font-semibold text-muted-foreground">Filter Jenis Kelamin</h4>
+                                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 pt-2">
+                                            {['Laki-laki', 'Perempuan'].map((gender) => (
+                                                <div key={gender} className="flex flex-row items-center space-x-2 space-y-0">
+                                                    <Checkbox
+                                                        id={`gender-${gender}`}
+                                                        checked={allowedGenders.includes(gender as any)}
+                                                        onCheckedChange={(checked) => {
+                                                            setAllowedGenders(prev => 
+                                                                checked ? [...prev, gender as any] : prev.filter(g => g !== gender)
+                                                            );
+                                                        }}
+                                                    />
+                                                    <Label htmlFor={`gender-${gender}`} className="font-normal">{gender}</Label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <Separator />
+                                    <div>
+                                        <h4 className="font-semibold text-muted-foreground">Filter Agama</h4>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2">
+                                            {religionOptions.map(religion => (
+                                                <div key={religion} className="flex flex-row items-center space-x-2 space-y-0">
+                                                    <Checkbox
+                                                        id={`religion-${religion}`}
+                                                        checked={allowedReligions.includes(religion)}
+                                                        onCheckedChange={(checked) => {
+                                                            setAllowedReligions(prev => 
+                                                                checked ? [...prev, religion] : prev.filter(r => r !== religion)
+                                                            );
+                                                        }}
+                                                    />
+                                                    <Label htmlFor={`religion-${religion}`} className="font-normal">{religion}</Label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button onClick={handleSaveSpecialRules} disabled={isSaving}>
+                                        {isSaving ? "Menyimpan..." : "Simpan Aturan Khusus"}
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </section>
                     </CardContent>
                 </Card>
             </div>
