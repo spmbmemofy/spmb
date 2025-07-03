@@ -431,27 +431,6 @@ export default function SchoolManagementPage() {
                                     </div>
                                 </TabsContent>
                                 <TabsContent value="data_pendaftaran" className="pt-4 space-y-6">
-                                     <FormField control={schoolForm.control} name="tahapId" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Tahap Pendaftaran</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Pilih tahap pendaftaran untuk sekolah ini" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {allStages.map(stage => (
-                                                        <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormDescription>
-                                                Pilih tahap di mana sekolah ini akan membuka pendaftaran. Biarkan kosong jika tidak relevan.
-                                            </FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
                                      {selectedJenjang === 'SMA' && (
                                         <>
                                             <FormField control={schoolForm.control} name="kuota" render={({ field }) => ( 
