@@ -18,7 +18,6 @@ const initialStages: Tahap[] = [
     name: 'Tahap 1', 
     startDate: now.toISOString(), 
     endDate: tahap1EndDate.toISOString(),
-    announcementContent: '<h3>Pengumuman Tahap 1 Belum Tersedia</h3><p>Silakan periksa kembali nanti.</p>',
     isAnnouncementPublished: false
   },
   { 
@@ -26,7 +25,6 @@ const initialStages: Tahap[] = [
     name: 'Tahap 2', 
     startDate: tahap2StartDate.toISOString(), 
     endDate: tahap2EndDate.toISOString(),
-    announcementContent: '<h3>Pengumuman Tahap 2 Belum Tersedia</h3><p>Silakan periksa kembali nanti.</p>',
     isAnnouncementPublished: false
   },
 ];
@@ -42,7 +40,7 @@ export function getStages(): Tahap[] {
   return getFromLocalStorage<Tahap[]>(STAGES_STORAGE_KEY, []);
 }
 
-export function addStage(newStage: Omit<Tahap, 'id' | 'announcementContent' | 'isAnnouncementPublished'>): Tahap {
+export function addStage(newStage: Omit<Tahap, 'id' | 'isAnnouncementPublished'>): Tahap {
   const stages = getStages();
   if (stages.some(s => s.name.toLowerCase() === newStage.name.toLowerCase())) {
     throw new Error('Tahap dengan nama yang sama sudah ada.');
@@ -50,7 +48,6 @@ export function addStage(newStage: Omit<Tahap, 'id' | 'announcementContent' | 'i
   const stageWithId: Tahap = {
     ...newStage,
     id: `tahap-${Date.now()}`,
-    announcementContent: '',
     isAnnouncementPublished: false,
   };
   const updatedStages = [...stages, stageWithId];

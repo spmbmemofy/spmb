@@ -14,7 +14,6 @@ export interface Tahap {
   name: string;
   startDate: string; // ISO String for datetime
   endDate: string; // ISO String for datetime
-  announcementContent?: string;
   isAnnouncementPublished?: boolean;
 }
 

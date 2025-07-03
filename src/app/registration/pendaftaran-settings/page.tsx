@@ -27,9 +27,10 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { getStages, addStage, updateStage, deleteStage, type Tahap } from "@/lib/stageService";
 import { getJalur, addJalur, updateJalur, deleteJalur, type Jalur } from "@/lib/pathwayService";
-import { getSchools, updateSchool, type School } from "@/lib/schoolService";
+import { getSchools, updateSchool, type School, getSchoolById } from "@/lib/schoolService";
 import type { SchoolJenjang } from "@/lib/schoolService";
 import { addressData } from "@/lib/addressData";
+import { getApplicants, type Applicant } from "@/lib/applicantService";
 
 
 // Stage Management Component
@@ -58,7 +59,6 @@ const toDateTimeLocal = (isoString: string | undefined): string => {
 };
 
 const announcementFormSchema = z.object({
-  announcementContent: z.string().optional(),
   isAnnouncementPublished: z.boolean().default(false),
 });
 type AnnouncementFormValues = z.infer<typeof announcementFormSchema>;
@@ -67,6 +67,7 @@ type AnnouncementFormValues = z.infer<typeof announcementFormSchema>;
 function StageManagementView() {
     const [stages, setStages] = React.useState<Tahap[]>([]);
     const [pathways, setPathways] = React.useState<Jalur[]>([]);
+    const [applicants, setApplicants] = React.useState<Applicant[]>([]);
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
     const [editingStage, setEditingStage] = React.useState<Tahap | null>(null);
     const [isAlertOpen, setIsAlertOpen] = React.useState(false);
@@ -76,6 +77,7 @@ function StageManagementView() {
     // Announcement Dialog State
     const [isAnnouncementDialogOpen, setIsAnnouncementDialogOpen] = React.useState(false);
     const [stageForAnnouncement, setStageForAnnouncement] = React.useState<Tahap | null>(null);
+    const [announcementApplicants, setAnnouncementApplicants] = React.useState<Applicant[]>([]);
 
     const form = useForm<StageFormValues>({
         resolver: zodResolver(stageFormSchema),
@@ -84,12 +86,13 @@ function StageManagementView() {
     
     const announcementForm = useForm<AnnouncementFormValues>({
         resolver: zodResolver(announcementFormSchema),
-        defaultValues: { announcementContent: '', isAnnouncementPublished: false },
+        defaultValues: { isAnnouncementPublished: false },
     });
 
     React.useEffect(() => {
         setStages(getStages());
         setPathways(getJalur());
+        setApplicants(getApplicants());
     }, []);
 
     const handleOpenDialog = (stage: Tahap | null = null) => {
@@ -113,8 +116,21 @@ function StageManagementView() {
     
     const handleOpenAnnouncementDialog = (stage: Tahap) => {
         setStageForAnnouncement(stage);
+        
+        const stagePathways = pathways.filter(p => p.tahapId === stage.id).map(p => p.name);
+        const relevantApplicants = applicants.filter(app => 
+            stagePathways.includes(app.jalur) && app.diterimaDiSekolahId
+        ).sort((a, b) => {
+            const schoolA = getSchoolById(a.diterimaDiSekolahId!)?.namaSekolah || '';
+            const schoolB = getSchoolById(b.diterimaDiSekolahId!)?.namaSekolah || '';
+            if (schoolA < schoolB) return -1;
+            if (schoolA > schoolB) return 1;
+            return (a.peringkat || Infinity) - (b.peringkat || Infinity);
+        });
+
+        setAnnouncementApplicants(relevantApplicants);
+        
         announcementForm.reset({
-            announcementContent: stage.announcementContent || '',
             isAnnouncementPublished: stage.isAnnouncementPublished || false,
         });
         setIsAnnouncementDialogOpen(true);
@@ -166,7 +182,7 @@ function StageManagementView() {
         try {
             updateStage({ ...stageForAnnouncement, ...data });
             setStages(getStages()); // Refresh local state
-            toast({ title: "Pengumuman Diperbarui", description: `Pengumuman untuk tahap "${stageForAnnouncement.name}" telah disimpan.` });
+            toast({ title: "Status Pengumuman Diperbarui", description: `Status pengumuman untuk tahap "${stageForAnnouncement.name}" telah disimpan.` });
             setIsAnnouncementDialogOpen(false);
         } catch (error: any) {
             toast({ variant: "destructive", title: "Gagal Menyimpan", description: error.message });
@@ -290,38 +306,57 @@ function StageManagementView() {
                 </DialogContent>
             </Dialog>
             
-             <Dialog open={isAnnouncementDialogOpen} onOpenChange={setIsAnnouncementDialogOpen}>
-                <DialogContent className="sm:max-w-3xl">
+            <Dialog open={isAnnouncementDialogOpen} onOpenChange={setIsAnnouncementDialogOpen}>
+                <DialogContent className="sm:max-w-4xl">
                     <DialogHeader>
-                        <DialogTitle>Atur Pengumuman untuk Tahap "{stageForAnnouncement?.name}"</DialogTitle>
+                        <DialogTitle>Hasil Seleksi Akhir: {stageForAnnouncement?.name}</DialogTitle>
                         <DialogDescription>
-                            Tulis dan publikasikan pengumuman akhir untuk tahap pendaftaran ini. Pengumuman akan terlihat oleh semua pengguna.
+                            Berikut adalah daftar pendaftar yang lulus seleksi pada tahap ini. Anda dapat mempublikasikan hasil ini ke halaman pengumuman publik.
                         </DialogDescription>
                     </DialogHeader>
-                    <Form {...announcementForm}>
-                        <form onSubmit={announcementForm.handleSubmit(processAnnouncementForm)} className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-4">
-                            <FormField
-                                control={announcementForm.control}
-                                name="announcementContent"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Konten Pengumuman</FormLabel>
-                                        <FormControl>
-                                            <Textarea {...field} rows={15} placeholder="Gunakan tag HTML untuk format seperti <h3>, <p>, <ul>, <li>, <strong>, dll." />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
+                    <div className="max-h-[60vh] overflow-y-auto pr-4">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>No.</TableHead>
+                                    <TableHead>Nama Pendaftar</TableHead>
+                                    <TableHead>NISN</TableHead>
+                                    <TableHead>Diterima di Sekolah</TableHead>
+                                    <TableHead>Jalur</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {announcementApplicants.length > 0 ? (
+                                    announcementApplicants.map((app, index) => (
+                                        <TableRow key={app.id}>
+                                            <TableCell>{index + 1}</TableCell>
+                                            <TableCell>{app.fullName}</TableCell>
+                                            <TableCell>{app.nisn}</TableCell>
+                                            <TableCell>{getSchoolById(app.diterimaDiSekolahId!)?.namaSekolah}</TableCell>
+                                            <TableCell>{app.jalur}</TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center h-24">
+                                            Tidak ada pendaftar yang lulus seleksi pada tahap ini.
+                                        </TableCell>
+                                    </TableRow>
                                 )}
-                            />
+                            </TableBody>
+                        </Table>
+                    </div>
+                    <Form {...announcementForm}>
+                        <form onSubmit={announcementForm.handleSubmit(processAnnouncementForm)} className="space-y-6 pt-4 border-t">
                             <FormField
                                 control={announcementForm.control}
                                 name="isAnnouncementPublished"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                         <div className="space-y-0.5">
-                                            <FormLabel className="text-base">Publikasikan Pengumuman</FormLabel>
+                                            <FormLabel className="text-base">Publikasikan Hasil Seleksi</FormLabel>
                                             <FormDescription>
-                                                Jika diaktifkan, pengumuman ini akan ditampilkan di halaman Pengumuman.
+                                                Jika diaktifkan, hasil seleksi ini akan ditampilkan di halaman Pengumuman.
                                             </FormDescription>
                                         </div>
                                         <FormControl>
@@ -333,9 +368,9 @@ function StageManagementView() {
                                     </FormItem>
                                 )}
                             />
-                            <DialogFooter className="pt-4">
+                            <DialogFooter>
                                 <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
-                                <Button type="submit">Simpan Pengumuman</Button>
+                                <Button type="submit">Simpan Status Publikasi</Button>
                             </DialogFooter>
                         </form>
                     </Form>
