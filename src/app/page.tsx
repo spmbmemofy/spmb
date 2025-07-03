@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ArrowRight, UserPlus, Edit3, School, ClipboardCheck, Megaphone, Heart, GraduationCap, MapPin, Briefcase, User, Building, FileUp } from 'lucide-react';
+import { LoginForm } from '@/components/auth/login-form';
 
 const alurPendaftaran = [
-  { icon: User, title: 'Dapatkan Akun', description: 'Dapatkan akun dan kata sandi dari operator sekolah asal Anda (SMP/MTs).' },
+  { icon: UserPlus, title: 'Dapatkan Akun', description: 'Dapatkan akun dan kata sandi dari operator sekolah asal Anda (SMP/MTs).' },
   { icon: Edit3, title: 'Lengkapi Biodata', description: 'Masuk dan lengkapi biodata, data orang tua, nilai rapor, serta unggah foto profil.' },
   { icon: School, title: 'Pilih Jalur & Sekolah', description: 'Pilih jalur pendaftaran dan urutkan 1-5 sekolah/jurusan tujuan.' },
   { icon: FileUp, title: 'Unggah Berkas', description: 'Unggah semua dokumen persyaratan yang diperlukan sesuai dengan jalur yang dipilih.' },
@@ -57,12 +58,6 @@ export default function LandingPage() {
                     Seleksi
                 </Link>
             </Button>
-            <Button asChild>
-              <Link href="/login">
-                Masuk
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
           </div>
         </div>
       </header>
@@ -77,11 +72,6 @@ export default function LandingPage() {
             <p className="max-w-xl text-md sm:text-lg text-muted-foreground">
               Mulai langkah pertama menuju masa depan cerah Anda. Sistem Penerimaan Murid Baru (PMB) online yang mudah, transparan, dan terpercaya.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" asChild>
-                <Link href="/login">Daftar / Masuk Sekarang</Link>
-              </Button>
-            </div>
             <div className="pt-6 space-y-4">
                 <Alert>
                     <User className="h-4 w-4" />
@@ -99,15 +89,8 @@ export default function LandingPage() {
                 </Alert>
             </div>
           </div>
-          <div className="hidden md:block">
-            <Image
-              src="https://placehold.co/600x400.png"
-              alt="Ilustrasi siswa belajar"
-              width={600}
-              height={400}
-              className="rounded-xl shadow-2xl"
-              data-ai-hint="students studying school"
-            />
+          <div className="flex items-center justify-center">
+            <LoginForm />
           </div>
         </section>
 

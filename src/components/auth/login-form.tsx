@@ -167,16 +167,7 @@ export function LoginForm() {
 
   return (
     <Card className="w-full max-w-md shadow-2xl">
-      <CardHeader className="text-center">
-        <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
-          <Lock size={32} />
-        </div>
-        <CardTitle className="text-xl sm:text-2xl font-headline">PMB 2026</CardTitle>
-        <CardDescription>
-          Sistem Penerimaan Murid Baru - Tahun 2026
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
