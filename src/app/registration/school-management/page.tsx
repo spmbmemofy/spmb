@@ -5,7 +5,7 @@ import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
 import * as z from "zod";
-import { Building, MoreHorizontal, Edit, Trash2, Search as SearchIcon, PlusCircle } from 'lucide-react';
+import { Building, MoreHorizontal, Edit, Trash2, Search as SearchIcon, PlusCircle, Settings } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -23,7 +23,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { Major } from "@/lib/types";
 import { getDistricts, getSubdistricts } from "@/lib/addressData";
-import { getStages, type Tahap } from "@/lib/stageService";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 
 
 export const schoolFormSchema = z.object({
@@ -38,7 +39,6 @@ export const schoolFormSchema = z.object({
   kecamatan: z.string().min(1, { message: "Kecamatan wajib dipilih." }),
   telepon: z.string().min(9, { message: "Nomor telepon minimal 9 karakter." }),
   akreditasi: z.enum(["A", "B", "C", "Belum Terakreditasi"]),
-  tahapId: z.string().optional(),
   
   kuota: z.coerce.number().int().min(0).optional(),
   jalurKuota: z.object({
@@ -48,6 +48,8 @@ export const schoolFormSchema = z.object({
     domisili: z.coerce.number().int().min(0).optional(),
   }).optional(),
   majors: z.array(z.any()).optional(), // Keep majors flexible for internal state
+  allowedGenders: z.array(z.string()).optional(),
+  allowedReligions: z.array(z.string()).optional(),
 });
 
 const majorFormSchema = z.object({
@@ -64,11 +66,12 @@ const majorFormSchema = z.object({
 
 type SchoolFormValues = z.infer<typeof schoolFormSchema>;
 type MajorFormValues = z.infer<typeof majorFormSchema>;
-type SchoolDialogTabs = "info_umum" | "data_pendaftaran";
+type SchoolDialogTabs = "info_umum" | "data_pendaftaran" | "aturan_khusus";
+
+const religionOptions = [ "Islam", "Kristen Protestan", "Katolik", "Hindu", "Buddha", "Konghucu", "Lainnya" ];
 
 export default function SchoolManagementPage() {
     const [schools, setSchools] = React.useState<School[]>([]);
-    const [allStages, setAllStages] = React.useState<Tahap[]>([]);
     const [smpSearchTerm, setSmpSearchTerm] = React.useState("");
     const [smaSmkSearchTerm, setSmaSmkSearchTerm] = React.useState("");
     
@@ -107,7 +110,6 @@ export default function SchoolManagementPage() {
 
     React.useEffect(() => {
         setSchools(getSchools());
-        setAllStages(getStages());
     }, []);
 
     React.useEffect(() => {
@@ -139,7 +141,9 @@ export default function SchoolManagementPage() {
         if (school) {
             schoolForm.reset({
                 ...school,
-                jalurKuota: school.jalurKuota || { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }
+                jalurKuota: school.jalurKuota || { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 },
+                allowedGenders: school.allowedGenders || [],
+                allowedReligions: school.allowedReligions || [],
             });
         } else {
             schoolForm.reset({
@@ -147,7 +151,8 @@ export default function SchoolManagementPage() {
                 alamat: '', kecamatan: '', telepon: '', akreditasi: 'A',
                 province: 'Kalimantan Timur', district: 'Kabupaten Berau',
                 kuota: 0, jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }, majors: [],
-                tahapId: undefined
+                allowedGenders: [],
+                allowedReligions: [],
             });
         }
         setIsSchoolDialogOpen(true);
@@ -209,11 +214,11 @@ export default function SchoolManagementPage() {
         }
     };
     
-    const handleNext = async () => {
+    const handleNext = async (targetTab: SchoolDialogTabs) => {
         const fieldsToValidate: (keyof SchoolFormValues)[] = ['npsn', 'namaSekolah', 'jenjang', 'jenis', 'alamat', 'province', 'district', 'kecamatan', 'telepon', 'akreditasi'];
         const isValid = await trigger(fieldsToValidate, { shouldFocus: true });
         if (isValid) {
-            setActiveTab('data_pendaftaran');
+            setActiveTab(targetTab);
         } else {
             toast({
                 variant: "destructive",
@@ -405,10 +410,13 @@ export default function SchoolManagementPage() {
                     <Form {...schoolForm}>
                         <form onSubmit={schoolForm.handleSubmit(processSchoolForm)} className="space-y-6 py-4 pr-2">
                             <Tabs value={activeTab} onValueChange={(value) => { if (!isAdding) setActiveTab(value as SchoolDialogTabs); }} className="w-full">
-                                <TabsList className="grid w-full grid-cols-2">
+                                <TabsList className="grid w-full grid-cols-3">
                                     <TabsTrigger value="info_umum">Informasi Umum</TabsTrigger>
                                     <TabsTrigger value="data_pendaftaran" disabled={selectedJenjang === 'SMP'}>
-                                        Data Pendaftaran (SMA/SMK)
+                                        Data Pendaftaran
+                                    </TabsTrigger>
+                                    <TabsTrigger value="aturan_khusus" disabled={selectedJenjang === 'SMP'}>
+                                        Aturan Khusus
                                     </TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="info_umum" className="pt-4 space-y-4">
@@ -509,6 +517,87 @@ export default function SchoolManagementPage() {
                                         </Card>
                                     )}
                                 </TabsContent>
+                                 <TabsContent value="aturan_khusus" className="pt-4 space-y-6">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center"><Settings className="mr-2"/> Aturan Pendaftaran Khusus</CardTitle>
+                                            <CardDescription>
+                                                Atur filter pendaftaran berdasarkan jenis kelamin atau agama. Jika tidak ada yang dipilih pada suatu kategori, semua akan diizinkan.
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="space-y-6">
+                                            <FormField
+                                                control={schoolForm.control}
+                                                name="allowedGenders"
+                                                render={() => (
+                                                    <FormItem>
+                                                        <h4 className="font-semibold text-muted-foreground">Filter Jenis Kelamin</h4>
+                                                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 pt-2">
+                                                            {['Laki-laki', 'Perempuan'].map((gender) => (
+                                                                <FormField
+                                                                    key={gender}
+                                                                    control={schoolForm.control}
+                                                                    name="allowedGenders"
+                                                                    render={({ field }) => (
+                                                                        <FormItem key={gender} className="flex flex-row items-center space-x-2 space-y-0">
+                                                                            <FormControl>
+                                                                                <Checkbox
+                                                                                    checked={field.value?.includes(gender)}
+                                                                                    onCheckedChange={(checked) => {
+                                                                                        const currentValues = field.value || [];
+                                                                                        return checked
+                                                                                            ? field.onChange([...currentValues, gender])
+                                                                                            : field.onChange(currentValues.filter(value => value !== gender));
+                                                                                    }}
+                                                                                />
+                                                                            </FormControl>
+                                                                            <FormLabel className="font-normal">{gender}</FormLabel>
+                                                                        </FormItem>
+                                                                    )}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <Separator />
+                                            <FormField
+                                                control={schoolForm.control}
+                                                name="allowedReligions"
+                                                render={() => (
+                                                    <FormItem>
+                                                        <h4 className="font-semibold text-muted-foreground">Filter Agama</h4>
+                                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2">
+                                                            {religionOptions.map(religion => (
+                                                                <FormField
+                                                                    key={religion}
+                                                                    control={schoolForm.control}
+                                                                    name="allowedReligions"
+                                                                    render={({ field }) => (
+                                                                        <FormItem key={religion} className="flex flex-row items-center space-x-2 space-y-0">
+                                                                            <FormControl>
+                                                                                <Checkbox
+                                                                                    checked={field.value?.includes(religion)}
+                                                                                    onCheckedChange={(checked) => {
+                                                                                        const currentValues = field.value || [];
+                                                                                        return checked
+                                                                                            ? field.onChange([...currentValues, religion])
+                                                                                            : field.onChange(currentValues.filter(value => value !== religion));
+                                                                                    }}
+                                                                                />
+                                                                            </FormControl>
+                                                                            <FormLabel className="font-normal">{religion}</FormLabel>
+                                                                        </FormItem>
+                                                                    )}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
                             </Tabs>
                             <DialogFooter className="pt-4">
                                 <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
@@ -518,13 +607,19 @@ export default function SchoolManagementPage() {
                                         {activeTab === 'info_umum' && (
                                             <Button 
                                                 type="button" 
-                                                onClick={selectedJenjang === 'SMP' ? schoolForm.handleSubmit(processSchoolForm) : handleNext}>
+                                                onClick={selectedJenjang === 'SMP' ? schoolForm.handleSubmit(processSchoolForm) : () => handleNext('data_pendaftaran')}>
                                                 {selectedJenjang === 'SMP' ? 'Simpan Sekolah' : 'Lanjut'}
                                             </Button>
                                         )}
                                         {activeTab === 'data_pendaftaran' && (
                                             <>
                                                 <Button type="button" variant="outline" onClick={() => setActiveTab('info_umum')}>Kembali</Button>
+                                                <Button type="button" onClick={() => handleNext('aturan_khusus')}>Lanjut</Button>
+                                            </>
+                                        )}
+                                        {activeTab === 'aturan_khusus' && (
+                                            <>
+                                                <Button type="button" variant="outline" onClick={() => setActiveTab('data_pendaftaran')}>Kembali</Button>
                                                 <Button type="submit">Simpan Sekolah</Button>
                                             </>
                                         )}
