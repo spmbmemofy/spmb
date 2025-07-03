@@ -7,11 +7,13 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie } from 'recha
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
-import { TrendingUp, Users, School, BookOpen, Star, UserCheck } from 'lucide-react';
+import { TrendingUp, Users, School, BookOpen, Star, UserCheck, AlertTriangle } from 'lucide-react';
 import { getSchools } from '@/lib/schoolService';
 import { getApplicants } from '@/lib/applicantService';
 import type { Applicant } from '@/lib/types';
 import { getJalur } from '@/lib/pathwayService';
+import { getStages } from '@/lib/stageService';
+import { getFromLocalStorage, type LoginCredentials } from '@/lib/localStorage';
 
 const barChartConfig = {
   pendaftar: {
@@ -23,11 +25,50 @@ const barChartConfig = {
 export default function HomePage() {
   const [allApplicants, setAllApplicants] = React.useState<Applicant[]>([]);
   const [schools, setSchools] = React.useState<ReturnType<typeof getSchools>>([]);
+  const [userRole, setUserRole] = React.useState<LoginCredentials['role'] | null>(null);
+  const [pendingActions, setPendingActions] = React.useState<{ text: string; href: string }[]>([]);
+
 
   React.useEffect(() => {
     setAllApplicants(getApplicants());
     setSchools(getSchools());
+    const creds = getFromLocalStorage<LoginCredentials | null>("loginCredentials", null);
+    if (creds) {
+        setUserRole(creds.role);
+    }
   }, []);
+  
+  React.useEffect(() => {
+    if (userRole === 'admin' || userRole === 'superadmin') {
+      const allSchools = getSchools();
+      const allStages = getStages();
+      const allPathways = getJalur();
+      const actions = [];
+
+      const targetSchools = allSchools.filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
+      if (targetSchools.length === 0) {
+        actions.push({ text: 'Tambahkan sekolah tujuan (SMA/SMK).', href: '/registration/school-management' });
+      }
+
+      if (allStages.length === 0) {
+        actions.push({ text: 'Buat setidaknya satu tahap pendaftaran.', href: '/registration/pendaftaran-settings' });
+      }
+
+      if (allPathways.length === 0) {
+        actions.push({ text: 'Buat setidaknya satu jalur pendaftaran.', href: '/registration/pendaftaran-settings' });
+      }
+
+      const domisiliExists = allPathways.some(p => p.name === 'Domisili');
+      const smaSchools = allSchools.filter(s => s.jenjang === 'SMA');
+      const hasDomicileRule = smaSchools.some(s => s.allowedVillages && s.allowedVillages.length > 0);
+      if (domisiliExists && smaSchools.length > 0 && !hasDomicileRule) {
+        actions.push({ text: 'Atur domisili untuk sekolah SMA pada jalur Zonasi.', href: '/registration/pendaftaran-settings' });
+      }
+
+      setPendingActions(actions);
+    }
+  }, [userRole]);
+
 
   const schoolStats = React.useMemo(() => {
      const schoolsWithPendaftar = schools.map(school => {
@@ -143,6 +184,26 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-1 flex-col p-4 sm:p-6 md:p-8 space-y-6">
+      {pendingActions.length > 0 && (
+        <Card className="bg-destructive/10 border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive flex items-center"><AlertTriangle className="mr-2"/> Tindakan Diperlukan</CardTitle>
+            <CardDescription className="text-destructive/80">
+                Sistem mendeteksi beberapa konfigurasi penting yang belum diatur. Harap selesaikan untuk memastikan sistem berjalan dengan baik.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc pl-5 space-y-2 text-sm text-destructive/90">
+                {pendingActions.map((action, index) => (
+                    <li key={index}>
+                        <Link href={action.href} className="hover:underline font-medium">{action.text}</Link>
+                    </li>
+                ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+      
       <h1 className="text-2xl sm:text-3xl font-bold font-headline">Beranda Dasbor</h1>
 
       <section>
