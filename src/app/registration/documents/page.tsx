@@ -188,8 +188,8 @@ export default function SchoolSelectionPage() {
     // Filter based on private school rules for pathway availability
     schoolsToDisplay = schoolsToDisplay.filter(school => {
         if (school.jenis === 'Swasta') {
-            // For Swasta, allow if pathway is Domisili or Reguler SMK
-            return selectedPathwayObject.name === 'Domisili' || selectedPathwayObject.name === 'Reguler SMK';
+            // For Swasta, allow if pathway is Domisili or Reguler SMK or Afirmasi or Mutasi
+            return ["Domisili", "Reguler SMK", "Afirmasi", "Mutasi"].includes(selectedPathwayObject.name);
         }
         // For Negeri, allow all pathways (for now)
         return true;
