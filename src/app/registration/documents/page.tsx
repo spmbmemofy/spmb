@@ -166,7 +166,7 @@ export default function SchoolSelectionPage() {
     );
 
     // Filter schools that offer the selected pathway (have quota for it)
-    const pathwayKey = selectedPathwayObject.name.toLowerCase() as keyof NonNullable<SchoolType['jalurKuota']>;
+    const pathwayKey = (selectedPathwayObject.name === 'Reguler SMK' ? 'domisili' : selectedPathwayObject.name.toLowerCase()) as keyof NonNullable<SchoolType['jalurKuota']>;
     schoolsToDisplay = schoolsToDisplay.filter(school => {
         if (school.jenjang === 'SMA') {
             return school.jalurKuota && (school.jalurKuota[pathwayKey] ?? 0) > 0;
