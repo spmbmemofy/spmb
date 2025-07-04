@@ -21,6 +21,7 @@ import type { SchoolSelection, Jalur, Tahap } from "@/lib/types";
 import { getJalur } from "@/lib/pathwayService";
 import { getStages } from "@/lib/stageService";
 import type { School as SchoolType } from "@/lib/schoolService";
+import { Badge } from "@/components/ui/badge";
 
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
@@ -396,8 +397,11 @@ export default function SchoolSelectionPage() {
                                   {school.jenjang === "SMA" ? (
                                     <div className="flex items-center text-sm p-2 rounded-md justify-between py-4 font-medium">
                                         <div className="flex-1 text-left">
-                                            <p className="font-medium">{school.namaSekolah}</p>
-                                            <p className="text-xs text-muted-foreground">{school.jenjang} - Akreditasi: {school.akreditasi}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-medium">{school.namaSekolah}</p>
+                                                <Badge variant="outline" className="text-xs">{school.jenis}</Badge>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-1">{school.jenjang} - Akreditasi: {school.akreditasi}</p>
                                         </div>
                                         <div className="pl-4">
                                             <Checkbox
@@ -413,8 +417,11 @@ export default function SchoolSelectionPage() {
                                     <>
                                       <AccordionTrigger className="text-sm hover:no-underline p-2 rounded-md hover:bg-muted" disabled={isLocked}>
                                         <div className="flex-1 text-left">
-                                          <p className="font-medium">{school.namaSekolah}</p>
-                                          <p className="text-xs text-muted-foreground">{school.jenjang} - Akreditasi: {school.akreditasi}</p>
+                                            <div className="flex items-center gap-2">
+                                              <p className="font-medium">{school.namaSekolah}</p>
+                                              <Badge variant="outline" className="text-xs">{school.jenis}</Badge>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-1">{school.jenjang} - Akreditasi: {school.akreditasi}</p>
                                         </div>
                                       </AccordionTrigger>
                                       <AccordionContent>
