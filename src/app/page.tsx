@@ -93,9 +93,9 @@ export default function LandingPage() {
         </section>
         
         {/* Alur Pendaftaran Section */}
-        <section id="alur" className="py-20 lg:py-24">
+        <section id="alur" className="py-24 md:py-32">
           <div className="container px-4">
-            <div className="text-center space-y-4 mb-16">
+            <div className="text-center space-y-4 mb-20">
               <Badge variant="outline">Langkah 1</Badge>
               <h2 className="text-3xl md:text-4xl font-bold">Alur Pendaftaran</h2>
               <p className="max-w-2xl mx-auto text-muted-foreground">
@@ -120,7 +120,7 @@ export default function LandingPage() {
         </section>
 
         {/* Login & Info Section */}
-        <section id="login-section" className="py-20 lg:py-24 bg-muted/40">
+        <section id="login-section" className="py-24 md:py-32 bg-muted/40">
           <div className="container">
             <div className="mx-auto max-w-2xl text-center">
               <div className="space-y-2 mb-8">
@@ -136,9 +136,9 @@ export default function LandingPage() {
         </section>
 
         {/* Jalur Pendaftaran Section */}
-        <section id="jalur" className="py-20 lg:py-24">
+        <section id="jalur" className="py-24 md:py-32">
           <div className="container px-4">
-             <div className="text-center space-y-4 mb-16">
+             <div className="text-center space-y-4 mb-20">
               <h2 className="text-3xl md:text-4xl font-bold">Jalur Pendaftaran</h2>
               <p className="max-w-2xl mx-auto text-muted-foreground">
                 Pilih jalur yang paling sesuai dengan kriteria dan kondisi Anda. Setiap jalur memiliki persyaratan dan kuota yang berbeda.
@@ -161,9 +161,9 @@ export default function LandingPage() {
         </section>
 
         {/* FAQ Section */}
-        <section id="faq" className="py-20 lg:py-24 bg-muted/40">
+        <section id="faq" className="py-24 md:py-32 bg-muted/40">
           <div className="container max-w-4xl px-4">
-            <div className="text-center space-y-4 mb-12">
+            <div className="text-center space-y-4 mb-16">
               <h2 className="text-3xl md:text-4xl font-bold">Pertanyaan Umum (FAQ)</h2>
               <p className="mx-auto text-muted-foreground">
                 Temukan jawaban untuk pertanyaan yang paling sering diajukan.
