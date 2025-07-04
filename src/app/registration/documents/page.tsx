@@ -65,12 +65,15 @@ export default function SchoolSelectionPage() {
     const applicantData = loggedInUser?.username ? getApplicants().find(a => a.nisn === loggedInUser.username) : null;
     
     if (!savedProgress?.hasProfilePhoto) {
-      toast({
-        variant: "destructive",
-        title: "Akses Ditolak",
-        description: "Harap unggah foto profil Anda di halaman Data Pendaftar sebelum melanjutkan.",
-      });
-      router.replace('/registration/dashboard');
+      // Defer toast and redirect to avoid state update during render
+      setTimeout(() => {
+          toast({
+            variant: "destructive",
+            title: "Akses Ditolak",
+            description: "Harap unggah foto profil Anda di halaman Data Pendaftar sebelum melanjutkan.",
+          });
+          router.replace('/registration/dashboard');
+      }, 0);
       return; 
     }
 
