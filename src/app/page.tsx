@@ -139,12 +139,12 @@ export default function LandingPage() {
         {/* Login & Status Check Section */}
         <section id="login" className="py-16 md:-mt-24 relative z-20">
             <div className="container max-w-4xl">
-                <Tabs defaultValue="login" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 h-12">
+                <Tabs defaultValue="login" className="w-full flex flex-col items-center">
+                    <TabsList className="grid grid-cols-2 h-12">
                         <TabsTrigger value="login" className="text-base">Masuk Akun</TabsTrigger>
                         <TabsTrigger value="status" className="text-base">Cek Status Pendaftaran</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="login">
+                    <TabsContent value="login" className="w-full">
                         <Card className="rounded-t-none">
                             <CardHeader className="text-center">
                                 <CardTitle>Login Pendaftar / Petugas</CardTitle>
@@ -155,7 +155,7 @@ export default function LandingPage() {
                             </CardContent>
                         </Card>
                     </TabsContent>
-                    <TabsContent value="status">
+                    <TabsContent value="status" className="w-full">
                         <Card className="rounded-t-none">
                            <CardHeader className="text-center">
                                 <CardTitle>Cek Status Pendaftaran</CardTitle>
