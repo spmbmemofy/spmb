@@ -90,35 +90,54 @@ export default function SchoolSelectionPage() {
   };
 
   const handleSchoolSelectionChange = (schoolId: string, major: string | null) => {
-    if (selectedPathway === 'Domisili' && selectedSelections.length === 0) {
-        const school = getSchoolById(schoolId);
-        if (school && school.jenjang !== 'SMA') {
-            toast({
-                variant: 'destructive',
-                title: 'Pilihan Tidak Sesuai',
-                description: 'Untuk jalur Domisili, pilihan pertama Anda harus sekolah jenjang SMA.',
-            });
-            return; 
-        }
-    }
-
     setSelectedSelections(prevSelected => {
       const selection = { schoolId, major };
       const isSelected = prevSelected.some(s => s.schoolId === schoolId && s.major === major);
 
       if (isSelected) {
+        // Deselecting is always allowed
         return prevSelected.filter(s => !(s.schoolId === schoolId && s.major === major));
-      } else {
-        if (prevSelected.length >= MAX_SCHOOL_SELECTION) {
-          toast({
-            variant: "destructive",
-            title: "Batas Maksimal Tercapai",
-            description: `Anda hanya dapat memilih maksimal ${MAX_SCHOOL_SELECTION} sekolah/jurusan.`,
-          });
-          return prevSelected;
-        }
-        return [...prevSelected, selection];
       }
+
+      // Adding a new selection, apply rules
+      if (prevSelected.length >= MAX_SCHOOL_SELECTION) {
+        toast({
+          variant: "destructive",
+          title: "Batas Maksimal Tercapai",
+          description: `Anda hanya dapat memilih maksimal ${MAX_SCHOOL_SELECTION} sekolah/jurusan.`,
+        });
+        return prevSelected;
+      }
+
+      const school = getSchoolById(schoolId);
+      if (!school) return prevSelected; // Should not happen
+
+      // Rule for "Domisili" pathway on the FIRST selection
+      if (selectedPathway === 'Domisili' && prevSelected.length === 0) {
+          if (school.jenjang !== 'SMA' || school.jenis !== 'Negeri') {
+              toast({
+                  variant: 'destructive',
+                  title: 'Pilihan Pertama Tidak Sesuai',
+                  description: 'Untuk jalur Domisili, pilihan pertama Anda harus sekolah jenjang SMA Negeri.',
+              });
+              return prevSelected; 
+          }
+      }
+      
+      // Rule for "Reguler SMK" pathway on the FIRST selection
+      if (selectedPathway === 'Reguler SMK' && prevSelected.length === 0) {
+          if (school.jenjang !== 'SMK') {
+              toast({
+                  variant: 'destructive',
+                  title: 'Pilihan Pertama Tidak Sesuai',
+                  description: 'Untuk jalur Reguler SMK, pilihan pertama Anda harus sekolah jenjang SMK.',
+              });
+              return prevSelected;
+          }
+      }
+      
+      // If all rules pass, add the new selection
+      return [...prevSelected, selection];
     });
   };
   
