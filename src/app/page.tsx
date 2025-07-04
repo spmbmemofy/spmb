@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ArrowDown, UserPlus, Edit3, School, FileUp, Megaphone, Heart, GraduationCap, MapPin, Briefcase, User, Building, LogIn } from 'lucide-react';
+import { ArrowDown, UserPlus, Edit3, School, FileUp, Megaphone, Heart, GraduationCap, MapPin, Briefcase, User, Building, LogIn, CheckCircle } from 'lucide-react';
 import { LoginForm } from '@/components/auth/login-form';
+import { Badge } from '@/components/ui/badge';
+
 
 const alurPendaftaran = [
-  { icon: UserPlus, title: 'Dapatkan Akun', description: 'Dapatkan akun dan kata sandi dari operator sekolah asal Anda (SMP/MTs).' },
+  { icon: UserPlus, title: 'Dapatkan Akun', description: 'Dapatkan akun dan kata sandi dari operator sekolah asal Anda (SMP/MTs) atau dari Dinas Pendidikan.' },
   { icon: Edit3, title: 'Lengkapi Biodata', description: 'Masuk dan lengkapi biodata, data orang tua, nilai rapor, serta unggah foto profil.' },
   { icon: School, title: 'Pilih Jalur & Sekolah', description: 'Pilih jalur pendaftaran dan urutkan 1-5 sekolah/jurusan tujuan.' },
   { icon: FileUp, title: 'Unggah Berkas', description: 'Unggah semua dokumen persyaratan yang diperlukan sesuai dengan jalur yang dipilih.' },
@@ -52,6 +54,11 @@ export default function LandingPage() {
             <GraduationCap className="h-7 w-7 text-primary" />
             <span>PMB 2026</span>
           </Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+            <Link href="#alur" className="transition-colors hover:text-primary">Alur</Link>
+            <Link href="#jalur" className="transition-colors hover:text-primary">Jalur</Link>
+            <Link href="#faq" className="transition-colors hover:text-primary">FAQ</Link>
+          </nav>
           <Button asChild>
               <Link href="#login-section">
                   <LogIn className="mr-2 h-4 w-4" /> Masuk
@@ -64,7 +71,7 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="relative container text-center py-24 sm:py-32 md:py-40 flex flex-col items-center">
             <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:32px_32px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)]"></div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter max-w-4xl">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter max-w-4xl bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
               Portal Penerimaan Murid Baru 2026
             </h1>
             <p className="mt-6 max-w-2xl text-lg sm:text-xl text-muted-foreground">
@@ -85,57 +92,45 @@ export default function LandingPage() {
             </div>
         </section>
         
-        {/* Login & Info Section */}
-        <section id="login-section" className="container py-20 lg:py-24">
-           <div className="grid lg:grid-cols-2 gap-12 items-center">
-                <div className="space-y-6">
-                    <h2 className="text-3xl font-bold">Informasi Akun & Login</h2>
-                    <p className="text-muted-foreground">
-                        Harap perhatikan informasi di bawah ini sebelum Anda melanjutkan proses pendaftaran atau masuk ke dasbor Anda.
-                    </p>
-                    <Alert>
-                        <User className="h-4 w-4" />
-                        <AlertTitle>Informasi Akun Pendaftar</AlertTitle>
-                        <AlertDescription>
-                            Akun pendaftar (username & kata sandi) akan diberikan oleh Operator Sekolah Menengah Pertama (SMP) masing-masing.
-                        </AlertDescription>
-                    </Alert>
-                    <Alert>
-                        <Building className="h-4 w-4" />
-                        <AlertTitle>Pendaftar dari Luar Kabupaten Berau</AlertTitle>
-                        <AlertDescription>
-                            Bagi pendaftar yang berasal dari sekolah di luar Kabupaten Berau, harap melapor ke Kantor Cabang Dinas Pendidikan untuk pembuatan akun.
-                        </AlertDescription>
-                    </Alert>
-                </div>
-                 <div className="flex items-center justify-center">
-                    <LoginForm />
-                </div>
-           </div>
-        </section>
-
         {/* Alur Pendaftaran Section */}
-        <section id="alur" className="py-20 lg:py-24 bg-muted/40">
+        <section id="alur" className="py-20 lg:py-24">
           <div className="container px-4">
             <div className="text-center space-y-4 mb-16">
+              <Badge variant="outline">Langkah 1</Badge>
               <h2 className="text-3xl md:text-4xl font-bold">Alur Pendaftaran</h2>
               <p className="max-w-2xl mx-auto text-muted-foreground">
                 Ikuti 5 langkah mudah untuk menyelesaikan proses pendaftaran Anda dari awal hingga akhir.
               </p>
             </div>
             <div className="relative">
-                <div className="absolute top-1/2 left-0 w-full h-0.5 bg-border -translate-y-1/2 hidden md:block"></div>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-10 relative">
+                <div className="absolute top-8 left-0 w-full h-0.5 bg-border hidden md:block"></div>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-x-8 gap-y-12 relative">
                   {alurPendaftaran.map((item, index) => (
                     <div key={index} className="flex flex-col items-center text-center space-y-3">
-                      <div className="mb-2 bg-background border-2 border-primary text-primary rounded-full p-4 w-16 h-16 flex items-center justify-center relative z-10">
+                      <div className="mb-4 bg-background border-2 border-primary text-primary rounded-full p-4 w-16 h-16 flex items-center justify-center relative z-10">
                         <item.icon className="h-8 w-8" />
                       </div>
-                      <h3 className="text-lg font-semibold">{index + 1}. {item.title}</h3>
+                      <h3 className="text-lg font-semibold">{item.title}</h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
                     </div>
                   ))}
                 </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Login & Info Section */}
+        <section id="login-section" className="py-20 lg:py-24 bg-muted/40">
+          <div className="container">
+            <div className="mx-auto max-w-2xl text-center">
+              <div className="space-y-2 mb-8">
+                <Badge variant="outline">Langkah 2</Badge>
+                <h2 className="text-3xl md:text-4xl font-bold">Masuk & Lengkapi Data</h2>
+                <p className="text-muted-foreground text-lg !mt-4">
+                  Gunakan akun yang telah Anda dapatkan dari operator sekolah (untuk siswa dalam kabupaten) atau dari dinas pendidikan (untuk siswa luar kabupaten) untuk masuk.
+                </p>
+              </div>
+              <LoginForm />
             </div>
           </div>
         </section>
@@ -174,13 +169,13 @@ export default function LandingPage() {
                 Temukan jawaban untuk pertanyaan yang paling sering diajukan.
               </p>
             </div>
-            <Accordion type="single" collapsible className="w-full bg-background rounded-lg border p-2">
+            <Accordion type="single" collapsible className="w-full bg-background rounded-lg border">
               {faqs.map((faq, index) => (
-                <AccordionItem value={`item-${index}`} key={index} className={index === faqs.length - 1 ? "border-b-0" : ""}>
-                  <AccordionTrigger className="text-lg text-left px-4 hover:no-underline">
+                <AccordionItem value={`item-${index}`} key={index}>
+                  <AccordionTrigger className="text-lg text-left px-6 hover:no-underline">
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-base text-muted-foreground px-4">
+                  <AccordionContent className="text-base text-muted-foreground px-6">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
