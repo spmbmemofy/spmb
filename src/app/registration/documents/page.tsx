@@ -188,8 +188,10 @@ export default function SchoolSelectionPage() {
     // Filter based on private school rules for pathway availability
     schoolsToDisplay = schoolsToDisplay.filter(school => {
         if (school.jenis === 'Swasta') {
+            // For Swasta, allow if pathway is Domisili or Reguler SMK
             return selectedPathwayObject.name === 'Domisili' || selectedPathwayObject.name === 'Reguler SMK';
         }
+        // For Negeri, allow all pathways (for now)
         return true;
     });
 
@@ -397,11 +399,8 @@ export default function SchoolSelectionPage() {
                                   {school.jenjang === "SMA" ? (
                                     <div className="flex items-center text-sm p-2 rounded-md justify-between py-4 font-medium">
                                         <div className="flex-1 text-left">
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-medium">{school.namaSekolah}</p>
-                                                <Badge variant="outline" className="text-xs">{school.jenis}</Badge>
-                                            </div>
-                                            <p className="text-xs text-muted-foreground mt-1">{school.jenjang} - Akreditasi: {school.akreditasi}</p>
+                                            <p className="font-medium">{school.namaSekolah}</p>
+                                            <p className="text-xs text-muted-foreground mt-1">{school.jenis} - Akreditasi: {school.akreditasi}</p>
                                         </div>
                                         <div className="pl-4">
                                             <Checkbox
@@ -417,11 +416,8 @@ export default function SchoolSelectionPage() {
                                     <>
                                       <AccordionTrigger className="text-sm hover:no-underline p-2 rounded-md hover:bg-muted" disabled={isLocked}>
                                         <div className="flex-1 text-left">
-                                            <div className="flex items-center gap-2">
-                                              <p className="font-medium">{school.namaSekolah}</p>
-                                              <Badge variant="outline" className="text-xs">{school.jenis}</Badge>
-                                            </div>
-                                            <p className="text-xs text-muted-foreground mt-1">{school.jenjang} - Akreditasi: {school.akreditasi}</p>
+                                            <p className="font-medium">{school.namaSekolah}</p>
+                                            <p className="text-xs text-muted-foreground mt-1">{school.jenis} - Akreditasi: {school.akreditasi}</p>
                                         </div>
                                       </AccordionTrigger>
                                       <AccordionContent>
