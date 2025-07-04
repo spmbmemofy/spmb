@@ -205,6 +205,15 @@ export default function SchoolSelectionPage() {
             if (!studentSubdistrict) return false;
             return school.kecamatan === studentSubdistrict;
         }
+        
+        // Geo-filter for Reguler SMK pathway (for public SMA schools)
+        if (selectedPathwayObject.name === 'Reguler SMK') {
+            if (school.jenjang === 'SMA' && school.jenis === 'Negeri') {
+                return studentSubdistrict ? school.kecamatan === studentSubdistrict : false;
+            }
+            // For SMKs or private SMAs on this pathway, no geographical restrictions apply here
+            return true;
+        }
 
         // Geo-filter for Domisili pathway (for public schools)
         if (selectedPathwayObject.name === 'Domisili') {

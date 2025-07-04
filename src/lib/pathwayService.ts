@@ -11,7 +11,7 @@ const initialJalurData: Jalur[] = [
   { id: 'jalur-mutasi', name: 'Mutasi', tahapId: 'tahap-1', allowedJenjang: ['SMA', 'SMK'] },
   { id: 'jalur-prestasi', name: 'Prestasi', tahapId: 'tahap-1', allowedJenjang: ['SMA', 'SMK'] },
   { id: 'jalur-domisili', name: 'Domisili', tahapId: 'tahap-2', allowedJenjang: ['SMA'] },
-  { id: 'jalur-reguler-smk', name: 'Reguler SMK', tahapId: 'tahap-2', allowedJenjang: ['SMK'] },
+  { id: 'jalur-reguler-smk', name: 'Reguler SMK', tahapId: 'tahap-2', allowedJenjang: ['SMA', 'SMK'] },
 ];
 
 export const initializeJalurData = (): void => {
