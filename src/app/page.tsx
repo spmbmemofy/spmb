@@ -4,38 +4,84 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { UserPlus, Edit3, School, FileUp, Megaphone, Heart, GraduationCap, MapPin, Briefcase, LogIn } from 'lucide-react';
+import { ArrowRight, Calendar, GraduationCap, LogIn, Map, Route, Search, BarChart, Users, CheckCircle } from 'lucide-react';
 import { LoginForm } from '@/components/auth/login-form';
-import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
 
-
-const alurPendaftaran = [
-  { icon: UserPlus, title: 'Dapatkan Akun', description: 'Dapatkan akun dan kata sandi dari operator sekolah asal Anda (SMP/MTs) atau dari Dinas Pendidikan.' },
-  { icon: Edit3, title: 'Lengkapi Biodata', description: 'Masuk dan lengkapi biodata, data orang tua, nilai rapor, serta unggah foto profil.' },
-  { icon: School, title: 'Pilih Jalur & Sekolah', description: 'Pilih jalur pendaftaran dan urutkan 1-5 sekolah/jurusan tujuan.' },
-  { icon: FileUp, title: 'Unggah Berkas', description: 'Unggah semua dokumen persyaratan yang diperlukan sesuai dengan jalur yang dipilih.' },
-  { icon: Megaphone, title: 'Lihat Pengumuman', description: 'Pantau status pendaftaran Anda dan lihat hasil pengumuman akhir.' },
+const infoCards = [
+  {
+    icon: Route,
+    title: 'Alur Pendaftaran',
+    description: 'Pahami langkah-langkah pendaftaran dari awal hingga akhir.',
+    href: '#alur',
+  },
+  {
+    icon: Calendar,
+    title: 'Jadwal Penting',
+    description: 'Lihat semua tanggal penting pelaksanaan SPMB 2026.',
+    href: '#jadwal',
+  },
+  {
+    icon: Map,
+    title: 'Jalur Tersedia',
+    description: 'Ketahui berbagai jalur pendaftaran yang dibuka tahun ini.',
+    href: '#jalur',
+  },
+  {
+    icon: BarChart,
+    title: 'Daya Tampung',
+    description: 'Informasi kuota penerimaan untuk setiap sekolah tujuan.',
+    href: '/registration/home', // Placeholder link
+  },
 ];
 
-const jalurPendaftaran = [
-    { icon: Heart, title: 'Afirmasi', description: 'Diperuntukkan bagi calon siswa dari keluarga kurang mampu atau penyandang disabilitas.' },
-    { icon: GraduationCap, title: 'Prestasi', description: 'Berdasarkan prestasi akademik (nilai rapor) atau non-akademik (lomba).' },
-    { icon: MapPin, title: 'Zonasi/Domisili', description: 'Berdasarkan jarak tempat tinggal calon siswa dengan sekolah tujuan.' },
-    { icon: Briefcase, title: 'Mutasi Orang Tua', description: 'Untuk calon siswa yang orang tuanya pindah tugas.' },
+const schedule = [
+  {
+    date: '10 - 25 Juni 2026',
+    title: 'Pendaftaran & Verifikasi Berkas',
+    description: 'Siswa melakukan pendaftaran online, melengkapi biodata, memilih sekolah, dan mengunggah berkas persyaratan.',
+    status: 'ongoing',
+  },
+  {
+    date: '26 - 28 Juni 2026',
+    title: 'Pemeringkatan & Seleksi',
+    description: 'Sistem melakukan pemeringkatan otomatis berdasarkan nilai dan kriteria jalur yang dipilih.',
+    status: 'upcoming',
+  },
+  {
+    date: '29 Juni 2026',
+    title: 'Pengumuman Hasil Seleksi',
+    description: 'Hasil akhir seleksi diumumkan secara online melalui portal ini.',
+    status: 'upcoming',
+  },
+  {
+    date: '30 Juni - 2 Juli 2026',
+    title: 'Daftar Ulang',
+    description: 'Siswa yang dinyatakan lulus melakukan proses daftar ulang di sekolah penerima.',
+    status: 'upcoming',
+  },
+];
+
+const stats = [
+    { icon: GraduationCap, value: '52', label: 'Sekolah Tujuan' },
+    { icon: Users, value: '10,430', label: 'Total Kuota' },
+    { icon: LogIn, value: '8,972', label: 'Jumlah Pendaftar' },
+    { icon: CheckCircle, value: '7,150', label: 'Pendaftar Terverifikasi' },
 ];
 
 const faqs = [
   {
     question: "Dokumen apa saja yang perlu disiapkan?",
-    answer: "Siapkan file scan Kartu Keluarga, Akta Kelahiran, Surat Keterangan Lulus (SKL), dan rapor semester 1-5. Dokumen tambahan mungkin diperlukan tergantung jalur yang dipilih."
+    answer: "Siapkan file scan Kartu Keluarga, Akta Kelahiran, Surat Keterangan Lulus (SKL), dan rapor semester 1-5 dalam format digital (PDF/JPG). Dokumen tambahan mungkin diperlukan tergantung jalur yang Anda pilih."
   },
   {
     question: "Berapa banyak sekolah yang bisa saya pilih?",
-    answer: "Anda dapat memilih hingga 5 sekolah/jurusan tujuan. Pastikan untuk mengurutkannya berdasarkan prioritas utama Anda."
+    answer: "Anda dapat memilih hingga 5 kombinasi sekolah/jurusan. Pastikan untuk mengurutkannya berdasarkan prioritas utama Anda, karena urutan sangat menentukan proses seleksi."
   },
   {
     question: "Bagaimana jika saya melakukan kesalahan saat mengisi data?",
-    answer: "Selama data belum diverifikasi, Anda masih dapat mengubahnya. Jika pendaftaran ditolak karena kesalahan data, Anda akan diberi kesempatan untuk melakukan perbaikan."
+    answer: "Selama data belum diverifikasi oleh panitia, Anda masih dapat mengubahnya melalui dasbor pendaftar. Jika pendaftaran ditolak karena kesalahan data, Anda akan diberi kesempatan untuk melakukan perbaikan sesuai jadwal."
   },
     {
     question: "Kapan saya bisa melihat hasil pengumuman?",
@@ -47,125 +93,176 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg">
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm">
+        <div className="container flex h-16 max-w-7xl items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
             <GraduationCap className="h-7 w-7 text-primary" />
-            <span>PMB 2026</span>
+            <span className="font-bold text-lg">SPMB 2026</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-            <Link href="#alur" className="transition-colors hover:text-primary">Alur</Link>
-            <Link href="#jalur" className="transition-colors hover:text-primary">Jalur</Link>
-            <Link href="#faq" className="transition-colors hover:text-primary">FAQ</Link>
-          </nav>
           <Button asChild>
-              <Link href="#hero">
-                  <LogIn className="mr-2 h-4 w-4" /> Masuk
-              </Link>
+            <Link href="#login">
+                <LogIn className="mr-2 h-4 w-4" /> Masuk
+            </Link>
           </Button>
         </div>
       </header>
 
       <main className="flex-1">
-        {/* Hero Section & Login Form */}
-        <section id="hero" className="relative container py-24 sm:py-32 md:py-40">
-            <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:32px_32px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)]"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                <div className="text-center md:text-left">
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
-                      Portal Penerimaan Murid Baru 2026
-                    </h1>
-                    <p className="mt-6 text-lg sm:text-xl text-muted-foreground">
-                      Mulai langkah pertama menuju masa depan cerah Anda. Sistem PMB online yang mudah, transparan, dan terpercaya untuk Kabupaten Berau.
-                    </p>
-                    <div className="mt-8 flex justify-center md:justify-start gap-4">
-                         <Button size="lg" variant="outline" asChild>
-                            <Link href="/selection-results">
-                                Lihat Hasil Seleksi
-                            </Link>
-                        </Button>
-                    </div>
-                </div>
-                <div className="mx-auto max-w-md w-full">
-                    <div className="space-y-2 mb-6 text-center">
-                        <h2 className="text-2xl font-bold">Masuk & Lengkapi Data</h2>
-                        <p className="text-muted-foreground">
-                          Gunakan akun dari operator sekolah (siswa dalam kabupaten) atau dinas pendidikan (siswa luar kabupaten).
-                        </p>
-                    </div>
-                    <LoginForm />
+        {/* Hero Section */}
+        <section className="relative h-[60vh] min-h-[400px] flex items-center justify-center text-center text-white">
+            <Image
+                src="https://placehold.co/1600x900.png"
+                alt="Siswa-siswi ceria di lingkungan sekolah"
+                layout="fill"
+                objectFit="cover"
+                className="brightness-[.4]"
+                data-ai-hint="school students education"
+            />
+            <div className="relative z-10 container max-w-4xl px-4">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
+                    Selamat Datang di Portal SPMB 2026
+                </h1>
+                <p className="mt-6 text-lg sm:text-xl text-white/90">
+                    Sistem Penerimaan Murid Baru Online untuk Kabupaten Berau. Transparan, akuntabel, dan mudah diakses.
+                </p>
+                <div className="mt-8">
+                    <Button size="lg" variant="secondary" asChild>
+                        <Link href="#jadwal">
+                            Lihat Jadwal Pelaksanaan <ArrowRight className="ml-2 h-5 w-5" />
+                        </Link>
+                    </Button>
                 </div>
             </div>
         </section>
         
-        {/* Alur Pendaftaran Section */}
-        <section id="alur" className="py-24 md:py-32 bg-muted/40">
-          <div className="container px-4">
-            <div className="text-center space-y-4 mb-20">
-              <Badge variant="outline">Panduan</Badge>
-              <h2 className="text-3xl md:text-4xl font-bold">Alur Pendaftaran</h2>
-              <p className="max-w-2xl mx-auto text-muted-foreground">
-                Ikuti 5 langkah mudah untuk menyelesaikan proses pendaftaran Anda dari awal hingga akhir.
-              </p>
+        {/* Login & Status Check Section */}
+        <section id="login" className="py-16 md:-mt-24 relative z-20">
+            <div className="container max-w-4xl">
+                <Tabs defaultValue="login" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 h-12">
+                        <TabsTrigger value="login" className="text-base">Masuk Akun</TabsTrigger>
+                        <TabsTrigger value="status" className="text-base">Cek Status Pendaftaran</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="login">
+                        <Card className="rounded-t-none">
+                            <CardHeader className="text-center">
+                                <CardTitle>Login Pendaftar / Petugas</CardTitle>
+                                <CardDescription>Gunakan akun yang telah Anda dapatkan untuk masuk ke sistem.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <LoginForm />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="status">
+                        <Card className="rounded-t-none">
+                           <CardHeader className="text-center">
+                                <CardTitle>Cek Status Pendaftaran</CardTitle>
+                                <CardDescription>Masukkan NISN Anda untuk melihat status verifikasi dan hasil seleksi.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex w-full items-center space-x-2">
+                                    <Input type="text" placeholder="Masukkan NISN Anda..." />
+                                    <Button type="submit">
+                                        <Search className="mr-2 h-4 w-4" /> Cek
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
             </div>
-            <div className="relative">
-                <div className="absolute top-8 left-0 w-full h-0.5 bg-border hidden md:block"></div>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-x-8 gap-y-12 relative">
-                  {alurPendaftaran.map((item, index) => (
-                    <div key={index} className="flex flex-col items-center text-center space-y-3">
-                      <div className="mb-4 bg-background border-2 border-primary text-primary rounded-full p-4 w-16 h-16 flex items-center justify-center relative z-10">
-                        <item.icon className="h-8 w-8" />
-                      </div>
-                      <h3 className="text-lg font-semibold">{item.title}</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+        </section>
+
+        {/* Info Cards Section */}
+        <section id="informasi" className="py-16 bg-muted/50">
+          <div className="container max-w-7xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {infoCards.map((card) => (
+                <Card key={card.title} className="group hover:border-primary hover:shadow-lg transition-all">
+                    <CardHeader>
+                        <div className="mb-4 w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                            <card.icon className="h-6 w-6" />
+                        </div>
+                        <CardTitle>{card.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-muted-foreground">{card.description}</p>
+                    </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+        
+        {/* Schedule Section */}
+        <section id="jadwal" className="py-20 md:py-28">
+            <div className="container max-w-5xl">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl md:text-4xl font-bold">Jadwal Pelaksanaan</h2>
+                    <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
+                        Catat tanggal-tanggal penting berikut agar tidak terlewat.
+                    </p>
+                </div>
+                <div className="relative">
+                    <div className="absolute left-1/2 -translate-x-1/2 h-full w-0.5 bg-border hidden md:block" aria-hidden="true"></div>
+                    <div className="space-y-12 md:space-y-0">
+                        {schedule.map((item, index) => (
+                            <div key={item.title} className="relative flex items-center md:justify-center">
+                                <div className={cn("md:w-1/2 flex", index % 2 === 0 ? 'md:justify-end' : 'md:justify-start')}>
+                                    <div className={cn("w-full md:max-w-sm p-6 rounded-lg border bg-card shadow-sm", index % 2 === 0 ? 'md:mr-12' : 'md:ml-12')}>
+                                        <p className="text-sm font-semibold text-primary">{item.date}</p>
+                                        <h3 className="mt-2 text-xl font-bold">{item.title}</h3>
+                                        <p className="mt-2 text-muted-foreground">{item.description}</p>
+                                    </div>
+                                </div>
+                                <div className="absolute left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-primary border-4 border-background hidden md:block"></div>
+                            </div>
+                        ))}
                     </div>
-                  ))}
                 </div>
             </div>
-          </div>
         </section>
 
-        {/* Jalur Pendaftaran Section */}
-        <section id="jalur" className="py-24 md:py-32">
-          <div className="container px-4">
-             <div className="text-center space-y-4 mb-20">
-              <h2 className="text-3xl md:text-4xl font-bold">Jalur Pendaftaran</h2>
-              <p className="max-w-2xl mx-auto text-muted-foreground">
-                Pilih jalur yang paling sesuai dengan kriteria dan kondisi Anda. Setiap jalur memiliki persyaratan dan kuota yang berbeda.
-              </p>
+        {/* Statistics Section */}
+        <section id="statistik" className="py-20 md:py-28 bg-muted/50">
+            <div className="container max-w-7xl">
+                 <div className="text-center mb-16">
+                    <h2 className="text-3xl md:text-4xl font-bold">Statistik Pendaftaran</h2>
+                    <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
+                        Data pendaftaran diperbarui secara real-time.
+                    </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {stats.map((stat, index) => (
+                        <Card key={index} className="text-center">
+                            <CardContent className="p-6">
+                                <stat.icon className="h-10 w-10 text-primary mx-auto mb-4" />
+                                <p className="text-4xl font-bold">{stat.value}</p>
+                                <p className="mt-1 text-muted-foreground">{stat.label}</p>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {jalurPendaftaran.map((jalur, index) => (
-                    <Card key={index} className="flex flex-col text-center items-center p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                        <div className="mb-4 p-4 bg-primary/10 text-primary rounded-full">
-                            <jalur.icon className="h-8 w-8"/>
-                        </div>
-                        <CardTitle className="text-xl mb-2">{jalur.title}</CardTitle>
-                        <CardDescription className="flex-grow">
-                            {jalur.description}
-                        </CardDescription>
-                    </Card>
-                ))}
-            </div>
-          </div>
         </section>
-
+        
         {/* FAQ Section */}
-        <section id="faq" className="py-24 md:py-32 bg-muted/40">
-          <div className="container max-w-4xl px-4">
-            <div className="text-center space-y-4 mb-16">
+        <section id="faq" className="py-20 md:py-28">
+          <div className="container max-w-4xl">
+            <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold">Pertanyaan Umum (FAQ)</h2>
-              <p className="mx-auto text-muted-foreground">
+              <p className="mt-4 mx-auto text-muted-foreground">
                 Temukan jawaban untuk pertanyaan yang paling sering diajukan.
               </p>
             </div>
-            <Accordion type="single" collapsible className="w-full bg-background rounded-lg border">
+            <Accordion type="single" collapsible className="w-full">
               {faqs.map((faq, index) => (
                 <AccordionItem value={`item-${index}`} key={index}>
-                  <AccordionTrigger className="text-lg text-left px-6 hover:no-underline">
+                  <AccordionTrigger className="py-4 text-lg text-left hover:no-underline">
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-base text-muted-foreground px-6">
+                  <AccordionContent className="text-base text-muted-foreground pb-4">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
@@ -176,9 +273,9 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t">
-        <div className="container py-8 text-center text-sm text-muted-foreground px-4">
-          &copy; {new Date().getFullYear()} PMB 2026. Dibuat oleh Memofy Studio.
+      <footer className="border-t bg-muted/50">
+        <div className="container max-w-7xl py-8 text-center text-sm text-muted-foreground">
+          &copy; {new Date().getFullYear()} Panitia SPMB Kabupaten Berau. Dibuat oleh Memofy Studio.
         </div>
       </footer>
     </div>

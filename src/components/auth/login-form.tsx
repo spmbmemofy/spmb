@@ -7,17 +7,9 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Building, Eye, EyeOff, GraduationCap, Hash, Lock, Shield, User, UserCog, UserCheck } from "lucide-react";
+import { Eye, EyeOff, Hash, Lock, User, UserCog } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
@@ -34,7 +26,6 @@ import { useToast } from "@/hooks/use-toast";
 import { getFromLocalStorage, saveToLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { getUsers } from "@/lib/userService";
 import { getApplicants } from "@/lib/applicantService";
-import type { UserRole } from "@/lib/userData";
 
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 
@@ -102,7 +93,6 @@ export function LoginForm() {
         u.password === values.password
     );
 
-    // Check if a user with matching credentials was found
     if (!user) {
       toast({
         variant: "destructive",
@@ -113,7 +103,6 @@ export function LoginForm() {
       return;
     }
 
-    // Now, check if the role matches
     const isApplicantRoleInForm = values.role === 'applicant';
     const isUserAnApplicant = user.role === 'applicant';
 
@@ -127,10 +116,9 @@ export function LoginForm() {
         return;
     }
 
-    // If all checks pass, proceed with login
     saveToLocalStorage<LoginCredentials>(LOCAL_STORAGE_LOGIN_KEY, {
       username: values.username,
-      role: user.role, // Save the actual specific role for the session
+      role: user.role,
       rememberMe: values.rememberMe,
     });
 
@@ -139,7 +127,6 @@ export function LoginForm() {
         description: `Selamat datang, ${user.fullName}!`,
     });
     
-    // Redirect based on role
     if (user.role === 'applicant') {
       const applicants = getApplicants();
       const currentApplicant = applicants.find(app => app.nisn === user.username);
@@ -167,126 +154,120 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md shadow-2xl">
-      <CardContent className="pt-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>Pilih Peran Anda</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      className="grid grid-cols-2 gap-x-2 gap-y-4"
-                    >
-                      {roles.map((roleInfo) => (
-                        <FormItem key={roleInfo.value} className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value={roleInfo.value} id={roleInfo.value} />
-                          </FormControl>
-                          <FormLabel htmlFor={roleInfo.value} className="font-normal flex items-center gap-2 cursor-pointer">
-                            <roleInfo.icon className="h-5 w-5 text-accent" />
-                            {roleInfo.label}
-                          </FormLabel>
-                        </FormItem>
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="role"
+            render={({ field }) => (
+              <FormItem className="space-y-3">
+                <FormLabel>Pilih Peran Anda</FormLabel>
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    className="grid grid-cols-2 gap-x-2 gap-y-4"
+                  >
+                    {roles.map((roleInfo) => (
+                      <FormItem key={roleInfo.value} className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value={roleInfo.value} id={roleInfo.value} />
+                        </FormControl>
+                        <FormLabel htmlFor={roleInfo.value} className="font-normal flex items-center gap-2 cursor-pointer">
+                          <roleInfo.icon className="h-5 w-5 text-accent-foreground" />
+                          {roleInfo.label}
+                        </FormLabel>
+                      </FormItem>
+                    ))}
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="username">{getUsernameLabel()}</FormLabel>
+                <div className="relative">
+                   {selectedRole === 'applicant' ? (
+                      <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  ) : (
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  )}
+                  <FormControl>
+                    <Input id="username" placeholder={getUsernamePlaceholder()} {...field} className="pl-10" />
+                  </FormControl>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="password">Kata Sandi</FormLabel>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <FormControl>
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Masukkan kata sandi Anda"
+                      {...field}
+                      className="pl-10 pr-10"
+                    />
+                  </FormControl>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </Button>
+                </div>
+                 <FormDescription>
+                     Untuk demo, gunakan: password123
+                  </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="flex items-center justify-between gap-4 flex-wrap">
             <FormField
               control={form.control}
-              name="username"
+              name="rememberMe"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="username">{getUsernameLabel()}</FormLabel>
-                  <div className="relative">
-                     {selectedRole === 'applicant' ? (
-                        <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    ) : (
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    )}
-                    <FormControl>
-                      <Input id="username" placeholder={getUsernamePlaceholder()} {...field} className="pl-10" />
-                    </FormControl>
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      id="rememberMe"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel htmlFor="rememberMe" className="font-normal">Ingat saya</FormLabel>
                   </div>
-                  <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="password">Kata Sandi</FormLabel>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <FormControl>
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Masukkan kata sandi Anda"
-                        {...field}
-                        className="pl-10 pr-10"
-                      />
-                    </FormControl>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground"
-                      onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </Button>
-                  </div>
-                   <FormDescription>
-                       Untuk demo, gunakan: password123
-                    </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <FormField
-                control={form.control}
-                name="rememberMe"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        id="rememberMe"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel htmlFor="rememberMe" className="font-normal">Ingat saya</FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={isSubmitting || !selectedRole}>
-              {isSubmitting ? "Sedang Masuk..." : "Masuk"}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-      <CardFooter className="flex justify-center">
-        <Button variant="link" asChild className="text-sm">
-          <Link href="/forgot-password">Lupa Kata Sandi?</Link>
-        </Button>
-      </CardFooter>
-    </Card>
+             <Button variant="link" asChild className="text-sm p-0 h-auto">
+                <Link href="/forgot-password">Lupa Kata Sandi?</Link>
+             </Button>
+          </div>
+          <Button type="submit" className="w-full" disabled={isSubmitting || !selectedRole}>
+            {isSubmitting ? "Sedang Masuk..." : "Masuk"}
+          </Button>
+        </form>
+      </Form>
   );
 }
