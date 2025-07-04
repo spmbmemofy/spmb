@@ -162,6 +162,16 @@ export default function SchoolSelectionPage() {
     schoolsToDisplay = schoolsToDisplay.filter(school => 
       selectedPathwayObject.allowedJenjang.includes(school.jenjang)
     );
+    
+    // NEW: Filter based on private school rules
+    schoolsToDisplay = schoolsToDisplay.filter(school => {
+        if (school.jenis === 'Swasta') {
+            // Private schools are only available for Domisili and Reguler SMK pathways
+            return selectedPathwayObject.name === 'Domisili' || selectedPathwayObject.name === 'Reguler SMK';
+        }
+        // Public schools are available for all pathways (subject to other filters)
+        return true;
+    });
 
     // Filter schools that offer the selected pathway (have quota for it)
     const pathwayKey = selectedPathwayObject.name.toLowerCase() as keyof NonNullable<SchoolType['jalurKuota']>;
