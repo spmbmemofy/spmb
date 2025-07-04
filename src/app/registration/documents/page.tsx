@@ -163,13 +163,11 @@ export default function SchoolSelectionPage() {
       selectedPathwayObject.allowedJenjang.includes(school.jenjang)
     );
     
-    // NEW: Filter based on private school rules
+    // Filter based on private school rules for pathway availability
     schoolsToDisplay = schoolsToDisplay.filter(school => {
         if (school.jenis === 'Swasta') {
-            // Private schools are only available for Domisili and Reguler SMK pathways
             return selectedPathwayObject.name === 'Domisili' || selectedPathwayObject.name === 'Reguler SMK';
         }
-        // Public schools are available for all pathways (subject to other filters)
         return true;
     });
 
@@ -185,29 +183,36 @@ export default function SchoolSelectionPage() {
         return false;
     });
 
-    // Filter by pathway/district for specific pathways
-    const subdistrictRestrictedPathways = ["Afirmasi", "Mutasi"];
-    if (subdistrictRestrictedPathways.includes(selectedPathwayObject.name) && studentSubdistrict) {
-        schoolsToDisplay = schoolsToDisplay.filter(school => school.kecamatan === studentSubdistrict);
-    }
+    // Apply geographical filters
+    schoolsToDisplay = schoolsToDisplay.filter(school => {
+        // Exception: Private schools on Domisili/Reguler SMK pathways have no geographical limits
+        if (school.jenis === 'Swasta' && (selectedPathwayObject.name === 'Domisili' || selectedPathwayObject.name === 'Reguler SMK')) {
+            return true;
+        }
 
-    // Special filter for Domisili pathway for SMA
-    if (selectedPathwayObject.name === 'Domisili') {
-        const studentVillage = applicantBiodata?.village;
-        schoolsToDisplay = schoolsToDisplay.filter(school => {
+        // Geo-filter for Afirmasi and Mutasi (by subdistrict)
+        const subdistrictRestrictedPathways = ["Afirmasi", "Mutasi"];
+        if (subdistrictRestrictedPathways.includes(selectedPathwayObject.name)) {
+            if (!studentSubdistrict) return false;
+            return school.kecamatan === studentSubdistrict;
+        }
+
+        // Geo-filter for Domisili pathway (for public schools)
+        if (selectedPathwayObject.name === 'Domisili') {
             if (school.jenjang !== 'SMA') {
-                return true; // Keep non-SMA schools as this rule doesn't apply to them
+                return true; // No geo-filter for SMK on Domisili (as per original logic)
             }
-            // For SMA schools:
+            const studentVillage = applicantBiodata?.village;
             if (school.allowedVillages && school.allowedVillages.length > 0) {
-                // If specific villages are set, student must be in one of them
                 return studentVillage ? school.allowedVillages.includes(studentVillage) : false;
             } else {
-                // If no specific villages are set, fall back to default subdistrict matching
                 return studentSubdistrict ? school.kecamatan === studentSubdistrict : false;
             }
-        });
-    }
+        }
+        
+        // If no specific geographical filter applies, the school is available
+        return true;
+    });
     
     // Filter by school-specific restrictions (gender, religion)
     if (applicantBiodata) {
