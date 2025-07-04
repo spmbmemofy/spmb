@@ -4,8 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ArrowDown, UserPlus, Edit3, School, FileUp, Megaphone, Heart, GraduationCap, MapPin, Briefcase, User, Building, LogIn, CheckCircle } from 'lucide-react';
+import { UserPlus, Edit3, School, FileUp, Megaphone, Heart, GraduationCap, MapPin, Briefcase, LogIn } from 'lucide-react';
 import { LoginForm } from '@/components/auth/login-form';
 import { Badge } from '@/components/ui/badge';
 
@@ -60,7 +59,7 @@ export default function LandingPage() {
             <Link href="#faq" className="transition-colors hover:text-primary">FAQ</Link>
           </nav>
           <Button asChild>
-              <Link href="#login-section">
+              <Link href="#hero">
                   <LogIn className="mr-2 h-4 w-4" /> Masuk
               </Link>
           </Button>
@@ -68,35 +67,42 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative container text-center py-24 sm:py-32 md:py-40 flex flex-col items-center">
+        {/* Hero Section & Login Form */}
+        <section id="hero" className="relative container py-24 sm:py-32 md:py-40">
             <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:32px_32px] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)]"></div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter max-w-4xl bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
-              Portal Penerimaan Murid Baru 2026
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg sm:text-xl text-muted-foreground">
-              Mulai langkah pertama menuju masa depan cerah Anda. Sistem PMB online yang mudah, transparan, dan terpercaya untuk Kabupaten Berau.
-            </p>
-            <div className="mt-8 flex gap-4">
-                 <Button size="lg" asChild>
-                    <Link href="#login-section">
-                        <UserPlus className="mr-2"/>
-                        Mulai Pendaftaran
-                    </Link>
-                </Button>
-                 <Button size="lg" variant="outline" asChild>
-                    <Link href="/selection-results">
-                        Lihat Hasil Seleksi
-                    </Link>
-                </Button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <div className="text-center md:text-left">
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
+                      Portal Penerimaan Murid Baru 2026
+                    </h1>
+                    <p className="mt-6 text-lg sm:text-xl text-muted-foreground">
+                      Mulai langkah pertama menuju masa depan cerah Anda. Sistem PMB online yang mudah, transparan, dan terpercaya untuk Kabupaten Berau.
+                    </p>
+                    <div className="mt-8 flex justify-center md:justify-start gap-4">
+                         <Button size="lg" variant="outline" asChild>
+                            <Link href="/selection-results">
+                                Lihat Hasil Seleksi
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+                <div className="mx-auto max-w-md w-full">
+                    <div className="space-y-2 mb-6 text-center">
+                        <h2 className="text-2xl font-bold">Masuk & Lengkapi Data</h2>
+                        <p className="text-muted-foreground">
+                          Gunakan akun dari operator sekolah (siswa dalam kabupaten) atau dinas pendidikan (siswa luar kabupaten).
+                        </p>
+                    </div>
+                    <LoginForm />
+                </div>
             </div>
         </section>
         
         {/* Alur Pendaftaran Section */}
-        <section id="alur" className="py-24 md:py-32">
+        <section id="alur" className="py-24 md:py-32 bg-muted/40">
           <div className="container px-4">
             <div className="text-center space-y-4 mb-20">
-              <Badge variant="outline">Langkah 1</Badge>
+              <Badge variant="outline">Panduan</Badge>
               <h2 className="text-3xl md:text-4xl font-bold">Alur Pendaftaran</h2>
               <p className="max-w-2xl mx-auto text-muted-foreground">
                 Ikuti 5 langkah mudah untuk menyelesaikan proses pendaftaran Anda dari awal hingga akhir.
@@ -115,22 +121,6 @@ export default function LandingPage() {
                     </div>
                   ))}
                 </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Login & Info Section */}
-        <section id="login-section" className="py-24 md:py-32 bg-muted/40">
-          <div className="container">
-            <div className="mx-auto max-w-2xl text-center">
-              <div className="space-y-2 mb-8">
-                <Badge variant="outline">Langkah 2</Badge>
-                <h2 className="text-3xl md:text-4xl font-bold">Masuk & Lengkapi Data</h2>
-                <p className="text-muted-foreground text-lg !mt-4">
-                  Gunakan akun yang telah Anda dapatkan dari operator sekolah (untuk siswa dalam kabupaten) atau dari dinas pendidikan (untuk siswa luar kabupaten) untuk masuk.
-                </p>
-              </div>
-              <LoginForm />
             </div>
           </div>
         </section>
