@@ -162,14 +162,6 @@ export default function SchoolSelectionPage() {
     schoolsToDisplay = schoolsToDisplay.filter(school => 
       selectedPathwayObject.allowedJenjang.includes(school.jenjang)
     );
-    
-    // Filter based on private school rules for pathway availability
-    schoolsToDisplay = schoolsToDisplay.filter(school => {
-        if (school.jenis === 'Swasta') {
-            return selectedPathwayObject.name === 'Domisili' || selectedPathwayObject.name === 'Reguler SMK';
-        }
-        return true;
-    });
 
     // Filter schools that offer the selected pathway (have quota for it)
     const pathwayKey = selectedPathwayObject.name.toLowerCase() as keyof NonNullable<SchoolType['jalurKuota']>;
@@ -181,6 +173,21 @@ export default function SchoolSelectionPage() {
             return school.majors && school.majors.some(major => (major.quota[pathwayKey] ?? 0) > 0);
         }
         return false;
+    });
+
+    // For "Prestasi" pathway, bypass all other geographical and special rule filters
+    if (selectedPathwayObject.name === 'Prestasi') {
+      return schoolsToDisplay;
+    }
+
+    // --- Filters for other pathways ---
+
+    // Filter based on private school rules for pathway availability
+    schoolsToDisplay = schoolsToDisplay.filter(school => {
+        if (school.jenis === 'Swasta') {
+            return selectedPathwayObject.name === 'Domisili' || selectedPathwayObject.name === 'Reguler SMK';
+        }
+        return true;
     });
 
     // Apply geographical filters
