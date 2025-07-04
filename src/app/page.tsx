@@ -8,6 +8,7 @@ import { ArrowRight, Calendar, GraduationCap, LogIn, Map, Route, Search, BarChar
 import { LoginForm } from '@/components/auth/login-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 const infoCards = [
   {
