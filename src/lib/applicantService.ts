@@ -245,7 +245,9 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
       throw new Error(`NISN ${creds.username} sudah terdaftar sebagai pengguna sistem (${conflictingUser.role}). Harap hubungi administrator.`);
   }
   
+  // Find an existing application, including those marked 'Dibatalkan'
   const existingApplicant = applicants.find(a => a.nisn === creds.username);
+  
   const allSchools = getSchools();
   const originSchool = allSchools.find(s => s.namaSekolah === progress.biodata!.previousSchool);
   const submissionTime = new Date().toISOString();
@@ -353,6 +355,7 @@ export function withdrawApplication(applicantId: string): void {
 
 /**
  * Deletes an applicant from the list based on their NISN.
+ * This is a hard delete, primarily for admin purposes.
  * @param nisn The NISN of the applicant to delete.
  * @returns True if an applicant was deleted, false otherwise.
  */

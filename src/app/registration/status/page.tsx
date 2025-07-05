@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp, Printer, AlertCircle, Undo2 } from 'lucide-react';
+import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp, Printer, AlertCircle, Undo2, ThumbsUp } from 'lucide-react';
 import { getSchoolById, type School } from "@/lib/schoolService"; 
 import { getFromLocalStorage, removeFromLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
 import { getApplicants, withdrawApplication, type Applicant } from "@/lib/applicantService";
@@ -135,7 +135,7 @@ const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ ap
         };
       case 'VERIFICATION_APPROVED':
         return {
-          icon: <ShieldCheck className="h-5 w-5 text-green-600 dark:text-green-400" />,
+          icon: <ThumbsUp className="h-5 w-5 text-green-600 dark:text-green-400" />,
           bgColor: "bg-green-100 dark:bg-green-900",
           title: "Verifikasi Berhasil",
           description: "Selamat! Berkas Anda telah diverifikasi dan pendaftaran Anda diterima untuk tahap selanjutnya.",
@@ -191,7 +191,6 @@ export default function StatusPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(true);
-  const [isWithdrawAlertOpen, setIsWithdrawAlertOpen] = React.useState(false);
   
   const [applicant, setApplicant] = React.useState<Applicant | null>(null);
   const [allApplicants, setAllApplicants] = React.useState<Applicant[]>([]);
@@ -208,7 +207,7 @@ export default function StatusPage() {
 
     const allApplicantsData = getApplicants();
     setAllApplicants(allApplicantsData);
-    const currentApplicant = allApplicantsData.find(app => app.nisn === loginCreds.username);
+    const currentApplicant = allApplicantsData.find(app => app.nisn === loginCreds.username && app.statusVerifikasi !== 'Dibatalkan');
     
     if (!currentApplicant) {
         setIsLoading(false);
@@ -281,8 +280,6 @@ export default function StatusPage() {
             description: error.message,
         });
     }
-    
-    setIsWithdrawAlertOpen(false);
   };
 
   if (isLoading) {
@@ -312,7 +309,7 @@ export default function StatusPage() {
             </p>
             <Button onClick={() => router.push('/registration/dashboard')}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Kembali ke Beranda
+              Kembali ke Dasbor
             </Button>
           </CardContent>
         </Card>
@@ -596,7 +593,7 @@ export default function StatusPage() {
                 </Link>
             </Button>
             {(applicant.statusVerifikasi === 'Menunggu Verifikasi' || applicant.statusVerifikasi === 'Berkas tidak sesuai') && (
-                <AlertDialog open={isWithdrawAlertOpen} onOpenChange={setIsWithdrawAlertOpen}>
+                <AlertDialog>
                     <AlertDialogTrigger asChild>
                         <Button variant="destructive">
                             <Undo2 className="mr-2 h-4 w-4" />
