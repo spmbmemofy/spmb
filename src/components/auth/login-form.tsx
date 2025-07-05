@@ -143,11 +143,6 @@ export function LoginForm() {
     setIsSubmitting(false);
   }
 
-  const getUsernameLabel = () => {
-    if (selectedRole === 'applicant') return "NISN (Nomor Induk Siswa Nasional)";
-    return "Nama Pengguna";
-  }
-  
   const getUsernamePlaceholder = () => {
     if (selectedRole === 'applicant') return "Masukkan NISN Anda";
     return "Masukkan nama pengguna";
@@ -155,7 +150,7 @@ export function LoginForm() {
 
   return (
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
             name="role"
@@ -191,7 +186,6 @@ export function LoginForm() {
             name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel htmlFor="username">{getUsernameLabel()}</FormLabel>
                 <div className="relative">
                    {selectedRole === 'applicant' ? (
                       <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -211,7 +205,6 @@ export function LoginForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel htmlFor="password">Kata Sandi</FormLabel>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <FormControl>
