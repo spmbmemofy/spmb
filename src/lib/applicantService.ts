@@ -3,7 +3,7 @@
 
 import { getFromLocalStorage, saveToLocalStorage, type LoginCredentials, type RegistrationProgress } from './localStorage';
 import { generateAllMockApplicants, jalurOptionsPlain } from './mockData';
-import type { Applicant, Jalur } from './types';
+import type { Applicant, ActivityEvent } from './types';
 import { getSchoolById, getSchools, type School } from './schoolService';
 import { getUsers } from './userService';
 
@@ -258,7 +258,7 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
     sekolahTujuanId: progress.schoolSelections[0].schoolId,
     sekolahTujuanNama: getSchoolById(progress.schoolSelections[0].schoolId)?.namaSekolah || 'Unknown Destination',
     schoolSelections: progress.schoolSelections,
-    jalur: progress.pathway as Jalur,
+    jalur: progress.pathway,
     statusVerifikasi: 'Menunggu Verifikasi' as const,
     submissionTimestamp: submissionTime,
     rejectionReason: undefined,
@@ -313,6 +313,34 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
     const updatedApplicants = [...applicants, newApplicant];
     saveToLocalStorage(APPLICANTS_STORAGE_KEY, updatedApplicants);
     return newApplicant;
+  }
+}
+
+/**
+ * Withdraws an application, logs the event, and triggers a re-rank.
+ * @param applicantId The ID of the applicant withdrawing.
+ * @param actorName The name of the user performing the action.
+ */
+export function withdrawApplication(applicantId: string, actorName: string): void {
+  let applicants = getApplicants();
+  const index = applicants.findIndex(app => app.id === applicantId);
+  if (index !== -1) {
+    const newEvent: ActivityEvent = { type: 'REGISTRATION_WITHDRAWN', timestamp: new Date().toISOString(), actor: actorName };
+    
+    // Add to history
+    applicants[index].activityHistory.push(newEvent);
+
+    // Reset placement and ranking
+    applicants[index].diterimaDiSekolahId = null;
+    applicants[index].peringkat = null;
+    
+    // Save updated applicant list
+    saveToLocalStorage(APPLICANTS_STORAGE_KEY, applicants);
+    
+    // Trigger a re-rank for all other applicants
+    recalculateAllRanks();
+  } else {
+    console.error("Applicant not found for withdrawal");
   }
 }
 

@@ -9,12 +9,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp, Printer, AlertCircle } from 'lucide-react';
+import { ClipboardCheck, ArrowLeft, Info, FileCheck2, FileQuestion, UserCircle, XSquare, School2, Star, ShieldCheck, CheckCircle, UserCheck as UserCheckIcon, BarChart, FileUp, Printer, AlertCircle, Undo2 } from 'lucide-react';
 import { getSchoolById, type School } from "@/lib/schoolService"; 
-import { getFromLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
-import { getApplicants, type Applicant } from "@/lib/applicantService";
+import { getFromLocalStorage, removeFromLocalStorage, type RegistrationProgress, type BiodataDetails, type LoginCredentials } from "@/lib/localStorage";
+import { getApplicants, withdrawApplication, type Applicant } from "@/lib/applicantService";
 import { type ActivityEvent, type SchoolSelection, type ApplicantStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
@@ -129,6 +141,15 @@ const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ ap
           actor: event.actor,
           timestamp,
         };
+      case 'REGISTRATION_WITHDRAWN':
+         return {
+          icon: <Undo2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />,
+          bgColor: "bg-orange-100 dark:bg-orange-900",
+          title: "Pendaftaran Dibatalkan",
+          description: "Anda mencabut berkas dan membatalkan pendaftaran ini untuk mendaftar ulang.",
+          actor: event.actor,
+          timestamp,
+        };
       default:
         return null;
     }
@@ -158,7 +179,9 @@ const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ ap
 
 export default function StatusPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isWithdrawAlertOpen, setIsWithdrawAlertOpen] = React.useState(false);
   
   const [applicant, setApplicant] = React.useState<Applicant | null>(null);
   const [allApplicants, setAllApplicants] = React.useState<Applicant[]>([]);
@@ -225,6 +248,35 @@ export default function StatusPage() {
 
     setIsLoading(false);
   }, [router]);
+
+  const handleWithdraw = () => {
+    if (!applicant) return;
+
+    try {
+        // Log the withdrawal event and trigger re-ranking
+        withdrawApplication(applicant.id, applicant.fullName);
+        
+        // Remove the local progress to allow re-registration
+        removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);
+        
+        toast({
+            title: "Pendaftaran Dibatalkan",
+            description: "Anda telah mencabut berkas pendaftaran. Anda sekarang dapat mendaftar ulang dari awal.",
+        });
+
+        // Redirect to dashboard to start over
+        router.push('/registration/dashboard');
+
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Gagal Membatalkan",
+            description: error.message,
+        });
+    }
+    
+    setIsWithdrawAlertOpen(false);
+  };
 
   if (isLoading) {
     return (
@@ -518,6 +570,30 @@ export default function StatusPage() {
                     Buka Halaman Cetak
                 </Link>
             </Button>
+            {(applicant.statusVerifikasi === 'Menunggu Verifikasi' || applicant.statusVerifikasi === 'Berkas tidak sesuai') && (
+                <AlertDialog open={isWithdrawAlertOpen} onOpenChange={setIsWithdrawAlertOpen}>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive">
+                            <Undo2 className="mr-2 h-4 w-4" />
+                            Cabut Berkas & Daftar Ulang
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Apakah Anda Yakin?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Tindakan ini akan membatalkan pendaftaran Anda saat ini dan mengizinkan Anda untuk memulai proses pendaftaran dari awal. Riwayat pendaftaran ini akan tetap tersimpan. Lanjutkan?
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Tidak</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleWithdraw}>
+                                Ya, Cabut Berkas
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
         </CardFooter>
       </Card>
     </div>
