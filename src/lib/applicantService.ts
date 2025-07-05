@@ -291,6 +291,7 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
     guardianName: progress.biodata.guardianName,
     contactNumber: progress.biodata.contactNumber,
     profilePhotoDataUri: progress.profilePhotoDataUri,
+    semesterGrades: progress.biodata.semesterGrades,
   };
 
   if (existingApplicant) {
@@ -304,6 +305,7 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
     const newApplicant: Applicant = {
       ...applicantDataFromProgress,
       id: `app-${creds.username}`,
+      semesterGrades: progress.biodata.semesterGrades,
       activityHistory: [
         { type: 'REGISTRATION_COMPLETED', timestamp: submissionTime, actor: progress.biodata.fullName },
       ]
