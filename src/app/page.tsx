@@ -138,40 +138,42 @@ export default function LandingPage() {
         
         {/* Login & Status Check Section */}
         <section id="login" className="py-16 md:-mt-24 relative z-20">
-            <div className="container max-w-4xl">
-                <Tabs defaultValue="login" className="w-full flex flex-col items-center">
-                    <TabsList className="grid grid-cols-2 h-12">
-                        <TabsTrigger value="login" className="text-base">Masuk Akun</TabsTrigger>
-                        <TabsTrigger value="status" className="text-base">Cek Status Pendaftaran</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="login" className="w-full">
-                        <Card className="rounded-t-none">
-                            <CardHeader className="text-center">
-                                <CardTitle>Login Pendaftar / Petugas</CardTitle>
-                                <CardDescription>Gunakan akun yang telah Anda dapatkan untuk masuk ke sistem.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <LoginForm />
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                    <TabsContent value="status" className="w-full">
-                        <Card className="rounded-t-none">
-                           <CardHeader className="text-center">
-                                <CardTitle>Cek Status Pendaftaran</CardTitle>
-                                <CardDescription>Masukkan NISN Anda untuk melihat status verifikasi dan hasil seleksi.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex w-full items-center space-x-2">
-                                    <Input type="text" placeholder="Masukkan NISN Anda..." />
-                                    <Button type="submit">
-                                        <Search className="mr-2 h-4 w-4" /> Cek
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
+            <div className="container">
+                <div className="max-w-xl mx-auto">
+                    <Tabs defaultValue="login" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 h-12">
+                            <TabsTrigger value="login" className="text-base">Masuk Akun</TabsTrigger>
+                            <TabsTrigger value="status" className="text-base">Cek Status Pendaftaran</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="login" className="w-full">
+                            <Card className="rounded-t-none">
+                                <CardHeader className="text-center">
+                                    <CardTitle>Login Pendaftar / Petugas</CardTitle>
+                                    <CardDescription>Gunakan akun yang telah Anda dapatkan untuk masuk ke sistem.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <LoginForm />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                        <TabsContent value="status" className="w-full">
+                            <Card className="rounded-t-none">
+                               <CardHeader className="text-center">
+                                    <CardTitle>Cek Status Pendaftaran</CardTitle>
+                                    <CardDescription>Masukkan NISN Anda untuk melihat status verifikasi dan hasil seleksi.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex w-full items-center space-x-2">
+                                        <Input type="text" placeholder="Masukkan NISN Anda..." />
+                                        <Button type="submit">
+                                            <Search className="mr-2 h-4 w-4" /> Cek
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                </div>
             </div>
         </section>
 
