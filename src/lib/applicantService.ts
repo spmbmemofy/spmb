@@ -317,25 +317,38 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
 }
 
 /**
- * Withdraws an application by deleting it, allowing the user to re-register.
+ * Withdraws an application by setting its status to "Dibatalkan".
+ * This preserves the applicant's history but allows them to re-register.
  * @param applicantId The ID of the applicant withdrawing.
  */
 export function withdrawApplication(applicantId: string): void {
-  let applicants = getApplicants();
-  const applicantToDelete = applicants.find(app => app.id === applicantId);
-
-  if (applicantToDelete) {
-    // To allow re-registration, the old application record must be removed.
-    // With the current data structure, this also removes the history.
-    // This is a necessary trade-off to enable the "start over" functionality.
-    const updatedApplicants = applicants.filter(app => app.id !== applicantId);
-    saveToLocalStorage(APPLICANTS_STORAGE_KEY, updatedApplicants);
-    
-    // Trigger a re-rank for all other applicants
-    recalculateAllRanks();
-  } else {
-    console.error("Applicant not found for withdrawal");
+  const applicant = getApplicantById(applicantId);
+  if (!applicant) {
+    throw new Error("Pendaftar tidak ditemukan untuk dibatalkan.");
   }
+  
+  if (applicant.statusVerifikasi === 'Terverifikasi') {
+    throw new Error("Tidak dapat membatalkan pendaftaran yang sudah terverifikasi.");
+  }
+
+  const newEvent: ActivityEvent = {
+    type: 'APPLICATION_WITHDRAWN',
+    timestamp: new Date().toISOString(),
+    actor: applicant.fullName,
+    details: 'Pendaftar mencabut berkas untuk mendaftar ulang.',
+  };
+  
+  const updatedApplicant: Applicant = {
+    ...applicant,
+    statusVerifikasi: "Dibatalkan",
+    // Reset fields to allow re-registration to overwrite them
+    peringkat: null,
+    diterimaDiSekolahId: null,
+    activityHistory: [...(applicant.activityHistory || []), newEvent],
+  };
+
+  updateApplicant(updatedApplicant);
+  recalculateAllRanks();
 }
 
 /**

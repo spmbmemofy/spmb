@@ -78,13 +78,13 @@ interface DisplaySelection {
     major: string | null;
 }
 
-type VerificationStatus = ApplicantStatus;
-
-const getVerificationBadgeVariant = (status: VerificationStatus): "default" | "destructive" | "secondary" => {
+const getVerificationBadgeVariant = (status: ApplicantStatus): "default" | "destructive" | "secondary" => {
     switch (status) {
         case "Terverifikasi":
             return "default";
         case "Berkas tidak sesuai":
+            return "destructive";
+        case "Dibatalkan":
             return "destructive";
         case "Menunggu Verifikasi":
             return "secondary";
@@ -148,6 +148,15 @@ const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ ap
           bgColor: "bg-orange-100 dark:bg-orange-900",
           title: "Verifikasi Dibatalkan",
           description: "Verifikasi pendaftaran dibatalkan. Status kembali menjadi Menunggu Verifikasi.",
+          actor: event.actor,
+          timestamp,
+        };
+      case 'APPLICATION_WITHDRAWN':
+        return {
+          icon: <Undo2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />,
+          bgColor: "bg-orange-100 dark:bg-orange-900",
+          title: "Pendaftaran Dibatalkan",
+          description: event.details || "Pendaftar mencabut berkas pendaftaran.",
           actor: event.actor,
           timestamp,
         };
@@ -350,6 +359,23 @@ export default function StatusPage() {
                 </div>
               </Alert>
             )}
+             {applicant.statusVerifikasi === 'Dibatalkan' && (
+                <Alert variant="destructive" className="mb-6">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Pendaftaran Dibatalkan</AlertTitle>
+                    <AlertDescription>
+                        Anda telah membatalkan pendaftaran ini. Anda dapat memulai proses pendaftaran baru dari dasbor.
+                    </AlertDescription>
+                    <div className="mt-4">
+                        <Button asChild>
+                            <Link href="/registration/dashboard">
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Kembali ke Dasbor
+                            </Link>
+                        </Button>
+                    </div>
+                </Alert>
+            )}
 
             <Dialog>
               <DialogTrigger asChild>
@@ -370,7 +396,7 @@ export default function StatusPage() {
                                 {applicant.statusVerifikasi}
                             </Badge>
                         </div>
-                        {applicant.statusVerifikasi !== 'Menunggu Verifikasi' && (
+                        {applicant.statusVerifikasi !== 'Menunggu Verifikasi' && applicant.statusVerifikasi !== 'Dibatalkan' && (
                             <>
                                 <div>
                                     <p className="font-medium text-muted-foreground mb-1">Diverifikasi oleh Sekolah</p>
@@ -425,10 +451,11 @@ export default function StatusPage() {
                     } else { // This is the first choice
                         switch (applicant.statusVerifikasi) {
                             case "Berkas tidak sesuai":
-                                rankStatus = 'Pendaftaran Ditolak';
+                            case "Dibatalkan":
+                                rankStatus = 'Pendaftaran Tidak Aktif';
                                 rankStatusVariant = 'destructive';
                                 rankText = '-';
-                                quotaInfo = "Verifikasi berkas gagal";
+                                quotaInfo = `Status: ${applicant.statusVerifikasi}`;
                                 break;
                             case "Menunggu Verifikasi":
                                 rankStatus = 'Menunggu Peringkat';

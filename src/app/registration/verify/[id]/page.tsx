@@ -51,6 +51,7 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
     case "Terverifikasi": return "default";
     case "Menunggu Verifikasi": return "secondary";
     case "Berkas tidak sesuai": return "destructive";
+    case "Dibatalkan": return "destructive";
     default: return "secondary";
   }
 };
@@ -113,6 +114,15 @@ const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ ap
           bgColor: "bg-orange-100 dark:bg-orange-900",
           title: "Verifikasi Dibatalkan",
           description: "Verifikasi pendaftaran dibatalkan. Status kembali menjadi Menunggu Verifikasi.",
+          actor: event.actor,
+          timestamp,
+        };
+      case 'APPLICATION_WITHDRAWN':
+        return {
+          icon: <Undo2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />,
+          bgColor: "bg-orange-100 dark:bg-orange-900",
+          title: "Pendaftaran Dibatalkan",
+          description: event.details || "Pendaftar mencabut berkas pendaftaran.",
           actor: event.actor,
           timestamp,
         };

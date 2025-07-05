@@ -23,6 +23,7 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
     case "Terverifikasi": return "default";
     case "Menunggu Verifikasi": return "secondary";
     case "Berkas tidak sesuai": return "destructive";
+    case "Dibatalkan": return "destructive";
     default: return "secondary";
   }
 };

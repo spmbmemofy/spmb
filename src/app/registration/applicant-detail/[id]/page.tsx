@@ -28,6 +28,7 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
     case "Terverifikasi": return "default";
     case "Menunggu Verifikasi": return "secondary";
     case "Berkas tidak sesuai": return "destructive";
+    case "Dibatalkan": return "destructive";
     default: return "secondary";
   }
 };
@@ -37,6 +38,7 @@ const getStatusIcon = (status: ApplicantStatus) => {
         case "Terverifikasi": return <CheckCircle className="h-5 w-5 text-green-600" />;
         case "Menunggu Verifikasi": return <Clock className="h-5 w-5 text-yellow-500" />;
         case "Berkas tidak sesuai": return <XCircle className="h-5 w-5 text-red-600" />;
+        case "Dibatalkan": return <XCircle className="h-5 w-5 text-red-600" />;
         default: return <Clock className="h-5 w-5 text-yellow-500" />;
     }
 };

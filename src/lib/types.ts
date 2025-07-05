@@ -6,7 +6,7 @@ export type SchoolSelection = {
   major: string | null;
 };
 
-export type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai";
+export type ApplicantStatus = "Terverifikasi" | "Menunggu Verifikasi" | "Berkas tidak sesuai" | "Dibatalkan";
 export type DocumentStatus = "valid" | "invalid" | null;
 
 export interface Tahap {
@@ -25,7 +25,7 @@ export interface Jalur {
 }
 
 export interface ActivityEvent {
-  type: 'REGISTRATION_COMPLETED' | 'VERIFICATION_REJECTED' | 'FILES_RESUBMITTED' | 'VERIFICATION_APPROVED' | 'VERIFICATION_CANCELLED';
+  type: 'REGISTRATION_COMPLETED' | 'VERIFICATION_REJECTED' | 'FILES_RESUBMITTED' | 'VERIFICATION_APPROVED' | 'VERIFICATION_CANCELLED' | 'APPLICATION_WITHDRAWN';
   timestamp: string; // ISO string
   actor: string; // e.g., 'Pendaftar' or verifier's name
   details?: string; // e.g., rejection reason
@@ -63,13 +63,6 @@ export interface Applicant {
   rejectionReason?: string;
   peringkat: number | null;
   diterimaDiSekolahId?: string | null;
-  semesterGrades: {
-    semester1: number;
-    semester2: number;
-    semester3: number;
-    semester4: number;
-    semester5: number;
-  };
   nilaiPrestasi?: number;
   nilaiTambahanPilihan?: number;
 

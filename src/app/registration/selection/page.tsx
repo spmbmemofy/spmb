@@ -28,6 +28,7 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
     case "Terverifikasi": return "default";
     case "Menunggu Verifikasi": return "secondary";
     case "Berkas tidak sesuai": return "destructive";
+    case "Dibatalkan": return "destructive";
     default: return "secondary";
   }
 };
@@ -72,7 +73,9 @@ export default function VerificationPage() {
     setSchoolName(verifierSchool.namaSekolah);
     const applicantsData = getApplicants();
     const verifierSchoolApplicants = applicantsData.filter(app => {
-        return app.schoolSelections?.some(sel => sel.schoolId === verifierSchool.id) && app.schoolSelections[0].schoolId === verifierSchool.id;
+        return app.schoolSelections?.some(sel => sel.schoolId === verifierSchool.id) 
+            && app.schoolSelections[0].schoolId === verifierSchool.id
+            && app.statusVerifikasi !== 'Dibatalkan';
     });
 
     setAllApplicants(verifierSchoolApplicants);
@@ -138,7 +141,7 @@ export default function VerificationPage() {
     return Math.ceil(sortedApplicants.length / pageSize);
   }, [sortedApplicants.length, pageSize]);
   
-  const statusOptions = ["Semua Status", ...statusVerifikasiOptionsPlain];
+  const statusOptions = ["Semua Status", ...statusVerifikasiOptionsPlain.filter(s => s !== 'Dibatalkan')];
   
   if (isLoading) {
     return <div className="p-4 text-center">Memuat data verifikasi...</div>;
