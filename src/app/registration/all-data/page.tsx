@@ -74,7 +74,8 @@ export default function AllDataPage() {
 
         let comparison = 0;
         
-        if (valA === null || valA === undefined) comparison = 1;
+        if ((valA === null || valA === undefined) && (valB === null || valB === undefined)) comparison = 0;
+        else if (valA === null || valA === undefined) comparison = 1;
         else if (valB === null || valB === undefined) comparison = -1;
         else if (typeof valA === 'number' && typeof valB === 'number') {
             comparison = valA - valB;
@@ -193,6 +194,9 @@ export default function AllDataPage() {
                     <TableHead className="cursor-pointer text-center hover:bg-muted/50" onClick={() => requestSort('statusVerifikasi')}>
                       <div className="flex items-center justify-center">Status Verifikasi{getSortIcon('statusVerifikasi')}</div>
                     </TableHead>
+                    <TableHead className="cursor-pointer text-center hover:bg-muted/50" onClick={() => requestSort('peringkat')}>
+                      <div className="flex items-center justify-center">Peringkat{getSortIcon('peringkat')}</div>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -224,11 +228,29 @@ export default function AllDataPage() {
                             {applicant.statusVerifikasi}
                           </Badge>
                         </TableCell>
+                        <TableCell className="text-center font-mono">
+                          {(() => {
+                            if (applicant.diterimaDiSekolahId && applicant.peringkat && applicant.statusVerifikasi === 'Terverifikasi') {
+                              const school = schools.find(s => s.id === applicant.diterimaDiSekolahId);
+                              if (school?.jalurKuota) {
+                                const pathwayKey = applicant.jalur.toLowerCase() as keyof typeof school.jalurKuota;
+                                const quota = school.jalurKuota[pathwayKey];
+                                if (quota !== undefined && applicant.peringkat <= quota) {
+                                  return <span className="text-green-600 font-bold">{applicant.peringkat}</span>;
+                                } else {
+                                  return <span className="text-red-600">{applicant.peringkat}</span>;
+                                }
+                              }
+                              return <span>{applicant.peringkat}</span>;
+                            }
+                            return <span>-</span>;
+                          })()}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground h-24"> 
+                      <TableCell colSpan={8} className="text-center text-muted-foreground h-24"> 
                         Tidak ada data pendaftar yang cocok dengan kriteria filter.
                       </TableCell>
                     </TableRow>
