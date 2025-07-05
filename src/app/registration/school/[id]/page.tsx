@@ -477,20 +477,44 @@ export default function SchoolDetailPage() {
                         </TableCell>
                         <TableCell>{applicant.jalur}</TableCell>
                         <TableCell
-                            className={cn(
-                                "text-right font-medium",
-                                (() => {
-                                    if (applicant.statusVerifikasi !== 'Terverifikasi' || !applicant.hypotheticalRank) {
-                                        return '';
-                                    }
-                                    if (applicant.diterimaDiSekolahId === school.id) {
-                                        return 'text-green-600';
-                                    }
-                                    return 'text-red-600';
-                                })()
-                            )}
+                          className={cn(
+                            "text-right font-medium",
+                            (() => {
+                                const isPlacedHere = applicant.diterimaDiSekolahId === school.id;
+                                const isPlacedElsewhere = applicant.diterimaDiSekolahId && !isPlacedHere;
+
+                                if (applicant.statusVerifikasi !== 'Terverifikasi' || isPlacedElsewhere) {
+                                    return ''; // default color
+                                }
+                                
+                                if (isPlacedHere) {
+                                    return 'text-green-600 font-bold';
+                                }
+                                
+                                // If not placed anywhere, they are outside quota at this school
+                                return 'text-red-600';
+                            })()
+                          )}
                         >
-                            {applicant.hypotheticalRank ?? '-'}
+                            {(() => {
+                                const isPlacedHere = applicant.diterimaDiSekolahId === school.id;
+                                const isPlacedElsewhere = applicant.diterimaDiSekolahId && !isPlacedHere;
+                                
+                                if (applicant.statusVerifikasi !== 'Terverifikasi') {
+                                    return '-';
+                                }
+                                
+                                if (isPlacedElsewhere) {
+                                    return '-';
+                                }
+
+                                if (isPlacedHere) {
+                                    return applicant.peringkat; // Show the final, official rank
+                                }
+                                
+                                // Not placed anywhere, show their rank for this school
+                                return applicant.hypotheticalRank ?? '-';
+                            })()}
                         </TableCell>
                       </TableRow>
                     ))
@@ -549,5 +573,3 @@ export default function SchoolDetailPage() {
     </div>
   );
 }
-
-    
