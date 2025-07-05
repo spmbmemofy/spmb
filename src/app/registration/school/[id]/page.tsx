@@ -45,6 +45,20 @@ const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "s
   }
 };
 
+const calculateScoreForSchool = (applicant: Applicant, schoolId: string): number => {
+    const totalNilaiRapor = Object.values(applicant.semesterGrades).reduce((a, b) => a + b, 0);
+    const nilaiPrestasi = applicant.jalur === 'Prestasi' ? (applicant.nilaiPrestasi || 0) : 0;
+    const isFirstChoice = applicant.schoolSelections && applicant.schoolSelections[0]?.schoolId === schoolId;
+    const nilaiTambahan = isFirstChoice ? 25 : 0;
+    return totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
+};
+
+
+interface DisplayApplicant extends Applicant {
+    finalScore: number | null;
+    hypotheticalRank: number | null;
+}
+
 export default function SchoolDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -71,9 +85,9 @@ export default function SchoolDetailPage() {
         
         setSchool(foundSchool);
         
-        if (foundSchool?.tahapId) {
-            const stage = allStages.find(s => s.id === foundSchool.tahapId);
-            setStageName(stage?.name || 'Tidak ada tahap');
+        if (foundSchool) {
+          const stage = allStages.find(s => allJalur.find(j => j.tahapId === s.id && foundSchool.jalurKuota && Object.keys(foundSchool.jalurKuota).includes(j.name.toLowerCase())));
+          setStageName(stage?.name || 'Tidak ada tahap');
         }
 
         setJalurOptions(["Semua Jalur", ...allJalur.map(j => j.name)]);
@@ -90,8 +104,52 @@ export default function SchoolDetailPage() {
     setCurrentPage(1);
   }, [searchTerm, selectedJalur, selectedStatus, pageSize]); 
 
+  const applicantsForDisplay = React.useMemo<DisplayApplicant[]>(() => {
+      if (!school) return [];
+
+      const allDisplayApplicants: DisplayApplicant[] = currentSchoolApplicants.map(app => ({
+          ...app,
+          finalScore: null,
+          hypotheticalRank: null,
+      }));
+
+      const applicantsByPathway: Record<string, DisplayApplicant[]> = {};
+
+      // Group verified applicants by pathway
+      allDisplayApplicants
+          .filter(app => app.statusVerifikasi === "Terverifikasi")
+          .forEach(app => {
+              app.finalScore = calculateScoreForSchool(app, school.id);
+              if (!applicantsByPathway[app.jalur]) {
+                  applicantsByPathway[app.jalur] = [];
+              }
+              applicantsByPathway[app.jalur].push(app);
+          });
+
+      // Sort within each pathway and assign rank
+      for (const jalur in applicantsByPathway) {
+          const group = applicantsByPathway[jalur];
+          group.sort((a, b) => {
+              if (jalur === 'Domisili') {
+                  const isAPriority = isPriority(a, school);
+                  const isBPriority = isPriority(b, school);
+                  if (isAPriority !== isBPriority) {
+                      return isAPriority ? -1 : 1;
+                  }
+              }
+              return (b.finalScore ?? 0) - (a.finalScore ?? 0);
+          });
+
+          group.forEach((app, index) => {
+              app.hypotheticalRank = index + 1;
+          });
+      }
+
+      return allDisplayApplicants;
+  }, [currentSchoolApplicants, school]);
+
   const filteredApplicants = React.useMemo(() => {
-    return currentSchoolApplicants.filter(applicant => {
+    return applicantsForDisplay.filter(applicant => {
       const searchTermMatch =
         applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         applicant.nisn.includes(searchTerm);
@@ -99,18 +157,15 @@ export default function SchoolDetailPage() {
       const statusMatch = selectedStatus === "Semua Status" || applicant.statusVerifikasi === selectedStatus;
       return searchTermMatch && jalurMatch && statusMatch; 
     });
-  }, [currentSchoolApplicants, searchTerm, selectedJalur, selectedStatus]);
+  }, [applicantsForDisplay, searchTerm, selectedJalur, selectedStatus]);
 
   const sortedApplicants = React.useMemo(() => {
     let sortableItems = [...filteredApplicants];
     if (sortConfig.key !== null && sortConfig.key !== 'no') {
       sortableItems.sort((a, b) => {
-        const key = sortConfig.key as keyof Applicant;
-        
-        // Handle sorting for 'peringkat' specifically
-        if (key === 'peringkat') {
-          const rankA = a.diterimaDiSekolahId === schoolId ? a.peringkat : null;
-          const rankB = b.diterimaDiSekolahId === schoolId ? b.peringkat : null;
+        if (sortConfig.key === 'peringkat') {
+          const rankA = a.hypotheticalRank;
+          const rankB = b.hypotheticalRank;
           
           if (rankA === null && rankB === null) return 0;
           if (rankA === null) return 1;
@@ -120,6 +175,8 @@ export default function SchoolDetailPage() {
           return sortConfig.direction === 'ascending' ? comparison : -comparison;
         }
 
+        const key = sortConfig.key as keyof Applicant;
+        
         const valA = a[key];
         const valB = b[key];
 
@@ -139,7 +196,7 @@ export default function SchoolDetailPage() {
       });
     }
     return sortableItems;
-  }, [filteredApplicants, sortConfig, schoolId]);
+  }, [filteredApplicants, sortConfig]);
 
   const paginatedApplicants = React.useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -423,19 +480,17 @@ export default function SchoolDetailPage() {
                             className={cn(
                                 "text-right font-medium",
                                 (() => {
-                                if (applicant.diterimaDiSekolahId === school.id && applicant.peringkat && school.jalurKuota) {
-                                    const pathwayKey = applicant.jalur.toLowerCase() as keyof NonNullable<typeof school.jalurKuota>;
-                                    const pathwayQuota = school.jalurKuota[pathwayKey];
-                                    if (pathwayQuota !== undefined && applicant.peringkat <= pathwayQuota) {
-                                    return 'text-green-600';
+                                    if (applicant.statusVerifikasi !== 'Terverifikasi' || !applicant.hypotheticalRank) {
+                                        return '';
                                     }
-                                    return 'text-red-600'; 
-                                }
-                                return ''; 
+                                    if (applicant.diterimaDiSekolahId === school.id) {
+                                        return 'text-green-600';
+                                    }
+                                    return 'text-red-600';
                                 })()
                             )}
-                            >
-                            {applicant.diterimaDiSekolahId === school.id ? (applicant.peringkat ?? '-') : '-'}
+                        >
+                            {applicant.hypotheticalRank ?? '-'}
                         </TableCell>
                       </TableRow>
                     ))
@@ -494,3 +549,5 @@ export default function SchoolDetailPage() {
     </div>
   );
 }
+
+    
