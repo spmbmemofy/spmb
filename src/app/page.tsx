@@ -110,34 +110,38 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative h-[60vh] min-h-[400px] flex items-center justify-center text-center text-white">
-            <Image
-                src="https://placehold.co/1600x900.png"
-                alt="Siswa-siswi ceria di lingkungan sekolah"
-                layout="fill"
-                objectFit="cover"
-                className="brightness-[.4]"
-                data-ai-hint="school students education"
-            />
-            <div className="relative z-10 container max-w-4xl px-4">
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
-                    Selamat Datang di Portal SPMB 2026
-                </h1>
-                <p className="mt-6 text-lg sm:text-xl text-white/90">
-                    Sistem Penerimaan Murid Baru Online untuk Kabupaten Berau. Transparan, akuntabel, dan mudah diakses.
-                </p>
-                <div className="mt-8">
-                    <Button size="lg" variant="secondary" asChild>
-                        <Link href="#jadwal">
-                            Lihat Jadwal Pelaksanaan <ArrowRight className="ml-2 h-5 w-5" />
-                        </Link>
-                    </Button>
-                </div>
+        <section className="py-16 sm:py-20">
+          <div className="container max-w-7xl">
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl h-[50vh] min-h-[450px] flex items-center justify-center text-center text-white p-4">
+              <Image
+                  src="https://placehold.co/1600x900.png"
+                  alt="Siswa-siswi ceria di lingkungan sekolah"
+                  layout="fill"
+                  objectFit="cover"
+                  className="brightness-[.4]"
+                  data-ai-hint="school students education"
+              />
+              <div className="relative z-10 max-w-4xl">
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
+                      Selamat Datang di Portal SPMB 2026
+                  </h1>
+                  <p className="mt-6 text-lg sm:text-xl text-white/90">
+                      Sistem Penerimaan Murid Baru Online untuk Kabupaten Berau. Transparan, akuntabel, dan mudah diakses.
+                  </p>
+                  <div className="mt-8">
+                      <Button size="lg" variant="secondary" asChild>
+                          <Link href="#jadwal">
+                              Lihat Jadwal Pelaksanaan <ArrowRight className="ml-2 h-5 w-5" />
+                          </Link>
+                      </Button>
+                  </div>
+              </div>
             </div>
+          </div>
         </section>
         
         {/* Login & Status Check Section */}
-        <section id="login" className="py-16 md:-mt-24 relative z-20">
+        <section id="login" className="py-16 sm:py-20">
             <div className="container">
                 <div className="max-w-xl mx-auto">
                     <Tabs defaultValue="login" className="w-full">
@@ -146,7 +150,7 @@ export default function LandingPage() {
                             <TabsTrigger value="status" className="text-base">Cek Status Pendaftaran</TabsTrigger>
                         </TabsList>
                         <TabsContent value="login" className="w-full">
-                            <Card className="rounded-t-none">
+                            <Card className="rounded-lg">
                                 <CardHeader className="text-center">
                                     <CardTitle>Login Pendaftar / Petugas</CardTitle>
                                     <CardDescription>Gunakan akun yang telah Anda dapatkan untuk masuk ke sistem.</CardDescription>
@@ -157,7 +161,7 @@ export default function LandingPage() {
                             </Card>
                         </TabsContent>
                         <TabsContent value="status" className="w-full">
-                            <Card className="rounded-t-none">
+                            <Card className="rounded-lg">
                                <CardHeader className="text-center">
                                     <CardTitle>Cek Status Pendaftaran</CardTitle>
                                     <CardDescription>Masukkan NISN Anda untuk melihat status verifikasi dan hasil seleksi.</CardDescription>
@@ -178,7 +182,7 @@ export default function LandingPage() {
         </section>
 
         {/* Info Cards Section */}
-        <section id="informasi" className="py-16 bg-muted/50">
+        <section id="informasi" className="py-16 sm:py-20 bg-muted/50">
           <div className="container max-w-7xl">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {infoCards.map((card) => (
@@ -199,7 +203,7 @@ export default function LandingPage() {
         </section>
         
         {/* Schedule Section */}
-        <section id="jadwal" className="py-20 md:py-28">
+        <section id="jadwal" className="py-16 sm:py-20 md:py-24">
             <div className="container max-w-5xl">
                 <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-4xl font-bold">Jadwal Pelaksanaan</h2>
@@ -228,7 +232,7 @@ export default function LandingPage() {
         </section>
 
         {/* Statistics Section */}
-        <section id="statistik" className="py-20 md:py-28 bg-muted/50">
+        <section id="statistik" className="py-16 sm:py-20 md:py-24 bg-muted/50">
             <div className="container max-w-7xl">
                  <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-4xl font-bold">Statistik Pendaftaran</h2>
@@ -251,26 +255,30 @@ export default function LandingPage() {
         </section>
         
         {/* FAQ Section */}
-        <section id="faq" className="py-20 md:py-28">
+        <section id="faq" className="py-16 sm:py-20 md:py-24">
           <div className="container max-w-4xl">
-            <div className="text-center mb-16">
+            <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold">Pertanyaan Umum (FAQ)</h2>
               <p className="mt-4 mx-auto text-muted-foreground">
                 Temukan jawaban untuk pertanyaan yang paling sering diajukan.
               </p>
             </div>
-            <Accordion type="single" collapsible className="w-full">
-              {faqs.map((faq, index) => (
-                <AccordionItem value={`item-${index}`} key={index}>
-                  <AccordionTrigger className="py-4 text-lg text-left hover:no-underline">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-base text-muted-foreground pb-4">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+            <Card>
+              <CardContent className="p-6">
+                <Accordion type="single" collapsible className="w-full">
+                  {faqs.map((faq, index) => (
+                    <AccordionItem value={`item-${index}`} key={index}>
+                      <AccordionTrigger className="py-4 text-lg text-left hover:no-underline">
+                        {faq.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-base text-muted-foreground pb-4">
+                        {faq.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </CardContent>
+            </Card>
           </div>
         </section>
       </main>
