@@ -25,7 +25,7 @@ export interface Jalur {
 }
 
 export interface ActivityEvent {
-  type: 'REGISTRATION_COMPLETED' | 'VERIFICATION_REJECTED' | 'FILES_RESUBMITTED' | 'VERIFICATION_APPROVED' | 'VERIFICATION_CANCELLED' | 'REGISTRATION_WITHDRAWN';
+  type: 'REGISTRATION_COMPLETED' | 'VERIFICATION_REJECTED' | 'FILES_RESUBMITTED' | 'VERIFICATION_APPROVED' | 'VERIFICATION_CANCELLED';
   timestamp: string; // ISO string
   actor: string; // e.g., 'Pendaftar' or verifier's name
   details?: string; // e.g., rejection reason

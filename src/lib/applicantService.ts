@@ -317,25 +317,19 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
 }
 
 /**
- * Withdraws an application, logs the event, and triggers a re-rank.
+ * Withdraws an application by deleting it, allowing the user to re-register.
  * @param applicantId The ID of the applicant withdrawing.
- * @param actorName The name of the user performing the action.
  */
-export function withdrawApplication(applicantId: string, actorName: string): void {
+export function withdrawApplication(applicantId: string): void {
   let applicants = getApplicants();
-  const index = applicants.findIndex(app => app.id === applicantId);
-  if (index !== -1) {
-    const newEvent: ActivityEvent = { type: 'REGISTRATION_WITHDRAWN', timestamp: new Date().toISOString(), actor: actorName };
-    
-    // Add to history
-    applicants[index].activityHistory.push(newEvent);
+  const applicantToDelete = applicants.find(app => app.id === applicantId);
 
-    // Reset placement and ranking
-    applicants[index].diterimaDiSekolahId = null;
-    applicants[index].peringkat = null;
-    
-    // Save updated applicant list
-    saveToLocalStorage(APPLICANTS_STORAGE_KEY, applicants);
+  if (applicantToDelete) {
+    // To allow re-registration, the old application record must be removed.
+    // With the current data structure, this also removes the history.
+    // This is a necessary trade-off to enable the "start over" functionality.
+    const updatedApplicants = applicants.filter(app => app.id !== applicantId);
+    saveToLocalStorage(APPLICANTS_STORAGE_KEY, updatedApplicants);
     
     // Trigger a re-rank for all other applicants
     recalculateAllRanks();

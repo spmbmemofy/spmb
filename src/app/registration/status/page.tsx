@@ -142,12 +142,12 @@ const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ ap
           actor: event.actor,
           timestamp,
         };
-      case 'REGISTRATION_WITHDRAWN':
-         return {
+      case 'VERIFICATION_CANCELLED':
+        return {
           icon: <Undo2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />,
           bgColor: "bg-orange-100 dark:bg-orange-900",
-          title: "Pendaftaran Dibatalkan",
-          description: "Anda mencabut berkas dan membatalkan pendaftaran ini untuk mendaftar ulang.",
+          title: "Verifikasi Dibatalkan",
+          description: "Verifikasi pendaftaran dibatalkan. Status kembali menjadi Menunggu Verifikasi.",
           actor: event.actor,
           timestamp,
         };
@@ -254,10 +254,8 @@ export default function StatusPage() {
     if (!applicant) return;
 
     try {
-        // Log the withdrawal event and trigger re-ranking
-        withdrawApplication(applicant.id, applicant.fullName);
+        withdrawApplication(applicant.id);
         
-        // Remove the local progress to allow re-registration
         removeFromLocalStorage(LOCAL_STORAGE_REGISTRATION_KEY);
         
         toast({
@@ -265,7 +263,6 @@ export default function StatusPage() {
             description: "Anda telah mencabut berkas pendaftaran. Anda sekarang dapat mendaftar ulang dari awal.",
         });
 
-        // Redirect to dashboard to start over
         router.push('/registration/dashboard');
 
     } catch (error: any) {
