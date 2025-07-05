@@ -311,7 +311,7 @@ export default function VerifyApplicantPage() {
     router.push('/registration/selection');
   };
   
-  const totalNilaiRapor = applicant ? Object.values(applicant.semesterGrades).reduce((sum, grade) => sum + grade, 0) : 0;
+  const totalNilaiRapor = (applicant && applicant.semesterGrades) ? Object.values(applicant.semesterGrades).reduce((sum, grade) => sum + grade, 0) : 0;
   const nilaiTambahan = (applicant && verifierSchoolId && applicant.schoolSelections?.[0]?.schoolId === verifierSchoolId) ? 25 : 0;
   const nilaiPrestasi = applicant?.jalur === 'Prestasi' ? editableNilaiPrestasi : 0;
   const nilaiTotal = totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
