@@ -480,41 +480,43 @@ export default function SchoolDetailPage() {
                           className={cn(
                             "text-right font-medium",
                             (() => {
-                                const isPlacedHere = applicant.diterimaDiSekolahId === school.id;
-                                const isPlacedElsewhere = applicant.diterimaDiSekolahId && !isPlacedHere;
+                              if (applicant.statusVerifikasi !== 'Terverifikasi') return '';
+                              
+                              const isPlacedHere = applicant.diterimaDiSekolahId === school.id;
+                              if (isPlacedHere) return 'text-green-600 font-bold';
 
-                                if (applicant.statusVerifikasi !== 'Terverifikasi' || isPlacedElsewhere) {
-                                    return ''; // default color
+                              const isPlacedElsewhere = applicant.diterimaDiSekolahId && !isPlacedHere;
+                              if (isPlacedElsewhere) {
+                                const thisSchoolIndex = applicant.schoolSelections.findIndex(s => s.schoolId === school.id);
+                                const acceptedSchoolIndex = applicant.schoolSelections.findIndex(s => s.schoolId === applicant.diterimaDiSekolahId);
+                                if (thisSchoolIndex !== -1 && acceptedSchoolIndex !== -1 && thisSchoolIndex < acceptedSchoolIndex) {
+                                  return 'text-red-600';
                                 }
-                                
-                                if (isPlacedHere) {
-                                    return 'text-green-600 font-bold';
-                                }
-                                
-                                // If not placed anywhere, they are outside quota at this school
-                                return 'text-red-600';
+                                return '';
+                              }
+                              
+                              return 'text-red-600';
                             })()
                           )}
                         >
-                            {(() => {
-                                const isPlacedHere = applicant.diterimaDiSekolahId === school.id;
-                                const isPlacedElsewhere = applicant.diterimaDiSekolahId && !isPlacedHere;
-                                
-                                if (applicant.statusVerifikasi !== 'Terverifikasi') {
-                                    return '-';
-                                }
-                                
-                                if (isPlacedElsewhere) {
-                                    return '-';
-                                }
+                          {(() => {
+                            if (applicant.statusVerifikasi !== 'Terverifikasi') return '-';
+                            
+                            const isPlacedHere = applicant.diterimaDiSekolahId === school.id;
+                            if (isPlacedHere) return applicant.peringkat;
 
-                                if (isPlacedHere) {
-                                    return applicant.peringkat; // Show the final, official rank
+                            const isPlacedElsewhere = applicant.diterimaDiSekolahId && !isPlacedHere;
+                            if (isPlacedElsewhere) {
+                                const thisSchoolIndex = applicant.schoolSelections.findIndex(s => s.schoolId === school.id);
+                                const acceptedSchoolIndex = applicant.schoolSelections.findIndex(s => s.schoolId === applicant.diterimaDiSekolahId);
+                                if (thisSchoolIndex !== -1 && acceptedSchoolIndex !== -1 && thisSchoolIndex < acceptedSchoolIndex) {
+                                  return applicant.hypotheticalRank ?? '-';
                                 }
-                                
-                                // Not placed anywhere, show their rank for this school
-                                return applicant.hypotheticalRank ?? '-';
-                            })()}
+                                return '-';
+                            }
+
+                            return applicant.hypotheticalRank ?? '-';
+                          })()}
                         </TableCell>
                       </TableRow>
                     ))
