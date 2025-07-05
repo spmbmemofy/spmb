@@ -257,14 +257,12 @@ export default function VerifyApplicantPage() {
     const verifierName = user ? user.fullName : 'Sistem';
 
     const finalDocumentStatuses: Record<string, DocumentStatus> = {};
-    const allPossibleDocKeys = ['biodata', 'nilai_rapor', ...documentsToVerify.map(d => d.id)];
-
     if (selectedAction === 'verify') {
-        allPossibleDocKeys.forEach(key => {
+        Object.keys(documentStatuses).forEach(key => {
             finalDocumentStatuses[key] = 'valid';
         });
     } else { // 'reject'
-        allPossibleDocKeys.forEach(key => {
+        Object.keys(documentStatuses).forEach(key => {
             finalDocumentStatuses[key] = documentStatuses[key] === 'invalid' ? 'invalid' : 'valid';
         });
     }
@@ -308,8 +306,6 @@ export default function VerifyApplicantPage() {
     const updatedApplicant: Applicant = {
         ...applicant,
         statusVerifikasi: "Menunggu Verifikasi",
-        // Keep 'verifiedBy', 'verificationTimestamp', and 'peringkat' as historical data.
-        // Only reset 'diterimaDiSekolahId' as they are no longer placed in any school.
         diterimaDiSekolahId: null,
         activityHistory: [...(applicant.activityHistory || []), newEvent]
     };
@@ -510,20 +506,19 @@ export default function VerifyApplicantPage() {
               </CardHeader>
               <CardContent>
                  <div className="space-y-2">
-                    {/* Biodata Item */}
                     <div className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between">
                         <span className="font-medium flex items-center">
                             <UserCircle className="mr-2 h-4 w-4 text-muted-foreground"/>
                             Kesesuaian Biodata
                         </span>
-                        {applicant.statusVerifikasi === 'Terverifikasi' ? (
-                             <Badge variant="default" className="w-fit"><ThumbsUp className="mr-1.5 h-3 w-3"/>Diterima</Badge>
+                        {documentStatuses['biodata'] === 'valid' ? (
+                            <Badge variant="default" className="w-fit"><ThumbsUp className="mr-1.5 h-3 w-3"/>Valid</Badge>
                         ) : (
                             <Button
                                 size="sm"
                                 variant={documentStatuses['biodata'] === 'invalid' ? 'destructive' : 'outline'}
                                 onClick={() => toggleInvalidStatus('biodata')}
-                                disabled={!isVerifierAuthorized}
+                                disabled={!isVerifierAuthorized || applicant.statusVerifikasi === 'Terverifikasi'}
                                 className="h-8 w-auto px-2"
                             >
                                 <XCircle className="mr-1.5 h-4 w-4" />
@@ -531,21 +526,19 @@ export default function VerifyApplicantPage() {
                             </Button>
                         )}
                     </div>
-
-                    {/* Nilai Rapor Item */}
                     <div className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between">
                         <span className="font-medium flex items-center">
                             <BookOpen className="mr-2 h-4 w-4 text-muted-foreground"/>
                             Kesesuaian Nilai Rapor
                         </span>
-                         {applicant.statusVerifikasi === 'Terverifikasi' ? (
-                             <Badge variant="default" className="w-fit"><ThumbsUp className="mr-1.5 h-3 w-3"/>Diterima</Badge>
+                         {documentStatuses['nilai_rapor'] === 'valid' ? (
+                            <Badge variant="default" className="w-fit"><ThumbsUp className="mr-1.5 h-3 w-3"/>Valid</Badge>
                         ) : (
                             <Button
                                 size="sm"
                                 variant={documentStatuses['nilai_rapor'] === 'invalid' ? 'destructive' : 'outline'}
                                 onClick={() => toggleInvalidStatus('nilai_rapor')}
-                                disabled={!isVerifierAuthorized}
+                                disabled={!isVerifierAuthorized || applicant.statusVerifikasi === 'Terverifikasi'}
                                 className="h-8 w-auto px-2"
                             >
                                 <XCircle className="mr-1.5 h-4 w-4" />
@@ -556,34 +549,39 @@ export default function VerifyApplicantPage() {
 
                     <Separator className="my-4"/>
 
-                    {documentsToVerify.map((doc) => (
-                      <div key={doc.id} className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between">
-                         <a
-                            href={doc.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-medium text-primary hover:underline flex-grow truncate"
-                          >
-                            {doc.label}
-                          </a>
-                        <div className="flex-shrink-0 flex gap-2">
-                           {applicant.statusVerifikasi === 'Terverifikasi' ? (
-                                <Badge variant="default" className="w-fit"><ThumbsUp className="mr-1.5 h-3 w-3"/>Diterima</Badge>
-                            ) : (
-                                <Button 
-                                  size="sm" 
-                                  variant={documentStatuses[doc.id] === 'invalid' ? 'destructive' : 'outline'} 
-                                  onClick={() => toggleInvalidStatus(doc.id)} 
-                                  disabled={!isVerifierAuthorized}
-                                  className="h-8 w-auto px-2"
-                                >
-                                  <XCircle className="mr-1.5 h-4 w-4" />
-                                  {documentStatuses[doc.id] === 'invalid' ? 'Batalkan Tolak' : 'Tolak'}
-                                </Button>
-                            )}
-                        </div>
-                      </div>
-                    ))}
+                    {documentsToVerify.map((doc) => {
+                        const docStatus = documentStatuses[doc.id];
+                        return (
+                          <div key={doc.id} className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between">
+                            <a
+                                href={doc.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-medium text-primary hover:underline flex-grow truncate"
+                              >
+                                {doc.label}
+                              </a>
+                            <div className="flex-shrink-0 flex gap-2">
+                                {docStatus === 'valid' ? (
+                                    <Badge variant="default" className="w-fit">
+                                        <ThumbsUp className="mr-1.5 h-3 w-3"/>Valid
+                                    </Badge>
+                                ) : (
+                                    <Button
+                                        size="sm"
+                                        variant={docStatus === 'invalid' ? 'destructive' : 'outline'}
+                                        onClick={() => toggleInvalidStatus(doc.id)}
+                                        disabled={!isVerifierAuthorized || applicant.statusVerifikasi === 'Terverifikasi'}
+                                        className="h-8 w-auto px-2"
+                                    >
+                                        <XCircle className="mr-1.5 h-4 w-4" />
+                                        {docStatus === 'invalid' ? 'Batalkan Tolak' : 'Tolak'}
+                                    </Button>
+                                )}
+                            </div>
+                          </div>
+                        );
+                    })}
                   </div>
               </CardContent>
             </Card>
