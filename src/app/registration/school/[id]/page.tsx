@@ -483,16 +483,13 @@ export default function SchoolDetailPage() {
                               if (applicant.statusVerifikasi !== 'Terverifikasi') return '';
                               
                               const isPlacedHere = applicant.diterimaDiSekolahId === school.id;
-                              if (isPlacedHere) return 'text-green-600 font-bold';
+                              if (isPlacedHere) {
+                                return 'text-green-600 font-bold';
+                              }
 
                               const isPlacedElsewhere = applicant.diterimaDiSekolahId && !isPlacedHere;
                               if (isPlacedElsewhere) {
-                                const thisSchoolIndex = applicant.schoolSelections.findIndex(s => s.schoolId === school.id);
-                                const acceptedSchoolIndex = applicant.schoolSelections.findIndex(s => s.schoolId === applicant.diterimaDiSekolahId);
-                                if (thisSchoolIndex !== -1 && acceptedSchoolIndex !== -1 && thisSchoolIndex < acceptedSchoolIndex) {
-                                  return 'text-red-600';
-                                }
-                                return '';
+                                return ''; // No color needed for '-'
                               }
                               
                               return 'text-red-600';
@@ -500,21 +497,21 @@ export default function SchoolDetailPage() {
                           )}
                         >
                           {(() => {
-                            if (applicant.statusVerifikasi !== 'Terverifikasi') return '-';
+                            if (applicant.statusVerifikasi !== 'Terverifikasi') {
+                                return '-';
+                            }
                             
                             const isPlacedHere = applicant.diterimaDiSekolahId === school.id;
-                            if (isPlacedHere) return applicant.peringkat;
-
                             const isPlacedElsewhere = applicant.diterimaDiSekolahId && !isPlacedHere;
+
                             if (isPlacedElsewhere) {
-                                const thisSchoolIndex = applicant.schoolSelections.findIndex(s => s.schoolId === school.id);
-                                const acceptedSchoolIndex = applicant.schoolSelections.findIndex(s => s.schoolId === applicant.diterimaDiSekolahId);
-                                if (thisSchoolIndex !== -1 && acceptedSchoolIndex !== -1 && thisSchoolIndex < acceptedSchoolIndex) {
-                                  return applicant.hypotheticalRank ?? '-';
-                                }
                                 return '-';
                             }
 
+                            if (isPlacedHere) {
+                                return applicant.peringkat;
+                            }
+                            
                             return applicant.hypotheticalRank ?? '-';
                           })()}
                         </TableCell>
