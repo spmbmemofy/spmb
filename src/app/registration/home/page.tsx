@@ -135,7 +135,6 @@ export default function HomePage() {
     const terverifikasi = allApplicants.filter(app => app.statusVerifikasi === 'Terverifikasi').length;
     
     const jumlahSiswa = managedApplicants.length;
-    const belumAktivasi = 0; // Placeholder
     const belumMendaftar = managedApplicants.filter(managed => !applicantNisnSet.has(managed.nisn)).length;
 
     return { 
@@ -150,7 +149,6 @@ export default function HomePage() {
         jalurDistribution,
         terverifikasi,
         jumlahSiswa,
-        belumAktivasi,
         belumMendaftar,
     };
   }, [allApplicants, schoolStats, managedApplicants]);
@@ -199,8 +197,6 @@ export default function HomePage() {
             <CardTitle>Ringkasan Status Pendaftar</CardTitle>
             <CardDescription>
               Ringkasan keseluruhan status pendaftar dalam sistem.
-              <br />
-              <span className="text-xs text-muted-foreground">*Data 'Belum Aktivasi' adalah placeholder karena tidak tersedia di sistem saat ini.</span>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -208,7 +204,6 @@ export default function HomePage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-center">Jumlah Siswa</TableHead>
-                  <TableHead className="text-center">Belum Aktivasi</TableHead>
                   <TableHead className="text-center">Belum Mendaftar</TableHead>
                   <TableHead className="text-center">Menunggu Verifikasi</TableHead>
                   <TableHead className="text-center">Terverifikasi</TableHead>
@@ -217,7 +212,6 @@ export default function HomePage() {
               <TableBody>
                 <TableRow>
                   <TableCell className="text-center text-lg font-bold">{globalStats.jumlahSiswa}</TableCell>
-                  <TableCell className="text-center text-lg font-bold">{globalStats.belumAktivasi}</TableCell>
                   <TableCell className="text-center text-lg font-bold">{globalStats.belumMendaftar}</TableCell>
                   <TableCell className="text-center text-lg font-bold">{globalStats.menungguVerifikasi}</TableCell>
                   <TableCell className="text-center text-lg font-bold">{globalStats.terverifikasi}</TableCell>
