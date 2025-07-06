@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getFromLocalStorage, saveToLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { getUsers } from "@/lib/userService";
 import { getApplicants } from "@/lib/applicantService";
+import { getSchoolByNPSN } from "@/lib/schoolService";
 
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 
@@ -137,7 +138,22 @@ export function LoginForm() {
           router.push('/registration/dashboard');
       }
     } else {
-      router.push('/registration/home');
+        if (user.role === 'verifikator' && user.npsn) {
+            const applicants = getApplicants();
+            const verifierSchool = getSchoolByNPSN(user.npsn);
+            if (verifierSchool) {
+                const hasPending = applicants.some(app =>
+                    app.schoolSelections?.[0]?.schoolId === verifierSchool.id &&
+                    app.statusVerifikasi === 'Menunggu Verifikasi'
+                );
+                if (hasPending) {
+                    router.push('/registration/selection');
+                    setIsSubmitting(false);
+                    return;
+                }
+            }
+        }
+        router.push('/registration/home');
     }
 
     setIsSubmitting(false);
