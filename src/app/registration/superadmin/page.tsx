@@ -37,6 +37,8 @@ const userFormSchema = z.object({
 
 type UserFormValues = z.infer<typeof userFormSchema>;
 
+const applicantStatusOptions = ["Semua Status", "Lulus", "Tidak Lulus", "Menunggu Verifikasi", "Berkas tidak sesuai", "Belum Mendaftar", "Dibatalkan"];
+
 export default function SuperadminPage() {
     const [users, setUsers] = React.useState<User[]>([]);
     const [applicants, setApplicants] = React.useState<Applicant[]>([]);
@@ -44,6 +46,8 @@ export default function SuperadminPage() {
     const [systemSearchTerm, setSystemSearchTerm] = React.useState("");
     const [applicantSearchTerm, setApplicantSearchTerm] = React.useState("");
     const [roleFilter, setRoleFilter] = React.useState<UserRole | "all">("all");
+    const [applicantStatusFilter, setApplicantStatusFilter] = React.useState<string>("all");
+
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
     const [editingUser, setEditingUser] = React.useState<User | null>(null);
     const [isAlertOpen, setIsAlertOpen] = React.useState(false);
@@ -87,16 +91,30 @@ export default function SuperadminPage() {
     }, [users, systemSearchTerm, roleFilter]);
 
     const filteredApplicantUsers = React.useMemo(() => {
+        const getStatus = (user: User): string => {
+            const applicant = applicants.find(app => app.nisn === user.username);
+            if (!applicant) return "Belum Mendaftar";
+            if (applicant.statusVerifikasi === 'Dibatalkan') return "Dibatalkan";
+            if (applicant.diterimaDiSekolahId) return "Lulus";
+            if (applicant.statusVerifikasi === 'Terverifikasi') return "Tidak Lulus";
+            return applicant.statusVerifikasi; // Menunggu Verifikasi, Berkas tidak sesuai
+        };
+
         return users.filter(user => {
             if (user.role !== 'applicant') return false;
-            return user.fullName.toLowerCase().includes(applicantSearchTerm.toLowerCase()) ||
+
+            const searchMatch = user.fullName.toLowerCase().includes(applicantSearchTerm.toLowerCase()) ||
                    user.username.toLowerCase().includes(applicantSearchTerm.toLowerCase());
+            
+            const statusMatch = applicantStatusFilter === "all" || getStatus(user) === applicantStatusFilter;
+
+            return searchMatch && statusMatch;
         });
-    }, [users, applicantSearchTerm]);
+    }, [users, applicants, applicantSearchTerm, applicantStatusFilter]);
 
     React.useEffect(() => {
         setSelectedUserIds(new Set());
-    }, [applicantSearchTerm]);
+    }, [applicantSearchTerm, applicantStatusFilter]);
 
     const handleOpenDialog = (user: User | null = null) => {
         setShowDialogPassword(false);
@@ -314,6 +332,8 @@ export default function SuperadminPage() {
                              if (applicant?.diterimaDiSekolahId) {
                                 const schoolName = getSchoolById(applicant.diterimaDiSekolahId)?.namaSekolah || 'Sekolah tidak ditemukan';
                                 placementStatus = <Badge variant="default">Lulus di {schoolName}</Badge>;
+                             } else if (applicant?.statusVerifikasi === 'Dibatalkan') {
+                                placementStatus = <Badge variant="destructive">{applicant.statusVerifikasi}</Badge>;
                              } else if (applicant?.statusVerifikasi === 'Terverifikasi') {
                                 placementStatus = <Badge variant="destructive">Tidak Lulus</Badge>;
                              } else if (applicant) {
@@ -461,8 +481,8 @@ export default function SuperadminPage() {
                                 {renderSystemUserTable(filteredSystemUsers)}
                             </TabsContent>
                             <TabsContent value="pendaftar" className="mt-4">
-                                <div className="flex items-center gap-4 py-4">
-                                    <div className="relative flex-1">
+                                <div className="flex flex-col md:flex-row items-center gap-4 py-4">
+                                    <div className="relative flex-1 w-full">
                                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input
                                             placeholder="Cari berdasarkan nama atau NISN..."
@@ -471,12 +491,24 @@ export default function SuperadminPage() {
                                             className="pl-10"
                                         />
                                     </div>
-                                    {selectedUserIds.size > 0 && (
-                                        <Button variant="destructive" onClick={() => setIsBulkDeleteAlertOpen(true)}>
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Hapus {selectedUserIds.size} Terpilih
-                                        </Button>
-                                    )}
+                                    <div className="flex w-full md:w-auto items-center gap-4">
+                                        <Select value={applicantStatusFilter} onValueChange={setApplicantStatusFilter}>
+                                            <SelectTrigger className="flex-1 md:w-[220px]">
+                                                <SelectValue placeholder="Filter berdasarkan status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {applicantStatusOptions.map(status => (
+                                                     <SelectItem key={status} value={status}>{status}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {selectedUserIds.size > 0 && (
+                                            <Button variant="destructive" onClick={() => setIsBulkDeleteAlertOpen(true)}>
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Hapus ({selectedUserIds.size})
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
                                 {renderApplicantTable(filteredApplicantUsers)}
                             </TabsContent>
@@ -636,7 +668,3 @@ export default function SuperadminPage() {
         </>
     );
 }
-
-    
-
-    
