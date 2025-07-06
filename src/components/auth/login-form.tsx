@@ -27,6 +27,7 @@ import { getFromLocalStorage, saveToLocalStorage, type LoginCredentials } from "
 import { getUsers } from "@/lib/userService";
 import { getApplicants } from "@/lib/applicantService";
 import { getSchoolByNPSN } from "@/lib/schoolService";
+import { getSystemSettings } from "@/lib/systemSettingsService";
 
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
 
@@ -102,6 +103,19 @@ export function LoginForm() {
       });
       setIsSubmitting(false);
       return;
+    }
+
+    if (user.role === 'applicant') {
+        const settings = getSystemSettings();
+        if (settings.isApplicantLoginLocked) {
+            toast({
+                variant: "destructive",
+                title: "Login Pendaftar Ditutup",
+                description: "Saat ini sistem pendaftaran sedang ditutup oleh admin. Silakan coba lagi nanti.",
+            });
+            setIsSubmitting(false);
+            return;
+        }
     }
 
     const isApplicantRoleInForm = values.role === 'applicant';

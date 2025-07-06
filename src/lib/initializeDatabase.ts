@@ -7,6 +7,7 @@ import { initializeManagedApplicantsData } from './managedApplicantService';
 import { initializeApplicantsData } from './applicantService';
 import { initializeJalurData } from './pathwayService';
 import { initializeStagesData } from './stageService';
+import { initializeSystemSettings } from './systemSettingsService';
 
 export function initializeAllData() {
   if (typeof window !== 'undefined') {
@@ -19,5 +20,6 @@ export function initializeAllData() {
     initializeApplicantsData(); 
     initializeJalurData();
     initializeStagesData();
+    initializeSystemSettings();
   }
 }

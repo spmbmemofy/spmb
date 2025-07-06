@@ -25,6 +25,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getApplicants, deleteApplicantById } from "@/lib/applicantService";
 import type { Applicant } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { getSystemSettings, updateSystemSettings } from "@/lib/systemSettingsService";
+import type { SystemSettings } from "@/lib/localStorage";
+import { Label } from "@/components/ui/label";
 
 const userFormSchema = z.object({
   id: z.string().optional(),
@@ -47,6 +51,7 @@ export default function SuperadminPage() {
     const [applicantSearchTerm, setApplicantSearchTerm] = React.useState("");
     const [roleFilter, setRoleFilter] = React.useState<UserRole | "all">("all");
     const [applicantStatusFilter, setApplicantStatusFilter] = React.useState<string>("Semua Status");
+    const [systemSettings, setSystemSettings] = React.useState<SystemSettings>({ isApplicantLoginLocked: false });
 
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
     const [editingUser, setEditingUser] = React.useState<User | null>(null);
@@ -71,11 +76,21 @@ export default function SuperadminPage() {
         setUsers(getUsers());
         setApplicants(getApplicants());
         setAllSchools(getSchools());
+        setSystemSettings(getSystemSettings());
     };
 
     React.useEffect(() => {
         refreshData();
     }, []);
+
+    const handleLockToggle = (isLocked: boolean) => {
+        updateSystemSettings({ isApplicantLoginLocked: isLocked });
+        setSystemSettings(getSystemSettings()); // Refresh state
+        toast({
+            title: "Pengaturan Sistem Diperbarui",
+            description: `Login untuk pendaftar telah ${isLocked ? 'dikunci' : 'dibuka'}.`,
+        });
+    };
 
     const filteredSystemUsers = React.useMemo(() => {
         return users.filter(user => {
@@ -429,7 +444,29 @@ export default function SuperadminPage() {
                             </Button>
                         </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Pengaturan Sistem</CardTitle>
+                                <CardDescription>Kontrol akses dan fitur penting lainnya pada sistem pendaftaran.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex items-center justify-between rounded-lg border p-4">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="lock-login" className="text-base font-medium">Kunci Login Pendaftar</Label>
+                                        <p className="text-sm text-muted-foreground">
+                                            Saat diaktifkan, semua pendaftar tidak akan bisa login ke sistem.
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        id="lock-login"
+                                        checked={systemSettings.isApplicantLoginLocked}
+                                        onCheckedChange={handleLockToggle}
+                                        aria-label="Kunci Login Pendaftar"
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
                         <Tabs defaultValue="system-users" className="w-full">
                             <TabsList className="grid w-full grid-cols-2">
                                 <TabsTrigger value="system-users">Pengguna Sistem</TabsTrigger>

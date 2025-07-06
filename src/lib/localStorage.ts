@@ -10,6 +10,10 @@ export interface LoginCredentials {
   rememberMe?: boolean;
 }
 
+export interface SystemSettings {
+  isApplicantLoginLocked?: boolean;
+}
+
 export interface BiodataDetails {
   fullName: string;
   nisn: string;
