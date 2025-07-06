@@ -504,16 +504,18 @@ function ApplicantDashboard() {
           title: "Ukuran File Terlalu Besar",
           description: `File ${file.name} melebihi batas maksimal 2MB.`,
         });
-        event.target.value = ''; 
+        if (event.target) event.target.value = '';
         return;
       }
-      if (!file.type.startsWith('image/')) {
+      
+      const allowedTypes = ['image/jpeg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
         toast({
           variant: "destructive",
           title: "Jenis File Tidak Sesuai",
-          description: "Harap pilih file gambar (PNG, JPG, JPEG).",
+          description: "Harap pilih file gambar dengan format JPG, JPEG, atau PNG.",
         });
-        event.target.value = ''; 
+        if (event.target) event.target.value = '';
         return;
       }
 
