@@ -229,7 +229,7 @@ export default function SchoolDetailPage() {
 
         const applicantsInPathwayForThisSchool = currentSchoolApplicants.filter(app => app.jalur === jalurName);
 
-        const terverifikasi = applicantsInPathwayForThisSchool.filter(app => app.diterimaDiSekolahId === school.id).length;
+        const terverifikasi = applicantsInPathwayForThisSchool.filter(app => app.statusVerifikasi === "Terverifikasi").length;
         const menungguVerifikasi = applicantsInPathwayForThisSchool.filter(app => app.statusVerifikasi === "Menunggu Verifikasi").length;
         const berkasTidakSesuai = applicantsInPathwayForThisSchool.filter(app => app.statusVerifikasi === "Berkas tidak sesuai").length;
         const totalPendaftar = applicantsInPathwayForThisSchool.length;
@@ -344,7 +344,7 @@ export default function SchoolDetailPage() {
                   <TableRow>
                     <TableHead className="font-semibold">Jalur</TableHead>
                     <TableHead className="text-center font-semibold">Kuota</TableHead>
-                    <TableHead className="text-center font-semibold">Diterima</TableHead>
+                    <TableHead className="text-center font-semibold">Terverifikasi</TableHead>
                     <TableHead className="text-center font-semibold">Menunggu Verifikasi</TableHead>
                     <TableHead className="text-center font-semibold whitespace-nowrap">Berkas Tdk. Sesuai</TableHead>
                     <TableHead className="text-center font-semibold">Total Pendaftar</TableHead>
