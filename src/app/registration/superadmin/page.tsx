@@ -20,10 +20,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { getUsers, addUser, updateUser, deleteUser } from "@/lib/userService";
 import { type User, type UserRole, roleDisplayNames, roleBadgeVariants } from "@/lib/userData";
-import { getSchools, type School } from "@/lib/schoolService";
+import { getSchools, getSchoolById, type School } from "@/lib/schoolService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getApplicants, deleteApplicantById } from "@/lib/applicantService";
 import type { Applicant } from "@/lib/types";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const userFormSchema = z.object({
   id: z.string().optional(),
@@ -53,6 +54,10 @@ export default function SuperadminPage() {
 
     const [isResetAlertOpen, setIsResetAlertOpen] = React.useState(false);
     const [userToReset, setUserToReset] = React.useState<User | null>(null);
+    
+    const [selectedUserIds, setSelectedUserIds] = React.useState<Set<string>>(new Set());
+    const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = React.useState(false);
+
 
     const form = useForm<UserFormValues>({
         resolver: zodResolver(userFormSchema),
@@ -60,11 +65,15 @@ export default function SuperadminPage() {
     });
     
     const selectedFormRole = form.watch("role");
+    
+    const refreshData = () => {
+        setUsers(getUsers());
+        setApplicants(getApplicants());
+        setAllSchools(getSchools());
+    };
 
     React.useEffect(() => {
-        setUsers(getUsers());
-        setAllSchools(getSchools());
-        setApplicants(getApplicants());
+        refreshData();
     }, []);
 
     const filteredSystemUsers = React.useMemo(() => {
@@ -84,6 +93,10 @@ export default function SuperadminPage() {
                    user.username.toLowerCase().includes(applicantSearchTerm.toLowerCase());
         });
     }, [users, applicantSearchTerm]);
+
+    React.useEffect(() => {
+        setSelectedUserIds(new Set());
+    }, [applicantSearchTerm]);
 
     const handleOpenDialog = (user: User | null = null) => {
         setShowDialogPassword(false);
@@ -109,8 +122,7 @@ export default function SuperadminPage() {
     const handleConfirmDelete = () => {
         if (userToDeleteId) {
             deleteUser(userToDeleteId);
-            setUsers(getUsers());
-            setApplicants(getApplicants());
+            refreshData();
             toast({ title: "Pengguna Dihapus", description: "Pengguna telah berhasil dihapus dari sistem." });
         }
         setIsAlertOpen(false);
@@ -123,7 +135,7 @@ export default function SuperadminPage() {
         const applicantToReset = applicants.find(app => app.nisn === userToReset.username);
         if (applicantToReset) {
             deleteApplicantById(applicantToReset.id);
-            setApplicants(getApplicants());
+            refreshData();
             toast({ title: "Pendaftaran Direset", description: `Proses pendaftaran untuk ${userToReset.fullName} telah dihapus.` });
         } else {
             toast({ variant: "destructive", title: "Gagal Mereset", description: "Data pendaftaran tidak ditemukan." });
@@ -131,6 +143,17 @@ export default function SuperadminPage() {
 
         setIsResetAlertOpen(false);
         setUserToReset(null);
+    };
+
+    const handleConfirmBulkDelete = () => {
+        let successCount = 0;
+        selectedUserIds.forEach(id => {
+            if(deleteUser(id)) successCount++;
+        });
+        refreshData();
+        toast({ title: "Hapus Massal Selesai", description: `${successCount} pengguna telah berhasil dihapus.` });
+        setSelectedUserIds(new Set());
+        setIsBulkDeleteAlertOpen(false);
     };
 
     const processForm = (data: UserFormValues) => {
@@ -149,10 +172,30 @@ export default function SuperadminPage() {
                 addUser(data);
                 toast({ title: "Pengguna Ditambahkan", description: `${data.fullName} telah ditambahkan ke sistem.` });
             }
-            setUsers(getUsers());
+            refreshData();
             setIsDialogOpen(false);
         } catch (error: any) {
              toast({ variant: "destructive", title: "Gagal Menyimpan", description: error.message });
+        }
+    };
+    
+    const toggleSelectUser = (userId: string, isSelected: boolean) => {
+        setSelectedUserIds(prev => {
+            const newSet = new Set(prev);
+            if (isSelected) {
+                newSet.add(userId);
+            } else {
+                newSet.delete(userId);
+            }
+            return newSet;
+        });
+    };
+
+    const toggleSelectAll = (isSelected: boolean) => {
+        if (isSelected) {
+            setSelectedUserIds(new Set(filteredApplicantUsers.map(u => u.id)));
+        } else {
+            setSelectedUserIds(new Set());
         }
     };
 
@@ -249,22 +292,48 @@ export default function SuperadminPage() {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[50px] text-center">No.</TableHead>
+                        <TableHead padding="checkbox" className="w-12">
+                           <Checkbox
+                                onCheckedChange={(checked) => toggleSelectAll(!!checked)}
+                                checked={selectedUserIds.size > 0 && selectedUserIds.size === userList.length}
+                                aria-label="Pilih semua"
+                            />
+                        </TableHead>
                         <TableHead>Nama Lengkap</TableHead>
                         <TableHead>NISN</TableHead>
+                        <TableHead>Status Kelulusan</TableHead>
                         <TableHead>Kata Sandi</TableHead>
                         <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {userList.length > 0 ? (
-                        userList.map((user, index) => {
+                        userList.map((user) => {
                              const applicant = applicants.find(app => app.nisn === user.username);
+                             let placementStatus;
+                             if (applicant?.diterimaDiSekolahId) {
+                                const schoolName = getSchoolById(applicant.diterimaDiSekolahId)?.namaSekolah || 'Sekolah tidak ditemukan';
+                                placementStatus = <Badge variant="default">Lulus di {schoolName}</Badge>;
+                             } else if (applicant?.statusVerifikasi === 'Terverifikasi') {
+                                placementStatus = <Badge variant="destructive">Tidak Lulus</Badge>;
+                             } else if (applicant) {
+                                placementStatus = <Badge variant="secondary">{applicant.statusVerifikasi}</Badge>
+                             } else {
+                                placementStatus = <Badge variant="outline">Belum Mendaftar</Badge>
+                             }
+                             
                              return (
-                            <TableRow key={user.id}>
-                                <TableCell className="text-center">{index + 1}</TableCell>
+                            <TableRow key={user.id} data-state={selectedUserIds.has(user.id) && "selected"}>
+                                <TableCell padding="checkbox">
+                                    <Checkbox
+                                        onCheckedChange={(checked) => toggleSelectUser(user.id, !!checked)}
+                                        checked={selectedUserIds.has(user.id)}
+                                        aria-label={`Pilih ${user.fullName}`}
+                                    />
+                                </TableCell>
                                 <TableCell className="font-medium">{user.fullName}</TableCell>
                                 <TableCell>{user.username}</TableCell>
+                                <TableCell>{placementStatus}</TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-2">
                                         <span className="font-mono">
@@ -315,7 +384,7 @@ export default function SuperadminPage() {
                         )})
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                            <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                                 Tidak ada pendaftar yang cocok dengan kriteria.
                             </TableCell>
                         </TableRow>
@@ -402,6 +471,12 @@ export default function SuperadminPage() {
                                             className="pl-10"
                                         />
                                     </div>
+                                    {selectedUserIds.size > 0 && (
+                                        <Button variant="destructive" onClick={() => setIsBulkDeleteAlertOpen(true)}>
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Hapus {selectedUserIds.size} Terpilih
+                                        </Button>
+                                    )}
                                 </div>
                                 {renderApplicantTable(filteredApplicantUsers)}
                             </TabsContent>
@@ -524,6 +599,23 @@ export default function SuperadminPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            
+             <AlertDialog open={isBulkDeleteAlertOpen} onOpenChange={setIsBulkDeleteAlertOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Hapus Pengguna Terpilih?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Anda akan menghapus {selectedUserIds.size} pengguna secara permanen. Tindakan ini tidak dapat diurungkan.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmBulkDelete} className="bg-destructive hover:bg-destructive/90">
+                            Ya, Hapus Terpilih
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <AlertDialog open={isResetAlertOpen} onOpenChange={setIsResetAlertOpen}>
                 <AlertDialogContent>
@@ -544,5 +636,7 @@ export default function SuperadminPage() {
         </>
     );
 }
+
+    
 
     
