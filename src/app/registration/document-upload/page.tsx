@@ -16,6 +16,7 @@ import { createOrUpdateApplicantFromRegistration, getApplicants } from "@/lib/ap
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getSchoolById } from "@/lib/schoolService";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
@@ -133,6 +134,7 @@ export default function DocumentUploadPage() {
   
   const [isGuideOpen, setIsGuideOpen] = React.useState(false);
   const [guideContent, setGuideContent] = React.useState({ title: '', imageUrl: '' });
+  const [isDeclarationChecked, setIsDeclarationChecked] = React.useState(false);
   
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
@@ -268,6 +270,15 @@ export default function DocumentUploadPage() {
       });
       return;
     }
+    
+    if (!isDeclarationChecked) {
+      toast({
+        variant: "destructive",
+        title: "Pernyataan Diperlukan",
+        description: "Harap centang pernyataan kebenaran data sebelum mengirim.",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
     const loggedInUser = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
@@ -365,6 +376,29 @@ export default function DocumentUploadPage() {
               />
             ))}
           </section>
+
+          {!isLocked && (
+            <div className="flex items-start space-x-3 mt-6 pt-6 border-t">
+              <Checkbox
+                id="declaration"
+                checked={isDeclarationChecked}
+                onCheckedChange={(checked) => setIsDeclarationChecked(Boolean(checked))}
+                disabled={isLocked}
+                aria-label="Pernyataan Kebenaran Data"
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="declaration"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Pernyataan Kebenaran Data
+                </label>
+                <p className="text-sm text-muted-foreground">
+                  Saya menyatakan bahwa semua data dan dokumen yang saya unggah adalah benar dan dapat dipertanggungjawabkan.
+                </p>
+              </div>
+            </div>
+          )}
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row justify-between items-center pt-6 gap-4">
           <Button variant="outline" asChild>
@@ -383,7 +417,7 @@ export default function DocumentUploadPage() {
             ) : (
              <Button 
                 onClick={handleSubmit} 
-                disabled={isSubmitting || !allRequiredFilesUploaded()}
+                disabled={isSubmitting || !allRequiredFilesUploaded() || !isDeclarationChecked}
              >
                 <Paperclip className="mr-2 h-4 w-4" />
                 {isSubmitting ? "Mengirim Pendaftaran..." : "Kirim & Selesaikan Pendaftaran"}
