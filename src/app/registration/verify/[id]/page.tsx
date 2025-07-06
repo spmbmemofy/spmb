@@ -59,6 +59,9 @@ const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary"
 type ActionType = "verify" | "reject";
 type DocumentItem = { id: string; label: string; url: string };
 
+const semesterKeys: (keyof Applicant['semesterGrades'])[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
+const semesterLabels = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5"];
+
 const ActivityHistoryTimeline: React.FC<{ applicant: Applicant | null }> = ({ applicant }) => {
   if (!applicant || !applicant.activityHistory || applicant.activityHistory.length === 0) {
     return (
@@ -377,8 +380,8 @@ export default function VerifyApplicantPage() {
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center text-lg"><UserCircle className="mr-2"/>Biodata</CardTitle>
@@ -404,35 +407,7 @@ export default function VerifyApplicantPage() {
                    <div className="flex justify-between"><span className="text-muted-foreground">No. Telepon</span><span className="font-medium">{applicant?.contactNumber || '-'}</span></div>
               </CardContent>
             </Card>
-            <Card>
-                <CardHeader><CardTitle className="flex items-center text-lg"><Users className="mr-2"/>Informasi Orang Tua/Wali</CardTitle></CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                    <h4 className="font-semibold text-muted-foreground">Data Ayah</h4>
-                    <div className="pl-2 space-y-2">
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Nama</span><span className="font-medium text-right truncate">{applicant?.fatherName || '-'}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Tgl Lahir</span><span className="font-medium text-right truncate">{applicant?.fatherDateOfBirth || '-'}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Pekerjaan</span><span className="font-medium text-right truncate">{applicant?.fatherOccupation || '-'}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Penghasilan</span><span className="font-medium text-right truncate">{applicant?.fatherIncome || '-'}</span></div>
-                    </div>
-                    <Separator />
-                    <h4 className="font-semibold text-muted-foreground">Data Ibu</h4>
-                    <div className="pl-2 space-y-2">
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Nama</span><span className="font-medium text-right truncate">{applicant?.motherName || '-'}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Tgl Lahir</span><span className="font-medium text-right truncate">{applicant?.motherDateOfBirth || '-'}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Pekerjaan</span><span className="font-medium text-right truncate">{applicant?.motherOccupation || '-'}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Penghasilan</span><span className="font-medium text-right truncate">{applicant?.motherIncome || '-'}</span></div>
-                    </div>
-                    {applicant?.guardianName && applicant?.guardianName !== '-' && (
-                        <>
-                            <Separator />
-                            <h4 className="font-semibold text-muted-foreground">Data Wali</h4>
-                            <div className="pl-2 space-y-2">
-                                <div className="flex justify-between gap-4"><span className="text-muted-foreground">Nama Wali</span><span className="font-medium text-right truncate">{applicant.guardianName}</span></div>
-                            </div>
-                        </>
-                    )}
-                </CardContent>
-            </Card>
+            
             <Card>
               <CardHeader><CardTitle className="flex items-center text-lg"><School className="mr-2"/>Pilihan Sekolah Tujuan</CardTitle></CardHeader>
               <CardContent>
@@ -498,92 +473,159 @@ export default function VerifyApplicantPage() {
             </Card>
           </div>
 
-          <div className="lg:col-span-2">
-            <Card className="h-full">
+          <div className="lg:col-span-3 space-y-6">
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center text-lg"><FileText className="mr-2"/>Verifikasi Berkas & Data</CardTitle>
+                <CardTitle className="flex items-center text-lg"><FileText className="mr-2"/>Area Verifikasi Berkas & Data</CardTitle>
                 <CardDescription>Tandai item jika tidak valid. Item yang tidak ditandai akan otomatis diterima jika pendaftaran ditolak.</CardDescription>
               </CardHeader>
               <CardContent>
-                 <div className="space-y-2">
-                    <div className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between">
-                        <span className="font-medium flex items-center">
-                            <UserCircle className="mr-2 h-4 w-4 text-muted-foreground"/>
-                            Kesesuaian Biodata
-                        </span>
-                        {documentStatuses['biodata'] === 'valid' ? (
-                            <Badge variant="default" className="w-fit"><ThumbsUp className="mr-1.5 h-3 w-3"/>Valid</Badge>
-                        ) : (
-                            <Button
-                                size="sm"
-                                variant={documentStatuses['biodata'] === 'invalid' ? 'destructive' : 'outline'}
-                                onClick={() => toggleInvalidStatus('biodata')}
-                                disabled={!isVerifierAuthorized || applicant.statusVerifikasi === 'Terverifikasi'}
-                                className="h-8 w-auto px-2"
-                            >
-                                <XCircle className="mr-1.5 h-4 w-4" />
-                                {documentStatuses['biodata'] === 'invalid' ? 'Batalkan Tolak' : 'Tolak'}
-                            </Button>
-                        )}
-                    </div>
-                    <div className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between">
-                        <span className="font-medium flex items-center">
-                            <BookOpen className="mr-2 h-4 w-4 text-muted-foreground"/>
-                            Kesesuaian Nilai Rapor
-                        </span>
-                         {documentStatuses['nilai_rapor'] === 'valid' ? (
-                            <Badge variant="default" className="w-fit"><ThumbsUp className="mr-1.5 h-3 w-3"/>Valid</Badge>
-                        ) : (
-                            <Button
-                                size="sm"
-                                variant={documentStatuses['nilai_rapor'] === 'invalid' ? 'destructive' : 'outline'}
-                                onClick={() => toggleInvalidStatus('nilai_rapor')}
-                                disabled={!isVerifierAuthorized || applicant.statusVerifikasi === 'Terverifikasi'}
-                                className="h-8 w-auto px-2"
-                            >
-                                <XCircle className="mr-1.5 h-4 w-4" />
-                                {documentStatuses['nilai_rapor'] === 'invalid' ? 'Batalkan Tolak' : 'Tolak'}
-                            </Button>
-                        )}
-                    </div>
-
-                    <Separator className="my-4"/>
-
-                    {documentsToVerify.map((doc) => {
-                        const docStatus = documentStatuses[doc.id];
-                        return (
-                          <div key={doc.id} className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between">
-                            <a
-                                href={doc.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="font-medium text-primary hover:underline flex-grow truncate"
-                              >
-                                {doc.label}
-                              </a>
-                            <div className="flex-shrink-0 flex gap-2">
-                                {docStatus === 'valid' ? (
-                                    <Badge variant="default" className="w-fit">
-                                        <ThumbsUp className="mr-1.5 h-3 w-3"/>Valid
-                                    </Badge>
+                 <div className="space-y-4">
+                     <section>
+                        <h4 className="font-semibold mb-3 text-primary">Rincian Nilai Rapor</h4>
+                        <div className="rounded-md border">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Semester</TableHead>
+                                        <TableHead className="text-right">Nilai Rata-rata</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {applicant.semesterGrades ? semesterKeys.map((key, index) => (
+                                        <TableRow key={key}>
+                                            <TableCell className="font-medium">{semesterLabels[index]}</TableCell>
+                                            <TableCell className="text-right">{applicant.semesterGrades[key].toFixed(2)}</TableCell>
+                                        </TableRow>
+                                    )) : (
+                                        <TableRow><TableCell colSpan={2} className="text-center">Data nilai tidak tersedia.</TableCell></TableRow>
+                                    )}
+                                </TableBody>
+                                <ShadcnTableFooter>
+                                    <TableRow>
+                                        <TableCell className="font-bold">Total Nilai</TableCell>
+                                        <TableCell className="font-bold text-right">{totalNilaiRapor.toFixed(2)}</TableCell>
+                                    </TableRow>
+                                </ShadcnTableFooter>
+                            </Table>
+                        </div>
+                     </section>
+                     <Separator/>
+                     <section>
+                         <h4 className="font-semibold mb-3 text-primary">Checklist Verifikasi</h4>
+                         <div className="space-y-2">
+                            <div className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between">
+                                <span className="font-medium flex items-center">
+                                    <UserCircle className="mr-2 h-4 w-4 text-muted-foreground"/>
+                                    Kesesuaian Biodata
+                                </span>
+                                {documentStatuses['biodata'] === 'valid' ? (
+                                    <Badge variant="default" className="w-fit"><ThumbsUp className="mr-1.5 h-3 w-3"/>Valid</Badge>
                                 ) : (
                                     <Button
                                         size="sm"
-                                        variant={docStatus === 'invalid' ? 'destructive' : 'outline'}
-                                        onClick={() => toggleInvalidStatus(doc.id)}
+                                        variant={documentStatuses['biodata'] === 'invalid' ? 'destructive' : 'outline'}
+                                        onClick={() => toggleInvalidStatus('biodata')}
                                         disabled={!isVerifierAuthorized || applicant.statusVerifikasi === 'Terverifikasi'}
                                         className="h-8 w-auto px-2"
                                     >
                                         <XCircle className="mr-1.5 h-4 w-4" />
-                                        {docStatus === 'invalid' ? 'Batalkan Tolak' : 'Tolak'}
+                                        {documentStatuses['biodata'] === 'invalid' ? 'Batalkan Tolak' : 'Tolak'}
                                     </Button>
                                 )}
                             </div>
-                          </div>
-                        );
-                    })}
+                            <div className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between">
+                                <span className="font-medium flex items-center">
+                                    <BookOpen className="mr-2 h-4 w-4 text-muted-foreground"/>
+                                    Kesesuaian Nilai Rapor
+                                </span>
+                                {documentStatuses['nilai_rapor'] === 'valid' ? (
+                                    <Badge variant="default" className="w-fit"><ThumbsUp className="mr-1.5 h-3 w-3"/>Valid</Badge>
+                                ) : (
+                                    <Button
+                                        size="sm"
+                                        variant={documentStatuses['nilai_rapor'] === 'invalid' ? 'destructive' : 'outline'}
+                                        onClick={() => toggleInvalidStatus('nilai_rapor')}
+                                        disabled={!isVerifierAuthorized || applicant.statusVerifikasi === 'Terverifikasi'}
+                                        className="h-8 w-auto px-2"
+                                    >
+                                        <XCircle className="mr-1.5 h-4 w-4" />
+                                        {documentStatuses['nilai_rapor'] === 'invalid' ? 'Batalkan Tolak' : 'Tolak'}
+                                    </Button>
+                                )}
+                            </div>
+                         </div>
+                     </section>
+                     <Separator/>
+                     <section>
+                         <h4 className="font-semibold mb-3 text-primary">Berkas Digital</h4>
+                         <div className="space-y-2">
+                             {documentsToVerify.map((doc) => {
+                                const docStatus = documentStatuses[doc.id];
+                                return (
+                                <div key={doc.id} className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <a
+                                        href={doc.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="font-medium text-primary hover:underline flex-grow truncate"
+                                    >
+                                        {doc.label}
+                                    </a>
+                                    <div className="flex-shrink-0 flex gap-2">
+                                        {docStatus === 'valid' ? (
+                                            <Badge variant="default" className="w-fit">
+                                                <ThumbsUp className="mr-1.5 h-3 w-3"/>Valid
+                                            </Badge>
+                                        ) : (
+                                            <Button
+                                                size="sm"
+                                                variant={docStatus === 'invalid' ? 'destructive' : 'outline'}
+                                                onClick={() => toggleInvalidStatus(doc.id)}
+                                                disabled={!isVerifierAuthorized || applicant.statusVerifikasi === 'Terverifikasi'}
+                                                className="h-8 w-auto px-2"
+                                            >
+                                                <XCircle className="mr-1.5 h-4 w-4" />
+                                                {docStatus === 'invalid' ? 'Batalkan Tolak' : 'Tolak'}
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                                );
+                            })}
+                         </div>
+                     </section>
                   </div>
               </CardContent>
+            </Card>
+            <Card>
+                <CardHeader><CardTitle className="flex items-center text-lg"><Users className="mr-2"/>Informasi Orang Tua/Wali</CardTitle></CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                    <h4 className="font-semibold text-muted-foreground">Data Ayah</h4>
+                    <div className="pl-2 space-y-2">
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Nama</span><span className="font-medium text-right truncate">{applicant?.fatherName || '-'}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Tgl Lahir</span><span className="font-medium text-right truncate">{applicant?.fatherDateOfBirth || '-'}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Pekerjaan</span><span className="font-medium text-right truncate">{applicant?.fatherOccupation || '-'}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Penghasilan</span><span className="font-medium text-right truncate">{applicant?.fatherIncome || '-'}</span></div>
+                    </div>
+                    <Separator />
+                    <h4 className="font-semibold text-muted-foreground">Data Ibu</h4>
+                    <div className="pl-2 space-y-2">
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Nama</span><span className="font-medium text-right truncate">{applicant?.motherName || '-'}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Tgl Lahir</span><span className="font-medium text-right truncate">{applicant?.motherDateOfBirth || '-'}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Pekerjaan</span><span className="font-medium text-right truncate">{applicant?.motherOccupation || '-'}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Penghasilan</span><span className="font-medium text-right truncate">{applicant?.motherIncome || '-'}</span></div>
+                    </div>
+                    {applicant?.guardianName && applicant?.guardianName !== '-' && (
+                        <>
+                            <Separator />
+                            <h4 className="font-semibold text-muted-foreground">Data Wali</h4>
+                            <div className="pl-2 space-y-2">
+                                <div className="flex justify-between gap-4"><span className="text-muted-foreground">Nama Wali</span><span className="font-medium text-right truncate">{applicant.guardianName}</span></div>
+                            </div>
+                        </>
+                    )}
+                </CardContent>
             </Card>
           </div>
         </div>
