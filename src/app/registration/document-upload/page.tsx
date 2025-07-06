@@ -129,6 +129,7 @@ export default function DocumentUploadPage() {
   const [documentsToUpload, setDocumentsToUpload] = React.useState<DocumentItem[]>([]);
   const [uploadedFiles, setUploadedFiles] = React.useState<Record<string, File | null>>({});
   const [fileMetadataStore, setFileMetadataStore] = React.useState<RegistrationProgress['documentMetadata']>({});
+  const [missingFiles, setMissingFiles] = React.useState<DocumentItem[]>([]);
   
   const [isGuideOpen, setIsGuideOpen] = React.useState(false);
   const [guideContent, setGuideContent] = React.useState({ title: '', imageUrl: '' });
@@ -185,6 +186,15 @@ export default function DocumentUploadPage() {
     setIsLoading(false);
 
   }, [router, toast, selectedPathwayParam]);
+
+  React.useEffect(() => {
+    // This effect runs after the documents to upload are determined.
+    // It calculates which required documents are still missing.
+    const requiredDocs = documentsToUpload.filter(doc => doc.required);
+    const missing = requiredDocs.filter(doc => !uploadedFiles[doc.id] && !fileMetadataStore[doc.id]);
+    setMissingFiles(missing);
+  }, [documentsToUpload, uploadedFiles, fileMetadataStore]);
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, documentId: string) => {
     const file = event.target.files?.[0];
@@ -320,6 +330,22 @@ export default function DocumentUploadPage() {
                 </AlertDescription>
             </Alert>
           )}
+
+          {!isLocked && missingFiles.length > 0 && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Berkas Wajib Belum Lengkap</AlertTitle>
+              <AlertDescription>
+                Anda harus mengunggah semua berkas yang ditandai wajib (*) untuk dapat melanjutkan. Berkas yang belum diunggah:
+                <ul className="list-disc pl-5 mt-2 font-medium">
+                  {missingFiles.map(file => (
+                    <li key={file.id}>{file.label}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <section>
              <h3 className="text-xl font-semibold mb-4 text-primary">
                 Daftar Berkas
@@ -393,4 +419,3 @@ export default function DocumentUploadPage() {
     </>
   );
 }
-
