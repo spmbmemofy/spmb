@@ -51,13 +51,10 @@ export default function SuperadminPage() {
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
     const [editingUser, setEditingUser] = React.useState<User | null>(null);
     const [isAlertOpen, setIsAlertOpen] = React.useState(false);
-    const [userToDeleteId, setUserToDeleteId] = React.useState<string | null>(null);
+    const [userToDelete, setUserToDelete] = React.useState<User | null>(null);
     const { toast } = useToast();
     const [visiblePasswordId, setVisiblePasswordId] = React.useState<string | null>(null);
     const [showDialogPassword, setShowDialogPassword] = React.useState(false);
-
-    const [isResetAlertOpen, setIsResetAlertOpen] = React.useState(false);
-    const [userToReset, setUserToReset] = React.useState<User | null>(null);
     
     const [selectedUserIds, setSelectedUserIds] = React.useState<Set<string>>(new Set());
     const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = React.useState(false);
@@ -126,49 +123,47 @@ export default function SuperadminPage() {
         setIsDialogOpen(true);
     };
 
-    const handleDeleteClick = (userId: string) => {
-        setUserToDeleteId(userId);
+    const handleDeleteClick = (user: User) => {
+        setUserToDelete(user);
         setIsAlertOpen(true);
-    };
-    
-    const handleResetClick = (user: User) => {
-        setUserToReset(user);
-        setIsResetAlertOpen(true);
     };
 
     const handleConfirmDelete = () => {
-        if (userToDeleteId) {
-            deleteUser(userToDeleteId);
-            refreshData();
-            toast({ title: "Pengguna Dihapus", description: "Pengguna telah berhasil dihapus dari sistem." });
-        }
-        setIsAlertOpen(false);
-        setUserToDeleteId(null);
-    };
+        if (!userToDelete) return;
 
-    const handleConfirmReset = () => {
-        if (!userToReset) return;
-
-        const applicantToReset = applicants.find(app => app.nisn === userToReset.username);
-        if (applicantToReset) {
-            deleteApplicantById(applicantToReset.id);
-            refreshData();
-            toast({ title: "Pendaftaran Direset", description: `Proses pendaftaran untuk ${userToReset.fullName} telah dihapus.` });
+        if (userToDelete.role === 'applicant') {
+            const applicantToReset = applicants.find(app => app.nisn === userToDelete.username);
+            if (applicantToReset) {
+                deleteApplicantById(applicantToReset.id);
+                toast({ title: "Pendaftaran Direset", description: `Proses pendaftaran untuk ${userToDelete.fullName} telah direset. Akun login tetap ada.` });
+            } else {
+                toast({ title: "Tidak Ada Data untuk Direset", description: `Pengguna ${userToDelete.fullName} belum memulai pendaftaran.` });
+            }
         } else {
-            toast({ variant: "destructive", title: "Gagal Mereset", description: "Data pendaftaran tidak ditemukan." });
+            deleteUser(userToDelete.id);
+            toast({ title: "Pengguna Dihapus", description: `Pengguna ${userToDelete.fullName} telah berhasil dihapus dari sistem.` });
         }
-
-        setIsResetAlertOpen(false);
-        setUserToReset(null);
+        
+        refreshData();
+        setIsAlertOpen(false);
+        setUserToDelete(null);
     };
-
+    
     const handleConfirmBulkDelete = () => {
         let successCount = 0;
         selectedUserIds.forEach(id => {
-            if(deleteUser(id)) successCount++;
+            const user = users.find(u => u.id === id);
+            if (user?.role === 'applicant') {
+                const applicantData = applicants.find(app => app.nisn === user.username);
+                if (applicantData) {
+                    if (deleteApplicantById(applicantData.id)) successCount++;
+                }
+            } else if (user) {
+                if(deleteUser(id)) successCount++;
+            }
         });
         refreshData();
-        toast({ title: "Hapus Massal Selesai", description: `${successCount} pengguna telah berhasil dihapus.` });
+        toast({ title: "Aksi Massal Selesai", description: `${successCount} pendaftaran/pengguna telah berhasil diproses.` });
         setSelectedUserIds(new Set());
         setIsBulkDeleteAlertOpen(false);
     };
@@ -282,9 +277,9 @@ export default function SuperadminPage() {
                                                     <Edit className="mr-2 h-4 w-4" />
                                                     <span>Edit</span>
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDeleteClick(user.id)} className="text-destructive focus:text-destructive">
+                                                <DropdownMenuItem onClick={() => handleDeleteClick(user)} className="text-destructive focus:text-destructive">
                                                     <Trash2 className="mr-2 h-4 w-4" />
-                                                    <span>Hapus</span>
+                                                    <span>Hapus Pengguna</span>
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -380,15 +375,9 @@ export default function SuperadminPage() {
                                                 <Edit className="mr-2 h-4 w-4" />
                                                 <span>Edit Akun</span>
                                             </DropdownMenuItem>
-                                             {applicant && applicant.statusVerifikasi === 'Terverifikasi' && !applicant.diterimaDiSekolahId && (
-                                                <DropdownMenuItem onClick={() => handleResetClick(user)} className="text-orange-600 focus:text-orange-600">
-                                                    <Undo2 className="mr-2 h-4 w-4" />
-                                                    <span>Reset Pendaftaran</span>
-                                                </DropdownMenuItem>
-                                            )}
-                                            <DropdownMenuItem onClick={() => handleDeleteClick(user.id)} className="text-destructive focus:text-destructive">
+                                            <DropdownMenuItem onClick={() => handleDeleteClick(user)} className="text-destructive focus:text-destructive">
                                                 <Trash2 className="mr-2 h-4 w-4" />
-                                                <span>Hapus Akun & Data</span>
+                                                <span>Hapus Pendaftaran</span>
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -613,13 +602,16 @@ export default function SuperadminPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Tindakan ini tidak dapat diurungkan. Pengguna akan dihapus secara permanen dari sistem. Jika pengguna adalah pendaftar, seluruh data pendaftarannya juga akan dihapus.
+                            {userToDelete?.role === 'applicant'
+                                ? `Ini akan mereset proses pendaftaran untuk "${userToDelete.fullName}". Akun login mereka akan tetap ada, tetapi semua data pendaftaran (pilihan sekolah, berkas) akan dihapus, memungkinkan mereka untuk mendaftar ulang.`
+                                : `Tindakan ini akan menghapus pengguna sistem "${userToDelete?.fullName}" secara permanen.`
+                            }
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Batal</AlertDialogCancel>
                         <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive hover:bg-destructive/90">
-                            Ya, Hapus Pengguna
+                            {userToDelete?.role === 'applicant' ? 'Ya, Hapus Pendaftaran' : 'Ya, Hapus Pengguna'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -630,30 +622,13 @@ export default function SuperadminPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Hapus Pengguna Terpilih?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Anda akan menghapus {selectedUserIds.size} pengguna secara permanen. Tindakan ini tidak dapat diurungkan.
+                           Anda akan memproses {selectedUserIds.size} pengguna terpilih. Untuk pendaftar, data pendaftaran akan dihapus. Untuk pengguna sistem, akun akan dihapus permanen. Tindakan ini tidak dapat diurungkan.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Batal</AlertDialogCancel>
                         <AlertDialogAction onClick={handleConfirmBulkDelete} className="bg-destructive hover:bg-destructive/90">
-                            Ya, Hapus Terpilih
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
-            <AlertDialog open={isResetAlertOpen} onOpenChange={setIsResetAlertOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Reset Proses Pendaftaran?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Tindakan ini akan menghapus data pendaftaran untuk <span className="font-bold">{userToReset?.fullName}</span>. Pengguna akan dapat melakukan pendaftaran ulang dari awal pada tahap selanjutnya. Akun pengguna tidak akan dihapus.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Batal</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleConfirmReset} className="bg-orange-500 text-white hover:bg-orange-600">
-                            Ya, Reset Pendaftaran
+                            Ya, Lanjutkan
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
