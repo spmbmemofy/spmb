@@ -3,21 +3,24 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { UploadCloud, FileUp, Paperclip, CheckCircle2, AlertCircle, ArrowLeft, ClipboardCheck, AlertTriangle } from 'lucide-react';
+import { UploadCloud, FileUp, Paperclip, CheckCircle2, ArrowLeft, ClipboardCheck, AlertTriangle, HelpCircle, Eye } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
 import { createOrUpdateApplicantFromRegistration, getApplicants } from "@/lib/applicantService";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getSchoolById } from "@/lib/schoolService";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 
 const LOCAL_STORAGE_REGISTRATION_KEY = "registrationProgress";
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
+const DUMMY_PDF_URL = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
 
 
 interface DocumentItem {
@@ -33,34 +36,39 @@ interface DocumentUploadItemProps {
   file: File | null;
   fileMetadata?: { name: string; size: number; type: string } | null;
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>, id: string) => void;
+  onShowGuide: (id: string) => void;
+  onViewFile: (file: File | null, metadata: { name: string; size: number; type: string } | null) => void;
   disabled?: boolean;
 }
 
-const DocumentUploadItem: React.FC<DocumentUploadItemProps> = ({ id, label, required = true, file, fileMetadata, onFileChange, disabled = false }) => {
+const DocumentUploadItem: React.FC<DocumentUploadItemProps> = ({ id, label, required = true, file, fileMetadata, onFileChange, onShowGuide, onViewFile, disabled = false }) => {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const displayFileName = file?.name || fileMetadata?.name;
-  const displayFileSize = file?.size || fileMetadata?.size;
-  const displayFileType = file?.type || fileMetadata?.type;
   const hasSelection = file || fileMetadata;
 
   return (
     <div className="space-y-2 border-b pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0">
-      <div className="flex justify-between items-center">
-        <Label htmlFor={id} className="text-md">
+      <div className="flex justify-between items-start">
+        <Label htmlFor={id} className="text-md font-medium leading-snug">
           {label} {required && <span className="text-destructive">*</span>}
+           {displayFileName && (
+             <p className="text-xs text-muted-foreground font-normal mt-1">
+               {displayFileName}
+             </p>
+           )}
         </Label>
-        {hasSelection && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+        {hasSelection && <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />}
       </div>
-      <div className="flex items-center space-x-3">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
           variant="outline"
+          size="sm"
           onClick={() => inputRef.current?.click()}
-          className="w-full sm:w-auto"
           disabled={disabled}
         >
           <FileUp className="mr-2 h-4 w-4" />
-          Pilih File
+          {hasSelection ? 'Ganti File' : 'Pilih File'}
         </Button>
         <Input
           id={id}
@@ -71,19 +79,21 @@ const DocumentUploadItem: React.FC<DocumentUploadItemProps> = ({ id, label, requ
           accept=".pdf,.jpg,.jpeg,.png"
           disabled={disabled}
         />
-        <span className="text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-xs">
-          {displayFileName ? displayFileName : "Belum ada file dipilih"}
-        </span>
+        
+        <Button type="button" variant="ghost" size="sm" onClick={() => onShowGuide(id)}>
+            <HelpCircle className="mr-2 h-4 w-4" />
+            Panduan
+        </Button>
+        
+        <Button type="button" variant="ghost" size="sm" onClick={() => onViewFile(file, fileMetadata)} disabled={!hasSelection}>
+            <Eye className="mr-2 h-4 w-4" />
+            Lihat
+        </Button>
       </div>
-       {displayFileName && displayFileSize !== undefined && displayFileType && (
-         <p className="text-xs text-muted-foreground">
-           Ukuran: {(displayFileSize / 1024 / 1024).toFixed(2)} MB, Jenis: {displayFileType}
-           {file ? "" : " (Dari sesi sebelumnya)"}
-         </p>
-       )}
     </div>
   );
 };
+
 
 const generalDocuments: DocumentItem[] = [
   { id: "kk", label: "Scan Kartu Keluarga (KK)", required: true },
@@ -119,6 +129,9 @@ export default function DocumentUploadPage() {
   const [documentsToUpload, setDocumentsToUpload] = React.useState<DocumentItem[]>([]);
   const [uploadedFiles, setUploadedFiles] = React.useState<Record<string, File | null>>({});
   const [fileMetadataStore, setFileMetadataStore] = React.useState<RegistrationProgress['documentMetadata']>({});
+  
+  const [isGuideOpen, setIsGuideOpen] = React.useState(false);
+  const [guideContent, setGuideContent] = React.useState({ title: '', imageUrl: '' });
   
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
@@ -206,6 +219,28 @@ export default function DocumentUploadPage() {
     });
   };
 
+  const handleShowGuide = (documentId: string) => {
+    const doc = documentsToUpload.find(d => d.id === documentId);
+    setGuideContent({
+      title: `Panduan untuk ${doc?.label || 'Berkas'}`,
+      imageUrl: `https://placehold.co/800x600.png`,
+    });
+    setIsGuideOpen(true);
+  };
+  
+  const handleViewFile = (file: File | null, metadata: { name: string; size: number; type: string } | null) => {
+    if (file) {
+      const url = URL.createObjectURL(file);
+      window.open(url, '_blank');
+    } else if (metadata) {
+      window.open(DUMMY_PDF_URL, '_blank');
+      toast({ title: "Membuka Berkas", description: "Menampilkan pratinjau berkas dari sesi sebelumnya." });
+    } else {
+      toast({ variant: "destructive", title: "Gagal", description: "Tidak ada berkas untuk ditampilkan." });
+    }
+  };
+
+
   const allRequiredFilesUploaded = () => {
     if (documentsToUpload.length === 0) return false;
     
@@ -261,6 +296,7 @@ export default function DocumentUploadPage() {
   }
 
   return (
+    <>
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
       <Card className="w-full max-w-3xl shadow-2xl">
         <CardHeader className="text-center">
@@ -297,6 +333,8 @@ export default function DocumentUploadPage() {
                 file={uploadedFiles[doc.id] || null}
                 fileMetadata={fileMetadataStore?.[doc.id]}
                 onFileChange={handleFileChange}
+                onShowGuide={handleShowGuide}
+                onViewFile={handleViewFile}
                 disabled={isLocked}
               />
             ))}
@@ -328,5 +366,31 @@ export default function DocumentUploadPage() {
         </CardFooter>
       </Card>
     </div>
+    
+    <Dialog open={isGuideOpen} onOpenChange={setIsGuideOpen}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{guideContent.title}</DialogTitle>
+          <DialogDescription>
+            Pastikan berkas Anda terlihat jelas, tidak buram, dan tidak terpotong seperti contoh di bawah.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          <Image 
+            src={guideContent.imageUrl} 
+            alt="Contoh panduan berkas" 
+            width={800} 
+            height={600} 
+            className="rounded-md border bg-muted"
+            data-ai-hint="document scan example" 
+          />
+        </div>
+        <DialogFooter>
+          <Button onClick={() => setIsGuideOpen(false)}>Tutup</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
+
