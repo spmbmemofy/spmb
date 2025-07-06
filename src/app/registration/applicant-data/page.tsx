@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import * as xlsx from "xlsx";
-import { Users, MoreHorizontal, Edit, Trash2, PlusCircle, Upload, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { Users, MoreHorizontal, Edit, Trash2, PlusCircle, Upload, KeyRound, Eye, EyeOff, FileDown } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -261,6 +261,26 @@ export default function ManagedApplicantPage() {
         return (sum / values.length).toFixed(2);
     };
 
+    const handleDownloadTemplate = () => {
+        const headers = [
+            "Nama Lengkap", "NISN", "NIK", "Tempat Lahir", "Tanggal Lahir", "Jenis Kelamin",
+            "Agama", "No. Kontak", "Nama Jalan & No. Rumah", "RT/RW", "Kelurahan/Desa",
+            "Kecamatan", "Kabupaten/Kota", "Provinsi", "Nama Ayah", "Pekerjaan Ayah",
+            "Penghasilan Ayah", "Nama Ibu", "Pekerjaan Ibu", "Penghasilan Ibu", "Nama Wali",
+            "Nilai Semester 1", "Nilai Semester 2", "Nilai Semester 3", "Nilai Semester 4", "Nilai Semester 5"
+        ];
+        // Create a worksheet with only the header row
+        const ws = xlsx.utils.aoa_to_sheet([headers]);
+        
+        // Create a workbook and append the worksheet
+        const wb = xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(wb, ws, "Template Pendaftar");
+        
+        // Write the workbook and trigger a download
+        xlsx.writeFile(wb, "Template_Pendaftar_SMP.xlsx");
+        toast({ title: "Template Diunduh", description: "Template Excel untuk data pendaftar telah berhasil diunduh." });
+    };
+
     const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file || !operatorSchool) return;
@@ -269,7 +289,7 @@ export default function ManagedApplicantPage() {
         reader.onload = (e) => {
             try {
                 const data = e.target?.result;
-                const workbook = xlsx.read(data, { type: 'binary' });
+                const workbook = xlsx.read(data, { type: 'binary', cellDates: true });
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 const json: ExcelRow[] = xlsx.utils.sheet_to_json(worksheet);
@@ -280,21 +300,28 @@ export default function ManagedApplicantPage() {
 
                 json.forEach((row, index) => {
                     try {
+                        // Basic validation for required fields
+                        if (!row["Nama Lengkap"] || !row["NISN"] || !row["Jenis Kelamin"]) {
+                            throw new Error("Kolom Nama Lengkap, NISN, dan Jenis Kelamin wajib diisi.");
+                        }
+
                         const newApplicant: Omit<ManagedApplicant, 'id'> = {
                             fullName: row["Nama Lengkap"],
                             nisn: String(row["NISN"]),
                             nik: row["NIK"] ? String(row["NIK"]) : undefined,
                             placeOfBirth: row["Tempat Lahir"],
-                            dateOfBirth: row["Tanggal Lahir"],
+                            dateOfBirth: row["Tanggal Lahir"] instanceof Date 
+                                ? row["Tanggal Lahir"].toISOString().split('T')[0] 
+                                : String(row["Tanggal Lahir"] || ''),
                             gender: row["Jenis Kelamin"],
                             religion: row["Agama"],
-                            contactNumber: row["No. Kontak"],
+                            contactNumber: row["No. Kontak"] ? String(row["No. Kontak"]) : undefined,
                             streetName: row["Nama Jalan & No. Rumah"],
                             rtRw: row["RT/RW"],
                             village: row["Kelurahan/Desa"],
                             subdistrict: row["Kecamatan"],
-                            district: row["Kabupaten/Kota"],
-                            province: row["Provinsi"],
+                            district: row["Kabupaten/Kota"] || 'Kabupaten Berau',
+                            province: row["Provinsi"] || 'Kalimantan Timur',
                             asalSekolahId: operatorSchool.id,
                             fatherName: row["Nama Ayah"],
                             fatherOccupation: row["Pekerjaan Ayah"],
@@ -304,11 +331,11 @@ export default function ManagedApplicantPage() {
                             motherIncome: row["Penghasilan Ibu"],
                             guardianName: row["Nama Wali"],
                             semesterGrades: {
-                                semester1: row["Nilai Semester 1"],
-                                semester2: row["Nilai Semester 2"],
-                                semester3: row["Nilai Semester 3"],
-                                semester4: row["Nilai Semester 4"],
-                                semester5: row["Nilai Semester 5"],
+                                semester1: Number(row["Nilai Semester 1"] || 0),
+                                semester2: Number(row["Nilai Semester 2"] || 0),
+                                semester3: Number(row["Nilai Semester 3"] || 0),
+                                semester4: Number(row["Nilai Semester 4"] || 0),
+                                semester5: Number(row["Nilai Semester 5"] || 0),
                             }
                         };
                         addManagedApplicant(newApplicant);
@@ -322,11 +349,11 @@ export default function ManagedApplicantPage() {
                 setApplicants(getManagedApplicants().filter(a => a.asalSekolahId === operatorSchool.id));
                 toast({
                     title: "Import Selesai",
-                    description: `${successCount} data berhasil diimpor, ${errorCount} data gagal. ${errors.slice(0, 2).join(', ')}`,
+                    description: `${successCount} data berhasil diimpor, ${errorCount} data gagal. ${errors.length > 0 ? `Error pertama: ${errors[0]}` : ''}`,
                 });
 
             } catch (e) {
-                toast({ variant: "destructive", title: "Gagal Membaca File", description: "Pastikan format file Excel sudah benar." });
+                toast({ variant: "destructive", title: "Gagal Membaca File", description: "Pastikan format file Excel sudah benar dan tidak rusak." });
             }
         };
         reader.readAsBinaryString(file);
@@ -353,8 +380,12 @@ export default function ManagedApplicantPage() {
                                     </CardDescription>
                                 </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                                 <input type="file" ref={fileInputRef} onChange={handleFileImport} accept=".xlsx, .xls" className="hidden"/>
+                                <Button type="button" variant="outline" onClick={handleDownloadTemplate}>
+                                    <FileDown className="mr-2 h-4 w-4" />
+                                    Unduh Template
+                                </Button>
                                 <Button type="button" onClick={() => fileInputRef.current?.click()}>
                                     <Upload className="mr-2 h-4 w-4" />
                                     Import Excel
