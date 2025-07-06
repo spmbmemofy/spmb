@@ -5,7 +5,7 @@ import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
 import * as z from "zod";
-import { Shield, UserPlus, MoreHorizontal, Edit, Trash2, Search as SearchIcon, Eye, EyeOff } from 'lucide-react';
+import { Shield, UserPlus, MoreHorizontal, Edit, Trash2, Search as SearchIcon, Eye, EyeOff, Undo2 } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,8 @@ import { getUsers, addUser, updateUser, deleteUser } from "@/lib/userService";
 import { type User, type UserRole, roleDisplayNames, roleBadgeVariants } from "@/lib/userData";
 import { getSchools, type School } from "@/lib/schoolService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getApplicants, deleteApplicantById } from "@/lib/applicantService";
+import type { Applicant } from "@/lib/types";
 
 const userFormSchema = z.object({
   id: z.string().optional(),
@@ -36,6 +38,7 @@ type UserFormValues = z.infer<typeof userFormSchema>;
 
 export default function SuperadminPage() {
     const [users, setUsers] = React.useState<User[]>([]);
+    const [applicants, setApplicants] = React.useState<Applicant[]>([]);
     const [allSchools, setAllSchools] = React.useState<School[]>([]);
     const [systemSearchTerm, setSystemSearchTerm] = React.useState("");
     const [applicantSearchTerm, setApplicantSearchTerm] = React.useState("");
@@ -48,6 +51,9 @@ export default function SuperadminPage() {
     const [visiblePasswordId, setVisiblePasswordId] = React.useState<string | null>(null);
     const [showDialogPassword, setShowDialogPassword] = React.useState(false);
 
+    const [isResetAlertOpen, setIsResetAlertOpen] = React.useState(false);
+    const [userToReset, setUserToReset] = React.useState<User | null>(null);
+
     const form = useForm<UserFormValues>({
         resolver: zodResolver(userFormSchema),
         defaultValues: { id: '', fullName: '', username: '', role: 'applicant', password: '', npsn: '' },
@@ -58,6 +64,7 @@ export default function SuperadminPage() {
     React.useEffect(() => {
         setUsers(getUsers());
         setAllSchools(getSchools());
+        setApplicants(getApplicants());
     }, []);
 
     const filteredSystemUsers = React.useMemo(() => {
@@ -93,15 +100,37 @@ export default function SuperadminPage() {
         setUserToDeleteId(userId);
         setIsAlertOpen(true);
     };
+    
+    const handleResetClick = (user: User) => {
+        setUserToReset(user);
+        setIsResetAlertOpen(true);
+    };
 
     const handleConfirmDelete = () => {
         if (userToDeleteId) {
             deleteUser(userToDeleteId);
             setUsers(getUsers());
+            setApplicants(getApplicants());
             toast({ title: "Pengguna Dihapus", description: "Pengguna telah berhasil dihapus dari sistem." });
         }
         setIsAlertOpen(false);
         setUserToDeleteId(null);
+    };
+
+    const handleConfirmReset = () => {
+        if (!userToReset) return;
+
+        const applicantToReset = applicants.find(app => app.nisn === userToReset.username);
+        if (applicantToReset) {
+            deleteApplicantById(applicantToReset.id);
+            setApplicants(getApplicants());
+            toast({ title: "Pendaftaran Direset", description: `Proses pendaftaran untuk ${userToReset.fullName} telah dihapus.` });
+        } else {
+            toast({ variant: "destructive", title: "Gagal Mereset", description: "Data pendaftaran tidak ditemukan." });
+        }
+
+        setIsResetAlertOpen(false);
+        setUserToReset(null);
     };
 
     const processForm = (data: UserFormValues) => {
@@ -229,7 +258,9 @@ export default function SuperadminPage() {
                 </TableHeader>
                 <TableBody>
                     {userList.length > 0 ? (
-                        userList.map((user, index) => (
+                        userList.map((user, index) => {
+                             const applicant = applicants.find(app => app.nisn === user.username);
+                             return (
                             <TableRow key={user.id}>
                                 <TableCell className="text-center">{index + 1}</TableCell>
                                 <TableCell className="font-medium">{user.fullName}</TableCell>
@@ -265,17 +296,23 @@ export default function SuperadminPage() {
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem onClick={() => handleOpenDialog(user)}>
                                                 <Edit className="mr-2 h-4 w-4" />
-                                                <span>Edit</span>
+                                                <span>Edit Akun</span>
                                             </DropdownMenuItem>
+                                             {applicant && applicant.statusVerifikasi === 'Terverifikasi' && !applicant.diterimaDiSekolahId && (
+                                                <DropdownMenuItem onClick={() => handleResetClick(user)} className="text-orange-600 focus:text-orange-600">
+                                                    <Undo2 className="mr-2 h-4 w-4" />
+                                                    <span>Reset Pendaftaran</span>
+                                                </DropdownMenuItem>
+                                            )}
                                             <DropdownMenuItem onClick={() => handleDeleteClick(user.id)} className="text-destructive focus:text-destructive">
                                                 <Trash2 className="mr-2 h-4 w-4" />
-                                                <span>Hapus</span>
+                                                <span>Hapus Akun & Data</span>
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </TableCell>
                             </TableRow>
-                        ))
+                        )})
                     ) : (
                         <TableRow>
                             <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
@@ -476,7 +513,7 @@ export default function SuperadminPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Tindakan ini tidak dapat diurungkan. Pengguna akan dihapus secara permanen dari sistem.
+                            Tindakan ini tidak dapat diurungkan. Pengguna akan dihapus secara permanen dari sistem. Jika pengguna adalah pendaftar, seluruh data pendaftarannya juga akan dihapus.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -487,6 +524,25 @@ export default function SuperadminPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <AlertDialog open={isResetAlertOpen} onOpenChange={setIsResetAlertOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Reset Proses Pendaftaran?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Tindakan ini akan menghapus data pendaftaran untuk <span className="font-bold">{userToReset?.fullName}</span>. Pengguna akan dapat melakukan pendaftaran ulang dari awal pada tahap selanjutnya. Akun pengguna tidak akan dihapus.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmReset} className="bg-orange-500 text-white hover:bg-orange-600">
+                            Ya, Reset Pendaftaran
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 }
+
+    

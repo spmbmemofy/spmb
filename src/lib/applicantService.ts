@@ -354,6 +354,26 @@ export function withdrawApplication(applicantId: string): void {
 }
 
 /**
+ * Deletes an applicant from the list based on their ID.
+ * This is a hard delete of the application record.
+ * @param applicantId The ID of the applicant to delete.
+ * @returns True if an applicant was deleted, false otherwise.
+ */
+export function deleteApplicantById(applicantId: string): boolean {
+  let applicants = getApplicants();
+  const initialLength = applicants.length;
+  const updatedApplicants = applicants.filter(app => app.id !== applicantId);
+  
+  if (updatedApplicants.length < initialLength) {
+    saveToLocalStorage(APPLICANTS_STORAGE_KEY, updatedApplicants);
+    recalculateAllRanks();
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * Deletes an applicant from the list based on their NISN.
  * This is a hard delete, primarily for admin purposes.
  * @param nisn The NISN of the applicant to delete.
