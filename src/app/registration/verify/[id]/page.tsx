@@ -475,6 +475,35 @@ export default function VerifyApplicantPage() {
 
           <div className="lg:col-span-3 space-y-6">
             <Card>
+                <CardHeader><CardTitle className="flex items-center text-lg"><Users className="mr-2"/>Informasi Orang Tua/Wali</CardTitle></CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                    <h4 className="font-semibold text-muted-foreground">Data Ayah</h4>
+                    <div className="pl-2 space-y-2">
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Nama</span><span className="font-medium text-right truncate">{applicant?.fatherName || '-'}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Tgl Lahir</span><span className="font-medium text-right truncate">{applicant?.fatherDateOfBirth || '-'}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Pekerjaan</span><span className="font-medium text-right truncate">{applicant?.fatherOccupation || '-'}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Penghasilan</span><span className="font-medium text-right truncate">{applicant?.fatherIncome || '-'}</span></div>
+                    </div>
+                    <Separator />
+                    <h4 className="font-semibold text-muted-foreground">Data Ibu</h4>
+                    <div className="pl-2 space-y-2">
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Nama</span><span className="font-medium text-right truncate">{applicant?.motherName || '-'}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Tgl Lahir</span><span className="font-medium text-right truncate">{applicant?.motherDateOfBirth || '-'}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Pekerjaan</span><span className="font-medium text-right truncate">{applicant?.motherOccupation || '-'}</span></div>
+                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Penghasilan</span><span className="font-medium text-right truncate">{applicant?.motherIncome || '-'}</span></div>
+                    </div>
+                    {applicant?.guardianName && applicant?.guardianName !== '-' && (
+                        <>
+                            <Separator />
+                            <h4 className="font-semibold text-muted-foreground">Data Wali</h4>
+                            <div className="pl-2 space-y-2">
+                                <div className="flex justify-between gap-4"><span className="text-muted-foreground">Nama Wali</span><span className="font-medium text-right truncate">{applicant.guardianName}</span></div>
+                            </div>
+                        </>
+                    )}
+                </CardContent>
+            </Card>
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center text-lg"><FileText className="mr-2"/>Area Verifikasi Berkas & Data</CardTitle>
                 <CardDescription>Tandai item jika tidak valid. Item yang tidak ditandai akan otomatis diterima jika pendaftaran ditolak.</CardDescription>
@@ -597,35 +626,6 @@ export default function VerifyApplicantPage() {
                      </section>
                   </div>
               </CardContent>
-            </Card>
-            <Card>
-                <CardHeader><CardTitle className="flex items-center text-lg"><Users className="mr-2"/>Informasi Orang Tua/Wali</CardTitle></CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                    <h4 className="font-semibold text-muted-foreground">Data Ayah</h4>
-                    <div className="pl-2 space-y-2">
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Nama</span><span className="font-medium text-right truncate">{applicant?.fatherName || '-'}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Tgl Lahir</span><span className="font-medium text-right truncate">{applicant?.fatherDateOfBirth || '-'}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Pekerjaan</span><span className="font-medium text-right truncate">{applicant?.fatherOccupation || '-'}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Penghasilan</span><span className="font-medium text-right truncate">{applicant?.fatherIncome || '-'}</span></div>
-                    </div>
-                    <Separator />
-                    <h4 className="font-semibold text-muted-foreground">Data Ibu</h4>
-                    <div className="pl-2 space-y-2">
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Nama</span><span className="font-medium text-right truncate">{applicant?.motherName || '-'}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Tgl Lahir</span><span className="font-medium text-right truncate">{applicant?.motherDateOfBirth || '-'}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Pekerjaan</span><span className="font-medium text-right truncate">{applicant?.motherOccupation || '-'}</span></div>
-                        <div className="flex justify-between gap-4"><span className="text-muted-foreground">Penghasilan</span><span className="font-medium text-right truncate">{applicant?.motherIncome || '-'}</span></div>
-                    </div>
-                    {applicant?.guardianName && applicant?.guardianName !== '-' && (
-                        <>
-                            <Separator />
-                            <h4 className="font-semibold text-muted-foreground">Data Wali</h4>
-                            <div className="pl-2 space-y-2">
-                                <div className="flex justify-between gap-4"><span className="text-muted-foreground">Nama Wali</span><span className="font-medium text-right truncate">{applicant.guardianName}</span></div>
-                            </div>
-                        </>
-                    )}
-                </CardContent>
             </Card>
           </div>
         </div>
