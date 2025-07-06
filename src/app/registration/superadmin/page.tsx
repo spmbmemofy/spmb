@@ -93,11 +93,10 @@ export default function SuperadminPage() {
     const filteredApplicantUsers = React.useMemo(() => {
         const getStatus = (user: User): string => {
             const applicant = applicants.find(app => app.nisn === user.username);
-            if (!applicant) return "Belum Mendaftar";
-            if (applicant.statusVerifikasi === 'Dibatalkan') return "Dibatalkan";
-            if (applicant.diterimaDiSekolahId) return "Lulus";
-            if (applicant.statusVerifikasi === 'Terverifikasi') return "Tidak Lulus";
-            return applicant.statusVerifikasi; // Menunggu Verifikasi, Berkas tidak sesuai
+            if (applicant?.diterimaDiSekolahId) {
+                return "Lulus";
+            }
+            return "Tidak Lulus";
         };
 
         return users.filter(user => {
@@ -332,14 +331,8 @@ export default function SuperadminPage() {
                              if (applicant?.diterimaDiSekolahId) {
                                 const schoolName = getSchoolById(applicant.diterimaDiSekolahId)?.namaSekolah || 'Sekolah tidak ditemukan';
                                 placementStatus = <Badge variant="default">Lulus di {schoolName}</Badge>;
-                             } else if (applicant?.statusVerifikasi === 'Dibatalkan') {
-                                placementStatus = <Badge variant="destructive">{applicant.statusVerifikasi}</Badge>;
-                             } else if (applicant?.statusVerifikasi === 'Terverifikasi') {
-                                placementStatus = <Badge variant="destructive">Tidak Lulus</Badge>;
-                             } else if (applicant) {
-                                placementStatus = <Badge variant="secondary">{applicant.statusVerifikasi}</Badge>
                              } else {
-                                placementStatus = <Badge variant="outline">Belum Mendaftar</Badge>
+                                placementStatus = <Badge variant="destructive">Tidak Lulus</Badge>;
                              }
                              
                              return (
