@@ -127,17 +127,17 @@ export default function SuperadminPage() {
         }
     };
 
-    const renderUserTable = (userList: User[]) => (
+    const renderSystemUserTable = (userList: User[]) => (
         <div className="rounded-md border">
             <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead className="w-[50px] text-center">No.</TableHead>
                         <TableHead>Nama Lengkap</TableHead>
-                        <TableHead>Username/NISN</TableHead>
+                        <TableHead>Username</TableHead>
                         <TableHead>Peran</TableHead>
                         <TableHead>Kata Sandi</TableHead>
-                        <TableHead>NPSN</TableHead>
+                        <TableHead>NPSN Sekolah Terkait</TableHead>
                         <TableHead>Nama Sekolah</TableHead>
                         <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
@@ -215,6 +215,79 @@ export default function SuperadminPage() {
         </div>
     );
     
+    const renderApplicantTable = (userList: User[]) => (
+        <div className="rounded-md border">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="w-[50px] text-center">No.</TableHead>
+                        <TableHead>Nama Lengkap</TableHead>
+                        <TableHead>NISN</TableHead>
+                        <TableHead>Kata Sandi</TableHead>
+                        <TableHead className="text-right">Aksi</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {userList.length > 0 ? (
+                        userList.map((user, index) => (
+                            <TableRow key={user.id}>
+                                <TableCell className="text-center">{index + 1}</TableCell>
+                                <TableCell className="font-medium">{user.fullName}</TableCell>
+                                <TableCell>{user.username}</TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-mono">
+                                            {visiblePasswordId === user.id ? user.password : '********'}
+                                        </span>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            onClick={() => setVisiblePasswordId(visiblePasswordId === user.id ? null : user.id)}
+                                            aria-label="Toggle password visibility"
+                                        >
+                                            {visiblePasswordId === user.id ? (
+                                                <EyeOff className="h-4 w-4" />
+                                            ) : (
+                                                <Eye className="h-4 w-4" />
+                                            )}
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                                <span className="sr-only">Buka menu</span>
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => handleOpenDialog(user)}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                <span>Edit</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleDeleteClick(user.id)} className="text-destructive focus:text-destructive">
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                <span>Hapus</span>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                Tidak ada pendaftar yang cocok dengan kriteria.
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+        </div>
+    );
+    
     const relevantSchools = React.useMemo(() => {
         if (selectedFormRole === "smp_operator") {
             return allSchools.filter(s => s.jenjang === "SMP");
@@ -279,7 +352,7 @@ export default function SuperadminPage() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                {renderUserTable(filteredSystemUsers)}
+                                {renderSystemUserTable(filteredSystemUsers)}
                             </TabsContent>
                             <TabsContent value="pendaftar" className="mt-4">
                                 <div className="flex items-center gap-4 py-4">
@@ -293,7 +366,7 @@ export default function SuperadminPage() {
                                         />
                                     </div>
                                 </div>
-                                {renderUserTable(filteredApplicantUsers)}
+                                {renderApplicantTable(filteredApplicantUsers)}
                             </TabsContent>
                         </Tabs>
                     </CardContent>
