@@ -89,6 +89,13 @@ export interface Applicant {
   guardianName?: string;
   contactNumber?: string;
   profilePhotoDataUri?: string;
+  semesterGrades: {
+    semester1: number;
+    semester2: number;
+    semester3: number;
+    semester4: number;
+    semester5: number;
+  };
 
   // Verification details
   verifiedBy?: string;

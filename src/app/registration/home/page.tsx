@@ -10,7 +10,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { TrendingUp, Users, School, BookOpen, Star, UserCheck, AlertTriangle } from 'lucide-react';
 import { getSchools } from '@/lib/schoolService';
 import { getApplicants } from '@/lib/applicantService';
-import type { Applicant } from '@/lib/types';
+import { getManagedApplicants } from '@/lib/managedApplicantService';
+import type { Applicant, ManagedApplicant } from '@/lib/types';
 import { getJalur } from '@/lib/pathwayService';
 import { getStages } from '@/lib/stageService';
 import { getFromLocalStorage, type LoginCredentials } from '@/lib/localStorage';
@@ -24,6 +25,7 @@ const barChartConfig = {
 
 export default function HomePage() {
   const [allApplicants, setAllApplicants] = React.useState<Applicant[]>([]);
+  const [managedApplicants, setManagedApplicants] = React.useState<ManagedApplicant[]>([]);
   const [schools, setSchools] = React.useState<ReturnType<typeof getSchools>>([]);
   const [userRole, setUserRole] = React.useState<LoginCredentials['role'] | null>(null);
   const [pendingActions, setPendingActions] = React.useState<{ text: string; href: string }[]>([]);
@@ -31,6 +33,7 @@ export default function HomePage() {
 
   React.useEffect(() => {
     setAllApplicants(getApplicants());
+    setManagedApplicants(getManagedApplicants());
     setSchools(getSchools());
     const creds = getFromLocalStorage<LoginCredentials | null>("loginCredentials", null);
     if (creds) {
@@ -100,26 +103,9 @@ export default function HomePage() {
 
 
   const globalStats = React.useMemo(() => {
-    if (allApplicants.length === 0) {
-      return {
-        totalPendaftar: 0,
-        kuotaTerisi: 0,
-        totalKuota: 0,
-        persentaseKuota: "0.0",
-        sekolahTujuanTeratas: '-',
-        sekolahAsalTeratas: '-',
-        menungguVerifikasi: 0,
-        jalurFavorit: '-',
-        jalurDistribution: [],
-        terverifikasi: 0,
-        jumlahSiswa: 0,
-        belumAktivasi: 0,
-        belumMendaftar: 0,
-      };
-    }
-    
-    // Total pendaftar is the unique set of applicants
     const totalPendaftar = new Set(allApplicants.map(app => app.id)).size;
+    const applicantNisnSet = new Set(allApplicants.map(app => app.nisn));
+
     const totalKuota = schoolStats.destinationSchools.reduce((acc, school) => acc + (school.kuota || 0), 0);
     const kuotaTerisi = Math.min(totalPendaftar, totalKuota);
     const persentaseKuota = totalKuota > 0 ? ((kuotaTerisi / totalKuota) * 100).toFixed(1) : "0.0";
@@ -147,9 +133,10 @@ export default function HomePage() {
     }));
 
     const terverifikasi = allApplicants.filter(app => app.statusVerifikasi === 'Terverifikasi').length;
-    const jumlahSiswa = totalPendaftar;
+    
+    const jumlahSiswa = managedApplicants.length;
     const belumAktivasi = 0; // Placeholder
-    const belumMendaftar = 0; // Placeholder
+    const belumMendaftar = managedApplicants.filter(managed => !applicantNisnSet.has(managed.nisn)).length;
 
     return { 
         totalPendaftar, 
@@ -166,7 +153,7 @@ export default function HomePage() {
         belumAktivasi,
         belumMendaftar,
     };
-  }, [allApplicants, schoolStats]);
+  }, [allApplicants, schoolStats, managedApplicants]);
   
   const pathways = React.useMemo(() => getJalur(), []);
 
@@ -213,7 +200,7 @@ export default function HomePage() {
             <CardDescription>
               Ringkasan keseluruhan status pendaftar dalam sistem.
               <br />
-              <span className="text-xs text-muted-foreground">*Data 'Belum Aktivasi' dan 'Belum Mendaftar' adalah placeholder karena tidak tersedia di sistem saat ini.</span>
+              <span className="text-xs text-muted-foreground">*Data 'Belum Aktivasi' adalah placeholder karena tidak tersedia di sistem saat ini.</span>
             </CardDescription>
           </CardHeader>
           <CardContent>
