@@ -149,16 +149,28 @@ export default function AnnouncementPage() {
       return;
     }
 
-    const dataToExport = sortedApplicants.map((app, index) => ({
-      'No.': index + 1,
-      'Nama Pendaftar': app.fullName,
-      'NISN': app.nisn,
-      'Asal Sekolah': app.asalSekolahNama,
-      'Diterima di Sekolah': getSchoolById(app.diterimaDiSekolahId!)?.namaSekolah || '-',
-      'Jalur': app.jalur,
-      'Nilai Akhir': app.finalScore.toFixed(2),
-      'Peringkat': app.peringkat,
-    }));
+    const dataToExport = sortedApplicants.map((app, index) => {
+      const placementChoice = app.schoolSelections.findIndex(s => s.schoolId === app.diterimaDiSekolahId) + 1;
+      const totalNilaiRapor = Object.values(app.semesterGrades).reduce((a, b) => a + b, 0);
+
+      return {
+        'No.': index + 1,
+        'Nama Pendaftar': app.fullName,
+        'NISN': app.nisn,
+        'NIK': app.nik || '-',
+        'Asal Sekolah': app.asalSekolahNama,
+        'Diterima di Sekolah': getSchoolById(app.diterimaDiSekolahId!)?.namaSekolah || '-',
+        'Jalur': app.jalur,
+        'Pilihan Ke-': placementChoice > 0 ? placementChoice : '-',
+        'Peringkat di Sekolah': app.peringkat,
+        'Total Nilai Rapor': totalNilaiRapor.toFixed(2),
+        'Nilai Prestasi': app.jalur === 'Prestasi' ? (app.nilaiPrestasi || 0) : '-',
+        'Nilai Akhir Seleksi': app.finalScore.toFixed(2),
+        'Tempat Lahir': app.placeOfBirth || '-',
+        'Tanggal Lahir': app.dateOfBirth ? new Date(app.dateOfBirth).toLocaleDateString('id-ID') : '-',
+        'Jenis Kelamin': app.gender || '-',
+      };
+    });
 
     const worksheet = xlsx.utils.json_to_sheet(dataToExport);
     const workbook = xlsx.utils.book_new();
@@ -168,11 +180,18 @@ export default function AnnouncementPage() {
       { wch: 5 },   // No.
       { wch: 30 },  // Nama Pendaftar
       { wch: 15 },  // NISN
+      { wch: 20 },  // NIK
       { wch: 30 },  // Asal Sekolah
       { wch: 30 },  // Diterima di Sekolah
       { wch: 20 },  // Jalur
-      { wch: 15 },  // Nilai Akhir
-      { wch: 10 },  // Peringkat
+      { wch: 10 },  // Pilihan Ke-
+      { wch: 15 },  // Peringkat di Sekolah
+      { wch: 15 },  // Total Nilai Rapor
+      { wch: 15 },  // Nilai Prestasi
+      { wch: 15 },  // Nilai Akhir Seleksi
+      { wch: 20 },  // Tempat Lahir
+      { wch: 20 },  // Tanggal Lahir
+      { wch: 15 },  // Jenis Kelamin
     ];
     worksheet['!cols'] = columnWidths;
 
