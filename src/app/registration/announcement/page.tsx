@@ -4,7 +4,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Megaphone, Search as SearchIcon, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Filter as FilterIcon } from 'lucide-react';
+import { Megaphone, Search as SearchIcon, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Filter as FilterIcon, FileDown } from 'lucide-react';
 import { getStages, type Tahap } from '@/lib/stageService';
 import { getApplicants, type Applicant } from '@/lib/applicantService';
 import type { SortConfig, SortDirection } from '@/lib/types';
@@ -14,6 +14,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { useToast } from "@/hooks/use-toast";
+import * as xlsx from "xlsx";
 
 type AnnouncementSortKey = keyof Applicant | 'finalScore' | 'no';
 
@@ -31,6 +33,7 @@ export default function AnnouncementPage() {
   const [allPathways, setAllPathways] = React.useState<Jalur[]>([]);
   const [allSchools, setAllSchools] = React.useState<School[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const { toast } = useToast();
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedOriginSchool, setSelectedOriginSchool] = React.useState("Semua Asal Sekolah");
@@ -135,6 +138,46 @@ export default function AnnouncementPage() {
         pathwayOptions: ["Semua Jalur", ...Array.from(pathways).sort()],
     };
   }, [relevantApplicants]);
+  
+  const handleDownloadExcel = () => {
+    if (!sortedApplicants || sortedApplicants.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Tidak Ada Data',
+        description: 'Tidak ada data untuk diunduh berdasarkan filter saat ini.',
+      });
+      return;
+    }
+
+    const dataToExport = sortedApplicants.map((app, index) => ({
+      'No.': index + 1,
+      'Nama Pendaftar': app.fullName,
+      'NISN': app.nisn,
+      'Asal Sekolah': app.asalSekolahNama,
+      'Diterima di Sekolah': getSchoolById(app.diterimaDiSekolahId!)?.namaSekolah || '-',
+      'Jalur': app.jalur,
+      'Nilai Akhir': app.finalScore.toFixed(2),
+      'Peringkat': app.peringkat,
+    }));
+
+    const worksheet = xlsx.utils.json_to_sheet(dataToExport);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, 'Hasil Seleksi');
+    
+    const columnWidths = [
+      { wch: 5 },   // No.
+      { wch: 30 },  // Nama Pendaftar
+      { wch: 15 },  // NISN
+      { wch: 30 },  // Asal Sekolah
+      { wch: 30 },  // Diterima di Sekolah
+      { wch: 20 },  // Jalur
+      { wch: 15 },  // Nilai Akhir
+      { wch: 10 },  // Peringkat
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    xlsx.writeFile(workbook, 'Hasil_Seleksi_PMB_2026.xlsx');
+  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -287,6 +330,12 @@ export default function AnnouncementPage() {
           <CardDescription className="text-md">
             Informasi hasil akhir kelulusan pendaftar SPMB 2026.
           </CardDescription>
+          <div className="flex justify-center pt-4">
+            <Button onClick={handleDownloadExcel} disabled={isLoading || sortedApplicants.length === 0}>
+              <FileDown className="mr-2 h-4 w-4" />
+              Unduh Hasil (Excel)
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="text-left space-y-8">
           {renderContent()}
