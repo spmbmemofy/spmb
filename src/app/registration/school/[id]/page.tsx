@@ -105,47 +105,67 @@ export default function SchoolDetailPage() {
   }, [searchTerm, selectedJalur, selectedStatus, pageSize]); 
 
   const applicantsForDisplay = React.useMemo<DisplayApplicant[]>(() => {
-      if (!school) return [];
+    if (!school) return [];
 
-      const allDisplayApplicants: DisplayApplicant[] = currentSchoolApplicants.map(app => ({
-          ...app,
-          finalScore: null,
-          hypotheticalRank: null,
-      }));
+    // Map all applicants who chose this school to the DisplayApplicant type
+    const allDisplayApplicants = new Map(
+      currentSchoolApplicants.map(app => [
+        app.id,
+        { ...app, finalScore: null, hypotheticalRank: null } as DisplayApplicant
+      ])
+    );
 
-      const applicantsByPathway: Record<string, DisplayApplicant[]> = {};
+    const applicantsByPathway: Record<string, DisplayApplicant[]> = {};
 
-      // Group verified applicants by pathway
-      allDisplayApplicants
-          .filter(app => app.statusVerifikasi === "Terverifikasi")
-          .forEach(app => {
-              app.finalScore = calculateScoreForSchool(app, school.id);
-              if (!applicantsByPathway[app.jalur]) {
-                  applicantsByPathway[app.jalur] = [];
-              }
-              applicantsByPathway[app.jalur].push(app);
-          });
+    // For each applicant who chose this school...
+    for (const applicant of currentSchoolApplicants) {
+        // Only consider verified applicants for ranking.
+        if (applicant.statusVerifikasi !== 'Terverifikasi') continue;
 
-      // Sort within each pathway and assign rank
-      for (const jalur in applicantsByPathway) {
-          const group = applicantsByPathway[jalur];
-          group.sort((a, b) => {
-              if (jalur === 'Domisili') {
-                  const isAPriority = isPriority(a, school);
-                  const isBPriority = isPriority(b, school);
-                  if (isAPriority !== isBPriority) {
-                      return isAPriority ? -1 : 1;
-                  }
-              }
-              return (b.finalScore ?? 0) - (a.finalScore ?? 0);
-          });
+        // Check if the applicant is already placed in a higher-priority school.
+        if (applicant.diterimaDiSekolahId) {
+            const acceptedAtIndex = applicant.schoolSelections.findIndex(s => s.schoolId === applicant.diterimaDiSekolahId);
+            const currentSchoolIndex = applicant.schoolSelections.findIndex(s => s.schoolId === school.id);
+            
+            // If they are accepted at a school with a lower index (higher priority), they do not compete here.
+            if (acceptedAtIndex !== -1 && currentSchoolIndex !== -1 && acceptedAtIndex < currentSchoolIndex) {
+                continue; // Skip this applicant from the ranking pool.
+            }
+        }
 
-          group.forEach((app, index) => {
-              app.hypotheticalRank = index + 1;
-          });
-      }
+        // If the applicant is competing for a spot at this school, add them to the correct pathway group.
+        const displayApp = allDisplayApplicants.get(applicant.id);
+        if (displayApp) {
+            displayApp.finalScore = calculateScoreForSchool(applicant, school.id);
+            if (!applicantsByPathway[applicant.jalur]) {
+                applicantsByPathway[applicant.jalur] = [];
+            }
+            applicantsByPathway[applicant.jalur].push(displayApp);
+        }
+    }
 
-      return allDisplayApplicants;
+    // Now, sort and rank within each pathway group.
+    for (const jalur in applicantsByPathway) {
+        const group = applicantsByPathway[jalur];
+        group.sort((a, b) => {
+            if (jalur === 'Domisili') {
+                const isAPriority = isPriority(a, school);
+                const isBPriority = isPriority(b, school);
+                if (isAPriority !== isBPriority) {
+                    return isAPriority ? -1 : 1;
+                }
+            }
+            return (b.finalScore ?? 0) - (a.finalScore ?? 0);
+        });
+
+        // Assign rank to the sorted applicants in this group
+        group.forEach((app, index) => {
+            app.hypotheticalRank = index + 1;
+        });
+    }
+
+    // Return the full list of display applicants, now with ranks updated.
+    return Array.from(allDisplayApplicants.values());
   }, [currentSchoolApplicants, school]);
 
   const filteredApplicants = React.useMemo(() => {
@@ -446,11 +466,23 @@ export default function SchoolDetailPage() {
                 </TableHeader>
                 <TableBody>
                   {paginatedApplicants.length > 0 ? (
-                    paginatedApplicants.map((applicant, index) => (
-                      <TableRow key={applicant.id}>
-                        <TableCell className="text-center">{(currentPage - 1) * pageSize + index + 1}</TableCell>
-                        <TableCell className="font-medium">
-                           <div className="flex items-center gap-2">
+                    paginatedApplicants.map((applicant, index) => {
+                      let rankClass = "";
+                      if (applicant.hypotheticalRank) {
+                        const pathwayKey = (applicant.jalur.toLowerCase()) as keyof NonNullable<typeof school.jalurKuota>;
+                        const quota = school.jalurKuota ? school.jalurKuota[pathwayKey] ?? 0 : 0;
+                        if (quota > 0 && applicant.hypotheticalRank <= quota) {
+                          rankClass = "text-green-600";
+                        } else {
+                          rankClass = "text-red-600";
+                        }
+                      }
+
+                      return (
+                        <TableRow key={applicant.id}>
+                          <TableCell className="text-center">{(currentPage - 1) * pageSize + index + 1}</TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
                                 <Link href={`/registration/applicant-detail/${applicant.id}`} className="hover:underline text-primary">
                                     {applicant.fullName}
                                 </Link>
@@ -467,56 +499,21 @@ export default function SchoolDetailPage() {
                                     </TooltipProvider>
                                 )}
                             </div>
-                        </TableCell>
-                        <TableCell>{applicant.nisn}</TableCell>
-                        <TableCell>{applicant.asalSekolahNama}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={getApplicantStatusBadgeVariant(applicant.statusVerifikasi)}>
-                            {applicant.statusVerifikasi}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{applicant.jalur}</TableCell>
-                        <TableCell
-                          className={cn(
-                            "text-right font-medium",
-                            (() => {
-                              if (applicant.statusVerifikasi !== 'Terverifikasi') return '';
-                              
-                              const isPlacedHere = applicant.diterimaDiSekolahId === school.id;
-                              if (isPlacedHere) {
-                                return 'text-green-600 font-bold';
-                              }
-
-                              const isPlacedElsewhere = applicant.diterimaDiSekolahId && !isPlacedHere;
-                              if (isPlacedElsewhere) {
-                                return ''; // No color needed for '-'
-                              }
-                              
-                              return 'text-red-600';
-                            })()
-                          )}
-                        >
-                          {(() => {
-                            if (applicant.statusVerifikasi !== 'Terverifikasi') {
-                                return '-';
-                            }
-                            
-                            const isPlacedHere = applicant.diterimaDiSekolahId === school.id;
-                            const isPlacedElsewhere = applicant.diterimaDiSekolahId && !isPlacedHere;
-
-                            if (isPlacedElsewhere) {
-                                return '-';
-                            }
-
-                            if (isPlacedHere) {
-                                return applicant.peringkat;
-                            }
-                            
-                            return applicant.hypotheticalRank ?? '-';
-                          })()}
-                        </TableCell>
-                      </TableRow>
-                    ))
+                          </TableCell>
+                          <TableCell>{applicant.nisn}</TableCell>
+                          <TableCell>{applicant.asalSekolahNama}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant={getApplicantStatusBadgeVariant(applicant.statusVerifikasi)}>
+                              {applicant.statusVerifikasi}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{applicant.jalur}</TableCell>
+                          <TableCell className={cn("text-right font-medium", rankClass)}>
+                            {applicant.hypotheticalRank ?? '-'}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center text-muted-foreground h-24"> 
