@@ -141,11 +141,11 @@ export default function DocumentUploadPage() {
     const loggedInUser = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
     const applicantData = loggedInUser?.username ? getApplicants().find(a => a.nisn === loggedInUser.username) : null;
 
-    if (!savedProgress?.hasProfilePhoto) {
+    if (!savedProgress?.biodata) {
       toast({
         variant: "destructive",
         title: "Akses Ditolak",
-        description: "Harap unggah foto profil Anda di halaman Data Pendaftar sebelum melanjutkan.",
+        description: "Harap lengkapi biodata Anda di halaman dasbor sebelum melanjutkan.",
       });
       router.replace('/registration/dashboard');
       return; 

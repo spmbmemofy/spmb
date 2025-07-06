@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { FileText, Save, School, ArrowUp, ArrowDown, AlertTriangle, ClipboardCheck, Info, Clock } from 'lucide-react';
+import { FileText, Save, School, ArrowUp, ArrowDown, AlertTriangle, ClipboardCheck, Info, Clock, ArrowLeft } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { getSchools, getSchoolById } from "@/lib/schoolService"; 
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
@@ -65,12 +65,12 @@ export default function SchoolSelectionPage() {
     const loggedInUser = getFromLocalStorage<LoginCredentials | null>("loginCredentials", null);
     const applicantData = loggedInUser?.username ? getApplicants().find(a => a.nisn === loggedInUser.username) : null;
     
-    if (!savedProgress?.hasProfilePhoto) {
+    if (!savedProgress?.biodata) {
       setTimeout(() => {
         toast({
           variant: "destructive",
           title: "Akses Ditolak",
-          description: "Harap unggah foto profil Anda di halaman Data Pendaftar sebelum melanjutkan.",
+          description: "Harap lengkapi biodata Anda di halaman dasbor sebelum melanjutkan.",
         });
         router.replace('/registration/dashboard');
       }, 0);
@@ -502,7 +502,13 @@ export default function SchoolSelectionPage() {
             </div>
           )}
         </CardContent>
-        <CardFooter className="flex justify-end pt-6">
+        <CardFooter className="flex flex-col sm:flex-row justify-between items-center pt-6 gap-4">
+          <Button variant="outline" asChild>
+            <Link href="/registration/dashboard">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Kembali ke Dasbor
+            </Link>
+          </Button>
           {isLocked ? (
             <Button asChild>
               <Link href="/registration/status">

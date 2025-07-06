@@ -270,7 +270,7 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
     nilaiPrestasi: undefined,
     nilaiTambahanPilihan: 0,
     
-    // Detailed biodata
+    // Detailed biodata from the new dashboard
     nik: progress.biodata.nik,
     placeOfBirth: progress.biodata.placeOfBirth,
     dateOfBirth: progress.biodata.dateOfBirth,
