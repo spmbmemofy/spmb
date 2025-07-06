@@ -37,7 +37,7 @@ const userFormSchema = z.object({
 
 type UserFormValues = z.infer<typeof userFormSchema>;
 
-const applicantStatusOptions = ["Semua Status", "Lulus", "Tidak Lulus", "Menunggu Verifikasi", "Berkas tidak sesuai", "Belum Mendaftar", "Dibatalkan"];
+const applicantStatusOptions = ["Semua Status", "Lulus", "Tidak Lulus"];
 
 export default function SuperadminPage() {
     const [users, setUsers] = React.useState<User[]>([]);
@@ -46,7 +46,7 @@ export default function SuperadminPage() {
     const [systemSearchTerm, setSystemSearchTerm] = React.useState("");
     const [applicantSearchTerm, setApplicantSearchTerm] = React.useState("");
     const [roleFilter, setRoleFilter] = React.useState<UserRole | "all">("all");
-    const [applicantStatusFilter, setApplicantStatusFilter] = React.useState<string>("all");
+    const [applicantStatusFilter, setApplicantStatusFilter] = React.useState<string>("Semua Status");
 
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
     const [editingUser, setEditingUser] = React.useState<User | null>(null);
@@ -106,7 +106,7 @@ export default function SuperadminPage() {
             const searchMatch = user.fullName.toLowerCase().includes(applicantSearchTerm.toLowerCase()) ||
                    user.username.toLowerCase().includes(applicantSearchTerm.toLowerCase());
             
-            const statusMatch = applicantStatusFilter === "all" || getStatus(user) === applicantStatusFilter;
+            const statusMatch = applicantStatusFilter === "Semua Status" || getStatus(user) === applicantStatusFilter;
 
             return searchMatch && statusMatch;
         });
