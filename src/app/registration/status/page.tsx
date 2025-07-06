@@ -64,7 +64,7 @@ const pathwaySpecificDocumentsMapConst: Record<string, DocumentItem[]> = {
     { id: "kip_kks_pkh", label: "Scan Kartu Indonesia Pintar (KIP) / Kartu Keluarga Sejahtera (KKS) / Program Keluarga Harapan (PKH)", required: true },
   ],
   Prestasi: [
-    { id: "sertifikat_prestasi", label: "Scan Sertifikat Prestasi", required: false }, 
+    { id: "sertifikat_prestasi", label: "Scan Sertifikat Prestasi", required: true }, 
     { id: "sk_prestasi", label: "Scan Surat Keterangan Prestasi dari Sekolah Asal", required: true },
   ],
   Mutasi: [

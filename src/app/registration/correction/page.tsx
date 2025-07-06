@@ -56,7 +56,7 @@ const generalDocuments: DocumentItem[] = [
 
 const pathwaySpecificDocumentsMap: Record<string, DocumentItem[]> = {
   Afirmasi: [ { id: "kip_kks_pkh", label: "Scan KIP/KKS/PKH", required: true } ],
-  Prestasi: [ { id: "sertifikat_prestasi", label: "Scan Sertifikat Prestasi (jika ada)", required: false }, { id: "sk_prestasi", label: "Scan SK Prestasi Sekolah", required: true } ],
+  Prestasi: [ { id: "sertifikat_prestasi", label: "Scan Sertifikat Prestasi", required: true }, { id: "sk_prestasi", label: "Scan SK Prestasi Sekolah", required: true } ],
   Mutasi: [ { id: "sk_penempatan", label: "Scan SK Mutasi Orang Tua", required: true } ],
   Domisili: [], 
 };
