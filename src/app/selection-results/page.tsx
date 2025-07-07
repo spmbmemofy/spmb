@@ -179,18 +179,16 @@ export default function SelectionResultsPage() {
                         <TableRow key={applicant.id}>
                           <TableCell className="text-center">{index + 1}</TableCell>
                           <TableCell className="font-medium">
-                            <Link href={`/registration/applicant-detail/${applicant.id}`} className="hover:underline text-primary">
-                              {applicant.fullName}
-                            </Link>
+                            {applicant.fullName}
                           </TableCell>
                           <TableCell>{applicant.nisn}</TableCell>
                           <TableCell>{applicant.jalur}</TableCell>
                           <TableCell>
                             {placementSchool ? (
-                              <Link href={`/registration/school/${placementSchool.id}`} className="hover:underline text-primary flex items-center">
+                              <div className="flex items-center">
                                 <Building className="mr-2 h-4 w-4 opacity-70" />
                                 {placementSchool.namaSekolah}
-                              </Link>
+                              </div>
                             ) : (
                               <span className="text-muted-foreground">-</span>
                             )}
