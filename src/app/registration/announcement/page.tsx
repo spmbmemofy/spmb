@@ -31,6 +31,7 @@ export default function AnnouncementPage() {
   const [publishedAnnouncements, setPublishedAnnouncements] = React.useState<Tahap[]>([]);
   const [allApplicants, setAllApplicants] = React.useState<Applicant[]>([]);
   const [allPathways, setAllPathways] = React.useState<Jalur[]>([]);
+  const [allStages, setAllStages] = React.useState<Tahap[]>([]);
   const [allSchools, setAllSchools] = React.useState<School[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const { toast } = useToast();
@@ -51,9 +52,27 @@ export default function AnnouncementPage() {
     
     setAllApplicants(getApplicants());
     setAllPathways(getJalur());
+    setAllStages(getStages());
     setAllSchools(getSchools());
     setIsLoading(false);
   }, []);
+
+  const pathwayToStageNameMap = React.useMemo(() => {
+    if (allStages.length === 0 || allPathways.length === 0) return new Map();
+    
+    const stageMap = new Map(allStages.map(s => [s.id, s.name]));
+    const pathwayMap = new Map<string, string>();
+    
+    allPathways.forEach(p => {
+        const stageName = stageMap.get(p.tahapId);
+        if (stageName) {
+            pathwayMap.set(p.name, stageName);
+        }
+    });
+    
+    return pathwayMap;
+  }, [allStages, allPathways]);
+
 
   const relevantApplicants = React.useMemo(() => {
     const stageIds = new Set(publishedAnnouncements.map(stage => stage.id));
@@ -152,6 +171,7 @@ export default function AnnouncementPage() {
     const dataToExport = sortedApplicants.map((app, index) => {
       const placementChoice = app.schoolSelections.findIndex(s => s.schoolId === app.diterimaDiSekolahId) + 1;
       const totalNilaiRapor = Object.values(app.semesterGrades).reduce((a, b) => a + b, 0);
+      const stageName = pathwayToStageNameMap.get(app.jalur) || '-';
 
       return {
         'No.': index + 1,
@@ -160,6 +180,7 @@ export default function AnnouncementPage() {
         'NIK': app.nik || '-',
         'Asal Sekolah': app.asalSekolahNama,
         'Diterima di Sekolah': getSchoolById(app.diterimaDiSekolahId!)?.namaSekolah || '-',
+        'Tahap': stageName,
         'Jalur': app.jalur,
         'Pilihan Ke-': placementChoice > 0 ? placementChoice : '-',
         'Peringkat di Sekolah': app.peringkat,
@@ -183,6 +204,7 @@ export default function AnnouncementPage() {
       { wch: 20 },  // NIK
       { wch: 30 },  // Asal Sekolah
       { wch: 30 },  // Diterima di Sekolah
+      { wch: 15 },  // Tahap
       { wch: 20 },  // Jalur
       { wch: 10 },  // Pilihan Ke-
       { wch: 15 },  // Peringkat di Sekolah
@@ -252,11 +274,17 @@ export default function AnnouncementPage() {
                                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('fullName')}>
                                   <div className="flex items-center">Nama Pendaftar{getSortIcon('fullName')}</div>
                                 </TableHead>
+                                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('nisn')}>
+                                  <div className="flex items-center">NISN{getSortIcon('nisn')}</div>
+                                </TableHead>
                                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('asalSekolahNama')}>
                                    <div className="flex items-center">Asal Sekolah{getSortIcon('asalSekolahNama')}</div>
                                 </TableHead>
                                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('diterimaDiSekolahId')}>
                                    <div className="flex items-center">Diterima di Sekolah{getSortIcon('diterimaDiSekolahId')}</div>
+                                </TableHead>
+                                <TableHead>
+                                   <div className="flex items-center">Tahap</div>
                                 </TableHead>
                                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('jalur')}>
                                    <div className="flex items-center">Jalur{getSortIcon('jalur')}</div>
@@ -279,8 +307,10 @@ export default function AnnouncementPage() {
                                             {app.fullName}
                                         </Link>
                                     </TableCell>
+                                    <TableCell>{app.nisn}</TableCell>
                                     <TableCell>{app.asalSekolahNama}</TableCell>
                                     <TableCell>{getSchoolById(app.diterimaDiSekolahId!)?.namaSekolah}</TableCell>
+                                    <TableCell>{pathwayToStageNameMap.get(app.jalur) || '-'}</TableCell>
                                     <TableCell>{app.jalur}</TableCell>
                                     <TableCell className="text-right font-mono">{app.finalScore.toFixed(2)}</TableCell>
                                     <TableCell className="text-center font-mono">{app.peringkat}</TableCell>
@@ -288,7 +318,7 @@ export default function AnnouncementPage() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center text-muted-foreground h-24">
+                                    <TableCell colSpan={9} className="text-center text-muted-foreground h-24">
                                         Tidak ada pendaftar yang cocok dengan kriteria.
                                     </TableCell>
                                 </TableRow>
