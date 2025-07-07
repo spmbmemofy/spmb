@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { FileText, Save, School, ArrowUp, ArrowDown, AlertTriangle, ClipboardCheck, Info, Clock, ArrowLeft } from 'lucide-react';
+import { FileText, Save, School, ArrowUp, ArrowDown, AlertTriangle, ClipboardCheck, Info, Clock, ArrowLeft, Trash2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { getSchools, getSchoolById } from "@/lib/schoolService"; 
 import { getFromLocalStorage, saveToLocalStorage, type RegistrationProgress, type LoginCredentials } from "@/lib/localStorage";
@@ -98,11 +98,9 @@ export default function SchoolSelectionPage() {
       const isSelected = prevSelected.some(s => s.schoolId === schoolId && s.major === major);
 
       if (isSelected) {
-        // Deselecting is always allowed
         return prevSelected.filter(s => !(s.schoolId === schoolId && s.major === major));
       }
 
-      // Adding a new selection, apply rules
       if (prevSelected.length >= MAX_SCHOOL_SELECTION) {
         toast({
           variant: "destructive",
@@ -111,35 +109,7 @@ export default function SchoolSelectionPage() {
         });
         return prevSelected;
       }
-
-      const school = getSchoolById(schoolId);
-      if (!school) return prevSelected; // Should not happen
-
-      // Rule for "Domisili" pathway on the FIRST selection
-      if (selectedPathway === 'Domisili' && prevSelected.length === 0) {
-          if (school.jenjang !== 'SMA' || school.jenis !== 'Negeri') {
-              toast({
-                  variant: 'destructive',
-                  title: 'Pilihan Pertama Tidak Sesuai',
-                  description: 'Untuk jalur Domisili, pilihan pertama Anda harus sekolah jenjang SMA Negeri.',
-              });
-              return prevSelected; 
-          }
-      }
       
-      // Rule for "Reguler SMK" pathway on the FIRST selection
-      if (selectedPathway === 'Reguler SMK' && prevSelected.length === 0) {
-          if (school.jenjang !== 'SMK') {
-              toast({
-                  variant: 'destructive',
-                  title: 'Pilihan Pertama Tidak Sesuai',
-                  description: 'Untuk jalur Reguler SMK, pilihan pertama Anda harus sekolah jenjang SMK.',
-              });
-              return prevSelected;
-          }
-      }
-      
-      // If all rules pass, add the new selection
       return [...prevSelected, selection];
     });
   };
@@ -161,12 +131,10 @@ export default function SchoolSelectionPage() {
 
     let schoolsToDisplay = allSchools.filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
     
-    // Filter by allowed jenjang for the pathway
     schoolsToDisplay = schoolsToDisplay.filter(school => 
       selectedPathwayObject.allowedJenjang.includes(school.jenjang)
     );
 
-    // Filter schools that offer the selected pathway (have quota for it)
     const pathwayKey = (selectedPathwayObject.name === 'Reguler SMK' ? 'domisili' : selectedPathwayObject.name.toLowerCase()) as keyof NonNullable<SchoolType['jalurKuota']>;
     schoolsToDisplay = schoolsToDisplay.filter(school => {
         if (school.jenjang === 'SMA') {
@@ -178,50 +146,52 @@ export default function SchoolSelectionPage() {
         return false;
     });
 
-    // For "Prestasi" pathway, bypass all other geographical and special rule filters
     if (selectedPathwayObject.name === 'Prestasi') {
       return schoolsToDisplay;
     }
+    
+    if (selectedPathway === 'Domisili') {
+        const hasSelectedSMA = selectedSelections.some(sel => getSchoolById(sel.schoolId)?.jenjang === 'SMA');
+        if (!hasSelectedSMA) {
+            return schoolsToDisplay.filter(s => s.jenjang === 'SMA');
+        }
+    }
+    
+    if (selectedPathway === 'Reguler SMK') {
+        const hasSelectedSMK = selectedSelections.some(sel => getSchoolById(sel.schoolId)?.jenjang === 'SMK');
+        if (!hasSelectedSMK) {
+            return schoolsToDisplay.filter(s => s.jenjang === 'SMK');
+        }
+    }
 
-    // --- Filters for other pathways ---
-
-    // Filter based on private school rules for pathway availability
     schoolsToDisplay = schoolsToDisplay.filter(school => {
         if (school.jenis === 'Swasta') {
-            // For Swasta, allow if pathway is Domisili or Reguler SMK or Afirmasi or Mutasi
             return ["Domisili", "Reguler SMK", "Afirmasi", "Mutasi"].includes(selectedPathwayObject.name);
         }
-        // For Negeri, allow all pathways (for now)
         return true;
     });
 
-    // Apply geographical filters
     schoolsToDisplay = schoolsToDisplay.filter(school => {
-        // Exception: Private schools on Domisili/Reguler SMK pathways have no geographical limits
         if (school.jenis === 'Swasta' && (selectedPathwayObject.name === 'Domisili' || selectedPathwayObject.name === 'Reguler SMK')) {
             return true;
         }
 
-        // Geo-filter for Afirmasi and Mutasi (by subdistrict)
         const subdistrictRestrictedPathways = ["Afirmasi", "Mutasi"];
         if (subdistrictRestrictedPathways.includes(selectedPathwayObject.name)) {
             if (!studentSubdistrict) return false;
             return school.kecamatan === studentSubdistrict;
         }
         
-        // Geo-filter for Reguler SMK pathway (for public SMA schools)
         if (selectedPathwayObject.name === 'Reguler SMK') {
             if (school.jenjang === 'SMA' && school.jenis === 'Negeri') {
                 return studentSubdistrict ? school.kecamatan === studentSubdistrict : false;
             }
-            // For SMKs or private SMAs on this pathway, no geographical restrictions apply here
             return true;
         }
 
-        // Geo-filter for Domisili pathway (for public schools)
         if (selectedPathwayObject.name === 'Domisili') {
             if (school.jenjang !== 'SMA') {
-                return true; // No geo-filter for SMK on Domisili (as per original logic)
+                return true; 
             }
             const studentVillage = applicantBiodata?.village;
             if (school.allowedVillages && school.allowedVillages.length > 0) {
@@ -231,11 +201,9 @@ export default function SchoolSelectionPage() {
             }
         }
         
-        // If no specific geographical filter applies, the school is available
         return true;
     });
     
-    // Filter by school-specific restrictions (gender, religion)
     if (applicantBiodata) {
         schoolsToDisplay = schoolsToDisplay.filter(school => {
             const genderOk = !school.allowedGenders || school.allowedGenders.length === 0 || school.allowedGenders.includes(applicantBiodata.gender as 'Laki-laki' | 'Perempuan');
@@ -245,7 +213,7 @@ export default function SchoolSelectionPage() {
     }
 
     return schoolsToDisplay;
-  }, [selectedPathwayObject, allSchools]);
+  }, [selectedPathwayObject, allSchools, selectedPathway, selectedSelections]);
 
   React.useEffect(() => {
     if (isLoading || isLocked) return; 
@@ -273,6 +241,10 @@ export default function SchoolSelectionPage() {
         [newSelection[index], newSelection[index + 1]] = [newSelection[index + 1], newSelection[index]];
         return newSelection;
     });
+  };
+  
+  const handleRemoveSelection = (index: number) => {
+    setSelectedSelections(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = () => {
@@ -378,14 +350,14 @@ export default function SchoolSelectionPage() {
                         <p className="text-sm text-muted-foreground">
                             Terpilih: {selectedSelections.length} dari {MAX_SCHOOL_SELECTION} pilihan.
                         </p>
-                        {["Afirmasi", "Mutasi"].includes(selectedPathway) && (
-                        <p className="text-xs text-primary mt-1">
-                            Untuk jalur {selectedPathway}, hanya sekolah di kecamatan Anda yang akan ditampilkan.
-                        </p>
-                        )}
-                         {selectedPathway === 'Domisili' && (
+                         {selectedPathway === 'Domisili' && selectedSelections.length === 0 && (
                           <p className="text-xs text-primary mt-1">
-                              Jalur Domisili memprioritaskan kelurahan yang diatur oleh sekolah. Jika tidak ada, prioritas berdasarkan kecamatan.
+                              Untuk jalur Domisili, pilihan pertama Anda harus sekolah jenjang SMA.
+                          </p>
+                        )}
+                        {selectedPathway === 'Reguler SMK' && selectedSelections.length === 0 && (
+                          <p className="text-xs text-primary mt-1">
+                              Untuk jalur Reguler SMK, pilihan pertama Anda harus sekolah jenjang SMK.
                           </p>
                         )}
                     </div>
@@ -488,6 +460,10 @@ export default function SchoolSelectionPage() {
                                                     <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0" onClick={() => handleMoveSelectionDown(index)} disabled={isLocked || index === selectedSelections.length - 1}>
                                                         <ArrowDown className="h-4 w-4" />
                                                          <span className="sr-only">Turunkan prioritas</span>
+                                                    </Button>
+                                                    <Button size="icon" variant="ghost" className="h-7 w-7 flex-shrink-0 text-destructive" onClick={() => handleRemoveSelection(index)} disabled={isLocked}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                         <span className="sr-only">Hapus pilihan</span>
                                                     </Button>
                                                 </div>
                                             </div>
