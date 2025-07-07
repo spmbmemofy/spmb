@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ArrowRight, Calendar, GraduationCap, LogIn, Map, Route, BarChart, Users, CheckCircle } from 'lucide-react';
+import { ArrowRight, Calendar, GraduationCap, LogIn, Map, Route, BarChart, Users, CheckCircle, Award } from 'lucide-react';
 import { LoginForm } from '@/components/auth/login-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -129,8 +129,9 @@ export default function LandingPage() {
                             </Link>
                         </Button>
                         <Button size="lg" variant="outline" asChild>
-                          <Link href="#informasi">
-                              Lihat Informasi
+                          <Link href="/selection-results">
+                              <Award className="mr-2 h-5 w-5" />
+                              Lihat Hasil Seleksi
                           </Link>
                       </Button>
                     </div>
@@ -139,8 +140,9 @@ export default function LandingPage() {
                     <Image
                         src="https://placehold.co/800x600.png"
                         alt="Siswa-siswi ceria di lingkungan sekolah"
-                        layout="fill"
-                        objectFit="cover"
+                        fill
+                        className="object-cover"
+                        priority
                         data-ai-hint="happy students school"
                     />
                 </div>
