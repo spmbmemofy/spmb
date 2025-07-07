@@ -388,7 +388,11 @@ export default function SchoolSelectionPage() {
                         <ScrollArea className="h-96 w-full rounded-md border">
                           <Accordion type="multiple" className="w-full p-2">
                             {availableSchools.length > 0 ? (
-                              availableSchools.map((school) => (
+                              availableSchools.map((school) => {
+                                const selectionIndexSma = selectedSelections.findIndex(s => s.schoolId === school.id && s.major === null);
+                                const isSelectedSma = selectionIndexSma !== -1;
+
+                                return (
                                 <AccordionItem value={school.id} key={school.id} className="border-b">
                                   {school.jenjang === "SMA" ? (
                                     <div className="flex items-center text-sm p-2 rounded-md justify-between py-4 font-medium">
@@ -399,11 +403,13 @@ export default function SchoolSelectionPage() {
                                         <div className="pl-4">
                                             <Checkbox
                                                 id={`${school.id}-sma`}
-                                                checked={selectedSelections.some(s => s.schoolId === school.id)}
+                                                checked={isSelectedSma}
                                                 onCheckedChange={() => handleSchoolSelectionChange(school.id, null)}
                                                 aria-label={`Pilih ${school.namaSekolah}`}
                                                 disabled={isLocked}
-                                            />
+                                            >
+                                              {isSelectedSma && <span className="text-sm font-bold leading-none">{selectionIndexSma + 1}</span>}
+                                            </Checkbox>
                                         </div>
                                     </div>
                                   ) : (
@@ -417,25 +423,30 @@ export default function SchoolSelectionPage() {
                                       <AccordionContent>
                                         <div className="pl-4 pr-2 pt-2 pb-2 space-y-3">
                                           <p className="text-xs font-semibold text-muted-foreground">Pilih Jurusan:</p>
-                                          {(school.majors || []).map(major => (
+                                          {(school.majors || []).map(major => {
+                                            const selectionIndexMajor = selectedSelections.findIndex(s => s.schoolId === school.id && s.major === major.name);
+                                            const isSelectedMajor = selectionIndexMajor !== -1;
+                                            return (
                                             <div key={major.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted/50">
                                               <Checkbox
                                                 id={`${school.id}-${major.id}`}
-                                                checked={selectedSelections.some(s => s.schoolId === school.id && s.major === major.name)}
+                                                checked={isSelectedMajor}
                                                 onCheckedChange={() => handleSchoolSelectionChange(school.id, major.name)}
                                                 disabled={isLocked}
-                                              />
+                                              >
+                                                {isSelectedMajor && <span className="text-sm font-bold leading-none">{selectionIndexMajor + 1}</span>}
+                                              </Checkbox>
                                               <Label htmlFor={`${school.id}-${major.id}`} className="flex-grow cursor-pointer font-normal text-sm">
                                                 {major.name}
                                               </Label>
                                             </div>
-                                          ))}
+                                          )})}
                                         </div>
                                       </AccordionContent>
                                     </>
                                   )}
                                 </AccordionItem>
-                              ))
+                                )})
                             ) : (
                               <div className="flex items-center justify-center h-full text-muted-foreground p-4 text-center">
                                 <p>Tidak ada sekolah yang tersedia untuk jalur dan tahap ini, atau tidak ada yang sesuai dengan kriteria pendaftaran Anda (misal: jenis kelamin/agama/domisili).</p>
