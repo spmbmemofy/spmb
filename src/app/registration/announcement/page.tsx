@@ -40,6 +40,7 @@ export default function AnnouncementPage() {
   const [selectedOriginSchool, setSelectedOriginSchool] = React.useState("Semua Asal Sekolah");
   const [selectedDestinationSchool, setSelectedDestinationSchool] = React.useState("Semua Sekolah Tujuan");
   const [selectedPathway, setSelectedPathway] = React.useState("Semua Jalur");
+  const [selectedStage, setSelectedStage] = React.useState("Semua Tahap");
   
   const [sortConfig, setSortConfig] = React.useState<SortConfig & { key: AnnouncementSortKey | null }>({ key: 'diterimaDiSekolahId', direction: 'ascending' });
   const [currentPage, setCurrentPage] = React.useState(1);
@@ -73,6 +74,15 @@ export default function AnnouncementPage() {
     return pathwayMap;
   }, [allStages, allPathways]);
 
+  const pathwayToStageIdMap = React.useMemo(() => {
+    if (allPathways.length === 0) return new Map();
+    const pathwayMap = new Map<string, string>();
+    allPathways.forEach(p => {
+        pathwayMap.set(p.name, p.tahapId);
+    });
+    return pathwayMap;
+  }, [allPathways]);
+
 
   const relevantApplicants = React.useMemo(() => {
     const stageIds = new Set(publishedAnnouncements.map(stage => stage.id));
@@ -94,10 +104,12 @@ export default function AnnouncementPage() {
         const originSchoolMatch = selectedOriginSchool === "Semua Asal Sekolah" || applicant.asalSekolahNama === selectedOriginSchool;
         const destinationSchoolMatch = selectedDestinationSchool === "Semua Sekolah Tujuan" || applicant.sekolahTujuanNama === selectedDestinationSchool;
         const pathwayMatch = selectedPathway === "Semua Jalur" || applicant.jalur === selectedPathway;
+        const stageIdForApplicant = pathwayToStageIdMap.get(applicant.jalur);
+        const stageMatch = selectedStage === "Semua Tahap" || stageIdForApplicant === selectedStage;
 
-        return searchTermMatch && originSchoolMatch && destinationSchoolMatch && pathwayMatch;
+        return searchTermMatch && originSchoolMatch && destinationSchoolMatch && pathwayMatch && stageMatch;
     });
-  }, [relevantApplicants, searchTerm, selectedOriginSchool, selectedDestinationSchool, selectedPathway]);
+  }, [relevantApplicants, searchTerm, selectedOriginSchool, selectedDestinationSchool, selectedPathway, selectedStage, pathwayToStageIdMap]);
 
   const sortedApplicants = React.useMemo(() => {
     let sortableItems = [...filteredApplicants];
@@ -240,7 +252,7 @@ export default function AnnouncementPage() {
                 <FilterIcon className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-semibold text-primary">Filter Hasil Seleksi</h3>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div className="relative">
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -261,6 +273,13 @@ export default function AnnouncementPage() {
                     <Select value={selectedPathway} onValueChange={setSelectedPathway}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>{pathwayOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <Select value={selectedStage} onValueChange={setSelectedStage}>
+                        <SelectTrigger><SelectValue placeholder="Filter Tahap"/></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Semua Tahap">Semua Tahap</SelectItem>
+                            {allStages.map(stage => <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>)}
+                        </SelectContent>
                     </Select>
                 </div>
             </section>
