@@ -1,19 +1,20 @@
 
 "use client";
 
-import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ArrowRight, Calendar, GraduationCap, LogIn, Map, Route, Search, BarChart, Users, CheckCircle } from 'lucide-react';
+import { ArrowRight, Calendar, GraduationCap, LogIn, Map, Route, BarChart, Users, CheckCircle } from 'lucide-react';
 import { LoginForm } from '@/components/auth/login-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { getApplicants, type ApplicantStatus } from '@/lib/applicantService';
+import { StatusCheckForm } from '@/components/landing/status-check-form';
+import { getApplicants } from '@/lib/applicantService';
+import { getSchools } from '@/lib/schoolService';
+import { getStages } from '@/lib/stageService';
+import { useEffect, useState } from 'react';
 
 const infoCards = [
   {
@@ -38,36 +39,6 @@ const infoCards = [
   },
 ];
 
-const schedule = [
-  {
-    date: '10 - 25 Juni 2026',
-    title: 'Pendaftaran & Verifikasi Berkas',
-    description: 'Siswa melakukan pendaftaran online, melengkapi biodata, memilih sekolah, dan mengunggah berkas persyaratan.',
-  },
-  {
-    date: '26 - 28 Juni 2026',
-    title: 'Pemeringkatan & Seleksi',
-    description: 'Sistem melakukan pemeringkatan otomatis berdasarkan nilai dan kriteria jalur yang dipilih.',
-  },
-  {
-    date: '29 Juni 2026',
-    title: 'Pengumuman Hasil Seleksi',
-    description: 'Hasil akhir seleksi diumumkan secara online melalui portal ini.',
-  },
-  {
-    date: '30 Juni - 2 Juli 2026',
-    title: 'Daftar Ulang',
-    description: 'Siswa yang dinyatakan lulus melakukan proses daftar ulang di sekolah penerima.',
-  },
-];
-
-const stats = [
-    { icon: GraduationCap, value: '52', label: 'Sekolah Tujuan' },
-    { icon: Users, value: '10,430', label: 'Total Kuota' },
-    { icon: LogIn, value: '8,972', label: 'Jumlah Pendaftar' },
-    { icon: CheckCircle, value: '7,150', label: 'Pendaftar Terverifikasi' },
-];
-
 const faqs = [
   {
     question: "Dokumen apa saja yang perlu disiapkan?",
@@ -88,50 +59,39 @@ const faqs = [
 ];
 
 export default function LandingPage() {
-  const [nisnCheck, setNisnCheck] = React.useState('');
-  const [checkResult, setCheckResult] = React.useState<React.ReactNode>(null);
-  const [isChecking, setIsChecking] = React.useState(false);
+  const [stats, setStats] = useState<any[]>([]);
+  const [schedule, setSchedule] = useState<any[]>([]);
 
-  const getStatusBadgeVariant = (status: ApplicantStatus): "default" | "secondary" | "destructive" => {
-    switch (status) {
-      case "Terverifikasi": return "default";
-      case "Menunggu Verifikasi": return "secondary";
-      case "Berkas tidak sesuai": return "destructive";
-      case "Dibatalkan": return "destructive";
-      default: return "secondary";
-    }
-  };
+  useEffect(() => {
+    const allSchools = getSchools();
+    const allApplicants = getApplicants();
+    const allStages = getStages();
 
-  const handleStatusCheck = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nisnCheck) {
-        setCheckResult(<p className="text-destructive">Harap masukkan NISN.</p>);
-        return;
-    }
-    
-    setIsChecking(true);
-    setCheckResult(null);
+    const destinationSchools = allSchools.filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
+    const totalQuota = destinationSchools.reduce((sum, school) => sum + (school.kuota || 0), 0);
+    const totalApplicants = allApplicants.length;
+    const verifiedApplicants = allApplicants.filter(app => app.statusVerifikasi === 'Terverifikasi').length;
 
-    setTimeout(() => { // Simulate network delay
-        const applicant = getApplicants().find(app => app.nisn === nisnCheck.trim());
-        if (applicant) {
-            setCheckResult(
-                <>
-                    <p className="font-medium">Status untuk: {applicant.fullName}</p>
-                    <Badge variant={getStatusBadgeVariant(applicant.statusVerifikasi)} className="mt-2 text-base px-4 py-1">
-                        {applicant.statusVerifikasi}
-                    </Badge>
-                    {applicant.statusVerifikasi === 'Berkas tidak sesuai' && (
-                        <p className="text-sm text-destructive mt-2 italic">"{applicant.rejectionReason || 'Ada berkas yang tidak valid. Silakan login untuk perbaikan.'}"</p>
-                    )}
-                </>
-            );
-        } else {
-            setCheckResult(<p className="text-destructive">Pendaftar dengan NISN tersebut tidak ditemukan.</p>);
-        }
-        setIsChecking(false);
-    }, 500);
-  };
+    setStats([
+      { icon: GraduationCap, value: destinationSchools.length.toString(), label: 'Sekolah Tujuan' },
+      { icon: Users, value: totalQuota.toLocaleString('id-ID'), label: 'Total Kuota' },
+      { icon: LogIn, value: totalApplicants.toLocaleString('id-ID'), label: 'Jumlah Pendaftar' },
+      { icon: CheckCircle, value: verifiedApplicants.toLocaleString('id-ID'), label: 'Pendaftar Terverifikasi' },
+    ]);
+  
+    const scheduleData = allStages.map(stage => {
+      const startDate = new Date(stage.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' });
+      const endDate = new Date(stage.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      
+      return {
+        date: `${startDate} - ${endDate}`,
+        title: stage.name,
+        description: `Proses pendaftaran, verifikasi, dan seleksi untuk jalur yang termasuk dalam ${stage.name}.`
+      }
+    });
+    setSchedule(scheduleData);
+  }, []);
+
 
   return (
     <div className="flex flex-col min-h-dvh bg-muted/30 text-foreground">
@@ -231,24 +191,7 @@ export default function LandingPage() {
                             <LoginForm />
                         </TabsContent>
                         <TabsContent value="status" className="p-8">
-                            <CardDescription className="text-center mb-6">Masukkan NISN Anda untuk melihat status verifikasi dan hasil seleksi.</CardDescription>
-                            <form onSubmit={handleStatusCheck} className="flex w-full items-start space-x-2">
-                                <Input 
-                                    type="text" 
-                                    placeholder="Masukkan NISN Anda..."
-                                    value={nisnCheck}
-                                    onChange={(e) => setNisnCheck(e.target.value)}
-                                    disabled={isChecking}
-                                />
-                                <Button type="submit" disabled={isChecking || !nisnCheck}>
-                                    {isChecking ? 'Mencari...' : <><Search className="mr-2 h-4 w-4" /> Cek</>}
-                                </Button>
-                            </form>
-                            {checkResult && (
-                                <div className="mt-6 text-center border-t pt-6">
-                                    {checkResult}
-                                </div>
-                            )}
+                            <StatusCheckForm />
                         </TabsContent>
                     </Tabs>
                 </Card>
