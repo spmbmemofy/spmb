@@ -305,7 +305,7 @@ export default function ManagedApplicantPage() {
                             throw new Error("Kolom Nama Lengkap, NISN, dan Jenis Kelamin wajib diisi.");
                         }
 
-                        const newApplicant: Omit<ManagedApplicant, 'id'> = {
+                        const newApplicantData: Omit<ManagedApplicant, 'id'> = {
                             fullName: row["Nama Lengkap"],
                             nisn: String(row["NISN"]),
                             nik: row["NIK"] ? String(row["NIK"]) : undefined,
@@ -338,7 +338,23 @@ export default function ManagedApplicantPage() {
                                 semester5: Number(row["Nilai Semester 5"] || 0),
                             }
                         };
-                        addManagedApplicant(newApplicant);
+                        addManagedApplicant(newApplicantData);
+                        
+                        try {
+                           const password = Math.random().toString(36).substring(2, 10);
+                           addUser({
+                             fullName: newApplicantData.fullName,
+                             username: newApplicantData.nisn,
+                             password: password,
+                             role: 'applicant'
+                           });
+                        } catch (userError: any) {
+                            if (!userError.message.includes('sudah ada')) {
+                                throw userError; // re-throw if it's not a duplicate user error
+                            }
+                            // If user already exists, that's fine, we can continue.
+                        }
+
                         successCount++;
                     } catch (e: any) {
                         errorCount++;

@@ -152,7 +152,7 @@ export interface ExcelRow {
   "NISN": string;
   "NIK"?: string;
   "Tempat Lahir"?: string;
-  "Tanggal Lahir"?: string;
+  "Tanggal Lahir"?: string | Date;
   "Jenis Kelamin": "Laki-laki" | "Perempuan";
   "Agama"?: string;
   "No. Kontak"?: string;
