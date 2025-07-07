@@ -101,7 +101,47 @@ export default function SchoolSelectionPage() {
     let schoolsToDisplay = allSchools.filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
     
     // Pathway-specific filtering logic
-    if (selectedPathway === 'Domisili') {
+    if (selectedPathway === 'Prestasi') {
+        schoolsToDisplay = schoolsToDisplay.filter(school => 
+            selectedPathwayObject.allowedJenjang.includes(school.jenjang)
+        );
+
+        const pathwayKey = selectedPathwayObject.name.toLowerCase() as keyof NonNullable<SchoolType['jalurKuota']>;
+        schoolsToDisplay = schoolsToDisplay.filter(school => {
+            if (school.jenjang === 'SMA') {
+                return school.jalurKuota && (school.jalurKuota[pathwayKey] ?? 0) > 0;
+            }
+            if (school.jenjang === 'SMK') {
+                return school.majors && school.majors.some(major => (major.quota[pathwayKey] ?? 0) > 0);
+            }
+            return false;
+        });
+    } else if (["Afirmasi", "Mutasi"].includes(selectedPathway)) {
+        // Filter by allowed jenjang for the pathway
+        schoolsToDisplay = schoolsToDisplay.filter(school => 
+            selectedPathwayObject.allowedJenjang.includes(school.jenjang)
+        );
+        
+        // Filter by quota for the pathway
+        const pathwayKey = selectedPathwayObject.name.toLowerCase() as keyof NonNullable<SchoolType['jalurKuota']>;
+        schoolsToDisplay = schoolsToDisplay.filter(school => {
+            if (school.jenjang === 'SMA') {
+                return school.jalurKuota && (school.jalurKuota[pathwayKey] ?? 0) > 0;
+            }
+            if (school.jenjang === 'SMK') {
+                return school.majors && school.majors.some(major => (major.quota[pathwayKey] ?? 0) > 0);
+            }
+            return false;
+        });
+
+        // Filter by domicile for Afirmasi & Mutasi
+        schoolsToDisplay = schoolsToDisplay.filter(school => {
+            if (school.allowedVillages && school.allowedVillages.length > 0) {
+                return studentVillage ? school.allowedVillages.includes(studentVillage) : false;
+            }
+            return studentSubdistrict ? school.kecamatan === studentSubdistrict : false;
+        });
+    } else if (selectedPathway === 'Domisili') {
       schoolsToDisplay = schoolsToDisplay.filter(school => {
         if (school.jenis === 'Swasta') return true;
         if (school.jenjang === 'SMK' && school.jenis === 'Negeri') return true;
@@ -126,37 +166,8 @@ export default function SchoolSelectionPage() {
         return false;
       });
     } else {
-      // Generic pathway filtering
-      schoolsToDisplay = schoolsToDisplay.filter(school => 
-        selectedPathwayObject.allowedJenjang.includes(school.jenjang)
-      );
-
-      const pathwayKey = selectedPathwayObject.name.toLowerCase() as keyof NonNullable<SchoolType['jalurKuota']>;
-      schoolsToDisplay = schoolsToDisplay.filter(school => {
-          if (school.jenjang === 'SMA') {
-              return school.jalurKuota && (school.jalurKuota[pathwayKey] ?? 0) > 0;
-          }
-          if (school.jenjang === 'SMK') {
-              return school.majors && school.majors.some(major => (major.quota[pathwayKey] ?? 0) > 0);
-          }
-          return false;
-      });
-
-      schoolsToDisplay = schoolsToDisplay.filter(school => {
-        if (school.jenis === 'Swasta') {
-            return ["Afirmasi", "Mutasi"].includes(selectedPathwayObject.name);
-        }
-        return true;
-      });
-
-      if (["Afirmasi", "Mutasi"].includes(selectedPathwayObject.name)) {
-        schoolsToDisplay = schoolsToDisplay.filter(school => {
-            if (school.allowedVillages && school.allowedVillages.length > 0) {
-                return studentVillage ? school.allowedVillages.includes(studentVillage) : false;
-            }
-            return studentSubdistrict ? school.kecamatan === studentSubdistrict : false;
-        });
-      }
+        // For any other pathway, or if no pathway is selected, clear the list.
+        schoolsToDisplay = [];
     }
     
     // Generic filters applied after pathway-specific logic
