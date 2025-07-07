@@ -88,11 +88,45 @@ export default function SchoolSelectionPage() {
   }, [router, toast]);
 
   const handlePathwayChange = (pathway: string) => {
-    setSelectedPathway(pathway);
-    setSelectedSelections([]); // Reset school selection when pathway changes
-  };
+    const pathwayObject = allPathways.find(p => p.name === pathway);
+    const isSMKOnly = pathwayObject?.allowedJenjang.length === 1 && pathwayObject.allowedJenjang[0] === 'SMK';
+    const isSMAOnly = pathwayObject?.allowedJenjang.length === 1 && pathwayObject.allowedJenjang[0] === 'SMA';
 
+    const firstSelection = selectedSelections[0];
+    if (firstSelection) {
+        const firstSchool = getSchoolById(firstSelection.schoolId);
+        if (firstSchool) {
+            if ((isSMKOnly && firstSchool.jenjang !== 'SMK') || (isSMAOnly && firstSchool.jenjang !== 'SMA')) {
+                setSelectedSelections([]);
+            }
+        }
+    }
+    
+    setSelectedPathway(pathway);
+  };
+  
   const handleSchoolSelectionChange = (schoolId: string, major: string | null) => {
+    const school = getSchoolById(schoolId);
+    if (!school) return;
+
+    if (selectedPathway === 'Domisili' && selectedSelections.length === 0 && school.jenjang !== 'SMA') {
+        toast({
+            variant: "destructive",
+            title: "Pilihan Tidak Sesuai Aturan",
+            description: "Untuk jalur Domisili, pilihan pertama Anda harus sekolah jenjang SMA.",
+        });
+        return;
+    }
+
+    if (selectedPathway === 'Reguler SMK' && selectedSelections.length === 0 && school.jenjang !== 'SMK') {
+        toast({
+            variant: "destructive",
+            title: "Pilihan Tidak Sesuai Aturan",
+            description: "Untuk jalur Reguler SMK, pilihan pertama Anda harus sekolah jenjang SMK.",
+        });
+        return;
+    }
+
     setSelectedSelections(prevSelected => {
       const selection = { schoolId, major };
       const isSelected = prevSelected.some(s => s.schoolId === schoolId && s.major === major);
@@ -128,6 +162,7 @@ export default function SchoolSelectionPage() {
     
     const applicantBiodata = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null)?.biodata;
     const studentSubdistrict = applicantBiodata?.subdistrict;
+    const studentVillage = applicantBiodata?.village;
 
     let schoolsToDisplay = allSchools.filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
     
@@ -146,24 +181,6 @@ export default function SchoolSelectionPage() {
         return false;
     });
 
-    if (selectedPathwayObject.name === 'Prestasi') {
-      return schoolsToDisplay;
-    }
-    
-    if (selectedPathway === 'Domisili') {
-        const hasSelectedSMA = selectedSelections.some(sel => getSchoolById(sel.schoolId)?.jenjang === 'SMA');
-        if (!hasSelectedSMA) {
-            return schoolsToDisplay.filter(s => s.jenjang === 'SMA');
-        }
-    }
-    
-    if (selectedPathway === 'Reguler SMK') {
-        const hasSelectedSMK = selectedSelections.some(sel => getSchoolById(sel.schoolId)?.jenjang === 'SMK');
-        if (!hasSelectedSMK) {
-            return schoolsToDisplay.filter(s => s.jenjang === 'SMK');
-        }
-    }
-
     schoolsToDisplay = schoolsToDisplay.filter(school => {
         if (school.jenis === 'Swasta') {
             return ["Domisili", "Reguler SMK", "Afirmasi", "Mutasi"].includes(selectedPathwayObject.name);
@@ -176,10 +193,12 @@ export default function SchoolSelectionPage() {
             return true;
         }
 
-        const subdistrictRestrictedPathways = ["Afirmasi", "Mutasi"];
-        if (subdistrictRestrictedPathways.includes(selectedPathwayObject.name)) {
-            if (!studentSubdistrict) return false;
-            return school.kecamatan === studentSubdistrict;
+        const villageOrSubdistrictRestricted = ["Afirmasi", "Mutasi"];
+        if (villageOrSubdistrictRestricted.includes(selectedPathwayObject.name)) {
+            if (school.allowedVillages && school.allowedVillages.length > 0) {
+                return studentVillage ? school.allowedVillages.includes(studentVillage) : false;
+            }
+            return studentSubdistrict ? school.kecamatan === studentSubdistrict : false;
         }
         
         if (selectedPathwayObject.name === 'Reguler SMK') {
@@ -193,7 +212,6 @@ export default function SchoolSelectionPage() {
             if (school.jenjang !== 'SMA') {
                 return true; 
             }
-            const studentVillage = applicantBiodata?.village;
             if (school.allowedVillages && school.allowedVillages.length > 0) {
                 return studentVillage ? school.allowedVillages.includes(studentVillage) : false;
             } else {
@@ -210,6 +228,21 @@ export default function SchoolSelectionPage() {
             const religionOk = !school.allowedReligions || school.allowedReligions.length === 0 || school.allowedReligions.includes(applicantBiodata.religion);
             return genderOk && religionOk;
         });
+    }
+
+    if (selectedSelections.length > 0) {
+        const firstSchoolJenjang = getSchoolById(selectedSelections[0].schoolId)?.jenjang;
+        if (firstSchoolJenjang === 'SMA') {
+            schoolsToDisplay = schoolsToDisplay.filter(s => s.jenjang === 'SMA');
+        } else if (firstSchoolJenjang === 'SMK') {
+            schoolsToDisplay = schoolsToDisplay.filter(s => s.jenjang === 'SMK');
+        }
+    } else {
+        if (selectedPathway === 'Domisili') {
+            schoolsToDisplay = schoolsToDisplay.filter(s => s.jenjang === 'SMA');
+        } else if (selectedPathway === 'Reguler SMK') {
+            schoolsToDisplay = schoolsToDisplay.filter(s => s.jenjang === 'SMK');
+        }
     }
 
     return schoolsToDisplay;
@@ -350,16 +383,6 @@ export default function SchoolSelectionPage() {
                         <p className="text-sm text-muted-foreground">
                             Terpilih: {selectedSelections.length} dari {MAX_SCHOOL_SELECTION} pilihan.
                         </p>
-                         {selectedPathway === 'Domisili' && selectedSelections.length === 0 && (
-                          <p className="text-xs text-primary mt-1">
-                              Untuk jalur Domisili, pilihan pertama Anda harus sekolah jenjang SMA.
-                          </p>
-                        )}
-                        {selectedPathway === 'Reguler SMK' && selectedSelections.length === 0 && (
-                          <p className="text-xs text-primary mt-1">
-                              Untuk jalur Reguler SMK, pilihan pertama Anda harus sekolah jenjang SMK.
-                          </p>
-                        )}
                     </div>
                     <Card>
                       <CardContent className="p-0">
