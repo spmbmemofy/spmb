@@ -4,7 +4,7 @@
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, UserCircle, School, Star, TrendingUp, BookOpen, CheckCircle, Clock, XCircle, Building } from "lucide-react";
+import { ArrowLeft, UserCircle, School, TrendingUp, BookOpen, CheckCircle, Clock, XCircle, Building } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -205,16 +205,7 @@ export default function ApplicantDetailPage() {
                                             <Building className="h-4 w-4 text-muted-foreground" />
                                             <span className="font-medium">{school?.namaSekolah || "Sekolah Tidak Ditemukan"}</span>
                                             {school && isPriority(applicant, school) && (
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger>
-                                                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-400" />
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <p>Prioritas Domisili untuk sekolah ini</p>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
+                                                <Badge variant="default" className="text-xs px-2 py-0.5">Prioritas Domisili</Badge>
                                             )}
                                         </div>
                                     </TableCell>
