@@ -137,7 +137,7 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-dvh bg-muted/30 text-foreground">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm">
-        <div className="container flex h-16 max-w-7xl items-center justify-between">
+        <div className="container flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2">
             <GraduationCap className="h-7 w-7 text-primary" />
             <span className="font-bold text-lg">SPMB 2026</span>
@@ -153,7 +153,7 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="py-20 sm:py-24 bg-background">
-          <div className="container max-w-7xl">
+          <div className="container max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div className="relative z-10">
                     <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
@@ -188,7 +188,7 @@ export default function LandingPage() {
           </div>
         </section>
         
-        <div className="container max-w-7xl py-20 sm:py-24 space-y-20 sm:space-y-24">
+        <div className="container max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-24 space-y-20 sm:space-y-24">
             {/* Info Cards Section */}
             <section id="informasi">
                 <div className="text-center mb-16">
@@ -336,7 +336,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t bg-background">
-        <div className="container max-w-7xl py-8 text-center text-sm text-muted-foreground">
+        <div className="container max-w-7xl px-4 sm:px-6 lg:px-8 py-8 text-center text-sm text-muted-foreground">
           &copy; {new Date().getFullYear()} Panitia SPMB Kabupaten Berau. Dibuat oleh Memofy Studio.
         </div>
       </footer>
