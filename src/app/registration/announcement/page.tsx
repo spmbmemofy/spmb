@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Megaphone, Search as SearchIcon, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Filter as FilterIcon, FileDown } from 'lucide-react';
 import { getStages, type Tahap } from '@/lib/stageService';
-import { getApplicants, type Applicant } from '@/lib/applicantService';
+import { getApplicants, type Applicant, calculateApplicantScore } from '@/lib/applicantService';
 import type { SortConfig, SortDirection } from '@/lib/types';
 import { getJalur, type Jalur } from '@/lib/pathwayService';
 import { getSchoolById, getSchools, type School } from '@/lib/schoolService';
@@ -18,14 +18,6 @@ import { useToast } from "@/hooks/use-toast";
 import * as xlsx from "xlsx";
 
 type AnnouncementSortKey = keyof Applicant | 'finalScore' | 'no';
-
-const calculateScoreForSchool = (applicant: Applicant, schoolId: string): number => {
-    const totalNilaiRapor = Object.values(applicant.semesterGrades).reduce((a, b) => a + b, 0);
-    const nilaiPrestasi = applicant.jalur === 'Prestasi' ? (applicant.nilaiPrestasi || 0) : 0;
-    const isFirstChoice = applicant.schoolSelections && applicant.schoolSelections[0]?.schoolId === schoolId;
-    const nilaiTambahan = isFirstChoice ? 25 : 0;
-    return totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
-};
 
 export default function AnnouncementPage() {
   const [publishedAnnouncements, setPublishedAnnouncements] = React.useState<Tahap[]>([]);
@@ -92,7 +84,7 @@ export default function AnnouncementPage() {
       .filter(app => pathwaysInPublishedStages.includes(app.jalur) && app.diterimaDiSekolahId)
       .map(app => ({
         ...app,
-        finalScore: calculateScoreForSchool(app, app.diterimaDiSekolahId!)
+        finalScore: calculateApplicantScore(app, app.diterimaDiSekolahId!)
       }));
   }, [publishedAnnouncements, allPathways, allApplicants]);
   

@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getSchools, type School } from "@/lib/schoolService";
-import { getApplicants, isPriority } from "@/lib/applicantService";
+import { getApplicants, isPriority, calculateApplicantScore } from "@/lib/applicantService";
 import type { Applicant, Tahap } from "@/lib/types";
 import { getJalur } from "@/lib/pathwayService";
 import { getStages } from "@/lib/stageService";
@@ -28,15 +28,6 @@ interface RankedApplicant extends Applicant {
   finalScore: number;
   placementStatus: 'Lulus' | 'Tidak Lulus' | 'Menunggu';
 }
-
-// Function to calculate final score for an applicant at a specific school
-const calculateScoreForSchool = (applicant: Applicant, schoolId: string): number => {
-    const totalNilaiRapor = Object.values(applicant.semesterGrades).reduce((a, b) => a + b, 0);
-    const nilaiPrestasi = applicant.jalur === 'Prestasi' ? (applicant.nilaiPrestasi || 0) : 0;
-    const isFirstChoice = applicant.schoolSelections && applicant.schoolSelections[0]?.schoolId === schoolId;
-    const nilaiTambahan = isFirstChoice ? 25 : 0;
-    return totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
-};
 
 export default function SelectionResultsPage() {
   const [rankedApplicants, setRankedApplicants] = React.useState<RankedApplicant[]>([]);
@@ -62,10 +53,10 @@ export default function SelectionResultsPage() {
       .map(app => {
         let finalScore = 0;
         if (app.diterimaDiSekolahId) {
-            finalScore = calculateScoreForSchool(app, app.diterimaDiSekolahId);
+            finalScore = calculateApplicantScore(app, app.diterimaDiSekolahId);
         } else if (app.schoolSelections && app.schoolSelections.length > 0) {
             // Calculate score for their first choice if not placed
-            finalScore = calculateScoreForSchool(app, app.schoolSelections[0].schoolId);
+            finalScore = calculateApplicantScore(app, app.schoolSelections[0].schoolId);
         }
 
         const placementStatus = app.diterimaDiSekolahId ? 'Lulus' : 'Tidak Lulus';

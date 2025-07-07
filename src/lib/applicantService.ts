@@ -6,6 +6,8 @@ import { generateAllMockApplicants, jalurOptionsPlain } from './mockData';
 import type { Applicant, ActivityEvent } from './types';
 import { getSchoolById, getSchools, type School } from './schoolService';
 import { getUsers } from './userService';
+import { getJalur } from './pathwayService';
+import { getStages } from './stageService';
 
 const APPLICANTS_STORAGE_KEY = 'allApplicantsData_v1';
 
@@ -37,6 +39,34 @@ export function isPriority(applicant: Applicant, school: School): boolean {
     }
 
     return priorityRule.rts.includes(applicantRT);
+}
+
+export function calculateApplicantScore(applicant: Applicant, schoolId: string): number {
+    const allJalur = getJalur();
+    const allStages = getStages();
+    
+    const applicantJalur = allJalur.find(j => j.name === applicant.jalur);
+    if (!applicantJalur) {
+        // Fallback for safety, though this should not happen
+        const totalNilaiRapor = Object.values(applicant.semesterGrades).reduce((a, b) => a + b, 0);
+        const nilaiPrestasi = applicant.jalur === 'Prestasi' ? (applicant.nilaiPrestasi || 0) : 0;
+        return totalNilaiRapor + nilaiPrestasi;
+    }
+    
+    const applicantStage = allStages.find(s => s.id === applicantJalur.tahapId);
+    
+    const totalNilaiRapor = Object.values(applicant.semesterGrades).reduce((a, b) => a + b, 0);
+    const nilaiPrestasi = applicant.jalur === 'Prestasi' ? (applicant.nilaiPrestasi || 0) : 0;
+    
+    let nilaiTambahan = 0;
+    const isFirstChoice = applicant.schoolSelections && applicant.schoolSelections[0]?.schoolId === schoolId;
+    
+    // Check if stage name is 'Tahap 1' to apply the bonus
+    if (isFirstChoice && applicantStage && applicantStage.name === 'Tahap 1') {
+        nilaiTambahan = 25;
+    }
+    
+    return totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
 }
 
 
@@ -75,13 +105,6 @@ function recalculateAllRanks(): void {
         app => app.statusVerifikasi === 'Terverifikasi' && app.schoolSelections && app.schoolSelections.length > 0
     );
 
-    const calculateScore = (applicant: Applicant, isFirstChoice: boolean): number => {
-        const totalNilaiRapor = Object.values(applicant.semesterGrades).reduce((a, b) => a + b, 0);
-        const nilaiPrestasi = applicant.jalur === 'Prestasi' ? (applicant.nilaiPrestasi || 0) : 0;
-        const nilaiTambahan = isFirstChoice ? 25 : 0;
-        return totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
-    };
-
     const maxChoices = Math.max(0, ...applicantsToProcess.map(app => app.schoolSelections.length));
 
     // 4. Iterate through each choice priority level (1st choice, 2nd choice, etc.).
@@ -116,7 +139,6 @@ function recalculateAllRanks(): void {
             
             const isSmk = school.jenjang === 'SMK';
             const jalur = isSmk ? jalurIfSmk : majorOrJalur;
-            const majorName = isSmk ? majorOrJalur : null;
             
             // Sort applicants by domicile priority, then by score.
             groupApplicants.sort((a, b) => {
@@ -129,7 +151,7 @@ function recalculateAllRanks(): void {
                 }
     
                 // If priority is the same (or not Domisili pathway), sort by score
-                return calculateScore(b, choiceIndex === 0) - calculateScore(a, choiceIndex === 0);
+                return calculateApplicantScore(b, school.id) - calculateApplicantScore(a, school.id);
             });
 
             let pathwayQuota = 0;
@@ -382,10 +404,10 @@ export function deleteApplicantById(applicantId: string): boolean {
 export function deleteApplicantByNisn(nisn: string): boolean {
   let applicants = getApplicants();
   const initialLength = applicants.length;
-  const updatedApplicants = applicants.filter(app => app.nisn !== nisn);
+  const newApplicants = applicants.filter(app => app.nisn !== nisn);
   
-  if (updatedApplicants.length < initialLength) {
-    saveToLocalStorage(APPLICANTS_STORAGE_KEY, updatedApplicants);
+  if (newApplicants.length < applicants.length) {
+    saveToLocalStorage(APPLICANTS_STORAGE_KEY, newApplicants);
     recalculateAllRanks();
     return true;
   }

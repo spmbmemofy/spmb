@@ -19,7 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { getApplicantById, getApplicants, isPriority } from "@/lib/applicantService";
+import { getApplicantById, getApplicants, isPriority, calculateApplicantScore } from "@/lib/applicantService";
 import { getSchoolById } from "@/lib/schoolService";
 import type { Applicant, ApplicantStatus, Jalur } from "@/lib/types";
 
@@ -42,18 +42,6 @@ const getStatusIcon = (status: ApplicantStatus) => {
         default: return <Clock className="h-5 w-5 text-yellow-500" />;
     }
 };
-
-
-const calculateScoreForSchool = (
-  applicant: Applicant,
-  schoolId: string,
-): number => {
-    const totalNilaiRapor = Object.values(applicant.semesterGrades).reduce((a, b) => a + b, 0);
-    const nilaiPrestasi = applicant.jalur === 'Prestasi' ? (applicant.nilaiPrestasi || 0) : 0;
-    const isFirstChoice = applicant.schoolSelections && applicant.schoolSelections[0]?.schoolId === schoolId;
-    const nilaiTambahan = isFirstChoice ? 25 : 0;
-    return totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
-}
 
 
 export default function ApplicantDetailPage() {
@@ -162,7 +150,7 @@ export default function ApplicantDetailPage() {
                     {applicant.schoolSelections && applicant.schoolSelections.length > 0 ? (
                         applicant.schoolSelections.map((selection, index) => {
                             const school = getSchoolById(selection.schoolId);
-                            const score = calculateScoreForSchool(applicant, selection.schoolId);
+                            const score = calculateApplicantScore(applicant, selection.schoolId);
                             
                             const isPlacedHere = applicant.diterimaDiSekolahId === selection.schoolId;
                             const isPlacedElsewhere = applicant.diterimaDiSekolahId && applicant.diterimaDiSekolahId !== selection.schoolId;

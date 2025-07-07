@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { getSchoolById, type School } from "@/lib/schoolService";
 import { cn } from "@/lib/utils";
 import { statusVerifikasiOptionsPlain } from "@/lib/mockData";
-import { getApplicants, isPriority } from "@/lib/applicantService";
+import { getApplicants, isPriority, calculateApplicantScore } from "@/lib/applicantService";
 import type { Applicant, ApplicantStatus, SortConfig, SortKey, SortDirection } from "@/lib/types";
 import { getJalur } from "@/lib/pathwayService";
 import { getStages } from "@/lib/stageService";
@@ -43,14 +43,6 @@ const getApplicantStatusBadgeVariant = (status: ApplicantStatus): "default" | "s
     default:
       return "default";
   }
-};
-
-const calculateScoreForSchool = (applicant: Applicant, schoolId: string): number => {
-    const totalNilaiRapor = Object.values(applicant.semesterGrades).reduce((a, b) => a + b, 0);
-    const nilaiPrestasi = applicant.jalur === 'Prestasi' ? (applicant.nilaiPrestasi || 0) : 0;
-    const isFirstChoice = applicant.schoolSelections && applicant.schoolSelections[0]?.schoolId === schoolId;
-    const nilaiTambahan = isFirstChoice ? 25 : 0;
-    return totalNilaiRapor + nilaiPrestasi + nilaiTambahan;
 };
 
 
@@ -136,7 +128,7 @@ export default function SchoolDetailPage() {
         // If the applicant is competing for a spot at this school, add them to the correct pathway group.
         const displayApp = allDisplayApplicants.get(applicant.id);
         if (displayApp) {
-            displayApp.finalScore = calculateScoreForSchool(applicant, school.id);
+            displayApp.finalScore = calculateApplicantScore(applicant, school.id);
             if (!applicantsByPathway[applicant.jalur]) {
                 applicantsByPathway[applicant.jalur] = [];
             }
