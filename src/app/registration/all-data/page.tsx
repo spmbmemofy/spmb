@@ -34,7 +34,7 @@ export default function AllDataPage() {
   const [jalurOptions, setJalurOptions] = React.useState<string[]>([]);
   
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [selectedSekolahTujuan, setSelectedSekolahTujuan] = React.useState("Semua Sekolah Tujuan");
+  const [selectedFirstChoiceSchool, setSelectedFirstChoiceSchool] = React.useState("Semua Pilihan Pertama");
   const [selectedJalur, setSelectedJalur] = React.useState("Semua Jalur");
   const [selectedStatus, setSelectedStatus] = React.useState("Semua Status");
   
@@ -50,19 +50,19 @@ export default function AllDataPage() {
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedSekolahTujuan, selectedJalur, selectedStatus, pageSize]);
+  }, [searchTerm, selectedFirstChoiceSchool, selectedJalur, selectedStatus, pageSize]);
 
   const filteredApplicants = React.useMemo(() => {
     return allApplicants.filter(applicant => {
       const searchTermMatch =
         applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         applicant.nisn.includes(searchTerm);
-      const sekolahTujuanMatch = selectedSekolahTujuan === "Semua Sekolah Tujuan" || applicant.sekolahTujuanNama === selectedSekolahTujuan;
+      const firstChoiceSchoolMatch = selectedFirstChoiceSchool === "Semua Pilihan Pertama" || applicant.sekolahTujuanNama === selectedFirstChoiceSchool;
       const jalurMatch = selectedJalur === "Semua Jalur" || applicant.jalur === selectedJalur;
       const statusMatch = selectedStatus === "Semua Status" || applicant.statusVerifikasi === selectedStatus;
-      return searchTermMatch && sekolahTujuanMatch && jalurMatch && statusMatch;
+      return searchTermMatch && firstChoiceSchoolMatch && jalurMatch && statusMatch;
     });
-  }, [allApplicants, searchTerm, selectedSekolahTujuan, selectedJalur, selectedStatus]);
+  }, [allApplicants, searchTerm, selectedFirstChoiceSchool, selectedJalur, selectedStatus]);
 
   const sortedApplicants = React.useMemo(() => {
     let sortableItems = [...filteredApplicants];
@@ -112,7 +112,7 @@ export default function AllDataPage() {
     return sortConfig.direction === 'ascending' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />;
   };
 
-  const sekolahTujuanOptions = ["Semua Sekolah Tujuan", ...schools.filter(s => s.jenjang !== 'SMP').map(s => s.namaSekolah)];
+  const firstChoiceSchoolOptions = ["Semua Pilihan Pertama", ...schools.filter(s => s.jenjang !== 'SMP').map(s => s.namaSekolah)];
   const statusOptions = ["Semua Status", ...statusVerifikasiOptionsPlain];
 
   return (
@@ -147,10 +147,10 @@ export default function AllDataPage() {
                   className="pl-10"
                 />
               </div>
-              <Select value={selectedSekolahTujuan} onValueChange={setSelectedSekolahTujuan}>
+              <Select value={selectedFirstChoiceSchool} onValueChange={setSelectedFirstChoiceSchool}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {sekolahTujuanOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                  {firstChoiceSchoolOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={selectedJalur} onValueChange={setSelectedJalur}>
@@ -186,16 +186,13 @@ export default function AllDataPage() {
                       <div className="flex items-center">Asal Sekolah{getSortIcon('asalSekolahNama')}</div>
                     </TableHead>
                     <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('sekolahTujuanNama')}>
-                      <div className="flex items-center">Sekolah Tujuan{getSortIcon('sekolahTujuanNama')}</div>
+                      <div className="flex items-center">Pilihan Pertama{getSortIcon('sekolahTujuanNama')}</div>
                     </TableHead>
                     <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('jalur')}>
                       <div className="flex items-center">Jalur{getSortIcon('jalur')}</div>
                     </TableHead>
                     <TableHead className="cursor-pointer text-center hover:bg-muted/50" onClick={() => requestSort('statusVerifikasi')}>
                       <div className="flex items-center justify-center">Status Verifikasi{getSortIcon('statusVerifikasi')}</div>
-                    </TableHead>
-                    <TableHead className="cursor-pointer text-center hover:bg-muted/50" onClick={() => requestSort('peringkat')}>
-                      <div className="flex items-center justify-center">Peringkat{getSortIcon('peringkat')}</div>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -228,29 +225,11 @@ export default function AllDataPage() {
                             {applicant.statusVerifikasi}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-center font-mono">
-                          {(() => {
-                            if (applicant.diterimaDiSekolahId && applicant.peringkat && applicant.statusVerifikasi === 'Terverifikasi') {
-                              const school = schools.find(s => s.id === applicant.diterimaDiSekolahId);
-                              if (school?.jalurKuota) {
-                                const pathwayKey = applicant.jalur.toLowerCase() as keyof typeof school.jalurKuota;
-                                const quota = school.jalurKuota[pathwayKey];
-                                if (quota !== undefined && applicant.peringkat <= quota) {
-                                  return <span className="text-green-600 font-bold">{applicant.peringkat}</span>;
-                                } else {
-                                  return <span className="text-red-600">{applicant.peringkat}</span>;
-                                }
-                              }
-                              return <span>{applicant.peringkat}</span>;
-                            }
-                            return <span>-</span>;
-                          })()}
-                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground h-24"> 
+                      <TableCell colSpan={7} className="text-center text-muted-foreground h-24"> 
                         Tidak ada data pendaftar yang cocok dengan kriteria filter.
                       </TableCell>
                     </TableRow>
@@ -301,3 +280,5 @@ export default function AllDataPage() {
     </div>
   );
 }
+
+    
