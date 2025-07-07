@@ -13,8 +13,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { getSchools, type School } from "@/lib/schoolService";
 import { getApplicants, isPriority } from "@/lib/applicantService";
-import type { Applicant } from "@/lib/types";
+import type { Applicant, Tahap } from "@/lib/types";
 import { getJalur } from "@/lib/pathwayService";
+import { getStages } from "@/lib/stageService";
 import {
   Tooltip,
   TooltipContent,
@@ -41,9 +42,11 @@ export default function SelectionResultsPage() {
   const [rankedApplicants, setRankedApplicants] = React.useState<RankedApplicant[]>([]);
   const [schools, setSchools] = React.useState<School[]>([]);
   const [jalurOptions, setJalurOptions] = React.useState<string[]>([]);
+  const [stages, setStages] = React.useState<Tahap[]>([]);
   
   const [selectedSchool, setSelectedSchool] = React.useState("Semua Sekolah");
   const [selectedJalur, setSelectedJalur] = React.useState("Semua Jalur");
+  const [selectedStage, setSelectedStage] = React.useState("Semua Tahap");
   const [searchTerm, setSearchTerm] = React.useState("");
 
   React.useEffect(() => {
@@ -51,6 +54,7 @@ export default function SelectionResultsPage() {
     const allSchools = getSchools();
     setSchools(allSchools.filter(s => s.jenjang !== 'SMP'));
     setJalurOptions(["Semua Jalur", ...getJalur().map(j => j.name)]);
+    setStages(getStages());
 
     // Process applicants for ranking
     const processedApplicants: RankedApplicant[] = allApplicants
@@ -86,19 +90,29 @@ export default function SelectionResultsPage() {
 
     setRankedApplicants(processedApplicants);
   }, []);
+  
+  const pathwayToStageMap = React.useMemo(() => {
+    const map = new Map<string, string>();
+    getJalur().forEach(pathway => {
+        map.set(pathway.name, pathway.tahapId);
+    });
+    return map;
+  }, []);
 
   const filteredAndSortedApplicants = React.useMemo(() => {
     return rankedApplicants
       .filter(applicant => {
         const schoolMatch = selectedSchool === "Semua Sekolah" || applicant.diterimaDiSekolahId === selectedSchool;
         const jalurMatch = selectedJalur === "Semua Jalur" || applicant.jalur === selectedJalur;
+        const stageIdForApplicant = pathwayToStageMap.get(applicant.jalur);
+        const stageMatch = selectedStage === "Semua Tahap" || stageIdForApplicant === selectedStage;
         const searchMatch =
           searchTerm === "" ||
           applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           applicant.nisn.includes(searchTerm);
-        return schoolMatch && jalurMatch && searchMatch;
+        return schoolMatch && jalurMatch && searchMatch && stageMatch;
       });
-  }, [rankedApplicants, selectedSchool, selectedJalur, searchTerm]);
+  }, [rankedApplicants, selectedSchool, selectedJalur, searchTerm, selectedStage, pathwayToStageMap]);
   
   const getPlacementSchool = (applicant: RankedApplicant): School | undefined => {
       if (!applicant.diterimaDiSekolahId) return undefined;
@@ -127,7 +141,7 @@ export default function SelectionResultsPage() {
               <FilterIcon className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold text-primary">Filter Hasil Seleksi</h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="relative">
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -152,6 +166,15 @@ export default function SelectionResultsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {jalurOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                </SelectContent>
+              </Select>
+               <Select value={selectedStage} onValueChange={setSelectedStage}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Filter Tahap" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Semua Tahap">Semua Tahap</SelectItem>
+                  {stages.map(stage => <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
