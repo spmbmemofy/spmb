@@ -20,29 +20,29 @@ const infoCards = [
   {
     icon: Route,
     title: 'Alur Pendaftaran',
-    description: 'Pahami langkah-langkah pendaftaran dari awal hingga akhir.',
+    description: 'Pahami alur pendaftaran mulai dari pembuatan akun, pengisian biodata, pemilihan sekolah, hingga verifikasi berkas.',
   },
   {
     icon: Calendar,
     title: 'Jadwal Penting',
-    description: 'Lihat semua tanggal penting pelaksanaan SPMB 2026.',
+    description: 'Catat semua tanggal penting pendaftaran, verifikasi, pengumuman, dan daftar ulang untuk setiap tahap.',
   },
   {
     icon: Map,
     title: 'Jalur Tersedia',
-    description: 'Ketahui berbagai jalur pendaftaran yang dibuka tahun ini.',
+    description: 'Temukan informasi lengkap mengenai jalur pendaftaran yang tersedia, seperti Afirmasi, Prestasi, dan Domisili.',
   },
   {
     icon: BarChart,
     title: 'Daya Tampung',
-    description: 'Informasi kuota penerimaan untuk setiap sekolah tujuan.',
+    description: 'Lihat daya tampung atau kuota penerimaan untuk setiap sekolah dan jurusan yang Anda minati.',
   },
 ];
 
 const faqs = [
   {
     question: "Dokumen apa saja yang perlu disiapkan?",
-    answer: "Siapkan file scan Kartu Keluarga, Akta Kelahiran, Surat Keterangan Lulus (SKL), dan rapor semester 1-5 dalam format digital (PDF/JPG). Dokumen tambahan mungkin diperlukan tergantung jalur yang Anda pilih."
+    answer: "Siapkan file scan Kartu Keluarga, Akta Kelahiran, Surat Keterangan Lulus (SKL), dan rapor semester 1-5 dalam format digital (PDF/JPG). Pastikan ukuran file tidak lebih dari 2MB per dokumen. Dokumen tambahan mungkin diperlukan tergantung jalur yang Anda pilih."
   },
   {
     question: "Berapa banyak sekolah yang bisa saya pilih?",
@@ -52,7 +52,11 @@ const faqs = [
     question: "Bagaimana jika saya melakukan kesalahan saat mengisi data?",
     answer: "Selama data belum diverifikasi oleh panitia, Anda masih dapat mengubahnya melalui dasbor pendaftar. Jika pendaftaran ditolak karena kesalahan data, Anda akan diberi kesempatan untuk melakukan perbaikan sesuai jadwal."
   },
-    {
+  {
+    question: "Bagaimana proses seleksi dilakukan?",
+    answer: "Seleksi dilakukan berdasarkan peringkat nilai akhir di setiap sekolah dan jalur yang dipilih. Nilai akhir dihitung dari total nilai rapor semester 1-5, ditambah nilai prestasi (untuk jalur prestasi) dan bonus lainnya sesuai aturan. Peringkat diurutkan dari nilai tertinggi hingga kuota terpenuhi."
+  },
+  {
     question: "Kapan saya bisa melihat hasil pengumuman?",
     answer: "Hasil pengumuman akan ditampilkan di halaman status dan halaman pengumuman setelah tahap verifikasi dan seleksi selesai sesuai dengan jadwal yang telah ditentukan."
   }
