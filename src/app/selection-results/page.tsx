@@ -36,6 +36,7 @@ export default function SelectionResultsPage() {
   const [stages, setStages] = React.useState<Tahap[]>([]);
   
   const [selectedSchool, setSelectedSchool] = React.useState("Semua Sekolah");
+  const [selectedOriginSchool, setSelectedOriginSchool] = React.useState("Semua Asal Sekolah");
   const [selectedJalur, setSelectedJalur] = React.useState("Semua Jalur");
   const [selectedStage, setSelectedStage] = React.useState("Semua Tahap");
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -89,11 +90,17 @@ export default function SelectionResultsPage() {
     });
     return map;
   }, []);
+  
+  const originSchoolOptions = React.useMemo(() => {
+    const origins = new Set(rankedApplicants.map(app => app.asalSekolahNama));
+    return ["Semua Asal Sekolah", ...Array.from(origins).sort()];
+  }, [rankedApplicants]);
 
   const filteredAndSortedApplicants = React.useMemo(() => {
     return rankedApplicants
       .filter(applicant => {
         const schoolMatch = selectedSchool === "Semua Sekolah" || applicant.diterimaDiSekolahId === selectedSchool;
+        const originSchoolMatch = selectedOriginSchool === "Semua Asal Sekolah" || applicant.asalSekolahNama === selectedOriginSchool;
         const jalurMatch = selectedJalur === "Semua Jalur" || applicant.jalur === selectedJalur;
         const stageIdForApplicant = pathwayToStageMap.get(applicant.jalur);
         const stageMatch = selectedStage === "Semua Tahap" || stageIdForApplicant === selectedStage;
@@ -101,9 +108,9 @@ export default function SelectionResultsPage() {
           searchTerm === "" ||
           applicant.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           applicant.nisn.includes(searchTerm);
-        return schoolMatch && jalurMatch && searchMatch && stageMatch;
+        return schoolMatch && originSchoolMatch && jalurMatch && searchMatch && stageMatch;
       });
-  }, [rankedApplicants, selectedSchool, selectedJalur, searchTerm, selectedStage, pathwayToStageMap]);
+  }, [rankedApplicants, selectedSchool, selectedOriginSchool, selectedJalur, searchTerm, selectedStage, pathwayToStageMap]);
   
   const getPlacementSchool = (applicant: RankedApplicant): School | undefined => {
       if (!applicant.diterimaDiSekolahId) return undefined;
@@ -132,7 +139,7 @@ export default function SelectionResultsPage() {
               <FilterIcon className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold text-primary">Filter Hasil Seleksi</h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="relative">
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -142,6 +149,14 @@ export default function SelectionResultsPage() {
                   className="pl-10"
                 />
               </div>
+               <Select value={selectedOriginSchool} onValueChange={setSelectedOriginSchool}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Filter Sekolah Asal" />
+                </SelectTrigger>
+                <SelectContent>
+                  {originSchoolOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <Select value={selectedSchool} onValueChange={setSelectedSchool}>
                 <SelectTrigger>
                     <SelectValue placeholder="Filter Sekolah Penempatan" />
@@ -179,6 +194,7 @@ export default function SelectionResultsPage() {
                     <TableHead className="text-center w-[50px]">No.</TableHead>
                     <TableHead>Nama Lengkap</TableHead>
                     <TableHead>NISN</TableHead>
+                    <TableHead>Asal Sekolah</TableHead>
                     <TableHead>Jalur</TableHead>
                     <TableHead>Sekolah Penempatan</TableHead>
                     <TableHead className="text-center">Peringkat</TableHead>
@@ -196,6 +212,7 @@ export default function SelectionResultsPage() {
                             {applicant.fullName}
                           </TableCell>
                           <TableCell>{applicant.nisn}</TableCell>
+                          <TableCell>{applicant.asalSekolahNama}</TableCell>
                           <TableCell>{applicant.jalur}</TableCell>
                           <TableCell>
                             {placementSchool ? (
@@ -220,7 +237,7 @@ export default function SelectionResultsPage() {
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground h-24"> 
+                      <TableCell colSpan={8} className="text-center text-muted-foreground h-24"> 
                         Tidak ada data pendaftar yang cocok dengan kriteria filter.
                       </TableCell>
                     </TableRow>
