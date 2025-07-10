@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ArrowRight, Calendar, GraduationCap, LogIn, Map, Route, BarChart, Users, CheckCircle, Award } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { ArrowRight, Calendar, GraduationCap, LogIn, Map, Route, BarChart, Users, CheckCircle, Award, UserPlus, Info } from 'lucide-react';
 import { LoginForm } from '@/components/auth/login-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -126,23 +127,52 @@ export default function LandingPage() {
                     <p className="mt-6 text-lg sm:text-xl text-muted-foreground">
                         Sistem Penerimaan Murid Baru Online yang transparan, akuntabel, dan mudah diakses untuk seluruh calon siswa.
                     </p>
-                    <div className="mt-8 flex gap-4">
+                    <div className="mt-8 flex flex-wrap gap-4">
                         <Button size="lg" asChild>
                             <Link href="#login">
-                                Mulai Pendaftaran <ArrowRight className="ml-2 h-5 w-5" />
+                                Saya Sudah Punya Akun
+                                <LogIn className="ml-2 h-5 w-5" />
                             </Link>
                         </Button>
-                        <Button size="lg" variant="outline" asChild>
-                          <Link href="/selection-results">
-                              <Award className="mr-2 h-5 w-5" />
-                              Lihat Hasil Seleksi
-                          </Link>
-                      </Button>
+
+                         <Dialog>
+                            <DialogTrigger asChild>
+                                <Button size="lg" variant="secondary">
+                                    <UserPlus className="mr-2 h-5 w-5" />
+                                    Belum Punya Akun?
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md">
+                                <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                    <Info className="h-6 w-6 text-primary" />
+                                    Informasi Pembuatan Akun
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Berikut adalah cara untuk mendapatkan akun pendaftaran Anda.
+                                </DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4 space-y-4 text-sm">
+                                    <div className="rounded-lg border p-4">
+                                        <h4 className="font-semibold mb-2">Bagi Siswa Dalam Daerah</h4>
+                                        <p className="text-muted-foreground">
+                                        Akun pendaftaran Anda akan dibuatkan dan didistribusikan oleh <strong>operator dari sekolah (SMP/MTs) Anda masing-masing</strong>. Silakan hubungi pihak sekolah Anda untuk mendapatkan akun.
+                                        </p>
+                                    </div>
+                                    <div className="rounded-lg border p-4">
+                                        <h4 className="font-semibold mb-2">Bagi Siswa Lulusan Luar Daerah</h4>
+                                        <p className="text-muted-foreground">
+                                        Harap melapor ke <strong>Cabang Dinas Pendidikan</strong> terdekat dengan membawa berkas-berkas yang diperlukan untuk dibuatkan akun pendaftaran.
+                                        </p>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </div>
                 <div className="relative h-80 lg:h-full rounded-2xl overflow-hidden shadow-2xl">
                     <Image
-                        src="https://placehold.co/800x600.png"
+                        src="/school-hero-image.jpg"
                         alt="Siswa-siswi ceria di lingkungan sekolah"
                         fill
                         className="object-cover"
