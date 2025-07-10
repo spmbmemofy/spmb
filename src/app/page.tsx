@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
-import { ArrowRight, Calendar, GraduationCap, LogIn, Map, Route, BarChart, Users, CheckCircle, Award, UserPlus, Info } from 'lucide-react';
+import { ArrowRight, Calendar, GraduationCap, LogIn, Map, Route, BarChart, Users, CheckCircle, Award, UserPlus, Info, Megaphone } from 'lucide-react';
 import { LoginForm } from '@/components/auth/login-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -107,11 +107,18 @@ export default function LandingPage() {
             <GraduationCap className="h-7 w-7 text-primary" />
             <span className="font-bold text-lg">SPMB 2026</span>
           </Link>
-          <Button asChild>
-            <Link href="#login">
-                <LogIn className="mr-2 h-4 w-4" /> Masuk
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+                <Link href="/selection-results">
+                    <Megaphone className="mr-2 h-4 w-4" /> Lihat Hasil Seleksi
+                </Link>
+            </Button>
+            <Button asChild>
+                <Link href="#login">
+                    <LogIn className="mr-2 h-4 w-4" /> Masuk
+                </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
