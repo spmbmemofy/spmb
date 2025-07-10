@@ -162,7 +162,7 @@ export default function LandingPage() {
                                     <div className="rounded-lg border p-4">
                                         <h4 className="font-semibold mb-2">Bagi Siswa Lulusan Luar Daerah</h4>
                                         <p className="text-muted-foreground">
-                                        Harap melapor ke <strong>Cabang Dinas Pendidikan</strong> terdekat dengan membawa berkas-berkas yang diperlukan untuk dibuatkan akun pendaftaran.
+                                        Harap melapor ke <strong>Cabang Dinas Pendidikan</strong> yang menaungi sekolah tujuan Anda dengan membawa berkas-berkas yang diperlukan untuk dibuatkan akun pendaftaran.
                                         </p>
                                     </div>
                                 </div>
@@ -172,7 +172,7 @@ export default function LandingPage() {
                 </div>
                 <div className="relative h-80 lg:h-full rounded-2xl overflow-hidden shadow-2xl">
                     <Image
-                        src="/school-hero-image.jpg"
+                        src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2070&auto=format&fit=crop"
                         alt="Siswa-siswi ceria di lingkungan sekolah"
                         fill
                         className="object-cover"
