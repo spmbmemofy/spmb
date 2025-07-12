@@ -179,7 +179,7 @@ export default function LandingPage() {
                 </div>
                 <div className="relative h-80 lg:h-full rounded-2xl overflow-hidden shadow-2xl">
                     <Image
-                        src="https://placehold.co/800x600.png"
+                        src="https://placehold.co/800x450.png"
                         alt="Ilustrasi siswa-siswi merayakan kelulusan"
                         fill
                         className="object-cover"
