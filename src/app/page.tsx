@@ -179,7 +179,7 @@ export default function LandingPage() {
                 </div>
                 <div className="relative h-80 lg:h-full rounded-2xl overflow-hidden shadow-2xl">
                     <Image
-                        src="https://placehold.co/800x450.png"
+                        src="https://storage.googleapis.com/gen-3-prod-frontend-output-assets-us-central1/project-id-8274705574483733075/image-49e3e3b0-64de-4b95-a400-9856c666fcf9.png"
                         alt="Ilustrasi siswa-siswi merayakan kelulusan"
                         fill
                         className="object-cover"
