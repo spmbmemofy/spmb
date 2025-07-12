@@ -179,12 +179,12 @@ export default function LandingPage() {
                 </div>
                 <div className="relative h-80 lg:h-full rounded-2xl overflow-hidden shadow-2xl">
                     <Image
-                        src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2070&auto=format&fit=crop"
-                        alt="Siswa-siswi ceria di lingkungan sekolah"
+                        src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop"
+                        alt="Siswa-siswi ceria belajar bersama"
                         fill
                         className="object-cover"
                         priority
-                        data-ai-hint="happy students school"
+                        data-ai-hint="happy students studying"
                     />
                 </div>
             </div>
