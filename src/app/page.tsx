@@ -179,12 +179,12 @@ export default function LandingPage() {
                 </div>
                 <div className="relative h-80 lg:h-full rounded-2xl overflow-hidden shadow-2xl">
                     <Image
-                        src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop"
-                        alt="Siswa-siswi ceria belajar bersama"
+                        src="https://firebasestorage.googleapis.com/v0/b/studioprompt-prod.appspot.com/o/1b1d1d81-8077-4467-ab64-50b8b609c13b.png?alt=media&token=e6118d53-a178-433e-b873-1f19894e4be9"
+                        alt="Ilustrasi siswa-siswi merayakan kelulusan"
                         fill
                         className="object-cover"
                         priority
-                        data-ai-hint="happy students studying"
+                        data-ai-hint="happy students illustration"
                     />
                 </div>
             </div>
