@@ -23,14 +23,14 @@ export function getManagedApplicants(): ManagedApplicant[] {
   return getFromLocalStorage<ManagedApplicant[]>(MANAGED_APPLICANTS_STORAGE_KEY, []);
 }
 
-export function addManagedApplicant(newApplicant: Omit<ManagedApplicant, 'id'>): ManagedApplicant {
+export function addManagedApplicant(newApplicant: Omit<ManagedApplicant, 'id'>, index?: number): ManagedApplicant {
   const applicants = getManagedApplicants();
   if (applicants.some(a => a.nisn === newApplicant.nisn)) {
     throw new Error('Pendaftar dengan NISN yang sama sudah ada.');
   }
   const applicantWithId: ManagedApplicant = { 
     ...newApplicant, 
-    id: `managed-${Date.now()}`
+    id: `managed-${Date.now()}-${index ?? 0}`
   };
   const updatedApplicants = [...applicants, applicantWithId];
   saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, updatedApplicants);

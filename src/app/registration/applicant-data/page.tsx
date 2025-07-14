@@ -338,7 +338,7 @@ export default function ManagedApplicantPage() {
                                 semester5: Number(row["Nilai Semester 5"] || 0),
                             }
                         };
-                        addManagedApplicant(newApplicantData);
+                        addManagedApplicant(newApplicantData, index);
                         
                         try {
                            const password = Math.random().toString(36).substring(2, 10);
