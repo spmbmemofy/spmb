@@ -7,19 +7,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import * as xlsx from "xlsx";
-import { Users, MoreHorizontal, Edit, Trash2, PlusCircle, Upload, KeyRound, Eye, EyeOff, FileDown } from 'lucide-react';
+import { Users, MoreHorizontal, Edit, Trash2, PlusCircle, Upload, KeyRound, Eye, EyeOff, FileDown, History } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 
 import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { getSchoolByNPSN, type School } from "@/lib/schoolService";
@@ -27,6 +29,7 @@ import { getUsers, addUser, updateUser, deleteUser } from "@/lib/userService";
 import { getManagedApplicants, addManagedApplicant, updateManagedApplicant, deleteManagedApplicant } from "@/lib/managedApplicantService";
 import type { ManagedApplicant, ExcelRow } from "@/lib/types";
 import { addressData, getDistricts, getSubdistricts, getVillages } from "@/lib/addressData";
+import { addImportLog, getImportHistory, type ImportLog } from "@/lib/importHistoryService";
 
 const religionOptions = [ "Islam", "Kristen Protestan", "Katolik", "Hindu", "Buddha", "Konghucu", "Lainnya" ];
 const occupationOptions = [ "Tidak Bekerja", "Ibu Rumah Tangga", "PNS/TNI/Polri", "Pegawai Swasta", "Wiraswasta", "Petani/Nelayan/Peternak", "Buruh", "Profesional", "Pensiunan", "Lainnya" ];
@@ -94,6 +97,9 @@ export default function ManagedApplicantPage() {
     const [accountInfoDialogTitle, setAccountInfoDialogTitle] = React.useState('');
     const [isNewApplicantSession, setIsNewApplicantSession] = React.useState(false);
     const [visiblePasswordId, setVisiblePasswordId] = React.useState<string | null>(null);
+    
+    const [isHistoryDialogOpen, setIsHistoryDialogOpen] = React.useState(false);
+    const [importHistory, setImportHistory] = React.useState<ImportLog[]>([]);
 
     const form = useForm<ApplicantFormValues>({
         resolver: zodResolver(applicantFormSchema),
@@ -129,6 +135,7 @@ export default function ManagedApplicantPage() {
             setOperatorSchool(school);
             const schoolApplicants = getManagedApplicants().filter(a => a.asalSekolahId === school.id);
             setApplicants(schoolApplicants);
+            setImportHistory(getImportHistory(school.id));
         }
         setIsLoading(false);
     }, [router, toast]);
@@ -172,18 +179,14 @@ export default function ManagedApplicantPage() {
 
     const handleConfirmDelete = () => {
         if (applicantToDelete && operatorSchool) {
-            // Find the user by NISN (username)
             const userToDeleteAccount = getUsers().find(u => u.username === applicantToDelete.nisn);
             
             if (userToDeleteAccount) {
-                // This will cascade delete from users, applicants, and managedApplicants
                 deleteUser(userToDeleteAccount.id);
             } else {
-                // If no user account, just delete the managed applicant record
                 deleteManagedApplicant(applicantToDelete.id);
             }
             
-            // Refetch the list of applicants for the current school
             setApplicants(getManagedApplicants().filter(a => a.asalSekolahId === operatorSchool.id));
             toast({ title: "Pendaftar Dihapus", description: `Data untuk ${applicantToDelete.fullName} telah dihapus.` });
         }
@@ -202,13 +205,12 @@ export default function ManagedApplicantPage() {
                 if (savedApplicant) {
                     setApplicants(prev => prev.map(a => a.id === savedApplicant!.id ? savedApplicant! : a));
                     
-                    // Also update the associated user account if it exists
                     const userToUpdate = getUsers().find(u => u.username === editingApplicant.nisn);
                     if (userToUpdate) {
                         updateUser({
                             ...userToUpdate,
-                            username: savedApplicant.nisn, // update username if NISN changed
-                            fullName: savedApplicant.fullName, // update full name
+                            username: savedApplicant.nisn,
+                            fullName: savedApplicant.fullName,
                         });
                     }
                 }
@@ -225,7 +227,7 @@ export default function ManagedApplicantPage() {
             if (isLastTab) {
                 if (isNewApplicantSession) {
                     try {
-                        const password = Math.random().toString(36).substring(2, 10); // Generate 8-char random password
+                        const password = Math.random().toString(36).substring(2, 10);
                         addUser({
                             fullName: data.fullName,
                             username: data.nisn,
@@ -269,14 +271,9 @@ export default function ManagedApplicantPage() {
             "Penghasilan Ayah", "Nama Ibu", "Pekerjaan Ibu", "Penghasilan Ibu", "Nama Wali",
             "Nilai Semester 1", "Nilai Semester 2", "Nilai Semester 3", "Nilai Semester 4", "Nilai Semester 5"
         ];
-        // Create a worksheet with only the header row
         const ws = xlsx.utils.aoa_to_sheet([headers]);
-        
-        // Create a workbook and append the worksheet
         const wb = xlsx.utils.book_new();
         xlsx.utils.book_append_sheet(wb, ws, "Template Pendaftar");
-        
-        // Write the workbook and trigger a download
         xlsx.writeFile(wb, "Template_Pendaftar_SMP.xlsx");
         toast({ title: "Template Diunduh", description: "Template Excel untuk data pendaftar telah berhasil diunduh." });
     };
@@ -287,6 +284,10 @@ export default function ManagedApplicantPage() {
 
         const reader = new FileReader();
         reader.onload = (e) => {
+            let successCount = 0;
+            let errorCount = 0;
+            const errors: string[] = [];
+            
             try {
                 const data = e.target?.result;
                 const workbook = xlsx.read(data, { type: 'binary', cellDates: true });
@@ -294,13 +295,8 @@ export default function ManagedApplicantPage() {
                 const worksheet = workbook.Sheets[sheetName];
                 const json: ExcelRow[] = xlsx.utils.sheet_to_json(worksheet);
 
-                let successCount = 0;
-                let errorCount = 0;
-                const errors: string[] = [];
-
                 json.forEach((row, index) => {
                     try {
-                        // Basic validation for required fields
                         if (!row["Nama Lengkap"] || !row["NISN"] || !row["Jenis Kelamin"]) {
                             throw new Error("Kolom Nama Lengkap, NISN, dan Jenis Kelamin wajib diisi.");
                         }
@@ -350,9 +346,8 @@ export default function ManagedApplicantPage() {
                            });
                         } catch (userError: any) {
                             if (!userError.message.includes('sudah ada')) {
-                                throw userError; // re-throw if it's not a duplicate user error
+                                throw userError;
                             }
-                            // If user already exists, that's fine, we can continue.
                         }
 
                         successCount++;
@@ -365,11 +360,23 @@ export default function ManagedApplicantPage() {
                 setApplicants(getManagedApplicants().filter(a => a.asalSekolahId === operatorSchool.id));
                 toast({
                     title: "Import Selesai",
-                    description: `${successCount} data berhasil diimpor, ${errorCount} data gagal. ${errors.length > 0 ? `Error pertama: ${errors[0]}` : ''}`,
+                    description: `${successCount} data berhasil diimpor, ${errorCount} data gagal. Lihat riwayat untuk detail.`,
                 });
 
             } catch (e) {
                 toast({ variant: "destructive", title: "Gagal Membaca File", description: "Pastikan format file Excel sudah benar dan tidak rusak." });
+                errorCount = 1;
+                errors.push("Gagal membaca file Excel. Pastikan format benar.");
+            } finally {
+                addImportLog({
+                    schoolId: operatorSchool.id,
+                    fileName: file.name,
+                    timestamp: new Date().toISOString(),
+                    successCount,
+                    errorCount,
+                    errors,
+                });
+                setImportHistory(getImportHistory(operatorSchool.id));
             }
         };
         reader.readAsBinaryString(file);
@@ -402,13 +409,17 @@ export default function ManagedApplicantPage() {
                                     <FileDown className="mr-2 h-4 w-4" />
                                     Unduh Template
                                 </Button>
+                                <Button type="button" variant="outline" onClick={() => setIsHistoryDialogOpen(true)}>
+                                    <History className="mr-2 h-4 w-4" />
+                                    Riwayat Impor
+                                </Button>
                                 <Button type="button" onClick={() => fileInputRef.current?.click()}>
                                     <Upload className="mr-2 h-4 w-4" />
                                     Import Excel
                                 </Button>
                                 <Button type="button" onClick={() => handleOpenDialog()}>
                                     <PlusCircle className="mr-2 h-4 w-4" />
-                                    Tambah Pendaftar
+                                    Tambah Manual
                                 </Button>
                             </div>
                         </div>
@@ -615,6 +626,58 @@ export default function ManagedApplicantPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            
+             <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
+                <DialogContent className="sm:max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>Riwayat Impor Excel</DialogTitle>
+                        <DialogDescription>
+                            Berikut adalah catatan semua aktivitas impor data dari file Excel.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="max-h-[60vh] overflow-y-auto pr-4 my-4">
+                        {importHistory.length > 0 ? (
+                             <Accordion type="single" collapsible className="w-full">
+                                {importHistory.map((log) => (
+                                    <AccordionItem value={log.id} key={log.id}>
+                                        <AccordionTrigger>
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full pr-4">
+                                                <div className="flex-1 text-left">
+                                                    <p className="font-medium truncate">{log.fileName}</p>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        {new Date(log.timestamp).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                                                    </p>
+                                                </div>
+                                                <div className="flex gap-2 mt-2 sm:mt-0">
+                                                    <Badge variant={log.successCount > 0 ? "default" : "secondary"}>Sukses: {log.successCount}</Badge>
+                                                    <Badge variant={log.errorCount > 0 ? "destructive" : "secondary"}>Gagal: {log.errorCount}</Badge>
+                                                </div>
+                                            </div>
+                                        </AccordionTrigger>
+                                        <AccordionContent>
+                                           {log.errors.length > 0 ? (
+                                                <div className="text-sm space-y-1 bg-muted p-3 rounded-md">
+                                                     <p className="font-semibold text-destructive mb-2">Detail Error:</p>
+                                                     <ul className="list-disc pl-5">
+                                                        {log.errors.map((error, idx) => <li key={idx}>{error}</li>)}
+                                                     </ul>
+                                                </div>
+                                           ) : (
+                                               <p className="text-sm text-muted-foreground text-center py-4">Tidak ada error pada impor ini.</p>
+                                           )}
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                ))}
+                            </Accordion>
+                        ) : (
+                            <p className="text-center text-muted-foreground py-10">Belum ada riwayat impor.</p>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" onClick={() => setIsHistoryDialogOpen(false)}>Tutup</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
