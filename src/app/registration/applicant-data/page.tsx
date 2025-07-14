@@ -198,7 +198,7 @@ export default function ManagedApplicantPage() {
             let savedApplicant: ManagedApplicant | undefined;
             
             if (editingApplicant) {
-                savedApplicant = updateManagedApplicant({ ...applicantData, id: editingApplicant.id });
+                savedApplicant = updateManagedApplicant({ ...applicantData, id: data.nisn });
                 if (savedApplicant) {
                     setApplicants(prev => prev.map(a => a.id === savedApplicant!.id ? savedApplicant! : a));
                     
@@ -338,7 +338,7 @@ export default function ManagedApplicantPage() {
                                 semester5: Number(row["Nilai Semester 5"] || 0),
                             }
                         };
-                        addManagedApplicant(newApplicantData, index);
+                        addManagedApplicant(newApplicantData);
                         
                         try {
                            const password = Math.random().toString(36).substring(2, 10);
@@ -507,7 +507,7 @@ export default function ManagedApplicantPage() {
                                 <TabsContent value="personal" className="pt-4 space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormField control={form.control} name="fullName" render={({ field }) => ( <FormItem><FormLabel>Nama Lengkap</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                                        <FormField control={form.control} name="nisn" render={({ field }) => ( <FormItem><FormLabel>NISN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                                        <FormField control={form.control} name="nisn" render={({ field }) => ( <FormItem><FormLabel>NISN</FormLabel><FormControl><Input {...field} disabled={!!editingApplicant} /></FormControl><FormMessage /></FormItem> )} />
                                         <FormField control={form.control} name="nik" render={({ field }) => ( <FormItem><FormLabel>NIK</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                                         <FormField control={form.control} name="gender" render={({ field }) => ( <FormItem><FormLabel>Jenis Kelamin</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="Laki-laki">Laki-laki</SelectItem><SelectItem value="Perempuan">Perempuan</SelectItem></SelectContent></Select><FormMessage /></FormItem> )} />
                                         <FormField control={form.control} name="placeOfBirth" render={({ field }) => ( <FormItem><FormLabel>Tempat Lahir</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />

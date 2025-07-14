@@ -328,7 +328,7 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
   } else {
     const newApplicant: Applicant = {
       ...applicantDataFromProgress,
-      id: `app-${creds.username}`,
+      id: creds.username!,
       semesterGrades: progress.biodata.semesterGrades,
       activityHistory: [
         { type: 'REGISTRATION_COMPLETED', timestamp: submissionTime, actor: progress.biodata.fullName },

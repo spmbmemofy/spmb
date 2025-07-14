@@ -23,14 +23,14 @@ export function getManagedApplicants(): ManagedApplicant[] {
   return getFromLocalStorage<ManagedApplicant[]>(MANAGED_APPLICANTS_STORAGE_KEY, []);
 }
 
-export function addManagedApplicant(newApplicant: Omit<ManagedApplicant, 'id'>, index?: number): ManagedApplicant {
+export function addManagedApplicant(newApplicant: Omit<ManagedApplicant, 'id'>): ManagedApplicant {
   const applicants = getManagedApplicants();
   if (applicants.some(a => a.nisn === newApplicant.nisn)) {
     throw new Error('Pendaftar dengan NISN yang sama sudah ada.');
   }
   const applicantWithId: ManagedApplicant = { 
     ...newApplicant, 
-    id: `managed-${Date.now()}-${index ?? 0}`
+    id: newApplicant.nisn
   };
   const updatedApplicants = [...applicants, applicantWithId];
   saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, updatedApplicants);
@@ -41,9 +41,14 @@ export function updateManagedApplicant(updatedApplicant: ManagedApplicant): Mana
   let applicants = getManagedApplicants();
   const index = applicants.findIndex(a => a.id === updatedApplicant.id);
   if (index !== -1) {
-    if (applicants.some(a => a.nisn === updatedApplicant.nisn && a.id !== updatedApplicant.id)) {
-        throw new Error('Pendaftar dengan NISN yang sama sudah ada.');
+    // If the NISN is being changed, we must ensure it doesn't conflict with another applicant's NISN
+    if (updatedApplicant.nisn !== applicants[index].nisn) {
+      if (applicants.some(a => a.nisn === updatedApplicant.nisn)) {
+        throw new Error('NISN baru sudah digunakan oleh pendaftar lain.');
+      }
     }
+    // The ID must always be the NISN
+    updatedApplicant.id = updatedApplicant.nisn;
     applicants[index] = updatedApplicant;
     saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, applicants);
     return updatedApplicant;
