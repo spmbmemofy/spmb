@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
-import { ArrowRight, Calendar, GraduationCap, LogIn, Map, Route, BarChart, Users, CheckCircle, Award, UserPlus, Info, Megaphone, Building } from 'lucide-react';
+import { ArrowRight, Calendar, GraduationCap, LogIn, Map, Route, BarChart, Users, CheckCircle, Award, UserPlus, Info, Megaphone, Building, School } from 'lucide-react';
 import { LoginForm } from '@/components/auth/login-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -16,7 +16,6 @@ import { getApplicants } from '@/lib/applicantService';
 import { getSchools } from '@/lib/schoolService';
 import { getStages } from '@/lib/stageService';
 import { useEffect, useState } from 'react';
-import type { School } from '@/lib/schoolService';
 
 const infoCards = [
   {
@@ -67,7 +66,6 @@ const faqs = [
 export default function LandingPage() {
   const [stats, setStats] = useState<any[]>([]);
   const [schedule, setSchedule] = useState<any[]>([]);
-  const [featuredSchools, setFeaturedSchools] = useState<School[]>([]);
 
   useEffect(() => {
     const allSchools = getSchools();
@@ -97,7 +95,6 @@ export default function LandingPage() {
       }
     });
     setSchedule(scheduleData);
-    setFeaturedSchools(destinationSchools.slice(0, 4));
   }, []);
 
 
@@ -112,8 +109,13 @@ export default function LandingPage() {
           </Link>
           <div className="flex items-center gap-2">
             <Button variant="outline" asChild>
+                <Link href="/schools">
+                    <School className="mr-2 h-4 w-4" /> Daftar Sekolah
+                </Link>
+            </Button>
+            <Button variant="outline" asChild>
                 <Link href="/selection-results">
-                    <Megaphone className="mr-2 h-4 w-4" /> Lihat Hasil Seleksi
+                    <Megaphone className="mr-2 h-4 w-4" /> Hasil Seleksi
                 </Link>
             </Button>
             <Button asChild>
@@ -220,53 +222,6 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Featured Schools Section */}
-            <section id="sekolah">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-4xl font-bold">Sekolah Tujuan Unggulan</h2>
-                    <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
-                        Jelajahi beberapa sekolah tujuan yang tersedia dalam pendaftaran tahun ini.
-                    </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                {featuredSchools.map((school) => (
-                    <Card key={school.id} className="group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col">
-                        <div className="relative h-40">
-                            <Image
-                                src={`https://placehold.co/600x400.png`}
-                                alt={`Foto ${school.namaSekolah}`}
-                                fill
-                                className="object-cover"
-                                data-ai-hint="school building"
-                            />
-                        </div>
-                        <CardHeader>
-                            <CardTitle className="text-lg">{school.namaSekolah}</CardTitle>
-                            <CardDescription>{school.kecamatan}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-grow">
-                             <div className="flex justify-between items-center text-sm text-muted-foreground">
-                                <span>Total Kuota</span>
-                                <span className="font-bold text-foreground">{school.kuota || '-'}</span>
-                             </div>
-                             <div className="flex justify-between items-center text-sm text-muted-foreground mt-2">
-                                <span>Akreditasi</span>
-                                <span className="font-bold text-foreground">{school.akreditasi}</span>
-                             </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button asChild className="w-full" variant="outline">
-                                <Link href={`/school/${school.id}`}>
-                                    Lihat Detail Sekolah
-                                    <ArrowRight className="ml-2 h-4 w-4" />
-                                </Link>
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                ))}
-                </div>
-            </section>
-            
             {/* Login & Status Check Section */}
             <section id="login">
                 <div className="text-center mb-16">
