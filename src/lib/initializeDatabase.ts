@@ -12,9 +12,6 @@ import { initializeImportHistory } from './importHistoryService';
 
 export function initializeAllData() {
   if (typeof window !== 'undefined') {
-    // This function runs on layout mount to ensure that
-    // the application's data is initialized in localStorage if it doesn't exist.
-    // Subsequent loads will use the persisted data.
     initializeUsers();
     initializeSchoolsData();
     initializeManagedApplicantsData();

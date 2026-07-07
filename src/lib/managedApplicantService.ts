@@ -4,18 +4,12 @@
 import { getFromLocalStorage, saveToLocalStorage } from './localStorage';
 import type { ManagedApplicant } from './types';
 
-// Adding initial data for demonstration purposes.
-const initialManagedApplicants: ManagedApplicant[] = [];
-
 const MANAGED_APPLICANTS_STORAGE_KEY = 'managedApplicantsData_v3';
 
-/**
- * Initializes the managed applicants data in localStorage if it doesn't already exist.
- */
 export const initializeManagedApplicantsData = (): void => {
   const existingData = getFromLocalStorage<ManagedApplicant[]>(MANAGED_APPLICANTS_STORAGE_KEY, []);
   if (existingData.length === 0) {
-    saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, initialManagedApplicants);
+    saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, []);
   }
 };
 
@@ -41,13 +35,11 @@ export function updateManagedApplicant(updatedApplicant: ManagedApplicant): Mana
   let applicants = getManagedApplicants();
   const index = applicants.findIndex(a => a.id === updatedApplicant.id);
   if (index !== -1) {
-    // If the NISN is being changed, we must ensure it doesn't conflict with another applicant's NISN
     if (updatedApplicant.nisn !== applicants[index].nisn) {
       if (applicants.some(a => a.nisn === updatedApplicant.nisn)) {
         throw new Error('NISN baru sudah digunakan oleh pendaftar lain.');
       }
     }
-    // The ID must always be the NISN
     updatedApplicant.id = updatedApplicant.nisn;
     applicants[index] = updatedApplicant;
     saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, applicants);
@@ -68,7 +60,6 @@ export function deleteManagedApplicant(applicantId: string): boolean {
 
 export function deleteManagedApplicantByNisn(nisn: string): boolean {
   let applicants = getManagedApplicants();
-  const initialLength = applicants.length;
   const newApplicants = applicants.filter(a => a.nisn !== nisn);
   if (newApplicants.length < applicants.length) {
     saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, newApplicants);

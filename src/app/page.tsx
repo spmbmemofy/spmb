@@ -4,13 +4,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { GraduationCap, LogIn, CheckCircle, UserPlus, Info, Megaphone, School, Route, Calendar, Map, BarChart, Users } from 'lucide-react';
 import { LoginForm } from '@/components/auth/login-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
 import { StatusCheckForm } from '@/components/landing/status-check-form';
 import { getApplicants } from '@/lib/applicantService';
 import { getSchools } from '@/lib/schoolService';
@@ -60,25 +59,10 @@ const faqs = [
 ];
 
 export default function LandingPage() {
-  const [stats, setStats] = useState<any[]>([]);
   const [schedule, setSchedule] = useState<any[]>([]);
 
   useEffect(() => {
-    const allSchools = getSchools();
-    const allApplicants = getApplicants();
     const allStages = getStages();
-
-    const destinationSchools = allSchools.filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
-    const totalQuota = destinationSchools.reduce((sum, school) => sum + (school.kuota || 0), 0);
-    const totalApplicants = allApplicants.length;
-    const verifiedApplicants = allApplicants.filter(app => app.statusVerifikasi === 'Terverifikasi').length;
-
-    setStats([
-      { icon: GraduationCap, value: destinationSchools.length.toString(), label: 'Sekolah Tujuan' },
-      { icon: Users, value: totalQuota.toLocaleString('id-ID'), label: 'Total Kuota' },
-      { icon: LogIn, value: totalApplicants.toLocaleString('id-ID'), label: 'Jumlah Pendaftar' },
-      { icon: CheckCircle, value: verifiedApplicants.toLocaleString('id-ID'), label: 'Pendaftar Terverifikasi' },
-    ]);
   
     const scheduleData = allStages.map(stage => {
       const startDate = new Date(stage.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' });
@@ -102,12 +86,12 @@ export default function LandingPage() {
             <span className="font-bold text-lg">SPMB 2026</span>
           </Link>
           <div className="flex items-center gap-2">
-            <Button variant="outline" asChild className="hidden sm:flex">
+            <Button variant="ghost" asChild className="hidden sm:flex">
                 <Link href="/schools">
                     <School className="mr-2 h-4 w-4" /> Daftar Sekolah
                 </Link>
             </Button>
-            <Button variant="outline" asChild>
+            <Button variant="ghost" asChild className="hidden sm:flex">
                 <Link href="/selection-results">
                     <Megaphone className="mr-2 h-4 w-4" /> Hasil Seleksi
                 </Link>
@@ -172,7 +156,7 @@ export default function LandingPage() {
                         </Dialog>
                     </div>
                 </div>
-                <div className="relative h-[450px] lg:h-full rounded-2xl overflow-hidden shadow-2xl">
+                <div className="relative h-[450px] rounded-2xl overflow-hidden shadow-2xl">
                     <Image
                         src="https://storage.googleapis.com/gen-3-prod-frontend-output-assets-us-central1/project-id-8274705574483733075/image-49e3e3b0-64de-4b95-a400-9856c666fcf9.png"
                         alt="Ilustrasi Penerimaan Siswa Baru"
@@ -180,7 +164,7 @@ export default function LandingPage() {
                         height={450}
                         className="object-cover w-full h-full"
                         priority
-                        data-ai-hint="students learning illustration"
+                        data-ai-hint="students registration illustration"
                     />
                 </div>
             </div>

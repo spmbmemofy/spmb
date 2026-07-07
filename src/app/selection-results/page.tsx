@@ -2,28 +2,19 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { ArrowUp, ArrowDown, Building, Database, Filter as FilterIcon, Search as SearchIcon, Award, UserCheck } from "lucide-react";
+import { Award, Building, Filter as FilterIcon, Search as SearchIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getSchools, type School } from "@/lib/schoolService";
-import { getApplicants, isPriority, calculateApplicantScore } from "@/lib/applicantService";
+import { getApplicants, calculateApplicantScore } from "@/lib/applicantService";
 import type { Applicant, Tahap } from "@/lib/types";
 import { getJalur } from "@/lib/pathwayService";
 import { getStages } from "@/lib/stageService";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
-// Define a type for the ranked applicant data
 interface RankedApplicant extends Applicant {
   finalScore: number;
   placementStatus: 'Lulus' | 'Tidak Lulus' | 'Menunggu';
@@ -48,7 +39,6 @@ export default function SelectionResultsPage() {
     setJalurOptions(["Semua Jalur", ...getJalur().map(j => j.name)]);
     setStages(getStages());
 
-    // Process applicants for ranking
     const processedApplicants: RankedApplicant[] = allApplicants
       .filter(app => app.statusVerifikasi === 'Terverifikasi')
       .map(app => {
@@ -56,7 +46,6 @@ export default function SelectionResultsPage() {
         if (app.diterimaDiSekolahId) {
             finalScore = calculateApplicantScore(app, app.diterimaDiSekolahId);
         } else if (app.schoolSelections && app.schoolSelections.length > 0) {
-            // Calculate score for their first choice if not placed
             finalScore = calculateApplicantScore(app, app.schoolSelections[0].schoolId);
         }
 
@@ -77,7 +66,7 @@ export default function SelectionResultsPage() {
             }
             return (a.peringkat || Infinity) - (b.peringkat || Infinity);
         }
-        return b.finalScore - a.finalScore; // For unplaced students, sort by score descending
+        return b.finalScore - a.finalScore;
       });
 
     setRankedApplicants(processedApplicants);
@@ -126,9 +115,9 @@ export default function SelectionResultsPage() {
               <Award size={28} />
             </div>
             <div>
-              <CardTitle className="text-2xl sm:text-3xl font-headline">Hasil Akhir dan Proses Seleksi</CardTitle>
+              <CardTitle className="text-2xl sm:text-3xl font-headline">Hasil Akhir Seleksi</CardTitle>
               <CardDescription className="text-md mt-1">
-                Lihat hasil akhir penempatan siswa di seluruh sekolah berdasarkan peringkat.
+                Informasi kelulusan pendaftar di sekolah tujuan berdasarkan peringkat.
               </CardDescription>
             </div>
           </div>
@@ -137,13 +126,13 @@ export default function SelectionResultsPage() {
           <section className="border rounded-lg p-4 space-y-4">
             <div className="flex items-center space-x-2">
               <FilterIcon className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-semibold text-primary">Filter Hasil Seleksi</h3>
+              <h3 className="text-lg font-semibold text-primary">Filter Hasil</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="relative">
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Cari Nama/NISN..."
+                  placeholder="Nama / NISN..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -151,7 +140,7 @@ export default function SelectionResultsPage() {
               </div>
                <Select value={selectedOriginSchool} onValueChange={setSelectedOriginSchool}>
                 <SelectTrigger>
-                    <SelectValue placeholder="Filter Sekolah Asal" />
+                    <SelectValue placeholder="Asal Sekolah" />
                 </SelectTrigger>
                 <SelectContent>
                   {originSchoolOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
@@ -159,16 +148,16 @@ export default function SelectionResultsPage() {
               </Select>
               <Select value={selectedSchool} onValueChange={setSelectedSchool}>
                 <SelectTrigger>
-                    <SelectValue placeholder="Filter Sekolah Penempatan" />
+                    <SelectValue placeholder="Sekolah Diterima" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Semua Sekolah">Semua Sekolah</SelectItem>
+                  <SelectItem value="Semua Sekolah">Semua Sekolah Diterima</SelectItem>
                   {schools.map(school => <SelectItem key={school.id} value={school.id}>{school.namaSekolah}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={selectedJalur} onValueChange={setSelectedJalur}>
                 <SelectTrigger>
-                    <SelectValue placeholder="Filter Jalur Pendaftaran" />
+                    <SelectValue placeholder="Jalur" />
                 </SelectTrigger>
                 <SelectContent>
                   {jalurOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
@@ -176,7 +165,7 @@ export default function SelectionResultsPage() {
               </Select>
                <Select value={selectedStage} onValueChange={setSelectedStage}>
                 <SelectTrigger>
-                    <SelectValue placeholder="Filter Tahap" />
+                    <SelectValue placeholder="Tahap" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Semua Tahap">Semua Tahap</SelectItem>
@@ -208,9 +197,7 @@ export default function SelectionResultsPage() {
                       return (
                         <TableRow key={applicant.id}>
                           <TableCell className="text-center">{index + 1}</TableCell>
-                          <TableCell className="font-medium">
-                            {applicant.fullName}
-                          </TableCell>
+                          <TableCell className="font-medium">{applicant.fullName}</TableCell>
                           <TableCell>{applicant.nisn}</TableCell>
                           <TableCell>{applicant.asalSekolahNama}</TableCell>
                           <TableCell>{applicant.jalur}</TableCell>
