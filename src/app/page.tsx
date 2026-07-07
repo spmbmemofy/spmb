@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
-import { ArrowRight, Calendar, GraduationCap, LogIn, Map, Route, BarChart, Users, CheckCircle, Award, UserPlus, Info, Megaphone, Building, School } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { GraduationCap, LogIn, CheckCircle, UserPlus, Info, Megaphone, School, Route, Calendar, Map, BarChart, Users } from 'lucide-react';
 import { LoginForm } from '@/components/auth/login-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -43,23 +43,19 @@ const infoCards = [
 const faqs = [
   {
     question: "Dokumen apa saja yang perlu disiapkan?",
-    answer: "Siapkan file scan Kartu Keluarga, Akta Kelahiran, Surat Keterangan Lulus (SKL), dan rapor semester 1-5 dalam format digital (PDF/JPG). Pastikan ukuran file tidak lebih dari 2MB per dokumen. Dokumen tambahan mungkin diperlukan tergantung jalur yang Anda pilih."
+    answer: "Siapkan file scan Kartu Keluarga, Akta Kelahiran, Surat Keterangan Lulus (SKL), dan rapor semester 1-5 dalam format digital (PDF/JPG). Pastikan ukuran file tidak lebih dari 2MB per dokumen."
   },
   {
     question: "Berapa banyak sekolah yang bisa saya pilih?",
-    answer: "Anda dapat memilih hingga 5 kombinasi sekolah/jurusan. Pastikan untuk mengurutkannya berdasarkan prioritas utama Anda, karena urutan sangat menentukan proses seleksi."
+    answer: "Anda dapat memilih hingga 5 kombinasi sekolah/jurusan. Pastikan untuk mengurutkannya berdasarkan prioritas utama Anda."
   },
   {
     question: "Bagaimana jika saya melakukan kesalahan saat mengisi data?",
-    answer: "Selama data belum diverifikasi oleh panitia, Anda masih dapat mengubahnya melalui dasbor pendaftar. Jika pendaftaran ditolak karena kesalahan data, Anda akan diberi kesempatan untuk melakukan perbaikan sesuai jadwal."
+    answer: "Selama data belum diverifikasi oleh panitia, Anda masih dapat mengubahnya melalui dasbor pendaftar."
   },
   {
     question: "Bagaimana proses seleksi dilakukan?",
-    answer: "Seleksi dilakukan berdasarkan peringkat nilai akhir di setiap sekolah dan jalur yang dipilih. Nilai akhir dihitung dari total nilai rapor semester 1-5, ditambah nilai prestasi (untuk jalur prestasi) dan bonus lainnya sesuai aturan. Peringkat diurutkan dari nilai tertinggi hingga kuota terpenuhi."
-  },
-  {
-    question: "Kapan saya bisa melihat hasil pengumuman?",
-    answer: "Hasil pengumuman akan ditampilkan di halaman status dan halaman pengumuman setelah tahap verifikasi dan seleksi selesai sesuai dengan jadwal yang telah ditentukan."
+    answer: "Seleksi dilakukan berdasarkan peringkat nilai akhir di setiap sekolah dan jalur yang dipilih."
   }
 ];
 
@@ -97,10 +93,8 @@ export default function LandingPage() {
     setSchedule(scheduleData);
   }, []);
 
-
   return (
     <div className="flex flex-col min-h-dvh bg-muted/30 text-foreground">
-      {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm">
         <div className="container flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2">
@@ -108,7 +102,7 @@ export default function LandingPage() {
             <span className="font-bold text-lg">SPMB 2026</span>
           </Link>
           <div className="flex items-center gap-2">
-            <Button variant="outline" asChild>
+            <Button variant="outline" asChild className="hidden sm:flex">
                 <Link href="/schools">
                     <School className="mr-2 h-4 w-4" /> Daftar Sekolah
                 </Link>
@@ -128,7 +122,6 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-1">
-        {/* Hero Section */}
         <section className="py-20 sm:py-24 bg-background">
           <div className="container max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -160,21 +153,18 @@ export default function LandingPage() {
                                     <Info className="h-6 w-6 text-primary" />
                                     Informasi Pembuatan Akun
                                 </DialogTitle>
-                                <DialogDescription>
-                                    Berikut adalah cara untuk mendapatkan akun pendaftaran Anda.
-                                </DialogDescription>
                                 </DialogHeader>
                                 <div className="py-4 space-y-4 text-sm">
                                     <div className="rounded-lg border p-4">
                                         <h4 className="font-semibold mb-2">Bagi Siswa Dalam Daerah</h4>
                                         <p className="text-muted-foreground">
-                                        Akun pendaftaran Anda akan dibuatkan dan didistribusikan oleh <strong>operator dari sekolah (SMP/MTs) Anda masing-masing</strong>. Silakan hubungi pihak sekolah Anda untuk mendapatkan akun.
+                                        Akun pendaftaran Anda akan dibuatkan oleh <strong>operator dari sekolah (SMP/MTs) asal</strong>.
                                         </p>
                                     </div>
                                     <div className="rounded-lg border p-4">
                                         <h4 className="font-semibold mb-2">Bagi Siswa Lulusan Luar Daerah</h4>
                                         <p className="text-muted-foreground">
-                                        Harap melapor ke <strong>Cabang Dinas Pendidikan</strong> yang menaungi sekolah tujuan Anda dengan membawa berkas-berkas yang diperlukan untuk dibuatkan akun pendaftaran.
+                                        Harap melapor ke <strong>Cabang Dinas Pendidikan</strong> setempat dengan membawa berkas persyaratan.
                                         </p>
                                     </div>
                                 </div>
@@ -182,14 +172,15 @@ export default function LandingPage() {
                         </Dialog>
                     </div>
                 </div>
-                <div className="relative h-80 lg:h-full rounded-2xl overflow-hidden shadow-2xl">
+                <div className="relative h-[450px] lg:h-full rounded-2xl overflow-hidden shadow-2xl">
                     <Image
                         src="https://storage.googleapis.com/gen-3-prod-frontend-output-assets-us-central1/project-id-8274705574483733075/image-49e3e3b0-64de-4b95-a400-9856c666fcf9.png"
-                        alt="Ilustrasi siswa-siswi merayakan kelulusan"
-                        fill
-                        className="object-cover"
+                        alt="Ilustrasi Penerimaan Siswa Baru"
+                        width={800}
+                        height={450}
+                        className="object-cover w-full h-full"
                         priority
-                        data-ai-hint="happy students illustration"
+                        data-ai-hint="students learning illustration"
                     />
                 </div>
             </div>
@@ -197,7 +188,6 @@ export default function LandingPage() {
         </section>
         
         <div className="container max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-24 space-y-20 sm:space-y-24">
-            {/* Info Cards Section */}
             <section id="informasi">
                 <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-4xl font-bold">Informasi Pendaftaran</h2>
@@ -215,27 +205,24 @@ export default function LandingPage() {
                             <CardTitle>{card.title}</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-muted-foreground">{card.description}</p>
+                            <p className="text-muted-foreground text-sm">{card.description}</p>
                         </CardContent>
                     </Card>
                 ))}
                 </div>
             </section>
 
-            {/* Login & Status Check Section */}
             <section id="login">
                 <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-4xl font-bold">Akses Portal Anda</h2>
-                    <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">Masuk atau cek status pendaftaran Anda di sini.</p>
                 </div>
                 <Card className="max-w-xl mx-auto shadow-2xl rounded-2xl">
                     <Tabs defaultValue="login" className="w-full">
                         <TabsList className="grid w-full grid-cols-2 h-14 rounded-t-2xl">
-                            <TabsTrigger value="login" className="text-base rounded-tl-2xl data-[state=active]:rounded-bl-none">Masuk Akun</TabsTrigger>
-                            <TabsTrigger value="status" className="text-base rounded-tr-2xl data-[state=active]:rounded-br-none">Cek Status</TabsTrigger>
+                            <TabsTrigger value="login" className="text-base rounded-tl-2xl">Masuk Akun</TabsTrigger>
+                            <TabsTrigger value="status" className="text-base rounded-tr-2xl">Cek Status</TabsTrigger>
                         </TabsList>
                         <TabsContent value="login" className="p-8">
-                             <CardDescription className="text-center mb-6">Gunakan akun yang telah Anda dapatkan untuk masuk ke sistem.</CardDescription>
                             <LoginForm />
                         </TabsContent>
                         <TabsContent value="status" className="p-8">
@@ -245,65 +232,32 @@ export default function LandingPage() {
                 </Card>
             </section>
             
-            {/* Schedule Section */}
             <section id="jadwal">
                 <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-4xl font-bold">Jadwal Pelaksanaan</h2>
-                    <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
-                        Catat tanggal-tanggal penting berikut agar tidak terlewat.
-                    </p>
                 </div>
                 <Card className="rounded-2xl shadow-xl overflow-hidden">
                     <CardContent className="p-8 md:p-12">
-                        <div className="relative">
-                            <div className="absolute left-1/2 -translate-x-1/2 h-full w-0.5 bg-border hidden md:block" aria-hidden="true"></div>
-                            <div className="space-y-12 md:space-y-0">
-                                {schedule.map((item, index) => (
-                                    <div key={item.title} className="relative flex items-center md:justify-center">
-                                        <div className={cn("md:w-1/2 flex", index % 2 === 0 ? 'md:justify-end' : 'md:justify-start')}>
-                                            <div className={cn("w-full md:max-w-sm p-6 rounded-2xl border bg-card shadow-lg", index % 2 === 0 ? 'md:mr-12' : 'md:ml-12')}>
-                                                <p className="text-sm font-semibold text-primary">{item.date}</p>
-                                                <h3 className="mt-2 text-xl font-bold">{item.title}</h3>
-                                                <p className="mt-2 text-muted-foreground">{item.description}</p>
-                                            </div>
-                                        </div>
-                                        <div className="absolute left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-primary border-4 border-background hidden md:block"></div>
+                        <div className="space-y-12">
+                            {schedule.map((item, index) => (
+                                <div key={item.title} className="flex flex-col md:flex-row md:items-center gap-6">
+                                    <div className="md:w-1/4">
+                                        <p className="text-lg font-bold text-primary">{item.date}</p>
                                     </div>
-                                ))}
-                            </div>
+                                    <div className="md:w-3/4 p-6 rounded-2xl border bg-card shadow-sm">
+                                        <h3 className="text-xl font-bold">{item.title}</h3>
+                                        <p className="mt-2 text-muted-foreground">{item.description}</p>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </CardContent>
                 </Card>
             </section>
 
-            {/* Statistics Section */}
-            <section id="statistik">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-4xl font-bold">Statistik Pendaftaran</h2>
-                    <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
-                        Data pendaftaran diperbarui secara real-time.
-                    </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {stats.map((stat, index) => (
-                        <Card key={index} className="text-center shadow-lg rounded-2xl">
-                            <CardContent className="p-8">
-                                <stat.icon className="h-12 w-12 text-primary mx-auto mb-5" />
-                                <p className="text-4xl font-bold">{stat.value}</p>
-                                <p className="mt-1 text-muted-foreground">{stat.label}</p>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            </section>
-            
-            {/* FAQ Section */}
             <section id="faq">
                 <div className="text-center mb-16">
                 <h2 className="text-3xl md:text-4xl font-bold">Pertanyaan Umum (FAQ)</h2>
-                <p className="mt-4 mx-auto text-muted-foreground max-w-2xl">
-                    Temukan jawaban untuk pertanyaan yang paling sering diajukan.
-                </p>
                 </div>
                 <Card className="max-w-4xl mx-auto shadow-xl rounded-2xl">
                 <CardContent className="p-6 md:p-8">
@@ -325,7 +279,6 @@ export default function LandingPage() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="border-t bg-background">
         <div className="container max-w-7xl px-4 sm:px-6 lg:px-8 py-8 text-center text-sm text-muted-foreground">
           &copy; {new Date().getFullYear()} Panitia SPMB Kabupaten Berau. Dibuat oleh Memofy Studio.

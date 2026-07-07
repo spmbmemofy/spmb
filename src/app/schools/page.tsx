@@ -41,28 +41,28 @@ export default function SchoolListPage() {
     return (
         <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
             <div className="w-full max-w-6xl space-y-8">
-                <Card className="shadow-lg">
+                <Card className="shadow-lg border-none bg-transparent shadow-none">
                     <CardHeader className="text-center">
-                         <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
-                            <SchoolIcon size={40} />
+                         <div className="mx-auto bg-primary text-primary-foreground rounded-full p-4 w-fit mb-6">
+                            <SchoolIcon size={48} />
                         </div>
-                        <CardTitle className="text-3xl font-bold">Daftar Sekolah Tujuan</CardTitle>
-                        <CardDescription>Jelajahi semua sekolah SMA dan SMK yang tersedia dalam pendaftaran tahun ini.</CardDescription>
+                        <CardTitle className="text-4xl font-extrabold tracking-tight">Daftar Sekolah Tujuan</CardTitle>
+                        <CardDescription className="text-lg">Jelajahi semua sekolah SMA dan SMK yang tersedia di Kabupaten Berau.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                        <div className="flex flex-col md:flex-row gap-4 mb-10 bg-card p-6 rounded-2xl shadow-md border">
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                 <Input 
                                     placeholder="Cari nama sekolah..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10 text-base"
+                                    className="pl-10 h-12"
                                 />
                             </div>
-                            <div className="flex gap-4">
+                            <div className="flex flex-col sm:flex-row gap-4">
                                 <Select value={jenjangFilter} onValueChange={setJenjangFilter}>
-                                    <SelectTrigger className="w-full sm:w-[150px]">
+                                    <SelectTrigger className="w-full sm:w-[160px] h-12">
                                         <SelectValue placeholder="Filter Jenjang" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -72,7 +72,7 @@ export default function SchoolListPage() {
                                     </SelectContent>
                                 </Select>
                                 <Select value={kecamatanFilter} onValueChange={setKecamatanFilter}>
-                                    <SelectTrigger className="w-full sm:w-[200px]">
+                                    <SelectTrigger className="w-full sm:w-[220px] h-12">
                                         <SelectValue placeholder="Filter Kecamatan" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -87,34 +87,42 @@ export default function SchoolListPage() {
                         {filteredSchools.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {filteredSchools.map((school) => (
-                                    <Card key={school.id} className="group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col">
-                                        <div className="relative h-40">
+                                    <Card key={school.id} className="group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col border-none bg-card">
+                                        <div className="relative h-48 bg-muted">
                                             <Image
-                                                src={`https://placehold.co/600x400.png`}
+                                                src={`https://placehold.co/800x450.png`}
                                                 alt={`Foto ${school.namaSekolah}`}
                                                 fill
-                                                className="object-cover"
+                                                className="object-cover transition-transform duration-500 group-hover:scale-105"
                                                 data-ai-hint="school building"
                                             />
-                                        </div>
-                                        <CardHeader>
-                                            <CardTitle className="text-lg">{school.namaSekolah}</CardTitle>
-                                            <CardDescription>{school.kecamatan}</CardDescription>
-                                        </CardHeader>
-                                        <CardContent className="flex-grow">
-                                            <div className="flex justify-between items-center text-sm text-muted-foreground">
-                                                <span>Total Kuota</span>
-                                                <span className="font-bold text-foreground">{school.kuota || '-'}</span>
+                                            <div className="absolute top-4 right-4">
+                                                <Badge className="bg-primary/90 backdrop-blur-sm px-3 py-1">{school.jenjang}</Badge>
                                             </div>
-                                            <div className="flex justify-between items-center text-sm text-muted-foreground mt-2">
-                                                <span>Akreditasi</span>
-                                                <span className="font-bold text-foreground">{school.akreditasi}</span>
+                                        </div>
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-xl line-clamp-1">{school.namaSekolah}</CardTitle>
+                                            <CardDescription className="flex items-center gap-1">
+                                                <Filter className="h-3 w-3" />
+                                                {school.kecamatan}
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="flex-grow space-y-4 pt-2">
+                                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                                <div className="bg-muted/50 p-2 rounded-lg">
+                                                    <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider">Kuota</p>
+                                                    <p className="text-lg font-bold">{school.kuota || '-'}</p>
+                                                </div>
+                                                <div className="bg-muted/50 p-2 rounded-lg">
+                                                    <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider">Akreditasi</p>
+                                                    <p className="text-lg font-bold">{school.akreditasi}</p>
+                                                </div>
                                             </div>
                                         </CardContent>
-                                        <CardFooter>
-                                            <Button asChild className="w-full" variant="outline">
+                                        <CardFooter className="pt-0 pb-6 px-6">
+                                            <Button asChild className="w-full h-11 rounded-xl" variant="outline">
                                                 <Link href={`/school/${school.id}`}>
-                                                    Lihat Detail Sekolah
+                                                    Lihat Profil
                                                     <ArrowRight className="ml-2 h-4 w-4" />
                                                 </Link>
                                             </Button>
@@ -123,9 +131,13 @@ export default function SchoolListPage() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-20 text-muted-foreground">
-                                <p className="text-lg font-medium">Sekolah tidak ditemukan</p>
-                                <p>Tidak ada sekolah yang cocok dengan kriteria pencarian atau filter Anda.</p>
+                            <div className="text-center py-24 bg-card rounded-3xl border border-dashed">
+                                <SchoolIcon className="mx-auto h-16 w-16 text-muted-foreground mb-4 opacity-20" />
+                                <p className="text-2xl font-bold text-muted-foreground">Sekolah tidak ditemukan</p>
+                                <p className="text-muted-foreground mt-2">Coba sesuaikan kata kunci pencarian atau filter Anda.</p>
+                                <Button variant="link" onClick={() => {setSearchTerm(''); setJenjangFilter('Semua'); setKecamatanFilter('Semua')}} className="mt-4">
+                                    Reset Semua Filter
+                                </Button>
                             </div>
                         )}
                     </CardContent>
