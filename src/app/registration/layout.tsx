@@ -101,7 +101,6 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
     ];
     
     const crossRoleMenuItems = [
-      { href: '/registration/selection', label: 'Verifikasi Berkas (SMA/SMK)', icon: UserCheck, activePaths: ['/registration/selection', '/registration/verify'] },
       { href: '/registration/school-settings', label: 'Pengaturan Sekolah (SMA/SMK)', icon: Settings, activePaths: ['/registration/school-settings'] },
       { href: '/registration/origin-school-data', label: 'Data Sekolah (SMP)', icon: Building, activePaths: ['/registration/origin-school-data'] },
       { href: '/registration/applicant-data', label: 'Kelola Siswa (SMP)', icon: Users, activePaths: ['/registration/applicant-data'] }
