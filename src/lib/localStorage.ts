@@ -1,6 +1,6 @@
 
 import type { UserRole } from './userData';
-import type { SchoolSelection } from './types';
+import type { SchoolSelection, ApplicantAchievement } from './types';
 
 const APP_PREFIX = 'admissionPortal_';
 
@@ -56,6 +56,7 @@ export interface RegistrationProgress {
   profilePhotoDataUri?: string;
   registrationCompleted?: boolean;
   biodata?: BiodataDetails;
+  achievements?: ApplicantAchievement[];
 }
 
 export function getFromLocalStorage<T>(key: string, defaultValue: T): T {

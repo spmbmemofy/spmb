@@ -5,7 +5,8 @@ import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
 import * as z from "zod";
-import { Building, MoreHorizontal, Edit, Trash2, Search as SearchIcon, PlusCircle, Settings } from 'lucide-react';
+import { Building, MoreHorizontal, Edit, Trash2, Search as SearchIcon, PlusCircle, Settings, MapPin, Navigation as NavigationIcon, Upload, Download, FileSpreadsheet, AlertTriangle, CheckCircle2, X, Lock, Unlock } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -18,11 +19,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { getSchools, addSchool, updateSchool, deleteSchool, type School, type SchoolJenjang } from "@/lib/schoolService";
+import { getSchools, addSchool, updateSchool, deleteSchool, getSchoolById, type School, type SchoolJenjang } from "@/lib/schoolService";
+import { addUser, deleteUsersByNpsn } from "@/lib/userService";
+import { deleteApplicantsBySchoolId } from "@/lib/applicantService";
+import { deleteManagedApplicantsBySchoolId } from "@/lib/managedApplicantService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { Major } from "@/lib/types";
-import { getDistricts, getSubdistricts } from "@/lib/addressData";
+import { getDistricts, getSubdistricts, addressData } from "@/lib/addressData";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 
@@ -41,6 +45,8 @@ export const schoolFormSchema = z.object({
   akreditasi: z.enum(["A", "B", "C", "Belum Terakreditasi"]),
   
   kuota: z.coerce.number().int().min(0).optional(),
+  latitude: z.coerce.number().optional(),
+  longitude: z.coerce.number().optional(),
   jalurKuota: z.object({
     afirmasi: z.coerce.number().int().min(0).optional(),
     mutasi: z.coerce.number().int().min(0).optional(),
@@ -66,7 +72,7 @@ const majorFormSchema = z.object({
 
 type SchoolFormValues = z.infer<typeof schoolFormSchema>;
 type MajorFormValues = z.infer<typeof majorFormSchema>;
-type SchoolDialogTabs = "info_umum" | "data_pendaftaran" | "aturan_khusus";
+type SchoolDialogTabs = "info_umum" | "data_pendaftaran" | "aturan_khusus" | "lokasi_peta";
 
 const religionOptions = [ "Islam", "Kristen Protestan", "Katolik", "Hindu", "Buddha", "Konghucu", "Lainnya" ];
 
@@ -89,6 +95,17 @@ export default function SchoolManagementPage() {
     const [isAlertOpen, setIsAlertOpen] = React.useState(false);
     const [isMajorAlertOpen, setIsMajorAlertOpen] = React.useState(false);
 
+    // Excel Import State
+    const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
+    const [importPreviewData, setImportPreviewData] = React.useState<any[]>([]);
+    const [importErrors, setImportErrors] = React.useState<string[]>([]);
+    const [isImporting, setIsImporting] = React.useState(false);
+    const importFileRef = React.useRef<HTMLInputElement>(null);
+
+    // Bulk Delete State
+    const [selectedSchoolIds, setSelectedSchoolIds] = React.useState<Set<string>>(new Set());
+    const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = React.useState(false);
+
     const { toast } = useToast();
 
     const schoolForm = useForm<SchoolFormValues>({
@@ -98,7 +115,10 @@ export default function SchoolManagementPage() {
 
     const { watch, setValue, trigger } = schoolForm;
     const selectedJenjang = watch("jenjang");
-    const jalurKuotaValues = watch("jalurKuota");
+    const watchAfirmasi = watch("jalurKuota.afirmasi");
+    const watchMutasi = watch("jalurKuota.mutasi");
+    const watchPrestasi = watch("jalurKuota.prestasi");
+    const watchDomisili = watch("jalurKuota.domisili");
     const currentMajors = watch("majors") as Major[] || [];
     
     const selectedProvince = watch("province");
@@ -108,16 +128,246 @@ export default function SchoolManagementPage() {
     const subdistrictOptions = getSubdistricts(selectedProvince as any, selectedDistrict as any);
     const isAdding = !editingSchool;
 
+    // Map Picker States
+    const mapRef = React.useRef<any>(null);
+    const markerRef = React.useRef<any>(null);
+
+    // Map Lock States
+    const [isMapLocked, setIsMapLocked] = React.useState(true);
+    const isMapLockedRef = React.useRef(true);
+
+    React.useEffect(() => {
+        isMapLockedRef.current = isMapLocked;
+        if (markerRef.current) {
+            if (isMapLocked) {
+                markerRef.current.dragging?.disable();
+            } else {
+                markerRef.current.dragging?.enable();
+            }
+        }
+    }, [isMapLocked]);
+    const [searchQuery, setSearchQuery] = React.useState("");
+
+    React.useEffect(() => {
+        if (typeof window === 'undefined' || activeTab !== 'lokasi_peta' || !isSchoolDialogOpen) return;
+
+        if (!document.getElementById('leaflet-css')) {
+            const link = document.createElement('link');
+            link.id = 'leaflet-css';
+            link.rel = 'stylesheet';
+            link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+            document.head.appendChild(link);
+        }
+
+        const initMap = () => {
+            const L = (window as any).L;
+            if (!L) return;
+
+            const container = document.getElementById('management-map-picker');
+            if (!container || mapRef.current) return;
+
+            const setupMap = (lat: number, lng: number) => {
+                const map = L.map('management-map-picker').setView([lat, lng], 15);
+                mapRef.current = map;
+
+                const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                });
+
+                const satelliteImg = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri'
+                });
+
+                const satelliteLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Labels &copy; Esri'
+                });
+
+                const satelliteHybrid = L.layerGroup([satelliteImg, satelliteLabels]);
+
+                const baseMaps = {
+                    "Peta Standard": osm,
+                    "Satelit (Hybrid)": satelliteHybrid
+                };
+
+                osm.addTo(map);
+                L.control.layers(baseMaps).addTo(map);
+
+                const marker = L.marker([lat, lng], { draggable: !isMapLockedRef.current }).addTo(map);
+                markerRef.current = marker;
+
+                marker.on('dragend', () => {
+                    if (isMapLockedRef.current) return;
+                    const position = marker.getLatLng();
+                    schoolForm.setValue("latitude", position.lat);
+                    schoolForm.setValue("longitude", position.lng);
+                });
+
+                map.on('click', (e: any) => {
+                    if (isMapLockedRef.current) return;
+                    const position = e.latlng;
+                    marker.setLatLng(position);
+                    schoolForm.setValue("latitude", position.lat);
+                    schoolForm.setValue("longitude", position.lng);
+                });
+
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 100);
+            };
+
+            const savedLat = schoolForm.getValues("latitude");
+            const savedLng = schoolForm.getValues("longitude");
+
+            const isDefaultCoords = !savedLat || !savedLng || (Math.abs(savedLat - (-2.15)) < 0.0001 && Math.abs(savedLng - 117.48) < 0.0001);
+
+            if (!isDefaultCoords) {
+                setupMap(savedLat, savedLng);
+            } else {
+                // Attempt to geocode school district/address
+                const schoolAlamat = schoolForm.getValues("alamat");
+                const schoolKecamatan = schoolForm.getValues("kecamatan");
+                const cleanKecamatan = schoolKecamatan ? schoolKecamatan.replace(/^kec\.\s+/i, '').trim() : '';
+                const queryText = `${schoolAlamat ? schoolAlamat + ", " : ""}${cleanKecamatan ? "Kecamatan " + cleanKecamatan : ""}, Berau, Kalimantan Timur`;
+                
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryText)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            const lat = parseFloat(data[0].lat);
+                            const lng = parseFloat(data[0].lon);
+                            schoolForm.setValue("latitude", lat);
+                            schoolForm.setValue("longitude", lng);
+                            setupMap(lat, lng);
+                        } else if (cleanKecamatan) {
+                            // Fallback 1: Geocode just the subdistrict (kecamatan)
+                            const queryKec = `Kecamatan ${cleanKecamatan}, Berau, Kalimantan Timur`;
+                            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryKec)}`)
+                                .then(r => r.json())
+                                .then(dataKec => {
+                                    if (dataKec && dataKec.length > 0) {
+                                        const lat = parseFloat(dataKec[0].lat);
+                                        const lng = parseFloat(dataKec[0].lon);
+                                        schoolForm.setValue("latitude", lat);
+                                        schoolForm.setValue("longitude", lng);
+                                        setupMap(lat, lng);
+                                    } else {
+                                        setupMap(-2.15, 117.48);
+                                    }
+                                })
+                                .catch(() => setupMap(-2.15, 117.48));
+                        } else {
+                            setupMap(-2.15, 117.48);
+                        }
+                    })
+                    .catch(() => {
+                        if (cleanKecamatan) {
+                            const queryKec = `Kecamatan ${cleanKecamatan}, Berau, Kalimantan Timur`;
+                            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryKec)}`)
+                                .then(r => r.json())
+                                .then(dataKec => {
+                                    if (dataKec && dataKec.length > 0) {
+                                        const lat = parseFloat(dataKec[0].lat);
+                                        const lng = parseFloat(dataKec[0].lon);
+                                        schoolForm.setValue("latitude", lat);
+                                        schoolForm.setValue("longitude", lng);
+                                        setupMap(lat, lng);
+                                    } else {
+                                        setupMap(-2.15, 117.48);
+                                    }
+                                })
+                                .catch(() => setupMap(-2.15, 117.48));
+                        } else {
+                            setupMap(-2.15, 117.48);
+                        }
+                    });
+            }
+        };
+
+        if (!(window as any).L) {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            script.async = true;
+            script.onload = () => {
+                setTimeout(initMap, 200);
+            };
+            document.body.appendChild(script);
+        } else {
+            setTimeout(initMap, 200);
+        }
+
+        return () => {
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+                markerRef.current = null;
+            }
+        };
+    }, [activeTab, isSchoolDialogOpen, schoolForm]);
+
+    const handleSearchLocation = async () => {
+        if (!searchQuery.trim()) return;
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery + ", Berau")}`);
+            const data = await res.json();
+            if (data && data.length > 0) {
+                const firstResult = data[0];
+                const lat = parseFloat(firstResult.lat);
+                const lon = parseFloat(firstResult.lon);
+                
+                schoolForm.setValue("latitude", lat);
+                schoolForm.setValue("longitude", lon);
+
+                if (mapRef.current && markerRef.current) {
+                    mapRef.current.setView([lat, lon], 16);
+                    markerRef.current.setLatLng([lat, lon]);
+                }
+                toast({ title: "Lokasi Ditemukan", description: `Menampilkan hasil pencarian untuk "${firstResult.display_name}".` });
+            } else {
+                toast({ variant: "destructive", title: "Lokasi Tidak Ditemukan", description: "Coba kata kunci pencarian alamat yang lain." });
+            }
+        } catch (e) {
+            toast({ variant: "destructive", title: "Error", description: "Gagal menghubungkan ke layanan peta." });
+        }
+    };
+
+    const handleLocateMe = () => {
+        if (!navigator.geolocation) {
+            toast({ variant: "destructive", title: "Geolocation Tidak Didukung", description: "Browser Anda tidak mendukung layanan lokasi saat ini." });
+            return;
+        }
+
+        toast({ title: "Mendapatkan Lokasi...", description: "Harap izinkan akses GPS pada browser Anda." });
+
+        navigator.geolocation.getCurrentPosition((position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            schoolForm.setValue("latitude", lat);
+            schoolForm.setValue("longitude", lng);
+
+            if (mapRef.current && markerRef.current) {
+                mapRef.current.setView([lat, lng], 15);
+                markerRef.current.setLatLng([lat, lng]);
+            }
+            toast({ title: "Lokasi Ditemukan", description: `Titik koordinat berhasil diposisikan ke lokasi GPS Anda.` });
+        }, (error) => {
+            toast({ variant: "destructive", title: "Akses Lokasi Ditolak", description: "Gagal mendapatkan lokasi GPS. Pastikan izin lokasi aktif." });
+        }, { enableHighAccuracy: true });
+    };
+
     React.useEffect(() => {
         setSchools(getSchools());
     }, []);
 
     React.useEffect(() => {
-        if (selectedJenjang === 'SMA' && jalurKuotaValues) {
-            const totalKuota = Object.values(jalurKuotaValues).reduce((sum, val) => sum + (Number(val) || 0), 0);
+        if (selectedJenjang === 'SMA') {
+            const totalKuota = (Number(watchAfirmasi) || 0) +
+                               (Number(watchMutasi) || 0) +
+                               (Number(watchPrestasi) || 0) +
+                               (Number(watchDomisili) || 0);
             setValue('kuota', totalKuota, { shouldValidate: true });
         }
-    }, [jalurKuotaValues, selectedJenjang, setValue]);
+    }, [watchAfirmasi, watchMutasi, watchPrestasi, watchDomisili, selectedJenjang, setValue]);
 
     const filteredSmpSchools = React.useMemo(() => {
         return schools.filter(school => 
@@ -136,14 +386,18 @@ export default function SchoolManagementPage() {
     }, [schools, smaSmkSearchTerm]);
 
     const handleOpenSchoolDialog = (school: School | null = null) => {
+        setIsMapLocked(true);
         setActiveTab('info_umum');
         setEditingSchool(school);
+        setSearchQuery("");
         if (school) {
             schoolForm.reset({
                 ...school,
                 jalurKuota: school.jalurKuota || { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 },
                 allowedGenders: school.allowedGenders || [],
                 allowedReligions: school.allowedReligions || [],
+                latitude: school.latitude ?? -2.15,
+                longitude: school.longitude ?? 117.48
             });
         } else {
             schoolForm.reset({
@@ -153,6 +407,8 @@ export default function SchoolManagementPage() {
                 kuota: 0, jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 }, majors: [],
                 allowedGenders: ['Laki-laki', 'Perempuan'],
                 allowedReligions: religionOptions,
+                latitude: -2.15,
+                longitude: 117.48
             });
         }
         setIsSchoolDialogOpen(true);
@@ -165,9 +421,35 @@ export default function SchoolManagementPage() {
 
     const handleConfirmDeleteSchool = () => {
         if (schoolToDeleteId) {
+            // Find the school first to get NPSN and ID for cascade deletes
+            const schoolToDelete = getSchoolById(schoolToDeleteId);
+            
+            // 1. Delete the school record
             deleteSchool(schoolToDeleteId);
+            
+            if (schoolToDelete) {
+                // 2. Delete headmaster account(s) with this NPSN
+                deleteUsersByNpsn(schoolToDelete.npsn);
+                
+                // 3. Delete applicants who selected this school as target
+                const deletedApplicants = deleteApplicantsBySchoolId(schoolToDeleteId);
+                
+                // 4. Delete managed applicants from this origin school
+                const deletedManaged = deleteManagedApplicantsBySchoolId(schoolToDeleteId);
+                
+                const details = [
+                    `Akun kepala sekolah dihapus.`,
+                    deletedApplicants > 0 ? `${deletedApplicants} data pendaftar terkait dihapus.` : null,
+                    deletedManaged > 0 ? `${deletedManaged} data siswa terkelola dihapus.` : null,
+                ].filter(Boolean).join(' ');
+
+                toast({ 
+                    title: "Sekolah & Data Terkait Dihapus", 
+                    description: `"${schoolToDelete.namaSekolah}" berhasil dihapus. ${details}` 
+                });
+            }
+
             setSchools(getSchools());
-            toast({ title: "Sekolah Dihapus", description: "Data sekolah telah berhasil dihapus dari sistem." });
         }
         setIsAlertOpen(false);
         setSchoolToDeleteId(null);
@@ -203,7 +485,24 @@ export default function SchoolManagementPage() {
             } else {
                 const { id, ...newSchoolData } = finalData;
                 addSchool(newSchoolData as Omit<School, 'id'>);
-                toast({ title: "Sekolah Ditambahkan", description: `Sekolah ${data.namaSekolah} berhasil ditambahkan.` });
+
+                // Auto-create headmaster account
+                try {
+                    addUser({
+                        username: data.npsn,
+                        password: data.npsn,
+                        role: 'headmaster',
+                        fullName: `Kepala Sekolah ${data.namaSekolah}`,
+                        npsn: data.npsn,
+                    });
+                } catch (userErr: any) {
+                    // Account might already exist; silently ignore
+                }
+
+                toast({
+                    title: "Sekolah Ditambahkan",
+                    description: `Sekolah ${data.namaSekolah} berhasil ditambahkan. Akun kepala sekolah telah dibuat (username: ${data.npsn}).`,
+                });
             }
             
             setSchools(getSchools());
@@ -228,7 +527,186 @@ export default function SchoolManagementPage() {
         }
     };
 
-    // Major Management Handlers
+    // ==================== EXCEL IMPORT HANDLERS ====================
+
+    const handleDownloadTemplate = () => {
+        const headers = ['npsn', 'namaSekolah', 'jenjang', 'jenis', 'alamat', 'kecamatan', 'telepon', 'akreditasi', 'province', 'district'];
+        const example = ['30400001', 'SMAN 1 Berau', 'SMA', 'Negeri', 'Jl. Merdeka No. 1', 'Tanjung Redeb', '(0554) 21234', 'A', 'Kalimantan Timur', 'Kabupaten Berau'];
+        const notes = ['(8 digit)', '(Nama lengkap sekolah)', '(SMA/SMK/SMP)', '(Negeri/Swasta)', '(Alamat lengkap)', '(Nama kecamatan)', '(Nomor telepon)', '(A/B/C/Belum Terakreditasi)', '(Provinsi)', '(Kabupaten/Kota)'];
+        
+        const ws = XLSX.utils.aoa_to_sheet([headers, example, notes]);
+        ws['!cols'] = headers.map(() => ({ wch: 25 }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Template Sekolah');
+        XLSX.writeFile(wb, 'template_import_sekolah.xlsx');
+        toast({ title: 'Template Diunduh', description: 'File template_import_sekolah.xlsx berhasil diunduh.' });
+    };
+
+    const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            try {
+                const data = new Uint8Array(evt.target?.result as ArrayBuffer);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const rows: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+                const errors: string[] = [];
+                const validRows: any[] = [];
+
+                rows.forEach((row: any, idx: number) => {
+                    const rowNum = idx + 2;
+                    const npsn = String(row['npsn'] || '').trim();
+                    const namaSekolah = String(row['namaSekolah'] || '').trim();
+                    const jenjang = String(row['jenjang'] || '').trim();
+
+                    if (!npsn) errors.push(`Baris ${rowNum}: Kolom "npsn" tidak boleh kosong.`);
+                    if (!namaSekolah) errors.push(`Baris ${rowNum}: Kolom "namaSekolah" tidak boleh kosong.`);
+                    if (!['SMA', 'SMK', 'SMP'].includes(jenjang)) errors.push(`Baris ${rowNum}: Kolom "jenjang" harus SMA, SMK, atau SMP (saat ini: "${jenjang}").`);
+
+                    const rawKec = String(row['kecamatan'] || '').trim();
+                    let matchedKecamatan = '';
+                    if (rawKec) {
+                        const subdistrictsList = Object.keys(addressData['Kalimantan Timur']['Kabupaten Berau']);
+                        const found = subdistrictsList.find(sub => 
+                            sub.toLowerCase() === rawKec.toLowerCase() ||
+                            sub.toLowerCase() === `kec. ${rawKec.toLowerCase()}` ||
+                            `kec. ${sub.toLowerCase()}` === rawKec.toLowerCase() ||
+                            sub.replace(/kec\.\s+/i, '').toLowerCase() === rawKec.replace(/kec\.\s+/i, '').toLowerCase()
+                        );
+                        matchedKecamatan = found || rawKec;
+                    }
+
+                    validRows.push({
+                        npsn,
+                        namaSekolah,
+                        jenjang: jenjang as any,
+                        jenis: (['Negeri', 'Swasta'].includes(String(row['jenis']).trim()) ? String(row['jenis']).trim() : 'Negeri') as any,
+                        alamat: String(row['alamat'] || '').trim(),
+                        kecamatan: matchedKecamatan,
+                        telepon: String(row['telepon'] || '').trim(),
+                        akreditasi: (['A','B','C','Belum Terakreditasi'].includes(String(row['akreditasi']).trim()) ? String(row['akreditasi']).trim() : 'B') as any,
+                        province: String(row['province'] || 'Kalimantan Timur').trim(),
+                        district: String(row['district'] || 'Kabupaten Berau').trim(),
+                        allowedGenders: ['Laki-laki', 'Perempuan'],
+                        allowedReligions: [...religionOptions],
+                        jalurKuota: { afirmasi: 0, mutasi: 0, prestasi: 0, domisili: 0 },
+                        kuota: 0,
+                    });
+                });
+
+                setImportErrors(errors);
+                setImportPreviewData(validRows);
+                setIsImportDialogOpen(true);
+            } catch (err) {
+                toast({ variant: 'destructive', title: 'Gagal Membaca File', description: 'File tidak valid. Pastikan format file adalah .xlsx atau .xls.' });
+            }
+        };
+        reader.readAsArrayBuffer(file);
+        // Reset input so same file can be re-imported
+        e.target.value = '';
+    };
+
+    const handleConfirmImport = () => {
+        setIsImporting(true);
+        let successCount = 0;
+        let skipCount = 0;
+        const failedRows: string[] = [];
+
+        importPreviewData.forEach((school) => {
+            try {
+                addSchool(school as Omit<School, 'id'>);
+                // Auto-create headmaster account
+                try { addUser({ username: school.npsn, password: school.npsn, role: 'headmaster', fullName: `Kepala Sekolah ${school.namaSekolah}`, npsn: school.npsn }); } catch {}
+                successCount++;
+            } catch (err: any) {
+                if (err.message?.includes('NPSN yang sama')) {
+                    skipCount++;
+                } else {
+                    failedRows.push(school.namaSekolah);
+                }
+            }
+        });
+
+        setSchools(getSchools());
+        setIsImporting(false);
+        setIsImportDialogOpen(false);
+        setImportPreviewData([]);
+        setImportErrors([]);
+
+        toast({
+            title: 'Import Selesai',
+            description: `${successCount} sekolah berhasil ditambahkan.${ skipCount > 0 ? ` ${skipCount} sekolah dilewati (NPSN sudah ada).` : ''}${ failedRows.length > 0 ? ` ${failedRows.length} gagal.` : ''}`,
+        });
+    };
+
+    // ==================== END EXCEL IMPORT HANDLERS ====================
+
+    // ==================== BULK DELETE HANDLERS ====================
+
+    const handleToggleSchool = (schoolId: string) => {
+        setSelectedSchoolIds(prev => {
+            const next = new Set(prev);
+            if (next.has(schoolId)) next.delete(schoolId);
+            else next.add(schoolId);
+            return next;
+        });
+    };
+
+    const handleToggleAll = (schoolList: School[]) => {
+        const allIds = new Set(schoolList.map(s => s.id));
+        const allSelected = schoolList.every(s => selectedSchoolIds.has(s.id));
+        if (allSelected) {
+            setSelectedSchoolIds(prev => {
+                const next = new Set(prev);
+                allIds.forEach(id => next.delete(id));
+                return next;
+            });
+        } else {
+            setSelectedSchoolIds(prev => {
+                const next = new Set(prev);
+                allIds.forEach(id => next.add(id));
+                return next;
+            });
+        }
+    };
+
+    const handleConfirmBulkDelete = () => {
+        let successCount = 0;
+        let totalApplicants = 0;
+        let totalManaged = 0;
+
+        selectedSchoolIds.forEach(schoolId => {
+            const school = getSchoolById(schoolId);
+            if (!school) return;
+            deleteSchool(schoolId);
+            deleteUsersByNpsn(school.npsn);
+            totalApplicants += deleteApplicantsBySchoolId(schoolId);
+            totalManaged += deleteManagedApplicantsBySchoolId(schoolId);
+            successCount++;
+        });
+
+        setSchools(getSchools());
+        setSelectedSchoolIds(new Set());
+        setIsBulkDeleteAlertOpen(false);
+
+        const details = [
+            totalApplicants > 0 ? `${totalApplicants} pendaftar dihapus.` : null,
+            totalManaged > 0 ? `${totalManaged} siswa terkelola dihapus.` : null,
+        ].filter(Boolean).join(' ');
+
+        toast({
+            title: `${successCount} Sekolah Dihapus`,
+            description: `Seluruh data & akun terkait telah dihapus.${details ? ' ' + details : ''}`,
+        });
+    };
+
+    // ==================== END BULK DELETE HANDLERS ====================
+
     const handleOpenMajorDialog = (major: Major | null = null) => {
         setEditingMajor(major);
         if (major) {
@@ -277,11 +755,23 @@ export default function SchoolManagementPage() {
     });
 
 
-    const renderSchoolTable = (schoolList: School[], type: 'smp' | 'sma_smk') => (
+    const renderSchoolTable = (schoolList: School[], type: 'smp' | 'sma_smk') => {
+        const allSelected = schoolList.length > 0 && schoolList.every(s => selectedSchoolIds.has(s.id));
+        const someSelected = schoolList.some(s => selectedSchoolIds.has(s.id));
+        return (
         <div className="rounded-md border">
             <Table>
                 <TableHeader>
                     <TableRow>
+                        <TableHead className="w-10">
+                            <Checkbox
+                                checked={allSelected}
+                                data-state={someSelected && !allSelected ? 'indeterminate' : undefined}
+                                onCheckedChange={() => handleToggleAll(schoolList)}
+                                aria-label="Pilih semua"
+                                className={someSelected && !allSelected ? 'opacity-70' : ''}
+                            />
+                        </TableHead>
                         <TableHead>NPSN</TableHead>
                         <TableHead>Nama Sekolah</TableHead>
                         {type === 'sma_smk' && <TableHead>Kuota</TableHead>}
@@ -294,7 +784,18 @@ export default function SchoolManagementPage() {
                 <TableBody>
                     {schoolList.length > 0 ? (
                         schoolList.map((school) => (
-                            <TableRow key={school.npsn}>
+                            <TableRow
+                                key={school.npsn}
+                                data-state={selectedSchoolIds.has(school.id) ? 'selected' : undefined}
+                                className={selectedSchoolIds.has(school.id) ? 'bg-primary/5' : ''}
+                            >
+                                <TableCell>
+                                    <Checkbox
+                                        checked={selectedSchoolIds.has(school.id)}
+                                        onCheckedChange={() => handleToggleSchool(school.id)}
+                                        aria-label={`Pilih ${school.namaSekolah}`}
+                                    />
+                                </TableCell>
                                 <TableCell className="font-mono">{school.npsn}</TableCell>
                                 <TableCell className="font-medium">{school.namaSekolah}</TableCell>
                                 {type === 'sma_smk' && <TableCell>{school.kuota || '-'}</TableCell>}
@@ -329,7 +830,7 @@ export default function SchoolManagementPage() {
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                            <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                                 Tidak ada sekolah yang cocok dengan kriteria.
                             </TableCell>
                         </TableRow>
@@ -337,7 +838,8 @@ export default function SchoolManagementPage() {
                 </TableBody>
             </Table>
         </div>
-    );
+    );};
+
 
     return (
         <>
@@ -356,10 +858,36 @@ export default function SchoolManagementPage() {
                                     </CardDescription>
                                 </div>
                             </div>
-                            <Button onClick={() => handleOpenSchoolDialog()}>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Tambah Sekolah
-                            </Button>
+                        <div className="flex flex-wrap gap-2">
+                                <input
+                                    ref={importFileRef}
+                                    type="file"
+                                    accept=".xlsx,.xls"
+                                    className="hidden"
+                                    onChange={handleImportFileChange}
+                                />
+                                {selectedSchoolIds.size > 0 && (
+                                    <Button
+                                        variant="destructive"
+                                        onClick={() => setIsBulkDeleteAlertOpen(true)}
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Hapus {selectedSchoolIds.size} Sekolah
+                                    </Button>
+                                )}
+                                <Button variant="outline" onClick={handleDownloadTemplate}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Unduh Template
+                                </Button>
+                                <Button variant="outline" onClick={() => importFileRef.current?.click()}>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    Import Excel
+                                </Button>
+                                <Button onClick={() => handleOpenSchoolDialog()}>
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Tambah Sekolah
+                                </Button>
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -410,7 +938,7 @@ export default function SchoolManagementPage() {
                     <Form {...schoolForm}>
                         <form onSubmit={schoolForm.handleSubmit(processSchoolForm)} className="space-y-6 py-4 pr-2">
                             <Tabs value={activeTab} onValueChange={(value) => { if (!isAdding) setActiveTab(value as SchoolDialogTabs); }} className="w-full">
-                                <TabsList className="grid w-full grid-cols-3">
+                                <TabsList className="grid w-full grid-cols-4">
                                     <TabsTrigger value="info_umum">Informasi Umum</TabsTrigger>
                                     <TabsTrigger value="data_pendaftaran" disabled={selectedJenjang === 'SMP'}>
                                         Data Pendaftaran
@@ -418,6 +946,9 @@ export default function SchoolManagementPage() {
                                     <TabsTrigger value="aturan_khusus" disabled={selectedJenjang === 'SMP'}>
                                         Aturan Khusus
                                     </TabsTrigger>
+                                    <TabsTrigger value="lokasi_peta">
+                                         Lokasi Peta
+                                     </TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="info_umum" className="pt-4 space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -598,31 +1129,131 @@ export default function SchoolManagementPage() {
                                         </CardContent>
                                     </Card>
                                 </TabsContent>
+                                <TabsContent value="lokasi_peta" className="pt-4 space-y-4">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center"><MapPin className="mr-2"/> Lokasi Koordinat Sekolah</CardTitle>
+                                            <CardDescription>
+                                                Tentukan lokasi geografis sekolah pada peta. Geser penanda (marker) atau klik pada peta untuk menetapkan koordinat lokasi sekolah secara akurat.
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                              <div className="flex flex-wrap items-center gap-2">
+                                                  <Input 
+                                                      placeholder={isMapLocked ? "Koordinat terkunci. Buka kunci untuk mencari..." : "Cari lokasi/alamat sekolah..."}
+                                                      value={searchQuery}
+                                                      onChange={(e) => setSearchQuery(e.target.value)}
+                                                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSearchLocation(); } }}
+                                                      disabled={isMapLocked}
+                                                      className="flex-1 min-w-[200px]"
+                                                  />
+                                                  <Button type="button" variant="outline" onClick={handleSearchLocation} disabled={isMapLocked}>
+                                                      <SearchIcon className="h-4 w-4 mr-2" /> Cari
+                                                  </Button>
+                                                  <Button type="button" variant="secondary" onClick={handleLocateMe} disabled={isMapLocked} className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20">
+                                                      <NavigationIcon className="h-4 w-4 mr-2" /> Gunakan lokasi saat ini
+                                                  </Button>
+                                              </div>
+                                            
+                                            <div className="relative rounded-lg overflow-hidden border bg-muted/20">
+                                                <div 
+                                                    id="management-map-picker" 
+                                                    className="w-full h-80 relative" 
+                                                    style={{ minHeight: '320px', zIndex: 1 }}
+                                                />
+                                                
+                                                {/* Sleek Floating Status Banner */}
+                                                <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-3 px-4 py-2 rounded-full border shadow-xl backdrop-blur-md transition-all duration-300 ${
+                                                    isMapLocked 
+                                                        ? 'bg-amber-500/95 border-amber-600/20 text-white' 
+                                                        : 'bg-green-600/95 border-green-700/20 text-white'
+                                                }`}>
+                                                    {isMapLocked ? (
+                                                        <>
+                                                            <Lock className="h-4 w-4 shrink-0 animate-pulse text-amber-100" />
+                                                            <span className="text-xs font-semibold whitespace-nowrap tracking-wide">Koordinat Terkunci</span>
+                                                            <Button 
+                                                                type="button" 
+                                                                size="sm" 
+                                                                onClick={() => setIsMapLocked(false)}
+                                                                className="h-7 px-3 text-xs font-bold rounded-full bg-white text-amber-700 hover:bg-white/90 shadow-sm border-0"
+                                                            >
+                                                                Ubah Lokasi
+                                                            </Button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Unlock className="h-4 w-4 shrink-0 text-green-100" />
+                                                            <span className="text-xs font-semibold whitespace-nowrap tracking-wide">Mode Edit Aktif</span>
+                                                            <Button 
+                                                                type="button" 
+                                                                size="sm" 
+                                                                onClick={() => setIsMapLocked(true)}
+                                                                className="h-7 px-3 text-xs font-bold rounded-full bg-white text-green-700 hover:bg-white/90 shadow-sm border-0"
+                                                            >
+                                                                Kunci Lokasi
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <FormField control={schoolForm.control} name="latitude" render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Latitude</FormLabel>
+                                                        <FormControl><Input {...field} value={field.value ?? ''} readOnly className="font-mono bg-muted" /></FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )} />
+                                                <FormField control={schoolForm.control} name="longitude" render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Longitude</FormLabel>
+                                                        <FormControl><Input {...field} value={field.value ?? ''} readOnly className="font-mono bg-muted" /></FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )} />
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
                             </Tabs>
                             <DialogFooter className="pt-4">
                                 <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
                                 
                                 {isAdding ? (
                                     <>
-                                        {activeTab === 'info_umum' && (
-                                            <Button 
-                                                type="button" 
-                                                onClick={selectedJenjang === 'SMP' ? schoolForm.handleSubmit(processSchoolForm) : () => handleNext('data_pendaftaran')}>
-                                                {selectedJenjang === 'SMP' ? 'Simpan Sekolah' : 'Lanjut'}
-                                            </Button>
-                                        )}
-                                        {activeTab === 'data_pendaftaran' && (
-                                            <>
-                                                <Button type="button" variant="outline" onClick={() => setActiveTab('info_umum')}>Kembali</Button>
-                                                <Button type="button" onClick={() => handleNext('aturan_khusus')}>Lanjut</Button>
-                                            </>
-                                        )}
-                                        {activeTab === 'aturan_khusus' && (
-                                            <>
-                                                <Button type="button" variant="outline" onClick={() => setActiveTab('data_pendaftaran')}>Kembali</Button>
-                                                <Button type="submit">Simpan Sekolah</Button>
-                                            </>
-                                        )}
+                                         {activeTab === 'info_umum' && (
+                                             <Button 
+                                                 type="button" 
+                                                 onClick={selectedJenjang === 'SMP' ? () => handleNext('lokasi_peta') : () => handleNext('data_pendaftaran')}>
+                                                 Lanjut
+                                             </Button>
+                                         )}
+                                         {activeTab === 'data_pendaftaran' && (
+                                             <>
+                                                 <Button type="button" variant="outline" onClick={() => setActiveTab('info_umum')}>Kembali</Button>
+                                                 <Button type="button" onClick={() => handleNext('aturan_khusus')}>Lanjut</Button>
+                                             </>
+                                         )}
+                                         {activeTab === 'aturan_khusus' && (
+                                             <>
+                                                 <Button type="button" variant="outline" onClick={() => setActiveTab('data_pendaftaran')}>Kembali</Button>
+                                                 <Button type="button" onClick={() => setActiveTab('lokasi_peta')}>Lanjut</Button>
+                                             </>
+                                         )}
+                                         {activeTab === 'lokasi_peta' && (
+                                             <>
+                                                 <Button 
+                                                     type="button" 
+                                                     variant="outline" 
+                                                     onClick={() => setActiveTab(selectedJenjang === 'SMP' ? 'info_umum' : 'aturan_khusus')}
+                                                 >
+                                                     Kembali
+                                                 </Button>
+                                                 <Button type="submit">Simpan Sekolah</Button>
+                                             </>
+                                         )}
                                     </>
                                 ) : (
                                     <Button type="submit">Simpan Perubahan</Button>
@@ -695,6 +1326,124 @@ export default function SchoolManagementPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* ===== BULK DELETE CONFIRMATION DIALOG ===== */}
+            <AlertDialog open={isBulkDeleteAlertOpen} onOpenChange={setIsBulkDeleteAlertOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <Trash2 className="h-5 w-5 text-destructive" />
+                            Hapus {selectedSchoolIds.size} Sekolah?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Tindakan ini akan menghapus <strong>{selectedSchoolIds.size} sekolah</strong> beserta seluruh data terkaitnya secara permanen, termasuk:
+                            <ul className="mt-2 list-disc list-inside space-y-1 text-sm">
+                                <li>Akun kepala sekolah (username &amp; password)</li>
+                                <li>Seluruh data pendaftar yang memilih sekolah ini</li>
+                                <li>Seluruh data siswa terkelola dari sekolah ini</li>
+                            </ul>
+                            <span className="block mt-2 font-semibold text-destructive">Tindakan ini tidak dapat diurungkan.</span>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmBulkDelete}
+                            className="bg-destructive hover:bg-destructive/90"
+                        >
+                            Ya, Hapus Semua
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* ===== IMPORT EXCEL PREVIEW DIALOG ===== */}
+
+            <Dialog open={isImportDialogOpen} onOpenChange={(open) => { if (!open) { setIsImportDialogOpen(false); setImportPreviewData([]); setImportErrors([]); }}}>
+                <DialogContent className="sm:max-w-5xl max-h-[90vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <FileSpreadsheet className="h-5 w-5 text-primary" />
+                            Preview Import Sekolah
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+                        {/* Validation Errors */}
+                        {importErrors.length > 0 && (
+                            <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 space-y-2">
+                                <div className="flex items-center gap-2 text-destructive font-semibold text-sm">
+                                    <AlertTriangle className="h-4 w-4" />
+                                    {importErrors.length} Peringatan Validasi — Baris bermasalah tetap akan disertakan, namun harap periksa kembali.
+                                </div>
+                                <ul className="space-y-1">
+                                    {importErrors.map((err, i) => (
+                                        <li key={i} className="text-xs text-destructive flex items-start gap-1.5">
+                                            <X className="h-3 w-3 mt-0.5 shrink-0" />{err}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {/* Summary */}
+                        <div className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/5 p-3 text-sm text-green-700">
+                            <CheckCircle2 className="h-4 w-4 shrink-0" />
+                            <span><strong>{importPreviewData.length}</strong> baris data siap diimpor. Akun kepala sekolah akan otomatis dibuat (username &amp; password = NPSN).</span>
+                        </div>
+
+                        {/* Preview Table */}
+                        <div className="rounded-lg border overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs">
+                                    <thead className="bg-muted/50">
+                                        <tr>
+                                            {['#', 'NPSN', 'Nama Sekolah', 'Jenjang', 'Jenis', 'Kecamatan', 'Akreditasi'].map(h => (
+                                                <th key={h} className="px-3 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap">{h}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {importPreviewData.map((row, i) => (
+                                            <tr key={i} className="border-t hover:bg-muted/30 transition-colors">
+                                                <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
+                                                <td className="px-3 py-2 font-mono">{row.npsn || <span className="text-destructive italic">kosong</span>}</td>
+                                                <td className="px-3 py-2 font-medium max-w-[200px] truncate">{row.namaSekolah || <span className="text-destructive italic">kosong</span>}</td>
+                                                <td className="px-3 py-2">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${row.jenjang === 'SMA' ? 'bg-blue-100 text-blue-700' : row.jenjang === 'SMK' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}`}>
+                                                        {row.jenjang}
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-2">{row.jenis}</td>
+                                                <td className="px-3 py-2">{row.kecamatan}</td>
+                                                <td className="px-3 py-2 font-bold text-primary">{row.akreditasi}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <DialogFooter className="pt-4 border-t">
+                        <DialogClose asChild>
+                            <Button type="button" variant="secondary" disabled={isImporting}>Batal</Button>
+                        </DialogClose>
+                        <Button
+                            type="button"
+                            onClick={handleConfirmImport}
+                            disabled={isImporting || importPreviewData.length === 0}
+                            className="min-w-[140px]"
+                        >
+                            {isImporting ? (
+                                <span className="flex items-center gap-2"><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" /> Mengimpor...</span>
+                            ) : (
+                                <span className="flex items-center gap-2"><Upload className="h-4 w-4" /> Import {importPreviewData.length} Sekolah</span>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

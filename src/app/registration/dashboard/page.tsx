@@ -18,6 +18,24 @@ import { addressData, getDistricts, getSubdistricts, getVillages } from "@/lib/a
 import { getManagedApplicants } from "@/lib/managedApplicantService";
 import { getApplicants } from "@/lib/applicantService";
 import { getSchoolById } from "@/lib/schoolService";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from "@/components/ui/dialog";
+
+const indonesianProvinces = [
+  "Aceh", "Sumatera Utara", "Sumatera Barat", "Riau", "Kepulauan Riau", "Jambi", 
+  "Sumatera Selatan", "Bangka Belitung", "Bengkulu", "Lampung", "DKI Jakarta", 
+  "Jawa Barat", "Banten", "Jawa Tengah", "DI Yogyakarta", "Jawa Timur", 
+  "Bali", "Nusa Tenggara Barat", "Nusa Tenggara Timur", "Kalimantan Barat", 
+  "Kalimantan Tengah", "Kalimantan Selatan", "Kalimantan Timur", "Kalimantan Utara", 
+  "Sulawesi Utara", "Gorontalo", "Sulawesi Tengah", "Sulawesi Barat", "Sulawesi Selatan", 
+  "Sulawesi Tenggara", "Maluku", "Maluku Utara", "Papua", "Papua Barat", 
+  "Papua Selatan", "Papua Tengah", "Papua Pegunungan", "Papua Barat Daya"
+];
+
+const kaltimDistricts = [
+  "Kabupaten Berau", "Kota Samarinda", "Kota Balikpapan", "Kota Bontang", 
+  "Kabupaten Kutai Kartanegara", "Kabupaten Kutai Timur", "Kabupaten Kutai Barat", 
+  "Kabupaten Paser", "Kabupaten Penajam Paser Utara", "Kabupaten Mahakam Ulu"
+];
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
@@ -247,6 +265,48 @@ const personalInfoEditableFields: Array<{ key: BiodataKeys; label: string; type?
 ];
 
 
+const StepProgress = ({ currentStep }: { currentStep: number }) => {
+  const steps = [
+    { label: "Isi Biodata", step: 1 },
+    { label: "Pilih Sekolah", step: 2 },
+    { label: "Unggah Berkas", step: 3 }
+  ];
+  return (
+    <div className="w-full max-w-3xl mb-8 px-4">
+      <div className="flex justify-between items-center relative">
+        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-muted -translate-y-1/2 z-0" />
+        <div 
+          className="absolute top-1/2 left-0 h-0.5 bg-primary -translate-y-1/2 z-0 transition-all duration-300"
+          style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+        />
+        {steps.map((s) => {
+          const isActive = s.step <= currentStep;
+          const isCurrent = s.step === currentStep;
+          return (
+            <div key={s.step} className="flex flex-col items-center z-10">
+              <div 
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300 ${
+                  isCurrent 
+                    ? "bg-primary text-primary-foreground ring-4 ring-primary/20" 
+                    : isActive 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {s.step}
+              </div>
+              <span className={`text-xs mt-2 font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                {s.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+
 function ApplicantDashboard() {
   const router = useRouter();
   const { toast } = useToast();
@@ -254,21 +314,6 @@ function ApplicantDashboard() {
   const [biodata, setBiodata] = React.useState<BiodataDetails | null>(null);
   const [isLocked, setIsLocked] = React.useState(false);
   
-  const [editingPersonalField, setEditingPersonalField] = React.useState<BiodataKeys | null>(null);
-  const [currentPersonalFieldValue, setCurrentPersonalFieldValue] = React.useState<string>("");
-
-  const [isEditingParentInfo, setIsEditingParentInfo] = React.useState(false);
-  const [editableParentInfo, setEditableParentInfo] = React.useState({
-    fatherName: "", fatherDateOfBirth: "", fatherOccupation: "", fatherIncome: "",
-    motherName: "", motherDateOfBirth: "", motherOccupation: "", motherIncome: "",
-    guardianName: "",
-  });
-
-  const [isEditingAddress, setIsEditingAddress] = React.useState(false);
-  const [editableAddress, setEditableAddress] = React.useState({
-    streetName: "", rtRw: "", province: "", district: "", subdistrict: "", village: "",
-  });
-
   const [profilePhoto, setProfilePhoto] = React.useState<string | null>(null);
   const [persistedPhotoUploaded, setPersistedPhotoUploaded] = React.useState<boolean>(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -276,10 +321,10 @@ function ApplicantDashboard() {
   const semesterKeys: (keyof BiodataDetails['semesterGrades'])[] = ["semester1", "semester2", "semester3", "semester4", "semester5"];
   const semesterLabels = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5"];
   
-  const provinceOptions = Object.keys(addressData);
-  const districtOptions = getDistricts(editableAddress.province as any);
-  const subdistrictOptions = getSubdistricts(editableAddress.province as any, editableAddress.district as any);
-  const villageOptions = getVillages(editableAddress.province as any, editableAddress.district as any, editableAddress.subdistrict);
+  const isBerau = biodata?.province === "Kalimantan Timur" && biodata?.district === "Kabupaten Berau";
+  const districtOptions = biodata?.province === "Kalimantan Timur" ? kaltimDistricts : [];
+  const subdistrictOptions = isBerau ? getSubdistricts(biodata?.province as any, biodata?.district as any) : [];
+  const villageOptions = isBerau ? getVillages(biodata?.province as any, biodata?.district as any, biodata?.subdistrict) : [];
 
   React.useEffect(() => {
     const savedProgress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, null);
@@ -361,42 +406,50 @@ function ApplicantDashboard() {
   }, [biodata?.semesterGrades]);
 
 
-  const handleStartEditPersonalField = (fieldKey: BiodataKeys, currentValue: string) => {
-    if (isEditingParentInfo || isEditingAddress) {
-      toast({ variant: "destructive", title: "Selesaikan Edit Dahulu", description: "Harap simpan atau batalkan perubahan pada informasi lain sebelum menyunting field ini." });
-      return;
-    }
-    if (editingPersonalField && editingPersonalField !== fieldKey) {
-       toast({ variant: "destructive", title: "Selesaikan Edit Saat Ini", description: `Harap simpan atau batalkan perubahan pada field yang sedang disunting.` });
-       return;
-    }
-    setEditingPersonalField(fieldKey);
-    setCurrentPersonalFieldValue(currentValue);
-  };
+  const [isReportDialogOpen, setIsReportDialogOpen] = React.useState(false);
+  const [reportMessage, setReportMessage] = React.useState("");
 
-  const handleSavePersonalField = (fieldKey: BiodataKeys) => {
-    setBiodata(prev => (prev ? { ...prev, [fieldKey]: currentPersonalFieldValue } : null));
-    setEditingPersonalField(null);
-    setCurrentPersonalFieldValue("");
-    const fieldLabel = personalInfoEditableFields.find(f => f.key === fieldKey)?.label || fieldKey;
-    toast({ title: "Data Disimpan", description: `${fieldLabel} telah berhasil diperbarui.` });
+  const handleInputChange = (field: keyof BiodataDetails, value: string) => {
+    setBiodata(prev => {
+      if (!prev) return null;
+      const newState = { ...prev, [field]: value };
+      if (field === 'province') {
+        newState.district = '';
+        newState.subdistrict = '';
+        newState.village = '';
+      } else if (field === 'district') {
+        newState.subdistrict = '';
+        newState.village = '';
+      } else if (field === 'subdistrict') {
+        newState.village = '';
+      }
+      return newState;
+    });
   };
-
-  const handleCancelEditPersonalField = () => {
-    setEditingPersonalField(null);
-    setCurrentPersonalFieldValue("");
-  };
-
 
   const handleConfirm = () => {
-    if (isEditingParentInfo || editingPersonalField || isEditingAddress) {
+    if (!biodata) return;
+
+    if (!biodata.fullName?.trim() || !biodata.placeOfBirth?.trim() || !biodata.dateOfBirth || !biodata.motherName?.trim() ||
+        !biodata.province || !biodata.district?.trim() || !biodata.subdistrict?.trim() || !biodata.village?.trim() ||
+        !biodata.streetName?.trim() || !biodata.rtRw?.trim() || !biodata.contactNumber?.trim()) {
       toast({
         variant: "destructive",
-        title: "Simpan Perubahan Dahulu",
-        description: "Harap simpan atau batalkan semua perubahan yang sedang aktif sebelum melanjutkan.",
+        title: "Biodata Belum Lengkap",
+        description: "Harap lengkapi semua data pribadi (termasuk NIK, Agama, No. Kontak, dan Alamat Lengkap) sebelum melanjutkan.",
       });
       return;
     }
+
+    if (!biodata.nik?.trim() || biodata.nik.length !== 16) {
+      toast({
+        variant: "destructive",
+        title: "NIK Tidak Valid",
+        description: "NIK harus 16 digit.",
+      });
+      return;
+    }
+
     const progress = getFromLocalStorage<RegistrationProgress | null>(LOCAL_STORAGE_REGISTRATION_KEY, {});
     if (!progress?.hasProfilePhoto) {
          toast({
@@ -412,85 +465,6 @@ function ApplicantDashboard() {
       description: "Biodata Anda telah dikonfirmasi. Melanjutkan ke pemilihan sekolah.",
     });
     router.push('/registration/documents');
-  };
-
-  const handleEditParentInfo = () => {
-    if (editingPersonalField || isEditingAddress || !biodata) {
-      toast({ variant: "destructive", title: "Selesaikan Edit Dahulu", description: "Harap simpan atau batalkan perubahan lain sebelum menyunting info orang tua." });
-      return;
-    }
-    setEditableParentInfo({
-      fatherName: biodata.fatherName,
-      fatherDateOfBirth: biodata.fatherDateOfBirth,
-      fatherOccupation: biodata.fatherOccupation,
-      fatherIncome: biodata.fatherIncome,
-      motherName: biodata.motherName,
-      motherDateOfBirth: biodata.motherDateOfBirth,
-      motherOccupation: biodata.motherOccupation,
-      motherIncome: biodata.motherIncome,
-      guardianName: biodata.guardianName,
-    });
-    setIsEditingParentInfo(true);
-  };
-  
-  const handleEditAddress = () => {
-    if (editingPersonalField || isEditingParentInfo || !biodata) {
-      toast({ variant: "destructive", title: "Selesaikan Edit Dahulu", description: "Harap simpan atau batalkan perubahan lain sebelum menyunting alamat." });
-      return;
-    }
-    setEditableAddress({
-        streetName: biodata.streetName,
-        rtRw: biodata.rtRw,
-        province: biodata.province,
-        district: biodata.district,
-        subdistrict: biodata.subdistrict,
-        village: biodata.village,
-    });
-    setIsEditingAddress(true);
-  };
-
-  const handleParentInputChange = (name: ParentInfoKeys, value: string) => {
-    setEditableParentInfo(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSaveParentInfo = () => {
-    setBiodata(prev => (prev ? { ...prev, ...editableParentInfo } : null));
-    setIsEditingParentInfo(false);
-    toast({
-      title: "Informasi Orang Tua Disimpan",
-      description: "Perubahan pada informasi orang tua telah berhasil disimpan.",
-    });
-  };
-
-  const handleCancelEditParentInfo = () => {
-    setIsEditingParentInfo(false);
-  };
-  
-  const handleAddressInputChange = (field: keyof typeof editableAddress, value: string) => {
-    setEditableAddress(prev => {
-        const newState = {...prev, [field]: value};
-        if (field === 'province') {
-            newState.district = '';
-            newState.subdistrict = '';
-            newState.village = '';
-        } else if (field === 'district') {
-            newState.subdistrict = '';
-            newState.village = '';
-        } else if (field === 'subdistrict') {
-            newState.village = '';
-        }
-        return newState;
-    })
-  };
-  
-  const handleSaveAddress = () => {
-    setBiodata(prev => (prev ? {...prev, ...editableAddress} : null));
-    setIsEditingAddress(false);
-    toast({ title: "Alamat Diperbarui", description: "Informasi alamat Anda telah berhasil disimpan." });
-  };
-
-  const handleCancelEditAddress = () => {
-    setIsEditingAddress(false);
   };
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -538,7 +512,6 @@ function ApplicantDashboard() {
     }
   };
 
-  const isAnyFieldBeingEdited = isEditingParentInfo || editingPersonalField !== null || isEditingAddress;
   
   if (isLoading || !biodata) {
     return (
@@ -550,6 +523,7 @@ function ApplicantDashboard() {
 
   return (
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
+      <StepProgress currentStep={1} />
       <Card className="w-full max-w-3xl shadow-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">
@@ -603,192 +577,228 @@ function ApplicantDashboard() {
           </div>
 
           <section>
-            <h2 className="text-xl font-semibold mb-4 text-primary">Informasi Pribadi</h2>
-            <div className="rounded-md border">
-              <Table>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="font-medium text-muted-foreground w-1/3">NISN</TableCell><TableCell>{biodata.nisn}</TableCell><TableCell></TableCell>
-                  </TableRow>
-                   <TableRow>
-                    <TableCell className="font-medium text-muted-foreground w-1/3">NIK</TableCell><TableCell>{biodata.nik}</TableCell><TableCell></TableCell>
-                  </TableRow>
-
-                  {personalInfoEditableFields.map((field) => (
-                    <BiodataItem
-                      key={field.key}
-                      label={field.label}
-                      value={biodata[field.key as keyof typeof biodata]}
-                      fieldKey={field.key as BiodataKeys}
-                      isEditing={editingPersonalField === field.key}
-                      currentInputValue={editingPersonalField === field.key ? currentPersonalFieldValue : String(biodata[field.key as keyof typeof biodata] || "")}
-                      onEditClick={handleStartEditPersonalField}
-                      onSaveClick={handleSavePersonalField}
-                      onCancelClick={handleCancelEditPersonalField}
-      onInputChange={setCurrentPersonalFieldValue}
-                      disableEditButton={isAnyFieldBeingEdited || isLocked}
-                      inputType={field.type}
-                      selectOptions={field.selectOptions}
-                    />
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </section>
-
-          <section>
             <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <CardTitle className="text-lg">Alamat Lengkap</CardTitle>
-                        {!isEditingAddress && (
-                            <Button variant="outline" size="sm" onClick={handleEditAddress} disabled={isAnyFieldBeingEdited || isLocked}>
-                                <Edit3 className="mr-2 h-4 w-4" /> Edit Alamat
-                            </Button>
-                        )}
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    {isEditingAddress ? (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="sm:col-span-2">
-                                    <Label htmlFor="streetName">Nama Jalan & No. Rumah</Label>
-                                    <Input id="streetName" value={editableAddress.streetName} onChange={(e) => handleAddressInputChange('streetName', e.target.value)} />
-                                </div>
-                                <div>
-                                    <Label htmlFor="rtRw">RT/RW</Label>
-                                    <Input id="rtRw" value={editableAddress.rtRw} onChange={(e) => handleAddressInputChange('rtRw', e.target.value)} />
-                                </div>
-                                <div>
-                                    <Label>Provinsi</Label>
-                                    <Select onValueChange={(v) => handleAddressInputChange('province', v)} value={editableAddress.province}>
-                                        <SelectTrigger><SelectValue placeholder="Pilih Provinsi" /></SelectTrigger>
-                                        <SelectContent>{provinceOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label>Kabupaten/Kota</Label>
-                                    <Select onValueChange={(v) => handleAddressInputChange('district', v)} value={editableAddress.district} disabled={!editableAddress.province}>
-                                        <SelectTrigger><SelectValue placeholder="Pilih Kabupaten/Kota" /></SelectTrigger>
-                                        <SelectContent>{districtOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label>Kecamatan</Label>
-                                    <Select onValueChange={(v) => handleAddressInputChange('subdistrict', v)} value={editableAddress.subdistrict} disabled={!editableAddress.district}>
-                                        <SelectTrigger><SelectValue placeholder="Pilih Kecamatan" /></SelectTrigger>
-                                        <SelectContent>{subdistrictOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label>Kelurahan/Desa</Label>
-                                    <Select onValueChange={(v) => handleAddressInputChange('village', v)} value={editableAddress.village} disabled={!editableAddress.subdistrict}>
-                                        <SelectTrigger><SelectValue placeholder="Pilih Kelurahan/Desa" /></SelectTrigger>
-                                        <SelectContent>{villageOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                            <div className="flex justify-end gap-2 pt-4">
-                                <Button variant="ghost" onClick={handleCancelEditAddress}>Batal</Button>
-                                <Button onClick={handleSaveAddress}><Save className="mr-2 h-4 w-4" /> Simpan Alamat</Button>
-                            </div>
-                        </div>
-                    ) : (
-                       <Table>
-                          <TableBody>
-                            <TableRow>
-                              <TableCell className="font-medium text-muted-foreground w-1/3">Alamat</TableCell>
-                              <TableCell>{`${biodata.streetName || ''}, ${biodata.rtRw || ''}`.replace(/^,|,$/g, '').trim() || '-'}</TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell className="font-medium text-muted-foreground">Kelurahan/Desa</TableCell>
-                              <TableCell>{biodata.village || '-'}</TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell className="font-medium text-muted-foreground">Kecamatan</TableCell>
-                              <TableCell>{biodata.subdistrict || '-'}</TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell className="font-medium text-muted-foreground">Kabupaten/Kota</TableCell>
-                              <TableCell>{biodata.district || '-'}</TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell className="font-medium text-muted-foreground">Provinsi</TableCell>
-                              <TableCell>{biodata.province || '-'}</TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                    )}
-                </CardContent>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <CardTitle className="text-lg">Informasi Pribadi</CardTitle>
+                    <CardDescription className="text-xs">Data pribadi dasar Anda.</CardDescription>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsReportDialogOpen(true)}
+                    className="border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/20"
+                  >
+                    <AlertTriangle className="mr-2 h-4 w-4 text-amber-500" /> Lapor ke Sekolah Asal
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <Alert className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300">
+                  <AlertTriangle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <AlertTitle className="text-sm font-semibold">Data Sinkronisasi Sekolah Asal</AlertTitle>
+                  <AlertDescription className="text-xs">
+                    Kolom berlatar abu-abu diimpor oleh sekolah asal (SMP). Jika ada kesalahan data tersebut, silakan klik tombol <strong>Lapor ke Sekolah Asal</strong> di atas untuk perbaikan.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                  <div>
+                    <Label className="text-muted-foreground flex items-center gap-1 mb-1">Nama Lengkap <span className="text-red-500 font-bold">*</span></Label>
+                    <Input value={biodata.fullName} disabled className="bg-muted text-muted-foreground font-semibold" />
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground flex items-center gap-1 mb-1">NISN <span className="text-red-500 font-bold">*</span></Label>
+                    <Input value={biodata.nisn} disabled className="bg-muted text-muted-foreground font-mono" />
+                  </div>
+                  <div>
+                    <Label htmlFor="nik" className="flex items-center gap-1 mb-1 font-semibold">NIK (16 Digit) <span className="text-red-500 font-bold">*</span></Label>
+                    <Input 
+                      id="nik" 
+                      value={biodata.nik || ""} 
+                      onChange={(e) => handleInputChange('nik', e.target.value)} 
+                      maxLength={16}
+                      disabled={isLocked}
+                      placeholder="Masukkan NIK Anda"
+                      className="border-primary/40 focus-visible:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground flex items-center gap-1 mb-1">Jenis Kelamin <span className="text-red-500 font-bold">*</span></Label>
+                    <Input value={biodata.gender} disabled className="bg-muted text-muted-foreground" />
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground flex items-center gap-1 mb-1">Tempat Lahir <span className="text-red-500 font-bold">*</span></Label>
+                    <Input value={biodata.placeOfBirth} disabled className="bg-muted text-muted-foreground" />
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground flex items-center gap-1 mb-1">Tanggal Lahir <span className="text-red-500 font-bold">*</span></Label>
+                    <Input 
+                      value={biodata.dateOfBirth ? new Date(biodata.dateOfBirth).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : ""} 
+                      disabled 
+                      className="bg-muted text-muted-foreground" 
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="religion" className="flex items-center gap-1 mb-1 font-semibold">Agama <span className="text-red-500 font-bold">*</span></Label>
+                    <Select 
+                      onValueChange={(v) => handleInputChange('religion', v)} 
+                      value={biodata.religion}
+                      disabled={isLocked}
+                    >
+                      <SelectTrigger id="religion" className="border-primary/40 focus:ring-primary"><SelectValue placeholder="Pilih Agama" /></SelectTrigger>
+                      <SelectContent>
+                        {religionOptions.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground flex items-center gap-1 mb-1">Nama Ibu Kandung <span className="text-red-500 font-bold">*</span></Label>
+                    <Input value={biodata.motherName} disabled className="bg-muted text-muted-foreground" />
+                  </div>
+                  <div>
+                    <Label htmlFor="contactNumber" className="flex items-center gap-1 mb-1 font-semibold">Nomor Kontak / WhatsApp <span className="text-red-500 font-bold">*</span></Label>
+                    <Input 
+                      id="contactNumber" 
+                      type="tel" 
+                      value={biodata.contactNumber || ""} 
+                      onChange={(e) => handleInputChange('contactNumber', e.target.value)}
+                      disabled={isLocked}
+                      placeholder="Contoh: 0812XXXXXXXX"
+                      className="border-primary/40 focus-visible:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground flex items-center gap-1 mb-1">Sekolah Asal</Label>
+                    <Input value={biodata.previousSchool} disabled className="bg-muted text-muted-foreground" />
+                  </div>
+                </div>
+              </CardContent>
             </Card>
           </section>
 
           <section>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-primary">Informasi Orang Tua/Wali</h2>
-              {!isEditingParentInfo && (
-                <Button 
-                  onClick={handleEditParentInfo} 
-                  variant="outline" 
-                  size="sm"
-                  disabled={isAnyFieldBeingEdited || isLocked}
-                >
-                  <Edit3 className="mr-2 h-4 w-4" /> Edit Info Orang Tua
-                </Button>
-              )}
-            </div>
-            {isEditingParentInfo ? (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-left border p-4 rounded-md">
-                  <h3 className="md:col-span-2 text-lg font-medium text-muted-foreground">Data Ayah</h3>
-                  <EditableBiodataField label="Nama Ayah" name="fatherName" value={editableParentInfo.fatherName} onChange={handleParentInputChange} />
-                  <EditableBiodataField label="Tanggal Lahir Ayah" name="fatherDateOfBirth" type="date" value={editableParentInfo.fatherDateOfBirth} onChange={handleParentInputChange} />
-                  <EditableBiodataField label="Pekerjaan Ayah" name="fatherOccupation" value={editableParentInfo.fatherOccupation} onChange={handleParentInputChange} selectOptions={occupationOptions} />
-                  <EditableBiodataField label="Penghasilan Ayah per Bulan" name="fatherIncome" value={editableParentInfo.fatherIncome} onChange={handleParentInputChange} selectOptions={incomeOptions}/>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Alamat Lengkap</CardTitle>
+                <CardDescription className="text-xs">Isi alamat domisili pendaftar saat ini.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                  <div>
+                    <Label className="flex items-center gap-1 mb-1 font-semibold">Provinsi <span className="text-red-500 font-bold">*</span></Label>
+                    <Select 
+                      onValueChange={(v) => handleInputChange('province', v)} 
+                      value={biodata.province}
+                      disabled={isLocked}
+                    >
+                      <SelectTrigger className="border-primary/40 focus:ring-primary"><SelectValue placeholder="Pilih Provinsi" /></SelectTrigger>
+                      <SelectContent>
+                        {indonesianProvinces.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="flex items-center gap-1 mb-1 font-semibold">Kabupaten/Kota <span className="text-red-500 font-bold">*</span></Label>
+                    {biodata.province === "Kalimantan Timur" ? (
+                      <Select 
+                        onValueChange={(v) => handleInputChange('district', v)} 
+                        value={biodata.district}
+                        disabled={isLocked}
+                      >
+                        <SelectTrigger className="border-primary/40 focus:ring-primary"><SelectValue placeholder="Pilih Kabupaten/Kota" /></SelectTrigger>
+                        <SelectContent>
+                          {districtOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input 
+                        value={biodata.district} 
+                        onChange={(e) => handleInputChange('district', e.target.value)} 
+                        placeholder="Tulis Kabupaten/Kota..." 
+                        disabled={isLocked || !biodata.province} 
+                        className="border-primary/40 focus-visible:ring-primary"
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <Label className="flex items-center gap-1 mb-1 font-semibold">Kecamatan <span className="text-red-500 font-bold">*</span></Label>
+                    {isBerau ? (
+                      <Select 
+                        onValueChange={(v) => handleInputChange('subdistrict', v)} 
+                        value={biodata.subdistrict}
+                        disabled={isLocked}
+                      >
+                        <SelectTrigger className="border-primary/40 focus:ring-primary"><SelectValue placeholder="Pilih Kecamatan" /></SelectTrigger>
+                        <SelectContent>
+                          {subdistrictOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input 
+                        value={biodata.subdistrict} 
+                        onChange={(e) => handleInputChange('subdistrict', e.target.value)} 
+                        placeholder="Tulis Kecamatan..." 
+                        disabled={isLocked || !biodata.district} 
+                        className="border-primary/40 focus-visible:ring-primary"
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <Label className="flex items-center gap-1 mb-1 font-semibold">Kelurahan/Desa <span className="text-red-500 font-bold">*</span></Label>
+                    {isBerau ? (
+                      <Select 
+                        onValueChange={(v) => handleInputChange('village', v)} 
+                        value={biodata.village}
+                        disabled={isLocked}
+                      >
+                        <SelectTrigger className="border-primary/40 focus:ring-primary"><SelectValue placeholder="Pilih Kelurahan/Desa" /></SelectTrigger>
+                        <SelectContent>
+                          {villageOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input 
+                        value={biodata.village} 
+                        onChange={(e) => handleInputChange('village', e.target.value)} 
+                        placeholder="Tulis Kelurahan/Desa..." 
+                        disabled={isLocked || !biodata.subdistrict} 
+                        className="border-primary/40 focus-visible:ring-primary"
+                      />
+                    )}
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="streetName" className="flex items-center gap-1 mb-1 font-semibold">Nama Jalan & No. Rumah <span className="text-red-500 font-bold">*</span></Label>
+                    <Input 
+                      id="streetName" 
+                      value={biodata.streetName} 
+                      onChange={(e) => handleInputChange('streetName', e.target.value)}
+                      disabled={isLocked}
+                      placeholder="Nama jalan, nomor rumah, gang, RT/RW, dll."
+                      className="border-primary/40 focus-visible:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="rtRw" className="flex items-center gap-1 mb-1 font-semibold">RT/RW <span className="text-red-500 font-bold">*</span></Label>
+                    <Input 
+                      id="rtRw" 
+                      value={biodata.rtRw} 
+                      onChange={(e) => handleInputChange('rtRw', e.target.value)}
+                      disabled={isLocked}
+                      placeholder="Contoh: RT 10 / RW 03"
+                      className="border-primary/40 focus-visible:ring-primary"
+                    />
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-left border p-4 rounded-md">
-                  <h3 className="md:col-span-2 text-lg font-medium text-muted-foreground">Data Ibu</h3>
-                  <EditableBiodataField label="Nama Ibu" name="motherName" value={editableParentInfo.motherName} onChange={handleParentInputChange} />
-                  <EditableBiodataField label="Tanggal Lahir Ibu" name="motherDateOfBirth" type="date" value={editableParentInfo.motherDateOfBirth} onChange={handleParentInputChange} />
-                  <EditableBiodataField label="Pekerjaan Ibu" name="motherOccupation" value={editableParentInfo.motherOccupation} onChange={handleParentInputChange} selectOptions={occupationOptions} />
-                  <EditableBiodataField label="Penghasilan Ibu per Bulan" name="motherIncome" value={editableParentInfo.motherIncome} onChange={handleParentInputChange} selectOptions={incomeOptions} />
-                </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-left border p-4 rounded-md">
-                    <h3 className="md:col-span-2 text-lg font-medium text-muted-foreground">Data Wali (jika ada)</h3>
-                    <EditableBiodataField label="Nama Wali" name="guardianName" value={editableParentInfo.guardianName} onChange={handleParentInputChange} />
-                 </div>
-                <div className="flex justify-end space-x-3 mt-4">
-                  <Button onClick={handleCancelEditParentInfo} variant="outline">
-                    <XCircle className="mr-2 h-4 w-4" /> Batal
-                  </Button>
-                  <Button onClick={handleSaveParentInfo}>
-                    <Save className="mr-2 h-4 w-4" /> Simpan Perubahan Ortu
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableBody>
-                    <TableRow><TableCell className="font-medium text-muted-foreground w-1/3">Nama Ayah</TableCell><TableCell>{biodata.fatherName}</TableCell></TableRow>
-                    <TableRow><TableCell className="font-medium text-muted-foreground">Tanggal Lahir Ayah</TableCell><TableCell>{biodata.fatherDateOfBirth}</TableCell></TableRow>
-                    <TableRow><TableCell className="font-medium text-muted-foreground">Pekerjaan Ayah</TableCell><TableCell>{biodata.fatherOccupation}</TableCell></TableRow>
-                    <TableRow><TableCell className="font-medium text-muted-foreground">Penghasilan Ayah</TableCell><TableCell>{biodata.fatherIncome}</TableCell></TableRow>
-                    <TableRow><TableCell className="font-medium text-muted-foreground">Nama Ibu</TableCell><TableCell>{biodata.motherName}</TableCell></TableRow>
-                    <TableRow><TableCell className="font-medium text-muted-foreground">Tanggal Lahir Ibu</TableCell><TableCell>{biodata.motherDateOfBirth}</TableCell></TableRow>
-                    <TableRow><TableCell className="font-medium text-muted-foreground">Pekerjaan Ibu</TableCell><TableCell>{biodata.motherOccupation}</TableCell></TableRow>
-                    <TableRow><TableCell className="font-medium text-muted-foreground">Penghasilan Ibu</TableCell><TableCell>{biodata.motherIncome}</TableCell></TableRow>
-                    <TableRow><TableCell className="font-medium text-muted-foreground">Nama Wali</TableCell><TableCell>{biodata.guardianName}</TableCell></TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+              </CardContent>
+            </Card>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-4 text-primary">Nilai Rapor (SMP/MTs)</h2>
-            <div className="overflow-x-auto rounded-md border">
+            <div className="overflow-x-auto rounded-md border text-left">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -807,15 +817,15 @@ function ApplicantDashboard() {
                 <ShadcnTableFooter>
                   <TableRow>
                     <TableCell className="font-semibold text-right bg-muted">Jumlah Keseluruhan Nilai Rapor</TableCell>
-                    <TableCell className="text-right font-bold text-lg bg-muted">{overallTableValue}</TableCell>
+                    <TableCell className="text-right font-bold text-lg bg-muted text-primary">{overallTableValue}</TableCell>
                   </TableRow>
                 </ShadcnTableFooter>
               </Table>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Nilai dalam skala 0-100.</p>
+            <p className="text-xs text-muted-foreground mt-2 text-left">Nilai dalam skala 0-100. Diimpor oleh sekolah asal.</p>
           </section>
         </CardContent>
-        <CardFooter className="flex flex-col sm:flex-row justify-end items-center pt-6 gap-4">
+        <CardFooter className="flex flex-col sm:flex-row justify-end items-center pt-6 gap-4 border-t">
             {isLocked ? (
                  <Button size="lg" asChild className="w-full sm:w-auto">
                     <Link href="/registration/status">
@@ -827,8 +837,7 @@ function ApplicantDashboard() {
                 <Button
                   size="lg"
                   onClick={handleConfirm}
-                  disabled={isAnyFieldBeingEdited}
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <CheckCircle2 className="mr-2 h-5 w-5" />
                   Konfirmasi dan Lanjutkan
@@ -836,6 +845,57 @@ function ApplicantDashboard() {
             )}
         </CardFooter>
       </Card>
+
+      <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-left">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Lapor Perbaikan Data ke Sekolah Asal
+            </DialogTitle>
+            <DialogDescription className="text-xs text-left">
+              Ajukan perbaikan data sinkronisasi sekolah asal Anda. Operator sekolah asal Anda akan menerima laporan ini.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2 text-left">
+            <div>
+              <Label className="text-xs text-muted-foreground">Sekolah Asal</Label>
+              <Input value={biodata.previousSchool} disabled className="bg-muted text-xs mt-1" />
+            </div>
+            <div>
+              <Label htmlFor="reportMessage" className="text-xs font-semibold">Detail Perbaikan yang Diajukan</Label>
+              <textarea
+                id="reportMessage"
+                rows={4}
+                value={reportMessage}
+                onChange={(e) => setReportMessage(e.target.value)}
+                placeholder="Contoh: Nama Ibu Kandung tertulis Siti Fatimah, yang benar Siti Aminah. Nilai IPA Semester 3 tertulis 80, yang benar 90."
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setIsReportDialogOpen(false)}>Batal</Button>
+            <Button 
+              size="sm" 
+              onClick={() => {
+                if (!reportMessage.trim()) {
+                  toast({ variant: "destructive", title: "Pesan Kosong", description: "Harap tulis detail perbaikan terlebih dahulu." });
+                  return;
+                }
+                toast({
+                  title: "Laporan Terkirim",
+                  description: `Laporan Anda berhasil dikirim ke operator ${biodata.previousSchool}.`,
+                });
+                setReportMessage("");
+                setIsReportDialogOpen(false);
+              }}
+            >
+              Kirim Laporan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

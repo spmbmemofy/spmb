@@ -42,7 +42,7 @@ export default function HomePage() {
   }, []);
   
   React.useEffect(() => {
-    if (userRole === 'admin' || userRole === 'superadmin') {
+    if (userRole === 'admin' || userRole === 'superadmin' || userRole === 'branch_admin') {
       const allSchools = getSchools();
       const allStages = getStages();
       const allPathways = getJalur();

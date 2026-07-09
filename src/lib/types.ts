@@ -104,6 +104,17 @@ export interface Applicant {
   submissionTimestamp?: string;
   latitude?: number;
   longitude?: number;
+  achievements?: ApplicantAchievement[];
+}
+
+export interface ApplicantAchievement {
+  id: string;
+  category: 'akademik' | 'non-akademik';
+  subcategory: string;
+  name: string;
+  level: string;
+  organizer: string;
+  score: number;
 }
 
 export type SortKey = keyof Applicant | 'no';
@@ -145,6 +156,7 @@ export interface ManagedApplicant {
     semester4: number;
     semester5: number;
   };
+  achievements?: ApplicantAchievement[];
 }
 
 export interface ExcelRow {

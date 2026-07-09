@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Building, AlertCircle, Edit, PlusCircle, Trash2, Settings } from 'lucide-react';
+import { Building, AlertCircle, Edit, PlusCircle, Trash2, Settings, MapPin, Search as SearchIcon, Navigation as NavigationIcon, Lock, Unlock } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -23,7 +23,9 @@ import type { Major } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { getVillages } from "@/lib/addressData";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 const majorFormSchema = z.object({
   id: z.string().optional(),
@@ -60,6 +62,222 @@ export default function SchoolSettingsPage() {
     const [allowedReligions, setAllowedReligions] = React.useState<string[]>([]);
     const [isSaving, setIsSaving] = React.useState(false);
 
+    // State for map locations
+    const mapRef = React.useRef<any>(null);
+    const markerRef = React.useRef<any>(null);
+    const [mapCoords, setMapCoords] = React.useState({ lat: -2.15, lng: 117.48 }); // Berau center
+    const [searchQuery, setSearchQuery] = React.useState("");
+
+    // Map Lock States
+    const [isMapLocked, setIsMapLocked] = React.useState(true);
+    const isMapLockedRef = React.useRef(true);
+
+    React.useEffect(() => {
+        isMapLockedRef.current = isMapLocked;
+        if (markerRef.current) {
+            if (isMapLocked) {
+                markerRef.current.dragging?.disable();
+            } else {
+                markerRef.current.dragging?.enable();
+            }
+        }
+    }, [isMapLocked]);
+
+    React.useEffect(() => {
+        if (typeof window === 'undefined' || !school) return;
+
+        // Dynamically load Leaflet stylesheet
+        if (!document.getElementById('leaflet-css')) {
+            const link = document.createElement('link');
+            link.id = 'leaflet-css';
+            link.rel = 'stylesheet';
+            link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+            document.head.appendChild(link);
+        }
+
+        const initMap = () => {
+            const L = (window as any).L;
+            if (!L) return;
+
+            const container = document.getElementById('school-map-picker');
+            if (!container || mapRef.current) return;
+
+            const setupMap = (lat: number, lng: number) => {
+                const map = L.map('school-map-picker').setView([lat, lng], 15);
+                mapRef.current = map;
+
+                const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                });
+
+                const satelliteImg = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri'
+                });
+
+                const satelliteLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Labels &copy; Esri'
+                });
+
+                const satelliteHybrid = L.layerGroup([satelliteImg, satelliteLabels]);
+
+                const baseMaps = {
+                    "Peta Standard": osm,
+                    "Satelit (Hybrid)": satelliteHybrid
+                };
+
+                osm.addTo(map);
+                L.control.layers(baseMaps).addTo(map);
+
+                const marker = L.marker([lat, lng], { draggable: !isMapLockedRef.current }).addTo(map);
+                markerRef.current = marker;
+
+                marker.on('dragend', () => {
+                    if (isMapLockedRef.current) return;
+                    const position = marker.getLatLng();
+                    setMapCoords({ lat: position.lat, lng: position.lng });
+                });
+
+                map.on('click', (e: any) => {
+                    if (isMapLockedRef.current) return;
+                    const position = e.latlng;
+                    marker.setLatLng(position);
+                    setMapCoords({ lat: position.lat, lng: position.lng });
+                });
+            };
+
+            const savedLat = school.latitude;
+            const savedLng = school.longitude;
+
+            const isDefaultCoords = !savedLat || !savedLng || (Math.abs(savedLat - (-2.15)) < 0.0001 && Math.abs(savedLng - 117.48) < 0.0001);
+
+            if (!isDefaultCoords) {
+                setMapCoords({ lat: savedLat, lng: savedLng });
+                setupMap(savedLat, savedLng);
+            } else {
+                // Attempt to geocode school district/address
+                const cleanKecamatan = school.kecamatan ? school.kecamatan.replace(/^kec\.\s+/i, '').trim() : '';
+                const queryText = `${school.alamat ? school.alamat + ", " : ""}${cleanKecamatan ? "Kecamatan " + cleanKecamatan : ""}, Berau, Kalimantan Timur`;
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryText)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            const lat = parseFloat(data[0].lat);
+                            const lng = parseFloat(data[0].lon);
+                            setMapCoords({ lat, lng });
+                            setupMap(lat, lng);
+                        } else if (cleanKecamatan) {
+                            // Fallback 1: Geocode just the subdistrict (kecamatan)
+                            const queryKec = `Kecamatan ${cleanKecamatan}, Berau, Kalimantan Timur`;
+                            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryKec)}`)
+                                .then(r => r.json())
+                                .then(dataKec => {
+                                    if (dataKec && dataKec.length > 0) {
+                                        const lat = parseFloat(dataKec[0].lat);
+                                        const lng = parseFloat(dataKec[0].lon);
+                                        setMapCoords({ lat, lng });
+                                        setupMap(lat, lng);
+                                    } else {
+                                        setupMap(-2.15, 117.48);
+                                    }
+                                })
+                                .catch(() => setupMap(-2.15, 117.48));
+                        } else {
+                            setupMap(-2.15, 117.48);
+                        }
+                    })
+                    .catch(() => {
+                        if (cleanKecamatan) {
+                            const queryKec = `Kecamatan ${cleanKecamatan}, Berau, Kalimantan Timur`;
+                            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryKec)}`)
+                                .then(r => r.json())
+                                .then(dataKec => {
+                                    if (dataKec && dataKec.length > 0) {
+                                        const lat = parseFloat(dataKec[0].lat);
+                                        const lng = parseFloat(dataKec[0].lon);
+                                        setMapCoords({ lat, lng });
+                                        setupMap(lat, lng);
+                                    } else {
+                                        setupMap(-2.15, 117.48);
+                                    }
+                                })
+                                .catch(() => setupMap(-2.15, 117.48));
+                        } else {
+                            setupMap(-2.15, 117.48);
+                        }
+                    });
+            }
+        };
+
+        if (!(window as any).L) {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            script.async = true;
+            script.onload = () => {
+                setTimeout(initMap, 200);
+            };
+            document.body.appendChild(script);
+        } else {
+            setTimeout(initMap, 200);
+        }
+
+        return () => {
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+                markerRef.current = null;
+            }
+        };
+    }, [school]);
+
+    const handleSearchLocation = async () => {
+        if (!searchQuery.trim()) return;
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery + ", Berau")}`);
+            const data = await res.json();
+            if (data && data.length > 0) {
+                const firstResult = data[0];
+                const lat = parseFloat(firstResult.lat);
+                const lon = parseFloat(firstResult.lon);
+                
+                setMapCoords({ lat, lng: lon });
+
+                if (mapRef.current && markerRef.current) {
+                    mapRef.current.setView([lat, lon], 16);
+                    markerRef.current.setLatLng([lat, lon]);
+                }
+                toast({ title: "Lokasi Ditemukan", description: `Menampilkan hasil pencarian untuk "${firstResult.display_name}".` });
+            } else {
+                toast({ variant: "destructive", title: "Lokasi Tidak Ditemukan", description: "Coba kata kunci pencarian alamat yang lain." });
+            }
+        } catch (e) {
+            toast({ variant: "destructive", title: "Error", description: "Gagal menghubungkan ke layanan peta." });
+        }
+    };
+
+    const handleLocateMe = () => {
+        if (!navigator.geolocation) {
+            toast({ variant: "destructive", title: "Geolocation Tidak Didukung", description: "Browser Anda tidak mendukung layanan lokasi saat ini." });
+            return;
+        }
+
+        toast({ title: "Mendapatkan Lokasi...", description: "Harap izinkan akses GPS pada browser Anda." });
+
+        navigator.geolocation.getCurrentPosition((position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            setMapCoords({ lat, lng });
+
+            if (mapRef.current && markerRef.current) {
+                mapRef.current.setView([lat, lng], 15);
+                markerRef.current.setLatLng([lat, lng]);
+            }
+            toast({ title: "Lokasi Ditemukan", description: `Titik koordinat berhasil diposisikan ke lokasi GPS Anda.` });
+        }, (error) => {
+            toast({ variant: "destructive", title: "Akses Lokasi Ditolak", description: "Gagal mendapatkan lokasi GPS. Pastikan izin lokasi aktif." });
+        }, { enableHighAccuracy: true });
+    };
+
     const form = useForm<MajorFormValues>({
         resolver: zodResolver(majorFormSchema),
         defaultValues: {
@@ -86,9 +304,16 @@ export default function SchoolSettingsPage() {
 
         const userSchool = getSchoolByNPSN(currentUser.npsn);
         if (userSchool) {
+            if (userSchool.jenjang === 'SMP') {
+                router.replace('/registration/applicant-data');
+                return;
+            }
             setSchool(userSchool);
             setAllowedGenders(userSchool.allowedGenders || []);
             setAllowedReligions(userSchool.allowedReligions || []);
+            if (userSchool.latitude && userSchool.longitude) {
+                setMapCoords({ lat: userSchool.latitude, lng: userSchool.longitude });
+            }
         }
         setIsLoading(false);
     }, [router, toast]);
@@ -184,12 +409,14 @@ export default function SchoolSettingsPage() {
             ...school,
             allowedGenders,
             allowedReligions,
+            latitude: mapCoords.lat,
+            longitude: mapCoords.lng
         };
 
         try {
             updateSchool(updatedSchoolData);
             setSchool(updatedSchoolData); // Update local state
-            toast({ title: "Aturan Khusus Disimpan", description: "Perubahan pada aturan pendaftaran khusus telah disimpan." });
+            toast({ title: "Pengaturan & Lokasi Disimpan", description: "Perubahan aturan pendaftaran dan koordinat lokasi sekolah telah disimpan." });
         } catch (error: any) {
             toast({ variant: "destructive", title: "Gagal Menyimpan", description: error.message });
         } finally {
@@ -247,6 +474,73 @@ export default function SchoolSettingsPage() {
                                  <div className="flex justify-between py-1"><span className="font-medium text-muted-foreground">Telepon</span><span>{school.telepon}</span></div>
                             </div>
                         </section>
+                        {school.jenjang !== 'SMK' && (
+                            <section className="space-y-4">
+                                <h3 className="text-xl font-semibold text-primary">Wilayah Penerimaan Domisili (Zonasi)</h3>
+                                <div className="rounded-md border p-6 bg-muted/10 space-y-6">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-4">
+                                        <div>
+                                            <h4 className="font-semibold text-foreground">Kecamatan Asal Sekolah: {school.kecamatan ? school.kecamatan.replace(/^kec\.\s+/i, '') : '-'}</h4>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Berikut adalah wilayah kelurahan/desa penerimaan domisili yang telah diatur oleh Admin Cabang Dinas / Superadmin untuk sekolah Anda.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    {school.allowedVillages && school.allowedVillages.length > 0 ? (
+                                        <div className="overflow-hidden rounded-lg border bg-card">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead className="w-1/3">Kelurahan / Desa</TableHead>
+                                                        <TableHead className="w-1/3">Status Penerimaan</TableHead>
+                                                        <TableHead className="w-1/3">Rincian RT Prioritas</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {school.allowedVillages.map(village => {
+                                                        const priorityRule = school.priorityDomiciles?.find(p => p.village === village);
+                                                        const isPrioritised = !!priorityRule;
+                                                        
+                                                        return (
+                                                            <TableRow key={village} className={isPrioritised ? "bg-primary/5 hover:bg-primary/10" : ""}>
+                                                                <TableCell className="font-medium">{village}</TableCell>
+                                                                <TableCell>
+                                                                    {isPrioritised ? (
+                                                                        <Badge variant="default" className="bg-green-600 text-white hover:bg-green-600">
+                                                                            Prioritas Utama
+                                                                        </Badge>
+                                                                    ) : (
+                                                                        <Badge variant="secondary">
+                                                                            Zonasi Standar
+                                                                        </Badge>
+                                                                    )}
+                                                                </TableCell>
+                                                                <TableCell className="text-sm">
+                                                                    {isPrioritised ? (
+                                                                        priorityRule.rts && priorityRule.rts.length > 0 ? (
+                                                                            <span>RT: <strong className="font-mono">{priorityRule.rts.join(', ')}</strong></span>
+                                                                        ) : (
+                                                                            <span className="text-xs text-muted-foreground italic">Semua RT Prioritas</span>
+                                                                        )
+                                                                    ) : (
+                                                                        <span className="text-xs text-muted-foreground">-</span>
+                                                                    )}
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        );
+                                                    })}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-md p-4">
+                                            ⚠️ <strong>Belum Diatur:</strong> Wilayah penerimaan domisili sekolah ini belum diatur oleh Admin Cabang Dinas / Superadmin.
+                                        </div>
+                                    )}
+                                </div>
+                            </section>
+                        )}
                         {(school.jenjang === 'SMK') && (
                             <section>
                                 <div className="flex justify-between items-center mb-4">
@@ -297,6 +591,92 @@ export default function SchoolSettingsPage() {
                                 </CardFooter>
                             </section>
                         )}
+                         <section>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center"><MapPin className="mr-2"/> Lokasi Koordinat Sekolah</CardTitle>
+                                    <CardDescription>
+                                        Tentukan lokasi geografis sekolah pada peta. Geser penanda (marker) atau klik pada peta untuk menetapkan koordinat lokasi sekolah secara akurat.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                     <div className="flex flex-wrap items-center gap-2">
+                                         <Input 
+                                             placeholder={isMapLocked ? "Koordinat terkunci. Buka kunci untuk mencari..." : "Cari lokasi/alamat sekolah..."}
+                                             value={searchQuery}
+                                             onChange={(e) => setSearchQuery(e.target.value)}
+                                             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSearchLocation(); } }}
+                                             disabled={isMapLocked}
+                                             className="flex-1 min-w-[200px]"
+                                         />
+                                         <Button type="button" variant="outline" onClick={handleSearchLocation} disabled={isMapLocked}>
+                                             <SearchIcon className="h-4 w-4 mr-2" /> Cari
+                                         </Button>
+                                         <Button type="button" variant="secondary" onClick={handleLocateMe} disabled={isMapLocked} className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20">
+                                             <NavigationIcon className="h-4 w-4 mr-2" /> Gunakan lokasi saat ini
+                                         </Button>
+                                     </div>
+                                    
+                                    <div className="relative rounded-lg overflow-hidden border bg-muted/20">
+                                        <div 
+                                            id="school-map-picker" 
+                                            className="w-full h-80 relative" 
+                                            style={{ minHeight: '320px', zIndex: 1 }}
+                                        />
+                                        
+                                        {/* Sleek Floating Status Banner */}
+                                        <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-3 px-4 py-2 rounded-full border shadow-xl backdrop-blur-md transition-all duration-300 ${
+                                            isMapLocked 
+                                                ? 'bg-amber-500/95 border-amber-600/20 text-white' 
+                                                : 'bg-green-600/95 border-green-700/20 text-white'
+                                        }`}>
+                                            {isMapLocked ? (
+                                                <>
+                                                    <Lock className="h-4 w-4 shrink-0 animate-pulse text-amber-100" />
+                                                    <span className="text-xs font-semibold whitespace-nowrap tracking-wide">Koordinat Terkunci</span>
+                                                    <Button 
+                                                        type="button" 
+                                                        size="sm" 
+                                                        onClick={() => setIsMapLocked(false)}
+                                                        className="h-7 px-3 text-xs font-bold rounded-full bg-white text-amber-700 hover:bg-white/90 shadow-sm border-0"
+                                                    >
+                                                        Ubah Lokasi
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Unlock className="h-4 w-4 shrink-0 text-green-100" />
+                                                    <span className="text-xs font-semibold whitespace-nowrap tracking-wide">Mode Edit Aktif</span>
+                                                    <Button 
+                                                        type="button" 
+                                                        size="sm" 
+                                                        onClick={() => setIsMapLocked(true)}
+                                                        className="h-7 px-3 text-xs font-bold rounded-full bg-white text-green-700 hover:bg-white/90 shadow-sm border-0"
+                                                    >
+                                                        Kunci Lokasi
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <Label htmlFor="latitude">Latitude</Label>
+                                            <Input id="latitude" value={mapCoords.lat.toFixed(6)} readOnly className="font-mono bg-muted" />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="longitude">Longitude</Label>
+                                            <Input id="longitude" value={mapCoords.lng.toFixed(6)} readOnly className="font-mono bg-muted" />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                                <CardFooter className="text-xs text-muted-foreground">
+                                    Titik koordinat ini akan disimpan ke dalam database profil sekolah Anda.
+                                </CardFooter>
+                            </Card>
+                        </section>
+
                          <section>
                             <Card>
                                 <CardHeader>

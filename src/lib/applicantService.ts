@@ -13,7 +13,8 @@ const APPLICANTS_STORAGE_KEY = 'allApplicantsData_v1';
 
 function getApplicantRT(applicant: Applicant): string | null {
     if (!applicant.rtRw) return null;
-    return applicant.rtRw.split('/')[0].replace(/rt/i, '').trim();
+    const match = applicant.rtRw.replace(/rt/i, '').match(/\d+/);
+    return match ? parseInt(match[0], 10).toString() : null;
 }
 
 export function isPriority(applicant: Applicant, school: School): boolean {
@@ -35,7 +36,15 @@ export function isPriority(applicant: Applicant, school: School): boolean {
         return false;
     }
 
-    return priorityRule.rts.includes(applicantRT);
+    const normalizeRT = (rtStr: string | undefined): string | null => {
+        if (!rtStr) return null;
+        const match = rtStr.replace(/rt/i, '').match(/\d+/);
+        return match ? parseInt(match[0], 10).toString() : null;
+    };
+
+    const normalizedSchoolRts = priorityRule.rts.map(rt => normalizeRT(rt)).filter(Boolean);
+
+    return normalizedSchoolRts.includes(applicantRT);
 }
 
 export function calculateApplicantScore(applicant: Applicant, schoolId: string): number {
@@ -124,8 +133,10 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
     documentStatuses: {},
     peringkat: null,
     diterimaDiSekolahId: null,
-    nilaiPrestasi: undefined,
-    nilaiTambahanPilihan: 0,
+    nilaiPrestasi: progress.pathway === 'Prestasi' && progress.achievements && progress.achievements.length > 0
+      ? Math.max(...progress.achievements.map((a: any) => a.score || 0))
+      : 0,
+    nilaiTambahanPilihan: (progress.schoolSelections && progress.schoolSelections.length > 0) ? 25 : 0,
     
     nik: progress.biodata.nik,
     placeOfBirth: progress.biodata.placeOfBirth,
@@ -150,6 +161,7 @@ export function createOrUpdateApplicantFromRegistration(progress: RegistrationPr
     contactNumber: progress.biodata.contactNumber,
     profilePhotoDataUri: progress.profilePhotoDataUri,
     semesterGrades: progress.biodata.semesterGrades,
+    achievements: progress.achievements,
   };
 
   const existingApplicant = applicants.find(a => a.nisn === creds.username);
@@ -218,3 +230,21 @@ export function deleteApplicantByNisn(nisn: string): boolean {
   }
   return false;
 }
+
+/**
+ * Deletes all applicants who have the given school as one of their selections.
+ * Returns the count of deleted applicants.
+ */
+export function deleteApplicantsBySchoolId(schoolId: string): number {
+  let applicants = getApplicants();
+  const initialLength = applicants.length;
+  const remaining = applicants.filter(app =>
+    app.sekolahTujuanId !== schoolId &&
+    !(app.schoolSelections || []).some(sel => sel.schoolId === schoolId)
+  );
+  if (remaining.length < initialLength) {
+    saveToLocalStorage(APPLICANTS_STORAGE_KEY, remaining);
+  }
+  return initialLength - remaining.length;
+}
+

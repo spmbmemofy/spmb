@@ -117,6 +117,48 @@ const pathwaySpecificDocumentsMap: Record<string, DocumentItem[]> = {
   Domisili: [], 
 };
 
+const StepProgress = ({ currentStep }: { currentStep: number }) => {
+  const steps = [
+    { label: "Isi Biodata", step: 1 },
+    { label: "Pilih Sekolah", step: 2 },
+    { label: "Unggah Berkas", step: 3 }
+  ];
+  return (
+    <div className="w-full max-w-3xl mb-8 px-4">
+      <div className="flex justify-between items-center relative">
+        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-muted -translate-y-1/2 z-0" />
+        <div 
+          className="absolute top-1/2 left-0 h-0.5 bg-primary -translate-y-1/2 z-0 transition-all duration-300"
+          style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+        />
+        {steps.map((s) => {
+          const isActive = s.step <= currentStep;
+          const isCurrent = s.step === currentStep;
+          return (
+            <div key={s.step} className="flex flex-col items-center z-10">
+              <div 
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300 ${
+                  isCurrent 
+                    ? "bg-primary text-primary-foreground ring-4 ring-primary/20" 
+                    : isActive 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {s.step}
+              </div>
+              <span className={`text-xs mt-2 font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                {s.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+
 export default function DocumentUploadPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -162,8 +204,43 @@ export default function DocumentUploadPage() {
     }
     
     let allDocs = [...generalDocuments];
-    const currentPathwayDocs = pathwaySpecificDocumentsMap[selectedPathwayParam] || [];
-    allDocs.push(...currentPathwayDocs);
+    
+    if (selectedPathwayParam === 'Prestasi' && savedProgress?.achievements && savedProgress.achievements.length > 0) {
+      savedProgress.achievements.forEach((ach) => {
+        let certLabel = `Scan Sertifikat: ${ach.name}`;
+        let supportLabel = `Scan SK/Dokumen Pendukung: ${ach.name}`;
+        
+        if (ach.subcategory === 'rapor') {
+          certLabel = `Scan Surat Keterangan Juara Kelas (Peringkat 1-3): ${ach.name}`;
+          supportLabel = `Scan Rapor Pendukung: ${ach.name}`;
+        } else if (ach.subcategory === 'tka') {
+          certLabel = `Scan Sertifikat TKA: ${ach.name}`;
+          supportLabel = `Scan SK Peringkat TKA dari Kepala Sekolah: ${ach.name}`;
+        } else if (ach.subcategory === 'osis') {
+          certLabel = `Scan SK Penetapan Ketua OSIS: ${ach.name}`;
+          supportLabel = `Scan Sertifikat/Piagam OSIS (jika ada): ${ach.name}`;
+        } else if (ach.subcategory === 'pratama') {
+          certLabel = `Scan SK Ketua Pratama: ${ach.name}`;
+          supportLabel = `Scan Piagam/Sertifikat Kepramukaan: ${ach.name}`;
+        }
+
+        allDocs.push({
+          id: `sertifikat_${ach.id}`,
+          label: certLabel,
+          required: true
+        });
+        
+        const isSupportRequired = !['osis', 'pratama'].includes(ach.subcategory);
+        allDocs.push({
+          id: `dokumen_pendukung_${ach.id}`,
+          label: supportLabel,
+          required: isSupportRequired
+        });
+      });
+    } else {
+      const currentPathwayDocs = pathwaySpecificDocumentsMap[selectedPathwayParam] || [];
+      allDocs.push(...currentPathwayDocs);
+    }
 
     const firstChoice = savedProgress?.schoolSelections?.[0];
     if (firstChoice) {
@@ -319,6 +396,7 @@ export default function DocumentUploadPage() {
   return (
     <>
     <div className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
+      <StepProgress currentStep={3} />
       <Card className="w-full max-w-3xl shadow-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit mb-4">

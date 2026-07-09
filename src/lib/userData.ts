@@ -1,5 +1,5 @@
 
-export type UserRole = 'applicant' | 'admin' | 'verifikator' | 'smp_operator' | 'superadmin' | 'headmaster';
+export type UserRole = 'applicant' | 'admin' | 'verifikator' | 'smp_operator' | 'superadmin' | 'headmaster' | 'branch_admin';
 
 export interface User {
   id: string;
@@ -22,11 +22,13 @@ export const roleDisplayNames: Record<UserRole, string> = {
   headmaster: "Kepala Sekolah",
   admin: "Admin",
   superadmin: "Superadmin",
+  branch_admin: "Admin Cabang",
 };
 
 export const roleBadgeVariants: Record<UserRole, "default" | "secondary" | "destructive" | "outline"> = {
     superadmin: "destructive",
     admin: "default",
+    branch_admin: "default",
     verifikator: "secondary",
     headmaster: "outline",
     smp_operator: "outline",

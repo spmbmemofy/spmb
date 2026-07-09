@@ -16,6 +16,14 @@ const superAdminAccount: User = {
   fullName: 'Super Administrator',
 };
 
+const branchAdminAccount: User = {
+  id: 'branchadmin-01',
+  username: 'branchadmin',
+  password: 'password123',
+  role: 'branch_admin',
+  fullName: 'Admin Cabang Dinas',
+};
+
 
 /**
  * Initializes the users data in localStorage if it doesn't already exist.
@@ -30,9 +38,9 @@ export const initializeUsers = (): void => {
 
 export function getUsers(): User[] {
   const storedUsers = getFromLocalStorage<User[]>(USERS_STORAGE_KEY, []);
-  // Ensure the superadmin is always present and not duplicated if somehow in storage.
-  const otherUsers = storedUsers.filter(u => u.username !== superAdminAccount.username);
-  return [superAdminAccount, ...otherUsers];
+  // Ensure the superadmin and branchadmin are always present and not duplicated if somehow in storage.
+  const otherUsers = storedUsers.filter(u => u.username !== superAdminAccount.username && u.username !== branchAdminAccount.username);
+  return [superAdminAccount, branchAdminAccount, ...otherUsers];
 }
 
 export function addUser(newUser: Omit<User, 'id'>): User {
@@ -43,7 +51,7 @@ export function addUser(newUser: Omit<User, 'id'>): User {
   if (users.some(u => u.username.toLowerCase() === newUser.username.toLowerCase())) {
     throw new Error('Pengguna dengan username yang sama sudah ada.');
   }
-  const userWithId: User = { ...newUser, id: `user-${Date.now()}` };
+  const userWithId: User = { ...newUser, id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 9)}` };
   const updatedUsers = [...users, userWithId];
   saveToLocalStorage(USERS_STORAGE_KEY, updatedUsers);
   return userWithId;
@@ -100,3 +108,17 @@ export function deleteUser(userId: string): boolean {
 
   return false;
 }
+
+/**
+ * Deletes all users (headmasters) associated with a given school NPSN.
+ */
+export function deleteUsersByNpsn(npsn: string): number {
+  let users = getFromLocalStorage<User[]>(USERS_STORAGE_KEY, []);
+  const initialLength = users.length;
+  const newUsers = users.filter(u => u.npsn !== npsn);
+  if (newUsers.length < initialLength) {
+    saveToLocalStorage(USERS_STORAGE_KEY, newUsers);
+  }
+  return initialLength - newUsers.length;
+}
+

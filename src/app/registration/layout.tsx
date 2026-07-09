@@ -27,6 +27,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { getUsers, type User } from '@/lib/userService';
 import { roleDisplayNames } from '@/lib/userData';
 import { getApplicants, type Applicant } from '@/lib/applicantService';
+import { getSchools } from '@/lib/schoolService';
 
 
 const LOCAL_STORAGE_LOGIN_KEY = "loginCredentials";
@@ -43,12 +44,16 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   const [userRole, setUserRole] = useState<LoginCredentials['role'] | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [applicant, setApplicant] = useState<Applicant | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     initializeAllData();
+    setIsInitialized(true);
   }, []);
 
   useEffect(() => {
+    if (!isInitialized) return;
+
     const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
     
     if (savedCredentials?.role && savedCredentials.username) {
@@ -69,9 +74,12 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       });
       router.replace('/');
     }
-  }, [router, toast, pathname]);
+  }, [router, toast, pathname, isInitialized]);
 
   const menuItems = useMemo(() => {
+    const userSchool = currentUser?.npsn ? getSchools().find(s => s.npsn === currentUser.npsn) : null;
+    const isSmpHeadmaster = userSchool?.jenjang === 'SMP';
+
     const verifierMenu = [
       { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
       { href: '/registration/all-data', label: 'Semua Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
@@ -88,18 +96,34 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       { href: '/registration/superadmin', label: 'Manajemen Pengguna', icon: Shield, activePaths: ['/registration/superadmin'] }
     ];
     
-    const superAdminMenu = [ ...adminMenu ];
+    const superAdminMenu = [ 
+      ...adminMenu,
+      { href: '/registration/achievement-settings', label: 'Pengaturan Prestasi', icon: Award, activePaths: ['/registration/achievement-settings'] }
+    ];
     
     const headmasterMenu = [
         { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
         { href: '/registration/all-data', label: 'Lihat Data', icon: Database, activePaths: ['/registration/all-data', '/registration/school', '/registration/origin-school'] },
-        { href: '/registration/school-settings', label: 'Kelola Sekolah', icon: Settings, activePaths: ['/registration/school-settings'] },
+        { 
+            href: isSmpHeadmaster ? '/registration/applicant-data' : '/registration/school-settings', 
+            label: isSmpHeadmaster ? 'Kelola Siswa' : 'Kelola Sekolah', 
+            icon: isSmpHeadmaster ? Users : Settings, 
+            activePaths: isSmpHeadmaster ? ['/registration/applicant-data'] : ['/registration/school-settings'] 
+        },
         { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
     ];
      const smpOperatorMenu = [
         { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
         { href: '/registration/origin-school-data', label: 'Data Sekolah', icon: Building, activePaths: ['/registration/origin-school-data'] },
         { href: '/registration/applicant-data', label: 'Data Pendaftar', icon: Users, activePaths: ['/registration/applicant-data'] },
+     ];
+
+    const branchAdminMenu = [
+        { href: '/registration/home', label: 'Beranda', icon: Home, activePaths: ['/registration/home'] },
+        { href: '/registration/all-data', label: 'Semua Pendaftar', icon: Database, activePaths: ['/registration/all-data'] },
+        { href: '/registration/school-monitoring', label: 'Monitoring Sekolah', icon: Building, activePaths: ['/registration/school-monitoring', '/registration/school'] },
+        { href: '/registration/outer-region-applicants', label: 'Pendaftar Luar Daerah', icon: UserCheck, activePaths: ['/registration/outer-region-applicants'] },
+        { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
     ];
 
     if (userRole === 'applicant') {
@@ -124,10 +148,11 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
         case 'superadmin': return superAdminMenu;
         case 'headmaster': return headmasterMenu;
         case 'smp_operator': return smpOperatorMenu;
+        case 'branch_admin': return branchAdminMenu;
         default: return [];
     }
     
-  }, [userRole, applicant]);
+  }, [userRole, applicant, currentUser]);
 
   const handleLogout = () => {
     const savedCredentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
@@ -142,7 +167,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   };
 
   const homeLink = useMemo(() => {
-    if (userRole && ['admin', 'verifikator', 'superadmin', 'headmaster', 'smp_operator', 'applicant'].includes(userRole)) {
+    if (userRole && ['admin', 'verifikator', 'superadmin', 'headmaster', 'smp_operator', 'applicant', 'branch_admin'].includes(userRole)) {
         return '/registration/home';
     }
     return '/registration/dashboard';

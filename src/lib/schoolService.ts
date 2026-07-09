@@ -32,6 +32,8 @@ export interface School {
   priorityDomiciles?: PriorityDomicile[];
   province?: string;
   district?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 // All initial data has been removed to provide a clean slate.

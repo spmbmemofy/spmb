@@ -1,7 +1,6 @@
 
 "use client";
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -157,15 +156,157 @@ export default function LandingPage() {
                     </div>
                 </div>
                 <div className="relative h-[450px] rounded-2xl overflow-hidden shadow-2xl">
-                    <Image
-                        src="https://storage.googleapis.com/gen-3-prod-frontend-output-assets-us-central1/project-id-8274705574483733075/image-49e3e3b0-64de-4b95-a400-9856c666fcf9.png"
-                        alt="Ilustrasi Penerimaan Siswa Baru"
-                        width={800}
-                        height={450}
-                        className="object-cover w-full h-full"
-                        priority
-                        data-ai-hint="students registration illustration"
-                    />
+                    <style>{`
+                        @keyframes float-up { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+                        @keyframes float-down { 0%,100%{transform:translateY(0)} 50%{transform:translateY(10px)} }
+                        @keyframes pulse-ring { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(1.6)} }
+                        @keyframes slide-in-r { from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)} }
+                        @keyframes slide-in-l { from{opacity:0;transform:translateX(-30px)} to{opacity:1;transform:translateX(0)} }
+                        @keyframes grow-bar { from{width:0} to{width:var(--w)} }
+                        @keyframes tick-in { from{opacity:0;transform:scale(0)} to{opacity:1;transform:scale(1)} }
+                        @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+                        @keyframes fade-cycle { 0%,100%{opacity:0.3} 50%{opacity:1} }
+                        .card-float-a { animation: float-up 4s ease-in-out infinite; }
+                        .card-float-b { animation: float-down 5s ease-in-out infinite; }
+                        .card-float-c { animation: float-up 3.5s ease-in-out infinite 0.5s; }
+                        .slide-r { animation: slide-in-r 0.8s ease forwards; }
+                        .slide-l { animation: slide-in-l 0.8s ease forwards 0.2s; opacity:0; }
+                        .bar1 { --w:72%; animation: grow-bar 2s ease forwards 0.5s; width:0; }
+                        .bar2 { --w:55%; animation: grow-bar 2s ease forwards 0.8s; width:0; }
+                        .bar3 { --w:40%; animation: grow-bar 2s ease forwards 1.1s; width:0; }
+                        .bar4 { --w:85%; animation: grow-bar 2s ease forwards 1.4s; width:0; }
+                        .tick1 { animation: tick-in 0.4s ease forwards 1.2s; opacity:0; }
+                        .tick2 { animation: tick-in 0.4s ease forwards 1.5s; opacity:0; }
+                        .tick3 { animation: tick-in 0.4s ease forwards 1.8s; opacity:0; }
+                        .spin-orb { animation: spin-slow 8s linear infinite; }
+                        .pulse-dot { animation: pulse-ring 1.8s ease-out infinite; }
+                        .fade1 { animation: fade-cycle 2.5s ease-in-out infinite 0s; }
+                        .fade2 { animation: fade-cycle 2.5s ease-in-out infinite 0.8s; }
+                        .fade3 { animation: fade-cycle 2.5s ease-in-out infinite 1.6s; }
+                    `}</style>
+
+                    {/* Background */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-blue-500/10" />
+
+                    {/* Decorative spinning ring */}
+                    <div className="spin-orb absolute -top-16 -right-16 w-64 h-64 rounded-full border-2 border-dashed border-primary/20" />
+                    <div className="spin-orb absolute -bottom-12 -left-12 w-48 h-48 rounded-full border border-dashed border-blue-400/20" style={{animationDirection:'reverse'}} />
+
+                    {/* Main dashboard card */}
+                    <div className="slide-r absolute top-8 left-8 right-8 bottom-8 bg-card rounded-2xl shadow-xl border border-border/60 overflow-hidden">
+                        {/* Top bar */}
+                        <div className="flex items-center gap-2 px-5 py-3 border-b border-border/50 bg-muted/30">
+                            <div className="w-3 h-3 rounded-full bg-red-400" />
+                            <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                            <div className="w-3 h-3 rounded-full bg-green-400" />
+                            <div className="mx-3 flex-1 h-6 rounded-md bg-muted/60 text-xs text-muted-foreground flex items-center px-3">
+                                spmb.beraukab.go.id
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 h-[calc(100%-44px)]">
+                            {/* Left sidebar */}
+                            <div className="col-span-1 border-r border-border/40 p-4 space-y-2 bg-muted/20">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Menu</p>
+                                {[
+                                  { label: 'Dashboard', active: true },
+                                  { label: 'Biodata' },
+                                  { label: 'Sekolah Tujuan' },
+                                  { label: 'Dokumen' },
+                                  { label: 'Status' },
+                                ].map((item, i) => (
+                                    <div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${item.active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>
+                                        <div className={`w-2 h-2 rounded-full ${item.active ? 'bg-primary-foreground' : 'bg-muted-foreground/40'}`} />
+                                        {item.label}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Main content */}
+                            <div className="col-span-2 p-5 overflow-hidden space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-sm">Selamat Datang, Budi 👋</h3>
+                                        <p className="text-[10px] text-muted-foreground">SPMB Kabupaten Berau 2026</p>
+                                    </div>
+                                    <div className="relative">
+                                        <div className="pulse-dot absolute inset-0 rounded-full bg-green-400/50" />
+                                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">B</div>
+                                    </div>
+                                </div>
+
+                                {/* Stat cards */}
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                        { label: 'Kuota SMA', val: '1.240', color: 'bg-blue-500/10 text-blue-600', cls: 'fade1' },
+                                        { label: 'Pendaftar', val: '3.782', color: 'bg-primary/10 text-primary', cls: 'fade2' },
+                                        { label: 'Sekolah', val: '28', color: 'bg-green-500/10 text-green-600', cls: 'fade3' },
+                                    ].map((s, i) => (
+                                        <div key={i} className={`${s.color} ${s.cls} rounded-xl p-3 text-center`}>
+                                            <p className="text-lg font-extrabold leading-none">{s.val}</p>
+                                            <p className="text-[9px] mt-1 opacity-80">{s.label}</p>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Progress bars */}
+                                <div className="space-y-2">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Progres Jalur</p>
+                                    {[
+                                        { label: 'Afirmasi', cls: 'bar1', color: 'bg-blue-500' },
+                                        { label: 'Prestasi', cls: 'bar2', color: 'bg-primary' },
+                                        { label: 'Mutasi', cls: 'bar3', color: 'bg-yellow-500' },
+                                        { label: 'Domisili', cls: 'bar4', color: 'bg-green-500' },
+                                    ].map((b, i) => (
+                                        <div key={i} className="flex items-center gap-2">
+                                            <span className="text-[9px] w-12 text-muted-foreground shrink-0">{b.label}</span>
+                                            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                                <div className={`${b.cls} ${b.color} h-full rounded-full`} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Checklist */}
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Kelengkapan Berkas</p>
+                                    {[
+                                        { label: 'Kartu Keluarga', cls: 'tick1' },
+                                        { label: 'Akta Kelahiran', cls: 'tick2' },
+                                        { label: 'Rapor Semester', cls: 'tick3' },
+                                    ].map((c, i) => (
+                                        <div key={i} className="flex items-center gap-2">
+                                            <span className={`${c.cls} w-4 h-4 rounded-full bg-green-500 flex items-center justify-center`}>
+                                                <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                                            </span>
+                                            <span className="text-[10px] text-muted-foreground">{c.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Floating notification card */}
+                    <div className="card-float-a absolute -right-2 top-24 w-44 bg-card border border-border shadow-xl rounded-xl p-3 text-xs space-y-1 z-10">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
+                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                            </div>
+                            <span className="font-semibold text-green-600">Berkas Diterima</span>
+                        </div>
+                        <p className="text-muted-foreground text-[9px] leading-snug">Dokumen Anda telah diverifikasi oleh panitia.</p>
+                    </div>
+
+                    {/* Floating rank card */}
+                    <div className="card-float-b absolute -left-2 bottom-24 w-40 bg-card border border-border shadow-xl rounded-xl p-3 text-xs z-10">
+                        <p className="font-semibold text-[10px] text-muted-foreground mb-1.5">Peringkat Sementara</p>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-3xl font-extrabold text-primary">#12</span>
+                            <span className="text-[9px] text-muted-foreground">/ 340</span>
+                        </div>
+                        <p className="text-[9px] text-green-600 font-medium mt-1">▲ Jalur Domisili — SMAN 1</p>
+                    </div>
                 </div>
             </div>
           </div>

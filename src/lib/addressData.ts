@@ -14,7 +14,7 @@ export const addressData: Record<Province, Record<District, Record<string, strin
       "Kec. Kelay": ["Lesan Dayak", "Long Beliu", "Long Duhung", "Long Keluh", "Long Lamcin", "Long Sului", "Mapulu", "Merabu", "Merasa", "Merapun", "Muara Lesan", "Panaan", "Sido Bangen"],
       "Kec. Maratua": ["Bohesilian", "Payung-Payung", "Teluk Alulu", "Teluk Harapan"],
       "Kec. Pulau Derawan": ["Kasai", "Pegat Betumbuk", "Pulau Derawan", "Tanjung Batu", "Teluk Semanting"],
-      "Kec. Sambaliung": ["Bebanir", "Bena Baru", "Gurimbang", "Inaran", "Long Lanuk", "Pegat Bukur", "Pilanjau", "Rantau Panjang", "Sambaliung", "Suaran", "Sukan Tengah", "Sukan Uluh", "Tumbit Dayak"],
+      "Kec. Sambaliung": ["Bena Baru", "Gurimbang", "Inaran", "Long Lanuk", "Pegat Bukur", "Pesayan", "Pilanjau", "Rantau Panjang", "Sambaliung", "Sei Bebanir Bangun", "Suaran", "Sukan Tengah", "Tanjung Perangat", "Tumbit Dayak"],
       "Kec. Segah": ["Batu Rajang", "Bukit Makmur", "Gunung Sari", "Harapan Jaya", "Long Ayan", "Long Ayap", "Long Laai", "Pandan Sari", "Punan Mahakam", "Punan Malinau", "Punan Segah", "Siduung Indah", "Tepian Buah"],
       "Kec. Tabalar": ["Buyung-Buyung", "Harapan Maju", "Semurut", "Tabalar Muara", "Tabalar Ulu", "Tubaan"],
       "Kec. Talisayan": ["Bumi Jaya", "Campur Sari", "Capuak", "Dumaring", "Eka Sapta", "Purnasari Jaya", "Suka Murya", "Sumber Mulya", "Talisayan", "Tunggal Bumi"],

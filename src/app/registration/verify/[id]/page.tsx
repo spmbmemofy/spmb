@@ -5,7 +5,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle, FileText, Info, UserCircle, XCircle, ThumbsUp, ThumbsDown, Save, TrendingUp, BookOpen, AlertCircle, School, ScrollText, FileUp, Users, Undo2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle, FileText, Info, UserCircle, XCircle, ThumbsUp, ThumbsDown, Save, TrendingUp, BookOpen, AlertCircle, School, ScrollText, FileUp, Users, Undo2, Award } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -193,8 +193,42 @@ export default function VerifyApplicantPage() {
         setIsVerifierAuthorized(foundApplicant.schoolSelections?.[0]?.schoolId === school.id);
 
         let allDocs: DocumentItem[] = [...generalDocuments];
-        const specificDocs = pathwaySpecificDocuments[foundApplicant.jalur] || [];
-        allDocs.push(...specificDocs);
+        
+        if (foundApplicant.jalur === 'Prestasi' && foundApplicant.achievements && foundApplicant.achievements.length > 0) {
+          foundApplicant.achievements.forEach((ach) => {
+            let certLabel = `Scan Sertifikat: ${ach.name}`;
+            let supportLabel = `Scan SK/Dokumen Pendukung: ${ach.name}`;
+            
+            if (ach.subcategory === 'rapor') {
+              certLabel = `Scan Surat Keterangan Juara Kelas (Peringkat 1-3): ${ach.name}`;
+              supportLabel = `Scan Rapor Pendukung: ${ach.name}`;
+            } else if (ach.subcategory === 'tka') {
+              certLabel = `Scan Sertifikat TKA: ${ach.name}`;
+              supportLabel = `Scan SK Peringkat TKA dari Kepala Sekolah: ${ach.name}`;
+            } else if (ach.subcategory === 'osis') {
+              certLabel = `Scan SK Penetapan Ketua OSIS: ${ach.name}`;
+              supportLabel = `Scan Sertifikat/Piagam OSIS (jika ada): ${ach.name}`;
+            } else if (ach.subcategory === 'pratama') {
+              certLabel = `Scan SK Ketua Pratama: ${ach.name}`;
+              supportLabel = `Scan Piagam/Sertifikat Kepramukaan: ${ach.name}`;
+            }
+
+            allDocs.push({
+              id: `sertifikat_${ach.id}`,
+              label: certLabel,
+              url: DUMMY_PDF_URL
+            });
+            
+            allDocs.push({
+              id: `dokumen_pendukung_${ach.id}`,
+              label: supportLabel,
+              url: DUMMY_PDF_URL
+            });
+          });
+        } else {
+          const specificDocs = pathwaySpecificDocuments[foundApplicant.jalur] || [];
+          allDocs.push(...specificDocs);
+        }
         
         const firstChoice = foundApplicant.schoolSelections?.[0];
         if (firstChoice) {
@@ -221,7 +255,10 @@ export default function VerifyApplicantPage() {
         });
 
         setDocumentStatuses(initialStatuses);
-        setEditableNilaiPrestasi(foundApplicant.nilaiPrestasi || 0);
+        const maxScore = (foundApplicant.achievements && foundApplicant.achievements.length > 0)
+          ? Math.max(...foundApplicant.achievements.map((a: any) => a.score || 0))
+          : 0;
+        setEditableNilaiPrestasi(foundApplicant.nilaiPrestasi !== undefined && foundApplicant.nilaiPrestasi !== 0 ? foundApplicant.nilaiPrestasi : maxScore);
       }
     }
     setIsLoading(false);
@@ -431,6 +468,67 @@ export default function VerifyApplicantPage() {
                 </ul>
               </CardContent>
             </Card>
+
+            {applicant.jalur === 'Prestasi' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Award className="mr-2 text-primary" /> Prestasi yang Diajukan
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {!applicant.achievements || applicant.achievements.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Tidak ada data prestasi yang dicantumkan.</p>
+                  ) : (
+                    applicant.achievements.map((ach: any, idx: number) => {
+                      const isExempt = ['rapor', 'osis', 'pratama'].includes(ach.subcategory);
+                      
+                      let subcatLabel = ach.subcategory;
+                      if (ach.subcategory === 'rapor') subcatLabel = 'Nilai Rapor (Juara Kelas 1-3)';
+                      else if (ach.subcategory === 'tka') subcatLabel = 'Nilai TKA (Peringkat 1-3 Sekolah)';
+                      else if (ach.subcategory === 'osis') subcatLabel = 'Ketua OSIS';
+                      else if (ach.subcategory === 'pratama') subcatLabel = 'Ketua Pratama Pramuka';
+                      else if (ach.subcategory === 'lomba_akademik') subcatLabel = 'Lomba Akademik';
+                      else if (ach.subcategory === 'seni_olahraga') subcatLabel = 'Lomba Non-Akademik (Seni/Olahraga/Bahasa)';
+                      else if (ach.subcategory === 'keagamaan') subcatLabel = 'Keagamaan';
+                      
+                      return (
+                        <div key={ach.id || idx} className="rounded-md border p-3 bg-muted/10 space-y-2 text-left">
+                          <div className="flex justify-between items-start gap-2">
+                            <p className="font-semibold text-sm">{ach.name}</p>
+                            <div className="flex gap-1.5 flex-shrink-0 items-center">
+                              <Badge variant={isExempt ? "secondary" : "outline"} className="text-[10px] whitespace-nowrap">
+                                {ach.category === 'akademik' ? 'Akademik' : 'Non-Akademik'}
+                              </Badge>
+                              <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-semibold whitespace-nowrap">
+                                +{ach.score || 0} Poin
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                            <div><span className="font-medium">Sub-Kategori:</span> {subcatLabel}</div>
+                            <div><span className="font-medium">Tingkat:</span> {ach.level}</div>
+                            <div className="col-span-2"><span className="font-medium">Penyelenggara:</span> {ach.organizer}</div>
+                          </div>
+                          
+                          {/* Alert info about verification exemption or requirements */}
+                          {isExempt ? (
+                            <div className="text-[11px] p-2 bg-green-50 border border-green-200 text-green-800 rounded dark:bg-green-950/20 dark:border-green-900/50 dark:text-green-400 font-medium">
+                              ✓ Bebas Verifikasi & Validasi Lapangan (Dikecualikan berdasarkan aturan No. 9).
+                            </div>
+                          ) : (
+                            <div className="text-[11px] p-2 bg-amber-50 border border-amber-200 text-amber-800 rounded dark:bg-amber-950/20 dark:border-amber-900/50 dark:text-amber-400 font-medium">
+                              ℹ️ <strong>Aturan Verifikasi:</strong> Wajib diselenggarakan oleh Kemendikbud/Kemenag/Kemenpora/KONI/Pramuka untuk tingkat Kab/Kota s.d. Internasional. Di luar itu, diakui minimal tingkat Provinsi (Aturan No. 7 & 8).
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
                <CardHeader><CardTitle className="flex items-center text-lg"><TrendingUp className="mr-2"/>Kalkulasi Nilai Akhir</CardTitle></CardHeader>
               <CardContent>

@@ -67,3 +67,18 @@ export function deleteManagedApplicantByNisn(nisn: string): boolean {
   }
   return false;
 }
+
+/**
+ * Deletes all managed applicants linked to a given school (by schoolId).
+ * Returns the count of deleted managed applicants.
+ */
+export function deleteManagedApplicantsBySchoolId(schoolId: string): number {
+  let applicants = getManagedApplicants();
+  const initialLength = applicants.length;
+  const remaining = applicants.filter(a => a.asalSekolahId !== schoolId);
+  if (remaining.length < initialLength) {
+    saveToLocalStorage(MANAGED_APPLICANTS_STORAGE_KEY, remaining);
+  }
+  return initialLength - remaining.length;
+}
+
