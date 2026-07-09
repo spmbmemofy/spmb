@@ -14,6 +14,8 @@ import { getApplicants } from '@/lib/applicantService';
 import { getSchools } from '@/lib/schoolService';
 import { getStages } from '@/lib/stageService';
 import { useEffect, useState } from 'react';
+import { pullFromSupabase } from '@/lib/localStorage';
+import { initializeAllData } from '@/lib/initializeDatabase';
 
 const infoCards = [
   {
@@ -61,19 +63,24 @@ export default function LandingPage() {
   const [schedule, setSchedule] = useState<any[]>([]);
 
   useEffect(() => {
-    const allStages = getStages();
-  
-    const scheduleData = allStages.map(stage => {
-      const startDate = new Date(stage.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' });
-      const endDate = new Date(stage.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    async function loadData() {
+      await pullFromSupabase();
+      initializeAllData();
       
-      return {
-        date: `${startDate} - ${endDate}`,
-        title: stage.name,
-        description: `Proses pendaftaran, verifikasi, dan seleksi untuk jalur yang termasuk dalam ${stage.name}.`
-      }
-    });
-    setSchedule(scheduleData);
+      const allStages = getStages();
+      const scheduleData = allStages.map(stage => {
+        const startDate = new Date(stage.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' });
+        const endDate = new Date(stage.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        
+        return {
+          date: `${startDate} - ${endDate}`,
+          title: stage.name,
+          description: `Proses pendaftaran, verifikasi, dan seleksi untuk jalur yang termasuk dalam ${stage.name}.`
+        }
+      });
+      setSchedule(scheduleData);
+    }
+    loadData();
   }, []);
 
   return (

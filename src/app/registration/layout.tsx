@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { getFromLocalStorage, removeFromLocalStorage, type LoginCredentials, type RegistrationProgress } from "@/lib/localStorage";
+import { getFromLocalStorage, removeFromLocalStorage, pullFromSupabase, type LoginCredentials, type RegistrationProgress } from "@/lib/localStorage";
 import { useToast } from "@/hooks/use-toast";
 import { initializeAllData } from '@/lib/initializeDatabase';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -47,8 +47,12 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    initializeAllData();
-    setIsInitialized(true);
+    async function loadData() {
+      await pullFromSupabase();
+      initializeAllData();
+      setIsInitialized(true);
+    }
+    loadData();
   }, []);
 
   useEffect(() => {
