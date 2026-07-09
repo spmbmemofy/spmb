@@ -189,8 +189,15 @@ export default function VerifyApplicantPage() {
       const foundApplicant = getApplicantById(applicantId);
       setApplicant(foundApplicant || null);
 
-      if (foundApplicant && school) {
-        setIsVerifierAuthorized(foundApplicant.schoolSelections?.[0]?.schoolId === school.id);
+      if (foundApplicant) {
+        const isAdmin = creds && ['superadmin', 'branch_admin'].includes(creds.role || '');
+        if (isAdmin) {
+          setIsVerifierAuthorized(true);
+          const firstSchoolId = foundApplicant.schoolSelections?.[0]?.schoolId || null;
+          setVerifierSchoolId(firstSchoolId);
+        } else if (school) {
+          setIsVerifierAuthorized(foundApplicant.schoolSelections?.[0]?.schoolId === school.id);
+        }
 
         let allDocs: DocumentItem[] = [...generalDocuments];
         

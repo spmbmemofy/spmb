@@ -24,7 +24,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 
 import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
-import { getSchoolByNPSN, type School } from "@/lib/schoolService";
+import { getSchoolByNPSN, getSchools, type School } from "@/lib/schoolService";
 import { getUsers, addUser, updateUser, deleteUser } from "@/lib/userService";
 import { getManagedApplicants, addManagedApplicant, updateManagedApplicant, deleteManagedApplicant } from "@/lib/managedApplicantService";
 import type { ManagedApplicant, ExcelRow } from "@/lib/types";
@@ -132,6 +132,26 @@ export default function ManagedApplicantPage() {
     const subdistrictOptions = isBerau ? getSubdistricts(watchedProvince as any, watchedDistrict as any) : [];
     const villageOptions = isBerau ? getVillages(watchedProvince as any, watchedDistrict as any, watchedSubdistrict) : [];
 
+    const [isAdminMode, setIsAdminMode] = React.useState(false);
+    const [smpSchools, setSmpSchools] = React.useState<School[]>([]);
+    const [selectedSchoolId, setSelectedSchoolId] = React.useState<string>("");
+
+    const loadSchoolAndManagedApplicants = React.useCallback((targetSchool: School) => {
+        setOperatorSchool(targetSchool);
+        const schoolApplicants = getManagedApplicants().filter(a => a.asalSekolahId === targetSchool.id);
+        setApplicants(schoolApplicants);
+        setImportHistory(getImportHistory(targetSchool.id));
+        setIsLoading(false);
+    }, []);
+
+    const handleSchoolChange = (schoolId: string) => {
+        setSelectedSchoolId(schoolId);
+        const targetSchool = smpSchools.find(s => s.id === schoolId);
+        if (targetSchool) {
+            loadSchoolAndManagedApplicants(targetSchool);
+        }
+    };
+
     React.useEffect(() => {
         const credentials = getFromLocalStorage<LoginCredentials | null>("loginCredentials", null);
         if (!credentials || !credentials.username) {
@@ -139,30 +159,42 @@ export default function ManagedApplicantPage() {
             return;
         }
 
-        const user = getUsers().find(u => u.username === credentials.username);
-        if (!user || !user.npsn) {
-            toast({ variant: "destructive", title: "Sekolah tidak terhubung" });
-            setIsLoading(false);
-            return;
-        }
+        const isAdmin = ['superadmin', 'branch_admin'].includes(credentials.role || '');
+        setIsAdminMode(isAdmin);
 
-        const school = getSchoolByNPSN(user.npsn);
-        
-        const isAuthorized = credentials.role === 'smp_operator' || (credentials.role === 'headmaster' && school?.jenjang === 'SMP');
-        if (!isAuthorized) {
-            toast({ variant: "destructive", title: "Akses Ditolak", description: "Hanya operator/kepala sekolah SMP yang dapat mengakses halaman ini." });
-            router.replace('/registration/home');
-            return;
-        }
+        if (isAdmin) {
+            const schools = getSchools().filter(s => s.jenjang === 'SMP');
+            setSmpSchools(schools);
+            if (schools.length > 0) {
+                setSelectedSchoolId(schools[0].id);
+                loadSchoolAndManagedApplicants(schools[0]);
+            } else {
+                setIsLoading(false);
+            }
+        } else {
+            const user = getUsers().find(u => u.username === credentials.username);
+            if (!user || !user.npsn) {
+                toast({ variant: "destructive", title: "Sekolah tidak terhubung" });
+                setIsLoading(false);
+                return;
+            }
 
-        if (school) {
-            setOperatorSchool(school);
-            const schoolApplicants = getManagedApplicants().filter(a => a.asalSekolahId === school.id);
-            setApplicants(schoolApplicants);
-            setImportHistory(getImportHistory(school.id));
+            const school = getSchoolByNPSN(user.npsn);
+            
+            const isAuthorized = credentials.role === 'smp_operator' || (credentials.role === 'headmaster' && school?.jenjang === 'SMP');
+            if (!isAuthorized) {
+                toast({ variant: "destructive", title: "Akses Ditolak", description: "Hanya operator/kepala sekolah SMP yang dapat mengakses halaman ini." });
+                router.replace('/registration/home');
+                return;
+            }
+
+            if (school) {
+                loadSchoolAndManagedApplicants(school);
+            } else {
+                setIsLoading(false);
+            }
         }
-        setIsLoading(false);
-    }, [router, toast]);
+    }, [router, toast, loadSchoolAndManagedApplicants]);
 
     const showAccountInfo = (applicant: ManagedApplicant, title: string) => {
         const user = getUsers().find(u => u.username === applicant.nisn);
@@ -450,7 +482,26 @@ export default function ManagedApplicantPage() {
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-6">
+                        {isAdminMode && (
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-primary/5 rounded-lg border border-primary/20 mb-6">
+                                <div className="space-y-1 text-left">
+                                    <h4 className="text-sm font-semibold text-primary">Mode Administrator / Wilayah</h4>
+                                    <p className="text-xs text-muted-foreground">Pilih Sekolah Asal (SMP) untuk mengelola data siswanya.</p>
+                                </div>
+                                <div className="w-full sm:w-80">
+                                    <Select value={selectedSchoolId} onValueChange={handleSchoolChange}>
+                                        <SelectTrigger className="w-full bg-background"><SelectValue placeholder="Pilih sekolah..." /></SelectTrigger>
+                                        <SelectContent>
+                                            {smpSchools.map(sch => (
+                                                <SelectItem key={sch.id} value={sch.id}>{sch.namaSekolah}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="rounded-md border">
                             <Table>
                                 <TableHeader>

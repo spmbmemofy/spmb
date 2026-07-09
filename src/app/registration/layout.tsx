@@ -100,9 +100,17 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
       { href: '/registration/superadmin', label: 'Manajemen Pengguna', icon: Shield, activePaths: ['/registration/superadmin'] }
     ];
     
+    const crossRoleMenuItems = [
+      { href: '/registration/selection', label: 'Verifikasi Berkas (SMA/SMK)', icon: UserCheck, activePaths: ['/registration/selection', '/registration/verify'] },
+      { href: '/registration/school-settings', label: 'Pengaturan Sekolah (SMA/SMK)', icon: Settings, activePaths: ['/registration/school-settings'] },
+      { href: '/registration/origin-school-data', label: 'Data Sekolah (SMP)', icon: Building, activePaths: ['/registration/origin-school-data'] },
+      { href: '/registration/applicant-data', label: 'Kelola Siswa (SMP)', icon: Users, activePaths: ['/registration/applicant-data'] }
+    ];
+
     const superAdminMenu = [ 
       ...adminMenu,
-      { href: '/registration/achievement-settings', label: 'Pengaturan Prestasi', icon: Award, activePaths: ['/registration/achievement-settings'] }
+      { href: '/registration/achievement-settings', label: 'Pengaturan Prestasi', icon: Award, activePaths: ['/registration/achievement-settings'] },
+      ...crossRoleMenuItems
     ];
     
     const headmasterMenu = [
@@ -128,6 +136,7 @@ export default function RegistrationLayout({ children }: RegistrationLayoutProps
         { href: '/registration/school-monitoring', label: 'Monitoring Sekolah', icon: Building, activePaths: ['/registration/school-monitoring', '/registration/school'] },
         { href: '/registration/outer-region-applicants', label: 'Pendaftar Luar Daerah', icon: UserCheck, activePaths: ['/registration/outer-region-applicants'] },
         { href: '/registration/announcement', label: 'Pengumuman', icon: Megaphone, activePaths: ['/registration/announcement'] },
+        ...crossRoleMenuItems
     ];
 
     if (userRole === 'applicant') {

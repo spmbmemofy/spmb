@@ -287,35 +287,71 @@ export default function SchoolSettingsPage() {
         },
     });
 
+    const [isAdminMode, setIsAdminMode] = React.useState(false);
+    const [smaSmkSchools, setSmaSmkSchools] = React.useState<School[]>([]);
+    const [selectedSchoolId, setSelectedSchoolId] = React.useState<string>("");
+
+    const handleSchoolChange = (schoolId: string) => {
+        setSelectedSchoolId(schoolId);
+        const targetSchool = smaSmkSchools.find(s => s.id === schoolId);
+        if (targetSchool) {
+            setSchool(targetSchool);
+            setAllowedGenders(targetSchool.allowedGenders || []);
+            setAllowedReligions(targetSchool.allowedReligions || []);
+            if (targetSchool.latitude && targetSchool.longitude) {
+                setMapCoords({ lat: targetSchool.latitude, lng: targetSchool.longitude });
+            }
+        }
+    };
+
     React.useEffect(() => {
         const credentials = getFromLocalStorage<LoginCredentials | null>("loginCredentials", null);
-        if (credentials?.role !== 'headmaster' || !credentials.username) {
-            toast({ variant: "destructive", title: "Akses Ditolak", description: "Hanya kepala sekolah yang dapat mengakses halaman ini." });
+        if (!credentials?.username || !['headmaster', 'superadmin', 'branch_admin'].includes(credentials.role || '')) {
+            toast({ variant: "destructive", title: "Akses Ditolak", description: "Anda tidak memiliki izin untuk mengakses halaman ini." });
             router.replace('/registration/home');
             return;
         }
 
-        const currentUser = getUsers().find(u => u.username === credentials.username);
-        if (!currentUser || !currentUser.npsn) {
-            toast({ variant: "destructive", title: "Sekolah Tidak Terhubung", description: "Akun Anda tidak terhubung dengan sekolah manapun." });
-            setIsLoading(false);
-            return;
-        }
+        const isAdmin = ['superadmin', 'branch_admin'].includes(credentials.role || '');
+        setIsAdminMode(isAdmin);
 
-        const userSchool = getSchoolByNPSN(currentUser.npsn);
-        if (userSchool) {
-            if (userSchool.jenjang === 'SMP') {
-                router.replace('/registration/applicant-data');
+        if (isAdmin) {
+            const schools = getSchools().filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
+            setSmaSmkSchools(schools);
+            if (schools.length > 0) {
+                const defaultSchool = schools[0];
+                setSelectedSchoolId(defaultSchool.id);
+                setSchool(defaultSchool);
+                setAllowedGenders(defaultSchool.allowedGenders || []);
+                setAllowedReligions(defaultSchool.allowedReligions || []);
+                if (defaultSchool.latitude && defaultSchool.longitude) {
+                    setMapCoords({ lat: defaultSchool.latitude, lng: defaultSchool.longitude });
+                }
+            }
+            setIsLoading(false);
+        } else {
+            const currentUser = getUsers().find(u => u.username === credentials.username);
+            if (!currentUser || !currentUser.npsn) {
+                toast({ variant: "destructive", title: "Sekolah Tidak Terhubung", description: "Akun Anda tidak terhubung dengan sekolah manapun." });
+                setIsLoading(false);
                 return;
             }
-            setSchool(userSchool);
-            setAllowedGenders(userSchool.allowedGenders || []);
-            setAllowedReligions(userSchool.allowedReligions || []);
-            if (userSchool.latitude && userSchool.longitude) {
-                setMapCoords({ lat: userSchool.latitude, lng: userSchool.longitude });
+
+            const userSchool = getSchoolByNPSN(currentUser.npsn);
+            if (userSchool) {
+                if (userSchool.jenjang === 'SMP') {
+                    router.replace('/registration/applicant-data');
+                    return;
+                }
+                setSchool(userSchool);
+                setAllowedGenders(userSchool.allowedGenders || []);
+                setAllowedReligions(userSchool.allowedReligions || []);
+                if (userSchool.latitude && userSchool.longitude) {
+                    setMapCoords({ lat: userSchool.latitude, lng: userSchool.longitude });
+                }
             }
+            setIsLoading(false);
         }
-        setIsLoading(false);
     }, [router, toast]);
     
     const handleOpenMajorDialog = (major: Major | null = null) => {
@@ -462,6 +498,25 @@ export default function SchoolSettingsPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-8 pt-6">
+                        {isAdminMode && (
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                                <div className="space-y-1 text-left">
+                                    <h4 className="text-sm font-semibold text-primary">Mode Administrator / Wilayah</h4>
+                                    <p className="text-xs text-muted-foreground">Pilih SMA/SMK untuk memantau dan mengubah pengaturan sekolah.</p>
+                                </div>
+                                <div className="w-full sm:w-80">
+                                    <Select value={selectedSchoolId} onValueChange={handleSchoolChange}>
+                                        <SelectTrigger className="w-full bg-background"><SelectValue placeholder="Pilih sekolah..." /></SelectTrigger>
+                                        <SelectContent>
+                                            {smaSmkSchools.map(sch => (
+                                                <SelectItem key={sch.id} value={sch.id}>{sch.namaSekolah}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        )}
+
                         <section>
                             <h3 className="text-xl font-semibold mb-3 text-primary">Profil Sekolah</h3>
                              <div className="space-y-2 rounded-md border p-4 text-sm">

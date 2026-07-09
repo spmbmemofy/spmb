@@ -22,7 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { useToast } from "@/hooks/use-toast";
 import { getApplicants } from "@/lib/applicantService";
-import { getSchoolByNPSN, getSchoolById, updateSchool, type School } from "@/lib/schoolService";
+import { getSchoolByNPSN, getSchoolById, updateSchool, getSchools, type School } from "@/lib/schoolService";
 import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import type { Applicant, ApplicantStatus } from "@/lib/types";
 import { getUsers } from "@/lib/userService";
@@ -55,38 +55,69 @@ export default function OriginSchoolDataPage() {
         defaultValues: {},
     });
 
+    const [isAdminMode, setIsAdminMode] = React.useState(false);
+    const [smpSchools, setSmpSchools] = React.useState<School[]>([]);
+    const [selectedSchoolId, setSelectedSchoolId] = React.useState<string>("");
+
+    const loadSchoolAndApplicants = React.useCallback((targetSchool: School) => {
+        setSchool(targetSchool);
+        form.reset({
+            ...targetSchool,
+            majors: targetSchool.majors ? targetSchool.majors.join('\n') : '',
+        });
+        const allApplicants = getApplicants();
+        const schoolApplicants = allApplicants.filter(app => app.asalSekolahId === targetSchool.id);
+        setApplicants(schoolApplicants);
+        setIsLoading(false);
+    }, [form]);
+
+    const handleSchoolChange = (schoolId: string) => {
+        setSelectedSchoolId(schoolId);
+        const targetSchool = smpSchools.find(s => s.id === schoolId);
+        if (targetSchool) {
+            loadSchoolAndApplicants(targetSchool);
+        }
+    };
+
     React.useEffect(() => {
         const credentials = getFromLocalStorage<LoginCredentials | null>(LOCAL_STORAGE_LOGIN_KEY, null);
-        if (!credentials || credentials.role !== 'smp_operator' || !credentials.username) {
+        if (!credentials?.username || !['smp_operator', 'superadmin', 'branch_admin'].includes(credentials.role || '')) {
             toast({ variant: "destructive", title: "Akses Ditolak", description: "Anda tidak memiliki izin untuk mengakses halaman ini." });
             router.replace('/registration/home');
             return;
         }
 
-        const allUsers = getUsers();
-        const currentUser = allUsers.find(u => u.username === credentials.username);
-        
-        if (!currentUser || !currentUser.npsn) {
-            toast({ variant: "destructive", title: "Data Tidak Lengkap", description: "Akun Anda tidak terhubung dengan sekolah manapun." });
-            setIsLoading(false);
-            return;
-        }
+        const isAdmin = ['superadmin', 'branch_admin'].includes(credentials.role || '');
+        setIsAdminMode(isAdmin);
 
-        const userSchool = getSchoolByNPSN(currentUser.npsn);
-        
-        if (userSchool) {
-            setSchool(userSchool);
-            form.reset({
-                ...userSchool,
-                majors: userSchool.majors ? userSchool.majors.join('\n') : '',
-            });
-        }
+        if (isAdmin) {
+            const schools = getSchools().filter(s => s.jenjang === 'SMP');
+            setSmpSchools(schools);
+            if (schools.length > 0) {
+                setSelectedSchoolId(schools[0].id);
+                loadSchoolAndApplicants(schools[0]);
+            } else {
+                setIsLoading(false);
+            }
+        } else {
+            const allUsers = getUsers();
+            const currentUser = allUsers.find(u => u.username === credentials.username);
+            
+            if (!currentUser || !currentUser.npsn) {
+                toast({ variant: "destructive", title: "Data Tidak Lengkap", description: "Akun Anda tidak terhubung dengan sekolah manapun." });
+                setIsLoading(false);
+                return;
+            }
 
-        const allApplicants = getApplicants();
-        const schoolApplicants = allApplicants.filter(app => app.asalSekolahId === userSchool?.id);
-        setApplicants(schoolApplicants);
-        setIsLoading(false);
-    }, [router, toast, form]);
+            const smpSchool = getSchoolByNPSN(currentUser.npsn);
+            if (!smpSchool) {
+                toast({ variant: "destructive", title: "Sekolah Tidak Ditemukan", description: "Data sekolah SMP Anda tidak dapat ditemukan." });
+                setIsLoading(false);
+                return;
+            }
+            loadSchoolAndApplicants(smpSchool);
+        }
+    }, [router, toast, loadSchoolAndApplicants]);
 
     const handleOpenDialog = () => {
         if (school) {
@@ -161,6 +192,25 @@ export default function OriginSchoolDataPage() {
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-8">
+                    {isAdminMode && (
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                            <div className="space-y-1 text-left">
+                                <h4 className="text-sm font-semibold text-primary">Mode Administrator / Wilayah</h4>
+                                <p className="text-xs text-muted-foreground">Pilih Sekolah Asal (SMP) untuk memantau data profil dan siswanya.</p>
+                            </div>
+                            <div className="w-full sm:w-80">
+                                <Select value={selectedSchoolId} onValueChange={handleSchoolChange}>
+                                    <SelectTrigger className="w-full bg-background"><SelectValue placeholder="Pilih sekolah..." /></SelectTrigger>
+                                    <SelectContent>
+                                        {smpSchools.map(sch => (
+                                            <SelectItem key={sch.id} value={sch.id}>{sch.namaSekolah}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    )}
+
                     <section>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold text-primary">Profil Sekolah</h3>

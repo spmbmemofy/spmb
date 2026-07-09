@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import { getApplicants } from "@/lib/applicantService";
 import { statusVerifikasiOptionsPlain } from "@/lib/mockData";
-import { getSchoolByNPSN } from "@/lib/schoolService";
+import { getSchoolByNPSN, getSchools } from "@/lib/schoolService";
 import type { Applicant, ApplicantStatus, SortConfig, SortDirection, SortKey } from "@/lib/types";
 import { getFromLocalStorage, type LoginCredentials } from "@/lib/localStorage";
 import { getUsers } from "@/lib/userService";
@@ -48,6 +48,21 @@ export default function VerificationPage() {
   const [currentPage, setCurrentPage] = React.useState(1);
   const [sortConfig, setSortConfig] = React.useState<SortConfig>({ key: 'submissionTimestamp', direction: 'descending' });
 
+  const [isAdminMode, setIsAdminMode] = React.useState(false);
+  const [smaSmkSchools, setSmaSmkSchools] = React.useState<any[]>([]);
+  const [selectedSchoolId, setSelectedSchoolId] = React.useState<string>("");
+
+  const loadApplicantsForSchool = React.useCallback((schoolId: string) => {
+    const applicantsData = getApplicants();
+    const verifierSchoolApplicants = applicantsData.filter(app => {
+        return app.schoolSelections?.some(sel => sel.schoolId === schoolId) 
+            && app.schoolSelections[0].schoolId === schoolId
+            && app.statusVerifikasi !== 'Dibatalkan';
+    });
+    setAllApplicants(verifierSchoolApplicants);
+    setIsLoading(false);
+  }, []);
+
   React.useEffect(() => {
     const creds = getFromLocalStorage<LoginCredentials | null>('loginCredentials', null);
     if (!creds?.username) {
@@ -57,31 +72,43 @@ export default function VerificationPage() {
     }
 
     const user = getUsers().find(u => u.username === creds.username);
-    if (!user || !user.npsn) {
-        toast({ variant: 'destructive', title: 'Akun tidak terhubung', description: 'Akun verifikator Anda tidak terhubung ke sekolah manapun.' });
-        setIsLoading(false);
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Pengguna tidak ditemukan' });
+        router.replace('/');
         return;
     }
 
-    const verifierSchool = getSchoolByNPSN(user.npsn);
-    if (!verifierSchool) {
-        toast({ variant: 'destructive', title: 'Sekolah tidak ditemukan', description: `Sekolah dengan NPSN ${user.npsn} tidak ditemukan.` });
-        setIsLoading(false);
-        return;
+    const isAdmin = ['superadmin', 'branch_admin'].includes(creds.role || '');
+    setIsAdminMode(isAdmin);
+
+    if (isAdmin) {
+        const schools = getSchools().filter(s => s.jenjang === 'SMA' || s.jenjang === 'SMK');
+        setSmaSmkSchools(schools);
+        if (schools.length > 0) {
+            setSelectedSchoolId(schools[0].id);
+            setSchoolName(schools[0].namaSekolah);
+            loadApplicantsForSchool(schools[0].id);
+        } else {
+            setIsLoading(false);
+        }
+    } else {
+        if (!user.npsn) {
+            toast({ variant: 'destructive', title: 'Akun tidak terhubung', description: 'Akun verifikator Anda tidak terhubung ke sekolah manapun.' });
+            setIsLoading(false);
+            return;
+        }
+        const verifierSchool = getSchoolByNPSN(user.npsn);
+        if (!verifierSchool) {
+            toast({ variant: 'destructive', title: 'Sekolah tidak ditemukan', description: `Sekolah dengan NPSN ${user.npsn} tidak ditemukan.` });
+            setIsLoading(false);
+            return;
+        }
+        setSchoolName(verifierSchool.namaSekolah);
+        loadApplicantsForSchool(verifierSchool.id);
     }
     
-    setSchoolName(verifierSchool.namaSekolah);
-    const applicantsData = getApplicants();
-    const verifierSchoolApplicants = applicantsData.filter(app => {
-        return app.schoolSelections?.some(sel => sel.schoolId === verifierSchool.id) 
-            && app.schoolSelections[0].schoolId === verifierSchool.id
-            && app.statusVerifikasi !== 'Dibatalkan';
-    });
-
-    setAllApplicants(verifierSchoolApplicants);
     setJalurOptions(["Semua Jalur", ...getJalur().map(j => j.name)]);
-    setIsLoading(false);
-  }, [router, toast]);
+  }, [router, toast, loadApplicantsForSchool]);
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -93,6 +120,14 @@ export default function VerificationPage() {
       direction = 'descending';
     }
     setSortConfig({ key, direction });
+  };
+  const handleSchoolChange = (schoolId: string) => {
+    setSelectedSchoolId(schoolId);
+    const targetSchool = smaSmkSchools.find(s => s.id === schoolId);
+    if (targetSchool) {
+      setSchoolName(targetSchool.namaSekolah);
+      loadApplicantsForSchool(schoolId);
+    }
   };
 
   const getSortIcon = (key: SortKey) => {
@@ -164,6 +199,25 @@ export default function VerificationPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {isAdminMode && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <div className="space-y-1 text-left">
+                <h4 className="text-sm font-semibold text-primary">Mode Administrator / Wilayah</h4>
+                <p className="text-xs text-muted-foreground">Pilih SMA/SMK untuk memantau dan memverifikasi berkas pendaftar.</p>
+              </div>
+              <div className="w-full sm:w-80">
+                <Select value={selectedSchoolId} onValueChange={handleSchoolChange}>
+                  <SelectTrigger className="w-full bg-background"><SelectValue placeholder="Pilih sekolah..." /></SelectTrigger>
+                  <SelectContent>
+                    {smaSmkSchools.map(sch => (
+                      <SelectItem key={sch.id} value={sch.id}>{sch.namaSekolah}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
           <section className="border rounded-lg p-4 space-y-4">
             <div className="flex items-center space-x-2">
               <FilterIcon className="h-5 w-5 text-primary" />
